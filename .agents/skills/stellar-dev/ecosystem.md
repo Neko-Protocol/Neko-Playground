@@ -7,6 +7,8 @@ This guide catalogs the major projects, protocols, and tools in the Stellar ecos
 > - [Stellar Ecosystem](https://stellar.org/ecosystem) — Official directory (searchable by country, asset, category)
 > - [SCF Projects](https://communityfund.stellar.org/projects) — Funded projects with status tracking
 > - [Stellar on DefiLlama](https://defillama.com/chain/stellar) — Live DeFi TVL data
+>
+> Treat project metrics/status as volatile. Validate latest activity and production readiness before taking dependencies.
 
 ## DeFi Protocols
 
@@ -226,7 +228,7 @@ Cloud execution environment for blockchain data processing.
 
 #### OpenZeppelin Stellar Contracts
 
-Audited smart contract library for Soroban (v0.6.0, Jan 2026).
+Audited smart contract library for Soroban (track latest release tags before pinning versions).
 
 - **GitHub**: https://github.com/OpenZeppelin/stellar-contracts
 - **Docs**: https://developers.stellar.org/docs/tools/openzeppelin-contracts
@@ -438,7 +440,7 @@ Cross-chain gateway and Interchain Token Service for Soroban.
 
 - **GitHub**: https://github.com/axelarnetwork/axelar-amplifier-stellar
 - **Use Case**: Cross-chain messaging, token bridging, interoperability
-- **Status**: Active development (last commit Nov 2025)
+- **Status**: Active development (verify latest activity before integrating)
 
 #### Allbridge Core
 
@@ -449,7 +451,7 @@ Cross-chain stable swap bridge (Stellar is 10th supported chain).
 
 #### LayerZero
 
-Omnichain interoperability protocol connecting Stellar to 150+ blockchains (launched Nov 2025).
+Omnichain interoperability protocol with Stellar support.
 
 - **Use Case**: Cross-chain messaging, token bridging (OFT/ONFT), dApp interoperability
 - **Features**: OApp standard, Omni-Chain Fungible Tokens, native issuer minting/burning control
@@ -519,7 +521,7 @@ Security audit funding for SCF projects.
 
 - **USDC** (Circle): Primary USD stablecoin
 - **EURC** (Circle): EUR stablecoin
-- **PYUSD** (PayPal): PayPal USD on Stellar (Q3 2025)
+- **PYUSD** (PayPal): Verify current issuance and distribution details before launch planning
 
 ## Enterprise Integrations
 

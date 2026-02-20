@@ -15,7 +15,7 @@
 ### API References
 
 - [Stellar RPC Methods](https://developers.stellar.org/docs/data/apis/rpc/api-reference/methods) - RPC API
-- [Horizon API](https://developers.stellar.org/docs/data/apis/horizon/api-reference) - REST API (deprecated)
+- [Horizon API](https://developers.stellar.org/docs/data/apis/horizon/api-reference) - REST API (legacy-focused)
 - [Oracle Providers](https://developers.stellar.org/docs/data/oracles/oracle-providers)
 
 ## SDKs
@@ -25,7 +25,7 @@
 - [JavaScript SDK](https://github.com/stellar/js-stellar-sdk) - `@stellar/stellar-sdk`
 - [Python SDK](https://github.com/StellarCN/py-stellar-base) - `stellar-sdk`
 - [Java SDK](https://github.com/lightsail-network/java-stellar-sdk) - `network.lightsail:stellar-sdk` (Lightsail Network)
-- [Go SDK](https://github.com/stellar/go-stellar-sdk) - `txnbuild`, Horizon & RPC clients (migrated from `stellar/go` Dec 2025)
+- [Go SDK](https://github.com/stellar/go-stellar-sdk) - `txnbuild`, Horizon & RPC clients
 - [Rust SDK (RPC Client)](https://github.com/stellar/rs-stellar-rpc-client)
 - [SDK Documentation](https://developers.stellar.org/docs/tools/sdks/client-sdks)
 
@@ -125,6 +125,32 @@ For vulnerability patterns, checklists, and detailed tooling guides, see [securi
 - [Soroban Security Portal](https://sorobansecurity.com) - Community vulnerability database
 - [CoinFabrik Audit Reports](https://www.coinfabrik.com/smart-contract-audit-reports/)
 - [Certora Security Reports](https://github.com/Certora/SecurityReports) - Includes Stellar verifications
+
+## Zero-Knowledge Proofs (Status-Sensitive)
+
+For comprehensive ZK development guidance, see [zk-proofs.md](zk-proofs.md).
+
+Always verify CAP status and network support before treating any ZK primitive as production-available.
+
+### Protocol & Specifications
+
+- [Protocol upgrades](https://stellar.org/protocol-upgrades) - Upgrade timeline and network context
+- [CAP-0074](https://github.com/stellar/stellar-protocol/blob/master/core/cap-0074.md) - BN254 host functions proposal
+- [CAP-0075](https://github.com/stellar/stellar-protocol/blob/master/core/cap-0075.md) - Poseidon/Poseidon2 host functions proposal
+
+### SDK Documentation
+
+- [Soroban SDK BN254 module](https://docs.rs/soroban-sdk/latest/soroban_sdk/crypto/bn254/) - Verify availability in your pinned SDK version
+- [Soroban SDK Crypto](https://docs.rs/soroban-sdk/latest/soroban_sdk/crypto/) - Full crypto module reference
+
+### Proving Systems & Tooling
+
+- [Noir Documentation](https://noir-lang.org/docs/) - Aztec's ZK domain-specific language
+- [RISC Zero](https://dev.risczero.com/) - General-purpose zkVM for Rust programs
+
+### Example Contracts
+
+- [Soroban Examples](https://github.com/stellar/soroban-examples) - Official examples (includes `groth16_verifier`, `privacy-pools`, `import_ark_bn254`)
 
 ## Testing
 
@@ -278,7 +304,7 @@ For vulnerability patterns, checklists, and detailed tooling guides, see [securi
 
 - [USDC on Stellar](https://www.circle.com/usdc/stellar) - Circle
 - [EURC on Stellar](https://www.circle.com/en/eurc) - Circle
-- PYUSD (PayPal) - Launched Q3 2025
+- PYUSD (PayPal) - Verify current issuer/distribution details before integration
 
 ### Asset Discovery
 
@@ -322,4 +348,4 @@ See [ecosystem.md](ecosystem.md) for a table of teams shipping production code o
 
 - [Stellar Development Foundation](https://stellar.org/foundation)
 - [Foundation Roadmap](https://stellar.org/foundation/roadmap)
-- [2025 Year in Review](https://stellar.org/blog/ecosystem/stellar-2025-year-in-review)
+- [Ecosystem Blog](https://stellar.org/blog/ecosystem)
