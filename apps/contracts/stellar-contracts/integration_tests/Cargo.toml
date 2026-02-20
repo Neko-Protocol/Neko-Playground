@@ -1,0 +1,18 @@
+[package]
+name = "integration_tests"
+description = "Integration tests for Stellar RWA flow (Oracle -> Token / Lending)"
+version = "0.0.1"
+edition.workspace = true
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+rwa_oracle = { path = "../rwa-oracle", package = "rwa-oracle" }
+rwa_token = { path = "../rwa-token", package = "rwa-token" }
+rwa_lending = { path = "../rwa-lending", package = "rwa-lending" }
+soroban-sdk = { workspace = true }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
