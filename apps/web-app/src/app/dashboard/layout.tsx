@@ -6,13 +6,7 @@ import Navbar from "@/components/navigation/Navbar";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        color: "#081F5C",
-        overflowX: "hidden",
-      }}
-    >
+    <main style={{ color: "#081F5C", minHeight: "100vh" }}>
       <Navbar />
       {children}
       <Layout.Footer>
