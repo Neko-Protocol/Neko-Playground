@@ -12,8 +12,14 @@ import {
   xdr,
 } from "@stellar/stellar-sdk";
 import { Client as RwaLendingClient, networks } from "@neko/lending";
-import { rpcUrl, networkPassphrase, horizonUrl, stellarNetwork } from "@/lib/constants/network";
+import {
+  rpcUrl,
+  networkPassphrase,
+  horizonUrl,
+  stellarNetwork,
+} from "@/lib/constants/network";
 import { toSmallestUnit } from "./swapUtils";
+import { extractContractError } from "./contractErrors";
 
 /**
  * Approve token contract to spend tokens on behalf of the user
@@ -23,17 +29,19 @@ export const approveToken = async (
   spenderAddress: string,
   amount: string,
   decimals: number = 7,
-  walletAddress: string,
+  walletAddress: string
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, { allowHttp: stellarNetwork === "LOCAL" });
+    const sorobanServer = new rpc.Server(rpcUrl, {
+      allowHttp: stellarNetwork === "LOCAL",
+    });
     const horizonServer = new Horizon.Server(horizonUrl);
     const tokenContract = new Contract(tokenContractAddress);
 
     // Get current ledger to calculate expiration
     const latestLedger = await sorobanServer.getLatestLedger();
     const currentLedger = latestLedger.sequence;
-    
+
     // Calculate expiration ledger: current + ~30 days
     // Stellar ledgers occur approximately every 5 seconds
     // 30 days = 30 * 24 * 60 * 60 / 5 = 518,400 ledgers
@@ -52,7 +60,7 @@ export const approveToken = async (
       new Address(walletAddress).toScVal(),
       new Address(spenderAddress).toScVal(),
       nativeToScVal(amountInSmallestUnit, { type: "i128" }),
-      nativeToScVal(expirationLedger, { type: "u32" }),
+      nativeToScVal(expirationLedger, { type: "u32" })
     );
 
     // Get account for transaction
@@ -71,7 +79,8 @@ export const approveToken = async (
     return transaction.toXDR();
   } catch (error) {
     console.error("Error building approve transaction:", error);
-    throw new Error(`Failed to build approve transaction: ${error instanceof Error ? error.message : String(error)}`);
+    const friendlyError = extractContractError(error, "rwa-token");
+    throw new Error(friendlyError);
   }
 };
 
@@ -82,10 +91,12 @@ export const depositToPool = async (
   assetCode: string,
   amount: string,
   decimals: number = 7,
-  walletAddress: string,
+  walletAddress: string
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, { allowHttp: stellarNetwork === "LOCAL" });
+    const sorobanServer = new rpc.Server(rpcUrl, {
+      allowHttp: stellarNetwork === "LOCAL",
+    });
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(networks.testnet.contractId);
 
@@ -100,7 +111,7 @@ export const depositToPool = async (
       "deposit",
       new Address(walletAddress).toScVal(),
       assetSymbol,
-      nativeToScVal(amountInSmallestUnit, { type: "i128" }),
+      nativeToScVal(amountInSmallestUnit, { type: "i128" })
     );
 
     // Get account for transaction
@@ -120,14 +131,20 @@ export const depositToPool = async (
       await sorobanServer.simulateTransaction(transaction);
     } catch (simError) {
       // Auth errors during simulation are expected since transaction isn't signed yet
-      const errorMessage = simError instanceof Error ? simError.message : String(simError);
-      if (!errorMessage.includes("Auth") && !errorMessage.includes("require_auth") && !errorMessage.includes("InvalidAction")) {
-        // If it's not an auth error, re-throw it
-        throw simError;
+      const errorMessage =
+        simError instanceof Error ? simError.message : String(simError);
+      if (
+        !errorMessage.includes("Auth") &&
+        !errorMessage.includes("require_auth") &&
+        !errorMessage.includes("InvalidAction")
+      ) {
+        // If it's not an auth error, extract and throw a user-friendly message
+        const friendlyError = extractContractError(simError, "rwa-lending");
+        throw new Error(friendlyError);
       }
       // Otherwise, continue - auth will be checked when transaction is signed
     }
-    
+
     // Prepare the transaction with the simulation results
     const preparedTx = await sorobanServer.prepareTransaction(transaction);
 
@@ -135,7 +152,17 @@ export const depositToPool = async (
     return preparedTx.toXDR();
   } catch (error) {
     console.error("Error building deposit transaction:", error);
-    throw new Error(`Failed to build deposit transaction: ${error instanceof Error ? error.message : String(error)}`);
+    // If error is already a user-friendly message, re-throw it
+    if (
+      error instanceof Error &&
+      error.message &&
+      !error.message.includes("Failed to build")
+    ) {
+      throw error;
+    }
+    // Otherwise, extract contract error
+    const friendlyError = extractContractError(error, "rwa-lending");
+    throw new Error(friendlyError);
   }
 };
 
@@ -146,10 +173,12 @@ export const withdrawFromPool = async (
   assetCode: string,
   bTokens: string,
   decimals: number = 7,
-  walletAddress: string,
+  walletAddress: string
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, { allowHttp: stellarNetwork === "LOCAL" });
+    const sorobanServer = new rpc.Server(rpcUrl, {
+      allowHttp: stellarNetwork === "LOCAL",
+    });
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(networks.testnet.contractId);
 
@@ -164,7 +193,7 @@ export const withdrawFromPool = async (
       "withdraw",
       new Address(walletAddress).toScVal(),
       assetSymbol,
-      nativeToScVal(bTokensInSmallestUnit, { type: "i128" }),
+      nativeToScVal(bTokensInSmallestUnit, { type: "i128" })
     );
 
     // Get account for transaction
@@ -184,14 +213,20 @@ export const withdrawFromPool = async (
       await sorobanServer.simulateTransaction(transaction);
     } catch (simError) {
       // Auth errors during simulation are expected since transaction isn't signed yet
-      const errorMessage = simError instanceof Error ? simError.message : String(simError);
-      if (!errorMessage.includes("Auth") && !errorMessage.includes("require_auth") && !errorMessage.includes("InvalidAction")) {
-        // If it's not an auth error, re-throw it
-        throw simError;
+      const errorMessage =
+        simError instanceof Error ? simError.message : String(simError);
+      if (
+        !errorMessage.includes("Auth") &&
+        !errorMessage.includes("require_auth") &&
+        !errorMessage.includes("InvalidAction")
+      ) {
+        // If it's not an auth error, extract and throw a user-friendly message
+        const friendlyError = extractContractError(simError, "rwa-lending");
+        throw new Error(friendlyError);
       }
       // Otherwise, continue - auth will be checked when transaction is signed
     }
-    
+
     // Prepare the transaction with the simulation results
     const preparedTx = await sorobanServer.prepareTransaction(transaction);
 
@@ -199,7 +234,15 @@ export const withdrawFromPool = async (
     return preparedTx.toXDR();
   } catch (error) {
     console.error("Error building withdraw transaction:", error);
-    throw new Error(`Failed to build withdraw transaction: ${error instanceof Error ? error.message : String(error)}`);
+    if (
+      error instanceof Error &&
+      error.message &&
+      !error.message.includes("Failed to build")
+    ) {
+      throw error;
+    }
+    const friendlyError = extractContractError(error, "rwa-lending");
+    throw new Error(friendlyError);
   }
 };
 
@@ -210,10 +253,12 @@ export const addCollateral = async (
   rwaTokenAddress: string,
   amount: string,
   decimals: number = 7,
-  walletAddress: string,
+  walletAddress: string
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, { allowHttp: stellarNetwork === "LOCAL" });
+    const sorobanServer = new rpc.Server(rpcUrl, {
+      allowHttp: stellarNetwork === "LOCAL",
+    });
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(networks.testnet.contractId);
 
@@ -225,7 +270,7 @@ export const addCollateral = async (
       "add_collateral",
       new Address(walletAddress).toScVal(),
       new Address(rwaTokenAddress).toScVal(),
-      nativeToScVal(amountInSmallestUnit, { type: "i128" }),
+      nativeToScVal(amountInSmallestUnit, { type: "i128" })
     );
 
     // Get account for transaction
@@ -244,12 +289,18 @@ export const addCollateral = async (
     try {
       await sorobanServer.simulateTransaction(transaction);
     } catch (simError) {
-      const errorMessage = simError instanceof Error ? simError.message : String(simError);
-      if (!errorMessage.includes("Auth") && !errorMessage.includes("require_auth") && !errorMessage.includes("InvalidAction")) {
-        throw simError;
+      const errorMessage =
+        simError instanceof Error ? simError.message : String(simError);
+      if (
+        !errorMessage.includes("Auth") &&
+        !errorMessage.includes("require_auth") &&
+        !errorMessage.includes("InvalidAction")
+      ) {
+        const friendlyError = extractContractError(simError, "rwa-lending");
+        throw new Error(friendlyError);
       }
     }
-    
+
     // Prepare the transaction with the simulation results
     const preparedTx = await sorobanServer.prepareTransaction(transaction);
 
@@ -257,7 +308,15 @@ export const addCollateral = async (
     return preparedTx.toXDR();
   } catch (error) {
     console.error("Error building add_collateral transaction:", error);
-    throw new Error(`Failed to build add_collateral transaction: ${error instanceof Error ? error.message : String(error)}`);
+    if (
+      error instanceof Error &&
+      error.message &&
+      !error.message.includes("Failed to build")
+    ) {
+      throw error;
+    }
+    const friendlyError = extractContractError(error, "rwa-lending");
+    throw new Error(friendlyError);
   }
 };
 
@@ -268,10 +327,12 @@ export const borrowFromPool = async (
   assetCode: string,
   amount: string,
   decimals: number = 7,
-  walletAddress: string,
+  walletAddress: string
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, { allowHttp: stellarNetwork === "LOCAL" });
+    const sorobanServer = new rpc.Server(rpcUrl, {
+      allowHttp: stellarNetwork === "LOCAL",
+    });
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(networks.testnet.contractId);
 
@@ -286,7 +347,7 @@ export const borrowFromPool = async (
       "borrow",
       new Address(walletAddress).toScVal(),
       assetSymbol,
-      nativeToScVal(amountInSmallestUnit, { type: "i128" }),
+      nativeToScVal(amountInSmallestUnit, { type: "i128" })
     );
 
     // Get account for transaction
@@ -305,12 +366,18 @@ export const borrowFromPool = async (
     try {
       await sorobanServer.simulateTransaction(transaction);
     } catch (simError) {
-      const errorMessage = simError instanceof Error ? simError.message : String(simError);
-      if (!errorMessage.includes("Auth") && !errorMessage.includes("require_auth") && !errorMessage.includes("InvalidAction")) {
-        throw simError;
+      const errorMessage =
+        simError instanceof Error ? simError.message : String(simError);
+      if (
+        !errorMessage.includes("Auth") &&
+        !errorMessage.includes("require_auth") &&
+        !errorMessage.includes("InvalidAction")
+      ) {
+        const friendlyError = extractContractError(simError, "rwa-lending");
+        throw new Error(friendlyError);
       }
     }
-    
+
     // Prepare the transaction with the simulation results
     const preparedTx = await sorobanServer.prepareTransaction(transaction);
 
@@ -318,7 +385,15 @@ export const borrowFromPool = async (
     return preparedTx.toXDR();
   } catch (error) {
     console.error("Error building borrow transaction:", error);
-    throw new Error(`Failed to build borrow transaction: ${error instanceof Error ? error.message : String(error)}`);
+    if (
+      error instanceof Error &&
+      error.message &&
+      !error.message.includes("Failed to build")
+    ) {
+      throw error;
+    }
+    const friendlyError = extractContractError(error, "rwa-lending");
+    throw new Error(friendlyError);
   }
 };
 
@@ -328,7 +403,7 @@ export const borrowFromPool = async (
 export const getBTokenBalance = async (
   assetCode: string,
   walletAddress: string,
-  decimals: number = 7,
+  decimals: number = 7
 ): Promise<string> => {
   try {
     const client = new RwaLendingClient({
@@ -351,12 +426,13 @@ export const getBTokenBalance = async (
     }
 
     // Convert from smallest unit to human-readable
-    const balanceStr = typeof balanceValue === 'bigint' 
-      ? balanceValue.toString() 
-      : typeof balanceValue === 'string'
-      ? balanceValue
-      : String(balanceValue);
-    
+    const balanceStr =
+      typeof balanceValue === "bigint"
+        ? balanceValue.toString()
+        : typeof balanceValue === "string"
+          ? balanceValue
+          : String(balanceValue);
+
     const balanceBigInt = BigInt(balanceStr);
     const divisor = BigInt(Math.pow(10, decimals));
     const whole = balanceBigInt / divisor;
@@ -374,4 +450,3 @@ export const getBTokenBalance = async (
     return "0";
   }
 };
-
