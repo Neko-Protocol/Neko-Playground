@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+  "integration_tests",
   "rwa-lending",
   "rwa-oracle",
   "rwa-token",
