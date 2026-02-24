@@ -111,11 +111,6 @@ impl Storage {
         }
     }
 
-    /// Set current price (for testing purposes)
-    pub fn set_current_price(env: &Env, rwa_token: &Address, price: i128) {
-        let key = (PRICE_KEY, rwa_token.clone());
-        env.storage().persistent().set(&key, &price);
-    }
 
     /// Get margin token address
     pub fn get_margin_token(env: &Env) -> Option<Address> {
