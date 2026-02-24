@@ -15,7 +15,12 @@ import {
 import { Client as RwaLendingClient, networks } from "@neko/lending";
 import { rpcUrl, networkPassphrase, horizonUrl } from "../constants/network";
 import { toSmallestUnit } from "../helpers/swapUtils";
-import { approveToken, addCollateral, borrowFromPool } from "../helpers/lending";
+import {
+  approveToken,
+  addCollateral,
+  borrowFromPool,
+} from "../helpers/lending";
+import { extractContractError } from "../helpers/contractErrors";
 import type {
   LendingOperationResult,
   CollateralOperationResult,
@@ -88,11 +93,10 @@ export class LendingService {
       return { xdr: transaction.toXDR() };
     } catch (error) {
       console.error("Error building approve transaction:", error);
+      const friendlyError = extractContractError(error, "rwa-token");
       return {
         xdr: "",
-        error: `Failed to build approve transaction: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        error: friendlyError,
       };
     }
   }
@@ -146,7 +150,8 @@ export class LendingService {
           !errorMessage.includes("require_auth") &&
           !errorMessage.includes("InvalidAction")
         ) {
-          throw simError;
+          const friendlyError = extractContractError(simError, "rwa-lending");
+          throw new Error(friendlyError);
         }
       }
 
@@ -158,11 +163,10 @@ export class LendingService {
       return { xdr: preparedTx.toXDR() };
     } catch (error) {
       console.error("Error building deposit transaction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
       return {
         xdr: "",
-        error: `Failed to build deposit transaction: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        error: friendlyError,
       };
     }
   }
@@ -216,7 +220,8 @@ export class LendingService {
           !errorMessage.includes("require_auth") &&
           !errorMessage.includes("InvalidAction")
         ) {
-          throw simError;
+          const friendlyError = extractContractError(simError, "rwa-lending");
+          throw new Error(friendlyError);
         }
       }
 
@@ -228,11 +233,10 @@ export class LendingService {
       return { xdr: preparedTx.toXDR() };
     } catch (error) {
       console.error("Error building withdraw transaction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
       return {
         xdr: "",
-        error: `Failed to build withdraw transaction: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        error: friendlyError,
       };
     }
   }
@@ -286,7 +290,8 @@ export class LendingService {
           !errorMessage.includes("require_auth") &&
           !errorMessage.includes("InvalidAction")
         ) {
-          throw simError;
+          const friendlyError = extractContractError(simError, "rwa-lending");
+          throw new Error(friendlyError);
         }
       }
 
@@ -298,11 +303,10 @@ export class LendingService {
       return { xdr: preparedTx.toXDR() };
     } catch (error) {
       console.error("Error building borrow transaction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
       return {
         xdr: "",
-        error: `Failed to build borrow transaction: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        error: friendlyError,
       };
     }
   }
@@ -353,7 +357,8 @@ export class LendingService {
           !errorMessage.includes("require_auth") &&
           !errorMessage.includes("InvalidAction")
         ) {
-          throw simError;
+          const friendlyError = extractContractError(simError, "rwa-lending");
+          throw new Error(friendlyError);
         }
       }
 
@@ -365,11 +370,10 @@ export class LendingService {
       return { xdr: preparedTx.toXDR() };
     } catch (error) {
       console.error("Error building add collateral transaction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
       return {
         xdr: "",
-        error: `Failed to build add collateral transaction: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        error: friendlyError,
       };
     }
   }
@@ -426,12 +430,11 @@ export class LendingService {
         "Error building add collateral with approve transactions:",
         error
       );
+      const friendlyError = extractContractError(error, "rwa-lending");
       return {
         approveXdr: "",
         addCollateralXdr: "",
-        error: `Failed to build add collateral transactions: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        error: friendlyError,
       };
     }
   }
@@ -480,14 +483,16 @@ export class LendingService {
         borrowXdr,
       };
     } catch (error) {
-      console.error("Error building borrow with collateral transactions:", error);
+      console.error(
+        "Error building borrow with collateral transactions:",
+        error
+      );
+      const friendlyError = extractContractError(error, "rwa-lending");
       return {
         approveXdr: "",
         addCollateralXdr: "",
         borrowXdr: "",
-        error: `Failed to build borrow with collateral transactions: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        error: friendlyError,
       };
     }
   }

@@ -5,16 +5,47 @@
 
 import {
   CONTRACT_ERRORS,
+  CONTRACT_ERRORS_BY_CONTRACT,
   ContractErrorCode,
   isValidErrorCode,
+  getContractError,
 } from "@/lib/constants/contracts";
+
+/**
+ * Try to extract contract name from error string
+ * Looks for contract identifiers in the error message
+ */
+function extractContractNameFromError(errorString: string): string | null {
+  const contractPatterns = [
+    { pattern: /rwa-lending/i, name: "rwa-lending" },
+    { pattern: /rwa-token/i, name: "rwa-token" },
+    { pattern: /rwa-oracle/i, name: "rwa-oracle" },
+    { pattern: /rwa-perps/i, name: "rwa-perps" },
+    { pattern: /lending/i, name: "rwa-lending" },
+    { pattern: /token/i, name: "rwa-token" },
+    { pattern: /oracle/i, name: "rwa-oracle" },
+    { pattern: /perps|perpetual/i, name: "rwa-perps" },
+  ];
+
+  for (const { pattern, name } of contractPatterns) {
+    if (pattern.test(errorString)) {
+      return name;
+    }
+  }
+
+  return null;
+}
 
 /**
  * Extract a user-friendly error message from a contract error
  * @param error - The error object from a failed contract call
+ * @param contractName - Optional contract name to narrow down error lookup
  * @returns A user-friendly error message
  */
-export function extractContractError(error: unknown): string {
+export function extractContractError(
+  error: unknown,
+  contractName?: string
+): string {
   if (!error) {
     return "An unknown error occurred";
   }
@@ -48,9 +79,22 @@ export function extractContractError(error: unknown): string {
   const contractErrorMatch = errorString.match(/Error\(Contract,\s*#(\d+)\)/);
   if (contractErrorMatch) {
     const errorCode = parseInt(contractErrorMatch[1], 10);
+
+    // Try contract-specific lookup first if contract name is provided or can be inferred
+    const inferredContract =
+      contractName || extractContractNameFromError(errorString);
+    if (inferredContract) {
+      const contractError = getContractError(inferredContract, errorCode);
+      if (contractError) {
+        return contractError.message;
+      }
+    }
+
+    // Fall back to flattened lookup (backward compatibility)
     if (isValidErrorCode(errorCode)) {
       return CONTRACT_ERRORS[errorCode].message;
     }
+
     return `Contract error #${errorCode}`;
   }
 
@@ -61,9 +105,22 @@ export function extractContractError(error: unknown): string {
   );
   if (hostErrorMatch) {
     const errorCode = parseInt(hostErrorMatch[1], 10);
+
+    // Try contract-specific lookup first
+    const inferredContract =
+      contractName || extractContractNameFromError(errorString);
+    if (inferredContract) {
+      const contractError = getContractError(inferredContract, errorCode);
+      if (contractError) {
+        return contractError.message;
+      }
+    }
+
+    // Fall back to flattened lookup
     if (isValidErrorCode(errorCode)) {
       return CONTRACT_ERRORS[errorCode].message;
     }
+
     return `Contract error #${errorCode}`;
   }
 
@@ -73,6 +130,18 @@ export function extractContractError(error: unknown): string {
     const innerMatch = errorString.match(/Error\(Contract,\s*#(\d+)\)/);
     if (innerMatch) {
       const errorCode = parseInt(innerMatch[1], 10);
+
+      // Try contract-specific lookup
+      const inferredContract =
+        contractName || extractContractNameFromError(errorString);
+      if (inferredContract) {
+        const contractError = getContractError(inferredContract, errorCode);
+        if (contractError) {
+          return contractError.message;
+        }
+      }
+
+      // Fall back to flattened lookup
       if (isValidErrorCode(errorCode)) {
         return CONTRACT_ERRORS[errorCode].message;
       }
@@ -209,12 +278,16 @@ export function isUserCancellationError(error: unknown): boolean {
  * Extract error message, returning null for user cancellations
  * Useful for notification systems where user cancellation shouldn't trigger a notification
  * @param error - The error object from a failed contract call
+ * @param contractName - Optional contract name to narrow down error lookup
  * @returns A user-friendly error message, or null if user cancelled
  */
-export function extractContractErrorOrNull(error: unknown): string | null {
+export function extractContractErrorOrNull(
+  error: unknown,
+  contractName?: string
+): string | null {
   if (isUserCancellationError(error)) {
     return null;
   }
 
-  return extractContractError(error);
+  return extractContractError(error, contractName);
 }
