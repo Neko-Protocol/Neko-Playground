@@ -14,6 +14,7 @@ import {
 } from "@/lib/helpers/soroswap";
 import { Token as UniswapToken } from "@uniswap/sdk-core";
 import { SUPPORTED_CHAINS } from "@/lib/constants/evmConfig";
+import { extractContractErrorOrNull } from "@/lib/helpers/contractErrors";
 import { OrderManagement } from "../ui/OrderManagement";
 import TokenSelectorModal from "../ui/TokenSelectorModal";
 
@@ -259,8 +260,14 @@ const Swap: React.FC = () => {
         return;
       }
 
+      // Try to extract contract error for Stellar swaps
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to complete swap";
+        swapMode === "stellar"
+          ? extractContractErrorOrNull(error, "rwa-perps") ||
+            (error instanceof Error ? error.message : "Failed to complete swap")
+          : error instanceof Error
+            ? error.message
+            : "Failed to complete swap";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
