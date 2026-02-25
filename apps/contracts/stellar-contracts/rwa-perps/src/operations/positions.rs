@@ -87,15 +87,7 @@ impl Positions {
             return Err(Error::ExceedsMaxLeverage);
         }
 
-        // 5. Get current price from oracle
-        // TODO: Integrate with actual RWA oracle contract using SEP-40 interface
-        // For now, use storage-based price (same pattern as margin.rs)
-        // Production implementation should use:
-        // let oracle_client = RWAOracleClient::new(env, &storage.oracle);
-        // let asset_symbol = oracle_client.get_asset_id_from_token(rwa_token)?;
-        // let asset = Asset::Other(asset_symbol);
-        // let price_data = oracle_client.lastprice(&asset)?;
-        // let current_price = price_data.price;
+        // 5. Get current price from oracle (integrated via Storage::get_current_price)
         let current_price = Storage::get_current_price(env, rwa_token)
             .ok_or(Error::OraclePriceNotFound)?;
 
@@ -216,10 +208,7 @@ impl Positions {
             return Err(Error::InvalidInput);
         }
 
-        // 6. Get current price from oracle
-        // TODO: Migration to SEP-40 Oracle Client. 
-        // Current implementation uses storage-cached prices to match margin.rs pattern.
-        // Integration should target the `lastprice` method from the RWA Oracle contract.
+        // 6. Get current price from oracle (integrated via Storage::get_current_price)
         let current_price = Storage::get_current_price(env, rwa_token)
             .ok_or(Error::OraclePriceNotFound)?;
 

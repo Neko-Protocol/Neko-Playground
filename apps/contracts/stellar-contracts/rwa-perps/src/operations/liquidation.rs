@@ -292,7 +292,7 @@ impl Liquidations {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::common::types::{MarketConfig, Position};
+    use crate::common::types::Position;
     use soroban_sdk::{testutils::Address as _, Address, Env};
 
     // Note: These tests require a full contract implementation to run properly.

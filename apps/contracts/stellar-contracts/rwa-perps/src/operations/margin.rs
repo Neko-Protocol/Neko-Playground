@@ -4,7 +4,7 @@ use soroban_sdk::token::TokenClient;
 use crate::common::error::Error;
 use crate::common::events::Events;
 use crate::common::storage::Storage;
-use crate::common::types::{BASIS_POINTS, SCALAR_9};
+use crate::common::types::BASIS_POINTS;
 use crate::operations::liquidation::Liquidations;
 
 /// Safety buffer above maintenance margin (0.5% = 50 basis points)
