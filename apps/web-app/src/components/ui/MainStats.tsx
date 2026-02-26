@@ -4,6 +4,7 @@ import React from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import { useWallet } from "@/hooks/useWallet";
+import { parseBalance } from "@/features/dashboard/utils/dashboardUtils";
 
 // Register Chart.js components - TypeScript incorrectly infers ChartJS as error type
 // but it works correctly at runtime
@@ -14,24 +15,17 @@ const MainStats: React.FC = () => {
   const { balances, isFetchingBalances, address } = useWallet();
 
   // Get XLM balance for total value
-  const xlmBalance = balances.xlm?.balance
-    ? parseFloat(balances.xlm.balance.replace(/,/g, ""))
-    : 0;
+  const xlmBalance = parseBalance(balances.xlm?.balance);
 
   // Convert balances to holdings format for chart
   const holdings = React.useMemo(() => {
     return Object.entries(balances)
       .filter(([, balance]) => {
-        // Filter out zero balances
-        const balanceNum = parseFloat(
-          balance.balance?.replace(/,/g, "") ?? "0"
-        );
+        const balanceNum = parseBalance(balance.balance);
         return balanceNum > 0;
       })
       .map(([, balance]) => {
-        const balanceNum = parseFloat(
-          balance.balance?.replace(/,/g, "") ?? "0"
-        );
+        const balanceNum = parseBalance(balance.balance);
         let assetName = "Unknown";
 
         if (balance.asset_type === "native") {
@@ -182,6 +176,7 @@ const MainStats: React.FC = () => {
                         clipRule="evenodd"
                       />
                     </svg>
+                    {/* TODO: replace with real 24h portfolio change from price feed */}
                     <span className="text-[#39bfb7] font-bold text-sm">
                       +2.5%
                     </span>
@@ -201,6 +196,7 @@ const MainStats: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-3 gap-4">
+              {/* TODO: replace +$120.28 with real weekly returns from protocol data */}
               <div className="bg-[#96b2ff]/90 rounded-2xl p-4 text-center border border-[#334EAC]/20 backdrop-blur-sm">
                 <p className="text-[#FFF9F0] font-bold text-lg mb-1">
                   +$120.28
@@ -209,6 +205,7 @@ const MainStats: React.FC = () => {
                   Returns last week
                 </p>
               </div>
+              {/* TODO: replace 7.8% with real avg pool performance from useDashboardPools */}
               <div className="bg-[#96b2ff]/90 rounded-2xl p-4 text-center border border-[#334EAC]/20 backdrop-blur-sm">
                 <p className="text-[#FFF9F0] font-bold text-lg mb-1">7.8%</p>
                 <p className="text-[#000000] text-[10px] font-bold uppercase tracking-wider opacity-70">

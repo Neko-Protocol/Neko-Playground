@@ -1,22 +1,20 @@
-"use client";
-
 import { ReactNode } from "react";
 import { Layout } from "@stellar/design-system";
 import Navbar from "@/components/navigation/Navbar";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <main style={{ color: "#081F5C", minHeight: "100vh" }}>
+    <main className="text-[#081F5C] min-h-screen">
       <Navbar />
       {children}
       <Layout.Footer>
-        <span style={{ color: "#334EAC" }}>
+        <span className="text-[#334EAC]">
           © {new Date().getFullYear()} Neko Protocol. Licensed under the{" "}
           <a
             href="https://opensource.org/license/mit"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: "#0325cbff", fontWeight: "bold" }}
+            className="text-[#0325cb] font-bold"
           >
             MIT License
           </a>
