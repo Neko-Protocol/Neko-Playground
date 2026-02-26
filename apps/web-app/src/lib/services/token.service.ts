@@ -145,7 +145,7 @@ export class TokenService {
    * Get token balance by token symbol or object
    */
   async getTokenBalance(
-    token: Token | string,
+    token: EVMToken | string,
     walletAddress: `0x${string}`,
     publicClient: PublicClient,
     chainId: number = 1

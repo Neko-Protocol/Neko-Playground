@@ -7,7 +7,7 @@ import {
   arbitrum,
   base,
   bsc,
-} from "wagmi/chains";
+} from "viem/chains";
 
 /**
  * Wagmi configuration for EVM wallets

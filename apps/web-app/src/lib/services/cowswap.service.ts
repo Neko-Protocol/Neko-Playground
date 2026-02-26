@@ -220,7 +220,7 @@ export class CowSwapService {
     request: CowSwapSwapRequest,
     chainId: number,
     walletClient: WalletClient,
-    tokenOut: Token
+    tokenOut: EVMToken
   ): Promise<CowSwapSwapResponse> {
     const ethFlowAddress = ETH_FLOW_CONTRACTS[chainId] as `0x${string}`;
 
