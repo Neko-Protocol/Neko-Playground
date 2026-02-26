@@ -13,7 +13,7 @@ import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useNotification } from "@/hooks/useNotification";
 import { rpcUrl } from "@/lib/constants/network";
-import { isUserCancellationError } from "@/lib/helpers/contractErrors";
+import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
 import { orchestrator } from "../core/Orchestrator";
 import { POOLS_QUERY_KEY } from "./usePools";
 import type { PoolAction, TransactionResult } from "../types/pool.types";

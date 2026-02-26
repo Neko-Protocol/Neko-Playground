@@ -1,6 +1,6 @@
 import React from "react";
-import { formatSwapAmount } from "@/lib/helpers/swapUtils";
-import type { Token } from "@/lib/helpers/soroswap";
+import { formatSwapAmount } from "@/lib/helpers/stellar/swapUtils";
+import type { Token } from "@/lib/helpers/stellar/soroswap";
 import type { EVMToken } from "@/lib/types/evmToken";
 
 export type SwapMode = "evm" | "stellar";

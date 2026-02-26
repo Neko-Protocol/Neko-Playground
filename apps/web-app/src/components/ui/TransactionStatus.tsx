@@ -7,7 +7,7 @@ import {
   ExternalLink,
   Check,
 } from "lucide-react";
-import { getExplorerUrl } from "@/lib/helpers/swapUtils";
+import { getExplorerUrl } from "@/lib/helpers/stellar/swapUtils";
 
 interface TransactionStatusProps {
   status: "pending" | "confirming" | "success" | "failed";

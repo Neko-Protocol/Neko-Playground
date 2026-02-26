@@ -21,7 +21,7 @@ export type {
   AddLiquidityResponse,
   PoolInfo,
   GetPoolRequest,
-} from "../../types/soroswapTypes";
+} from "../../../types/soroswapTypes";
 
 // Token registry
 export {

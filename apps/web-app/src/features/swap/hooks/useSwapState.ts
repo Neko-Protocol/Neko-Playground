@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { Token } from "@/lib/helpers/soroswap";
+import type { Token } from "@/lib/helpers/stellar/soroswap";
 import type { EVMToken } from "@/lib/types/evmToken";
 
 export type SwapMode = "evm" | "stellar";

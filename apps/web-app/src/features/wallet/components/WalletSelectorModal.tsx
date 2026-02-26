@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { ConnectButton, useAccountModal } from "@rainbow-me/rainbowkit";
 import { useAccount, useDisconnect } from "wagmi";
 import { useWallet } from "@/hooks/useWallet";
-import { connectWallet, disconnectWallet } from "@/lib/helpers/wallet";
+import { connectWallet, disconnectWallet } from "@/lib/helpers/stellar/wallet";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { Copy, Check } from "lucide-react";
 

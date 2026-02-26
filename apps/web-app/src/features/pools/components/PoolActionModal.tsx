@@ -6,7 +6,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePoolAction, useUserPosition } from "@/lib/orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
-import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/swapUtils";
+import {
+  toSmallestUnit,
+  fromSmallestUnit,
+} from "@/lib/helpers/stellar/swapUtils";
 import type { PoolInfo, PoolAction } from "@/lib/orchestrator";
 
 interface PoolActionModalProps {

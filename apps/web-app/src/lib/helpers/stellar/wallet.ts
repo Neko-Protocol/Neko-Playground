@@ -1,4 +1,4 @@
-import storage from "./storage";
+import storage from "../storage";
 import {
   ISupportedWallet,
   StellarWalletsKit,
@@ -10,7 +10,7 @@ import {
   networkPassphrase,
   stellarNetwork,
   horizonUrl,
-} from "../constants/network";
+} from "../../constants/network";
 
 let kit: StellarWalletsKit | null = null;
 
