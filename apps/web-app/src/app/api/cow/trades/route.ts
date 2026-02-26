@@ -8,23 +8,7 @@ import {
   COW_API_BASE_URLS,
   COW_API_ENDPOINTS,
 } from "@/lib/constants/cowswapConfig";
-import type { CowTrade, CowOrder } from "@/lib/types/cowswapTypes";
-
-interface CowTradesResponse {
-  trades: CowTrade[];
-  meta?: {
-    total: number;
-    hasMore: boolean;
-  };
-}
-
-interface CowOrdersResponse {
-  orders: CowOrder[];
-  meta?: {
-    total: number;
-    hasMore: boolean;
-  };
-}
+import type { CowTradesResponse } from "@/lib/types/cowswapTypes";
 
 /**
  * GET /api/cow/trades - Get raw trades for a user
