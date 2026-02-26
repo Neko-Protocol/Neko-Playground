@@ -1,7 +1,6 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WalletProvider } from "@/providers/WalletProvider";
 import { NotificationProvider } from "@/providers/NotificationProvider";
 import { ReactNode, useState } from "react";
 import "@rainbow-me/rainbowkit/styles.css";
@@ -26,9 +25,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={wagmiConfig}>
         <RainbowKitProvider>
-          <WalletProvider>
-            <NotificationProvider>{children}</NotificationProvider>
-          </WalletProvider>
+          <NotificationProvider>{children}</NotificationProvider>
         </RainbowKitProvider>
       </WagmiProvider>
     </QueryClientProvider>

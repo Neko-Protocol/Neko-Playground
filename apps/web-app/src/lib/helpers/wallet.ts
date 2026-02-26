@@ -1,10 +1,19 @@
-import storage from "./storage";
+"use client";
+
 import {
-  ISupportedWallet,
   StellarWalletsKit,
+  FREIGHTER_ID,
+  FreighterModule,
+  AlbedoModule,
+  xBullModule,
+  LobstrModule,
   WalletNetwork,
-  sep43Modules,
 } from "@creit.tech/stellar-wallets-kit";
+import { LedgerModule } from "@creit.tech/stellar-wallets-kit/modules/ledger.module";
+import {
+  WalletConnectAllowedMethods,
+  WalletConnectModule,
+} from "@creit.tech/stellar-wallets-kit/modules/walletconnect.module";
 import { Horizon } from "@stellar/stellar-sdk";
 import {
   networkPassphrase,
@@ -12,68 +21,41 @@ import {
   horizonUrl,
 } from "../constants/network";
 
-let kit: StellarWalletsKit | null = null;
+let stellarWalletKitInstance: StellarWalletsKit | null = null;
 
 const getKit = (): StellarWalletsKit => {
   if (typeof window === "undefined") {
     throw new Error("StellarWalletsKit can only be used in the browser");
   }
 
-  if (!kit) {
-    kit = new StellarWalletsKit({
+  if (!stellarWalletKitInstance) {
+    stellarWalletKitInstance = new StellarWalletsKit({
       network: networkPassphrase as WalletNetwork,
-      modules: sep43Modules(),
+      selectedWalletId: FREIGHTER_ID,
+      modules: [
+        new FreighterModule(),
+        new AlbedoModule(),
+        new xBullModule(),
+        new LedgerModule(),
+        new LobstrModule(),
+        new WalletConnectModule({
+          url: "https://nekoprotocol.xyz",
+          projectId:
+            process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+            "fa57d523d12455e4fc2c8c83c94ec7b1",
+          method: WalletConnectAllowedMethods.SIGN,
+          name: "Neko Protocol",
+          description: "Neko — The Marketplace for Real-World Assets On-Chain",
+          icons: ["/Neko.svg"],
+          network: networkPassphrase as WalletNetwork,
+        }),
+      ],
     });
   }
 
-  return kit;
+  return stellarWalletKitInstance;
 };
 
-export const connectWallet = async () => {
-  const kitInstance = getKit();
-  await kitInstance.openModal({
-    modalTitle: "Connect to your wallet",
-    onWalletSelected: (option: ISupportedWallet) => {
-      const selectedId = option.id;
-      kitInstance.setWallet(selectedId);
-
-      // Now open selected wallet's login flow by calling `getAddress` --
-      // Yes, it's strange that a getter has a side effect of opening a modal
-      void kitInstance.getAddress().then((address) => {
-        if (address.address) {
-          storage.setItem("walletId", selectedId);
-          storage.setItem("walletAddress", address.address);
-        } else {
-          storage.setItem("walletId", "");
-          storage.setItem("walletAddress", "");
-        }
-      });
-      if (selectedId == "freighter" || selectedId == "hot-wallet") {
-        void kitInstance.getNetwork().then((network) => {
-          if (network.network && network.networkPassphrase) {
-            storage.setItem("walletNetwork", network.network);
-            storage.setItem("networkPassphrase", network.networkPassphrase);
-          } else {
-            storage.setItem("walletNetwork", "");
-            storage.setItem("networkPassphrase", "");
-          }
-        });
-      }
-    },
-  });
-};
-
-export const disconnectWallet = async () => {
-  const kitInstance = getKit();
-  await kitInstance.disconnect();
-  storage.removeItem("walletId");
-  storage.removeItem("walletAddress");
-  storage.removeItem("walletNetwork");
-  storage.removeItem("networkPassphrase");
-};
-
-// Create Horizon server instance lazily (only when needed and in browser)
-// This prevents issues during SSR and ensures we use the correct URL
 const getHorizon = (): Horizon.Server | null => {
   if (typeof window === "undefined") {
     return null;
@@ -132,6 +114,4 @@ export const fetchBalances = async (address: string) => {
   }
 };
 
-// Export a getter function instead of the instance directly
-// This ensures it's only accessed in the browser
 export const getWallet = () => getKit();
