@@ -13,7 +13,7 @@ import {
 } from "@stellar/stellar-sdk";
 import { Client as RwaLendingClient, networks } from "@neko/lending";
 import { rpcUrl, networkPassphrase, horizonUrl } from "@/lib/constants/network";
-import { toSmallestUnit } from "@/lib/helpers/stellar/tokenUtils";
+import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 
 /**
  * Approve token contract to spend tokens on behalf of the user

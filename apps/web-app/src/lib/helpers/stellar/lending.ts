@@ -18,7 +18,7 @@ import {
   horizonUrl,
   stellarNetwork,
 } from "@/lib/constants/network";
-import { toSmallestUnit } from "./tokenUtils";
+import { toSmallestUnit } from "../tokenUtils";
 import { StellarContractError } from "../contractErrorsStellarV2";
 
 /**

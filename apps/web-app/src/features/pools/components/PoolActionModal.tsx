@@ -9,7 +9,7 @@ import { useTokenBalance } from "@/hooks/useTokenBalance";
 import {
   toSmallestUnit,
   fromSmallestUnit,
-} from "@/lib/helpers/stellar/tokenUtils";
+} from "@/lib/helpers/tokenUtils";
 import type { PoolInfo, PoolAction } from "@/lib/orchestrator";
 
 interface PoolActionModalProps {

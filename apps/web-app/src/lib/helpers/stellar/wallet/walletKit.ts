@@ -14,7 +14,7 @@ import {
   WalletConnectAllowedMethods,
   WalletConnectModule,
 } from "@creit.tech/stellar-wallets-kit/modules/walletconnect.module";
-import { getCurrentNetworkPassphrase } from "./stellar-network";
+import { getCurrentNetworkPassphrase } from "../network";
 
 let stellarWalletKitInstance: StellarWalletsKit | null = null;
 
@@ -49,3 +49,5 @@ export function getStellarWalletKit(): StellarWalletsKit {
   }
   return stellarWalletKitInstance;
 }
+
+export const getWallet = () => getStellarWalletKit();
