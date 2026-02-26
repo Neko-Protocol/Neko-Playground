@@ -54,16 +54,6 @@ export function useSwapState(
     defaultTokenOut
   );
 
-  // Wrapper functions to ensure state updates are detected
-  const setTokenInWrapper = useCallback((token: Token | string | EVMToken) => {
-    console.log("setTokenInWrapper called with:", token);
-    setTokenIn(token);
-  }, []);
-
-  const setTokenOutWrapper = useCallback((token: Token | string | EVMToken) => {
-    console.log("setTokenOutWrapper called with:", token);
-    setTokenOut(token);
-  }, []);
   const [limitPrice, setLimitPrice] = useState<string>("");
   const [twapParts, setTwapParts] = useState<string>("10");
   const [twapFrequency, setTwapFrequency] = useState<string>("3600");

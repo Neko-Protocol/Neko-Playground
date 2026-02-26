@@ -27,11 +27,10 @@ export class PriceService {
     NFLX: "netflix-ondo-tokenized-stock",
   };
 
-  // Fallback prices for stable coins and common tokens
+  // Fallback prices for stable coins
   private readonly FALLBACK_PRICES: Record<string, number> = {
     USDC: 1.0,
     USDT: 1.0,
-    ETH: 3000, // Rough fallback price
   };
 
   /**
