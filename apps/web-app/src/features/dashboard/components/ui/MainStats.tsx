@@ -1,15 +1,9 @@
 "use client";
 
 import React from "react";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
-import { Doughnut } from "react-chartjs-2";
 import { useWallet } from "@/hooks/useWallet";
 import { parseBalance } from "@/features/dashboard/utils/dashboardUtils";
-
-// Register Chart.js components - TypeScript incorrectly infers ChartJS as error type
-// but it works correctly at runtime
-
-ChartJS.register(ArcElement, Tooltip, Legend);
+import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
 
 const MainStats: React.FC = () => {
   const { balances, isFetchingBalances, address } = useWallet();
@@ -45,80 +39,6 @@ const MainStats: React.FC = () => {
   }, [balances]);
 
   const totalValue = holdings.reduce((sum, holding) => sum + holding.value, 0);
-
-  // Color palette for chart - reuse colors if we have more assets than colors
-  const chartColors = [
-    "#68f9f2ff", // Planetary
-    "#31c1c6ff", // Slightly lighter Planetary
-    "#1dd1b3ff", // Darker Planetary
-    "#1daca9ff", // Planetary
-    "#2bb8d7ff", // Slightly lighter Planetary
-    "#39bfb7ff", // Accent color
-    "#7096D1ff", // Text color variant
-    "#334EACff", // Border color variant
-  ];
-
-  const chartData = {
-    labels: holdings.map((h) => h.name),
-    datasets: [
-      {
-        data: holdings.map((h) => h.value),
-        backgroundColor: holdings.map(
-          (_, index) => chartColors[index % chartColors.length]
-        ),
-        borderWidth: 3,
-        borderColor: "#294cab",
-        hoverOffset: 8,
-        hoverBorderWidth: 4,
-        hoverBorderColor: "#FFF9F0",
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "right" as const,
-        labels: {
-          color: "#BAD6EB",
-          usePointStyle: true,
-          pointStyle: "circle",
-          padding: 20,
-          font: {
-            size: 12,
-            family: "Inter",
-          },
-        },
-      },
-      tooltip: {
-        backgroundColor: "rgba(8, 31, 92, 0.95)",
-        titleColor: "#FFF9F0",
-        bodyColor: "#BAD6EB",
-        borderColor: "#7096D1",
-        borderWidth: 2,
-        padding: 16,
-        cornerRadius: 8,
-        callbacks: {
-          label: function (context: {
-            parsed: number;
-            label: string;
-            dataIndex: number;
-          }) {
-            const value = context.parsed;
-            const label = context.label;
-            // Show both asset name and balance value
-            return `${label}: ${value.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 7,
-            })}`;
-          },
-        },
-      },
-    },
-    cutout: "70%",
-  };
 
   return (
     <div className="w-full px-6 py-8">
@@ -251,21 +171,8 @@ const MainStats: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex-1 relative min-h-[200px]">
-                <Doughnut data={chartData} options={chartOptions} />
-                {/* Center Text Overlay */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pr-[100px]">
-                  {/* pr-[100px] to offset the legend on the right */}
-                  <span className="text-[#BAD6EB] text-xs font-medium uppercase tracking-wide">
-                    Total Assets
-                  </span>
-                  <span className="text-[#FFF9F0] text-2xl font-bold mt-1">
-                    {totalValue.toLocaleString("en-US", {
-                      notation: "compact",
-                      maximumFractionDigits: 1,
-                    })}
-                  </span>
-                </div>
+              <div className="flex-1 flex flex-col min-h-[200px]">
+                <HoldingsPieChart holdings={holdings} totalValue={totalValue} />
               </div>
             )}
           </div>
