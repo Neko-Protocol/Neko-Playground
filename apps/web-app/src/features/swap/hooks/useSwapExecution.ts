@@ -19,6 +19,7 @@ import {
 } from "@/lib/helpers/cowswap";
 import { getTokensForChain } from "@/lib/constants/evmConfig";
 import { useWallet } from "@/hooks/useWallet";
+import { handleSwapError } from "@/features/swap/utils/swapErrorUtils";
 
 export interface SwapExecutionParams {
   swapMode: "evm" | "stellar";
@@ -203,20 +204,7 @@ export function useSwapExecution() {
             address: address,
           });
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : String(error);
-          const errorString = errorMessage.toLowerCase();
-          if (
-            errorString.includes("user denied") ||
-            errorString.includes("user rejected") ||
-            errorString.includes("user cancelled") ||
-            errorString.includes("user canceled") ||
-            errorString.includes("cancelled") ||
-            errorString.includes("canceled")
-          ) {
-            throw new Error("USER_REJECTED");
-          }
-          throw error;
+          handleSwapError(error);
         }
 
         const signedXdrString =
