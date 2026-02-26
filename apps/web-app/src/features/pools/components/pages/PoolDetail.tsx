@@ -5,7 +5,7 @@ import { use } from "react";
 import Link from "next/link";
 import { orchestrator, usePoolInfo, useUserPosition } from "@/lib/orchestrator";
 import type { PoolAction } from "@/lib/orchestrator";
-import { fromSmallestUnit } from "@/lib/helpers/stellar/swapUtils";
+import { fromSmallestUnit } from "@/lib/helpers/stellar/tokenUtils";
 import { useWallet } from "@/hooks/useWallet";
 import { PoolActionModal } from "../PoolActionModal";
 

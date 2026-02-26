@@ -7,7 +7,7 @@ import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import {
   getTokenId as getTokenIdUtil,
   getTokenIcon,
-} from "@/lib/helpers/stellar/swapUtils";
+} from "@/lib/helpers/stellar/tokenUtils";
 import { isUserRejection } from "@/lib/helpers/isUserRejection";
 
 export interface TokenSelectionState {

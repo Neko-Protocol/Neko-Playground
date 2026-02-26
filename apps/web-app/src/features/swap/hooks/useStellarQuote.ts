@@ -5,7 +5,7 @@ import { type EVMToken } from "@/lib/types/evmToken";
 import {
   formatSwapAmount,
   fromSmallestUnit,
-} from "@/lib/helpers/stellar/swapUtils";
+} from "@/lib/helpers/stellar/tokenUtils";
 import {
   DEFAULT_SLIPPAGE_BPS,
   MAX_HOPS,

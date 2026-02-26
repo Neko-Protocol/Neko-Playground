@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
-import { getTokenIcon } from "@/lib/helpers/stellar/swapUtils";
+import { getTokenIcon } from "@/lib/helpers/stellar/tokenUtils";
 import {
   getTokensForChain,
   SUPPORTED_CHAINS,

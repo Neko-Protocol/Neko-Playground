@@ -1,6 +1,6 @@
 import React from "react";
 import { getCowSwapExplorerUrl } from "@/lib/helpers/evm/cowswap";
-import { getExplorerUrl } from "@/lib/helpers/stellar/swapUtils";
+import { getExplorerUrl } from "@/lib/helpers/stellar/tokenUtils";
 
 interface TransactionResultProps {
   txHash: string;

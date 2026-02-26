@@ -18,8 +18,8 @@ import {
   horizonUrl,
   stellarNetwork,
 } from "@/lib/constants/network";
-import { toSmallestUnit } from "./swapUtils";
-import { StellarContractError } from "./contractErrorsStellarV2";
+import { toSmallestUnit } from "./tokenUtils";
+import { StellarContractError } from "../contractErrorsStellarV2";
 
 /**
  * Approve token contract to spend tokens on behalf of the user
