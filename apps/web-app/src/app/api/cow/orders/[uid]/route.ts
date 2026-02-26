@@ -8,17 +8,7 @@ import {
   COW_API_BASE_URLS,
   COW_API_ENDPOINTS,
 } from "@/lib/constants/cowswapConfig";
-import type { CowOrder } from "@/lib/types/cowswapTypes";
-
-interface CowOrderStatus {
-  uid: string;
-  status: "open" | "fulfilled" | "cancelled" | "expired";
-  creationDate: string;
-  owner: string;
-  executedBuyAmount: string;
-  executedSellAmount: string;
-  executedFeeAmount: string;
-}
+import type { CowOrder, CowOrderStatus } from "@/lib/types/cowswapTypes";
 
 /**
  * GET /api/cow/orders/[uid] - Get specific order by UID

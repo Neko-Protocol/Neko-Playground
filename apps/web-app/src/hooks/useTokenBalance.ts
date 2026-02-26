@@ -13,9 +13,9 @@ import {
   horizonUrl,
 } from "@/lib/config/stellar.config";
 import { useWallet } from "./useWallet";
-import { fromSmallestUnit } from "@/lib/helpers/swapUtils";
-import { getTokens, getAvailableTokens } from "@/lib/helpers/soroswap";
-import { getTokenAddress } from "@/lib/helpers/soroswap";
+import { fromSmallestUnit } from "@/lib/helpers/stellar/tokenUtils";
+import { getTokens, getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
+import { getTokenAddress } from "@/lib/helpers/stellar/soroswap";
 
 /**
  * Get token balance by simulating contract call

@@ -2,8 +2,9 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useWallet } from "@/hooks/useWallet";
-import { getAvailableTokens, type Token } from "@/lib/helpers/soroswap";
-import { getTokenIcon } from "@/lib/helpers/swapUtils";
+import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
+import { getTokenIcon } from "@/lib/helpers/stellar/tokenUtils";
 import {
   getTokensForChain,
   SUPPORTED_CHAINS,
@@ -156,6 +157,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
   onChainChange,
 }) => {
   const { balances } = useWallet();
+  const { price: xlmPrice } = useTokenPrice("XLM");
   const [localChainId, setLocalChainId] = useState(selectedChainId);
   const availableTokens = swapMode === "stellar" ? getAvailableTokens() : {};
 
@@ -258,7 +260,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
         const balance = parseFloat(
           balances.xlm.balance?.replace(/,/g, "") || "0"
         );
-        const usdValue = balance * 0.1;
+        const usdValue = balance * xlmPrice;
         return {
           balance: balance.toString(),
           usdValue: usdValue.toFixed(2),
@@ -286,17 +288,10 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
   }, [filteredTokens, getTokenBalance]);
 
   const handleTokenClick = (tokenCode: string) => {
-    console.log("handleTokenClick called:", {
-      tokenCode,
-      swapMode,
-      localChainId,
-    });
     if (swapMode === "evm") {
-      console.log("Calling onSelectToken with EVM token:", tokenCode);
       onSelectToken(tokenCode, localChainId);
     } else {
       const token = availableTokens[tokenCode].contract;
-      console.log("Calling onSelectToken with Stellar token:", token);
       onSelectToken(token);
     }
     setSearchQuery("");

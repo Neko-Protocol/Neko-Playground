@@ -14,6 +14,7 @@ export class PriceService {
   // CoinGecko ID mapping for tokens
   private readonly COINGECKO_ID_MAP: Record<string, string> = {
     ETH: "ethereum",
+    BNB: "binancecoin",
     USDC: "usd-coin",
     USDT: "tether",
     NVDA: "nvidia-ondo-tokenized-stock",
@@ -23,15 +24,15 @@ export class PriceService {
     AMZN: "amazon-ondo-tokenized-stock",
     META: "meta-platforms-ondo-tokenized-stock",
     SPOT: "spotify-ondo-tokenized-stock",
+    SHOP: "shopify-ondo-tokenized-stock",
     MA: "mastercard-ondo-tokenized-stock",
     NFLX: "netflix-ondo-tokenized-stock",
   };
 
-  // Fallback prices for stable coins and common tokens
+  // Fallback prices for stable coins
   private readonly FALLBACK_PRICES: Record<string, number> = {
     USDC: 1.0,
     USDT: 1.0,
-    ETH: 3000, // Rough fallback price
   };
 
   /**

@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import React, { useMemo } from "react";
-import { useLendingPools } from "@/features/lending/hooks/useLendingPools";
-import { useBorrowPools } from "@/features/borrowing/hooks/useBorrowPools";
+import { usePools } from "@/lib/orchestrator";
+import type { PoolInfo } from "@/lib/orchestrator";
+import { fromSmallestUnit } from "@/lib/helpers/stellar/tokenUtils";
 
-interface PoolData {
+interface PoolCardData {
   id: string;
   token1: string;
   token2: string;
@@ -14,84 +15,50 @@ interface PoolData {
   feeApy: string;
   liquidity: string;
   isActive: boolean;
+  type: string;
 }
 
 const Pools: React.FC = () => {
   const router = useRouter();
 
-  // Get real lending pools from contract
-  const {
-    data: lendingPools = [],
-    isLoading: isLoadingLending,
-    error: lendingError,
-  } = useLendingPools();
+  const { data: allPools = [], isLoading, error } = usePools();
 
-  // Get real borrow pools from contract
-  const {
-    data: borrowPools = [],
-    isLoading: isLoadingBorrow,
-    error: borrowError,
-  } = useBorrowPools();
+  const pools: PoolCardData[] = useMemo(() => {
+    return allPools.map((pool: PoolInfo) => {
+      const token1 = pool.tokens[0]?.code ?? "?";
+      const token2 =
+        pool.tokens.length > 1
+          ? (pool.tokens[1]?.code ?? "?")
+          : pool.type === "blend"
+            ? "Lending"
+            : "?";
 
-  const isLoading = isLoadingLending || isLoadingBorrow;
-  const error = lendingError || borrowError;
-
-  // Combine and transform lending and borrow pools into unified PoolData format
-  const pools: PoolData[] = useMemo(() => {
-    const combinedPools: PoolData[] = [];
-
-    // Add lending pools (single token pools for supplying liquidity)
-    lendingPools.forEach((pool, index) => {
-      // Calculate APY from interest rate
-      const apy =
-        pool.interestRate > 0 ? `${pool.interestRate.toFixed(2)}%` : "0.00%";
-
-      // Format liquidity
-      const balanceNum = parseFloat(pool.poolBalance);
+      const decimals = pool.tokens[0]?.decimals ?? 7;
+      const tvlHuman = parseFloat(
+        fromSmallestUnit(pool.tvl.toString(), decimals)
+      );
       const liquidity =
-        balanceNum >= 1000000
-          ? `$${(balanceNum / 1000000).toFixed(2)}M`
-          : balanceNum >= 1000
-            ? `$${(balanceNum / 1000).toFixed(2)}k`
-            : `$${balanceNum.toFixed(2)}`;
+        tvlHuman >= 1_000_000
+          ? `$${(tvlHuman / 1_000_000).toFixed(2)}M`
+          : tvlHuman >= 1_000
+            ? `$${(tvlHuman / 1_000).toFixed(2)}k`
+            : `$${tvlHuman.toFixed(2)}`;
 
-      combinedPools.push({
-        id: `lending-${index}`,
-        token1: pool.assetCode,
-        token2: "Lending",
+      const apy = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
+
+      return {
+        id: pool.id,
+        token1,
+        token2,
         fee: "0%",
-        roi: `${pool.interestRate.toFixed(2)}%`,
+        roi: apy,
         feeApy: apy,
         liquidity,
-        isActive: pool.isActive,
-      });
+        isActive: pool.state === "active",
+        type: pool.type,
+      };
     });
-
-    // Add borrow pools (RWA token + debt asset pairs)
-    borrowPools.forEach((pool, index) => {
-      // Format liquidity
-      const balanceNum = parseFloat(pool.poolBalance);
-      const liquidity =
-        balanceNum >= 1000000
-          ? `$${(balanceNum / 1000000).toFixed(2)}M`
-          : balanceNum >= 1000
-            ? `$${(balanceNum / 1000).toFixed(2)}k`
-            : `$${balanceNum.toFixed(2)}`;
-
-      combinedPools.push({
-        id: `borrow-${index}`,
-        token1: pool.assetCode,
-        token2: pool.collateralTokenCode,
-        fee: `${pool.collateralFactor}%`,
-        roi: `${pool.interestRate.toFixed(2)}%`,
-        feeApy: `${pool.interestRate.toFixed(2)}%`,
-        liquidity,
-        isActive: pool.isActive,
-      });
-    });
-
-    return combinedPools;
-  }, [lendingPools, borrowPools]);
+  }, [allPools]);
 
   return (
     <div className="w-full min-h-screen">
@@ -161,7 +128,7 @@ const Pools: React.FC = () => {
                           {pool.token1} / {pool.token2}
                         </h3>
                         <div className="inline-block bg-white/10 text-white text-xs font-semibold px-2 py-1 rounded-md mt-1">
-                          V2
+                          {pool.type === "blend" ? "Lending" : "AMM"}
                         </div>
                       </div>
                     </div>
@@ -192,14 +159,14 @@ const Pools: React.FC = () => {
 
                 {/* Pool Details / Dashboard Link */}
                 <div
-                  className="relative z-10 bg-[#fff] rounded-2xl p-4 mb-4 border border-[#334EAC]/30 hover:bg-[#f3f4f6] cursor-pointer transition-colors duration-200"
+                  className="relative z-10 bg-white rounded-2xl p-4 mb-4 border border-[#334EAC]/30 hover:bg-[#f3f4f6] cursor-pointer transition-colors duration-200"
                   onClick={() => {
                     router.push(`/dashboard/pools/${pool.id}`);
                   }}
                 >
                   <div className="flex items-center justify-center">
                     <button className="text-black px-3 py-1 rounded-lg text-sm font-semibold duration-200 flex items-center gap-1">
-                      Pool Details <span className="opacity-70">→</span>
+                      Pool Details <span className="opacity-70">&rarr;</span>
                     </button>
                   </div>
                 </div>

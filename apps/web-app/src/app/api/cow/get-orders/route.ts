@@ -8,133 +8,8 @@ import {
   COW_API_BASE_URLS,
   COW_API_ENDPOINTS,
 } from "@/lib/constants/cowswapConfig";
-import type { CowOrder, CowTrade } from "@/lib/types/cowswapTypes";
-
-// Additional response types for API routes
-interface CowOrdersResponse {
-  orders: CowOrder[];
-  meta?: {
-    total: number;
-    hasMore: boolean;
-  };
-}
-
-interface CowTradesResponse {
-  trades: CowTrade[];
-  meta?: {
-    total: number;
-    hasMore: boolean;
-  };
-}
-
-// Processed response type
-interface ProcessedOrdersResponse {
-  orders: any[];
-  meta?: {
-    total: number;
-    hasMore: boolean;
-  };
-}
-
-/**
- * Calculate traffic light status based on order parameters
- */
-function calculateTrafficLightStatus(
-  order: CowOrder,
-  limitPrice: number
-): "far" | "close" | "executable" | "executing" {
-  try {
-    // Get current execution percentage
-    const executedSell = BigInt(order.executedSellAmount || "0");
-    const totalSell = BigInt(order.sellAmount);
-
-    if (totalSell === 0n) return "far";
-
-    const executionRatio = Number(executedSell) / Number(totalSell);
-
-    // If order is partially executed, it's executing
-    if (executionRatio > 0) {
-      return "executing";
-    }
-
-    // Check time remaining vs total duration
-    const now = Date.now() / 1000;
-    const timeRemaining = order.validTo - now;
-    const totalDuration =
-      order.validTo - new Date(order.creationDate).getTime() / 1000;
-
-    if (totalDuration <= 0) return "far";
-
-    const timeRatio = timeRemaining / totalDuration;
-
-    // Logic for determining status:
-    // - far: order is young or has low chance of execution
-    // - close: getting closer to execution conditions
-    // - executable: ready for execution
-    // - executing: already partially filled
-
-    if (timeRatio < 0.2) {
-      // Less than 20% time remaining - getting urgent
-      return "executable";
-    } else if (timeRatio < 0.5) {
-      // Less than 50% time remaining
-      return "close";
-    } else {
-      // Plenty of time remaining
-      return "far";
-    }
-  } catch (error) {
-    console.error("Error calculating traffic light status:", error);
-    return "far";
-  }
-}
-
-/**
- * Process raw orders into our internal format with business logic
- */
-function processOrders(rawOrders: CowOrder[], chainId: number) {
-  const processedOrders = [];
-
-  for (const order of rawOrders) {
-    if (order.status === "open") {
-      // Calculate limit price for display
-      const sellAmount = BigInt(order.sellAmount);
-      const buyAmount = BigInt(order.buyAmount);
-      const limitPrice =
-        sellAmount > 0n ? Number(buyAmount) / Number(sellAmount) : 0;
-
-      // Calculate progress status based on order parameters
-      const progressStatus = calculateTrafficLightStatus(order, limitPrice);
-
-      const explorerUrl = `https://explorer.cow.fi/orders/${order.uid}`;
-
-      processedOrders.push({
-        orderId: order.uid,
-        owner: order.owner,
-        sellToken: order.sellToken,
-        buyToken: order.buyToken,
-        sellAmount: order.sellAmount,
-        buyAmount: order.buyAmount,
-        executedSellAmount: order.executedSellAmount || "0",
-        executedBuyAmount: order.executedBuyAmount || "0",
-        executedFeeAmount: order.executedFeeAmount || "0",
-        status: order.status,
-        creationDate: order.creationDate,
-        validTo: order.validTo,
-        receiver: order.receiver,
-        appData: order.appData,
-        kind: order.kind,
-        partiallyFillable: order.partiallyFillable,
-        explorerUrl,
-        limitPrice: limitPrice.toString(),
-        executionPrice: limitPrice.toString(), // Simplified
-        progressStatus,
-      });
-    }
-  }
-
-  return processedOrders;
-}
+import type { CowOrder } from "@/lib/types/cowswapTypes";
+import { cowSwapService } from "@/lib/services/cowswap.service";
 
 /**
  * GET /api/cow/get-orders - Get processed orders for a user
@@ -144,7 +19,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const owner = searchParams.get("owner");
 
-    // Basic validation
     if (!owner) {
       return NextResponse.json(
         { error: "Owner address is required" },
@@ -152,14 +26,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Return empty orders with informational message
-    const result: ProcessedOrdersResponse & { message?: string } = {
-      orders: [],
-      meta: { total: 0, hasMore: false },
-      message: "Order management functionality coming soon. Check your orders on CoW Explorer.",
-    };
+    const rawOrders: CowOrder[] = [];
+    const orders = cowSwapService.processOrders(rawOrders, 1);
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      orders,
+      meta: { total: 0, hasMore: false },
+      message:
+        "Order management functionality coming soon. Check your orders on CoW Explorer.",
+    });
   } catch (error) {
     console.error("Error in /api/cow/get-orders:", error);
     return NextResponse.json(

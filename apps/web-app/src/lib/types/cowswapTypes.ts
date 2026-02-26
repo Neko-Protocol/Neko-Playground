@@ -144,3 +144,30 @@ export interface CowSwapOrderHistoryResponse {
   orders: CowSwapOrder[];
   hasMore: boolean;
 }
+
+// API Route Response Types
+export interface CowOrdersResponse {
+  orders: CowOrder[];
+  meta?: {
+    total: number;
+    hasMore: boolean;
+  };
+}
+
+export interface CowTradesResponse {
+  trades: CowTrade[];
+  meta?: {
+    total: number;
+    hasMore: boolean;
+  };
+}
+
+export interface CowOrderStatus {
+  uid: string;
+  status: "open" | "fulfilled" | "cancelled" | "expired";
+  creationDate: string;
+  owner: string;
+  executedBuyAmount: string;
+  executedSellAmount: string;
+  executedFeeAmount: string;
+}
