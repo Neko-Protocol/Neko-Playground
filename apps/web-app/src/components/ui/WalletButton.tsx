@@ -5,26 +5,19 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useDisconnect } from "wagmi";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { useWalletType } from "@/hooks/useWalletType";
-import { ConnectWalletModal } from "./ConnectWalletModal";
+import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
+import { truncateAddress } from "@/lib/utils";
 
-function truncateAddress(value: string, start = 4, end = 4): string {
-  if (value.length <= start + end) return value;
-  return `${value.slice(0, start)}…${value.slice(-end)}`;
-}
+const primaryButton =
+  "rounded-full bg-[#081F5C] text-sm font-medium text-[#FFF9F0] transition-colors hover:bg-[#334EAC]";
 
 export const WalletButton: React.FC = () => {
-  const {
-    walletType,
-    isEvmConnected,
-    isStellarConnected,
-    evmAddress,
-    stellarAddress,
-  } = useWalletType();
+  const { walletType, isEvmConnected, isStellarConnected, evmAddress, stellarAddress } =
+    useWalletType();
   const { disconnect: disconnectStellar } = useStellarWallet();
   const { disconnect: disconnectEvm } = useDisconnect();
   const [showModal, setShowModal] = useState(false);
-  const address = walletType === "evm" ? evmAddress : stellarAddress;
-  const displayAddress = address ? truncateAddress(address) : "";
+  const displayAddress = stellarAddress ? truncateAddress(stellarAddress) : "";
 
   const handleDisconnect = () => {
     if (walletType === "evm") {
@@ -34,7 +27,6 @@ export const WalletButton: React.FC = () => {
     }
   };
 
-  // EVM connected: use RainbowKit ConnectButton
   if (isEvmConnected && evmAddress) {
     return (
       <div className="flex items-center gap-2">
@@ -43,7 +35,6 @@ export const WalletButton: React.FC = () => {
     );
   }
 
-  // Stellar connected: only address + Disconnect (no Fund Account, no Testnet pill)
   if (isStellarConnected && stellarAddress) {
     return (
       <div className="flex items-center gap-2">
@@ -53,24 +44,19 @@ export const WalletButton: React.FC = () => {
         >
           {displayAddress}
         </span>
-        <button
-          type="button"
-          onClick={handleDisconnect}
-          className="rounded-full bg-[#081F5C] px-4 py-2 text-sm font-medium text-[#FFF9F0] transition-colors hover:bg-[#334EAC]"
-        >
+        <button type="button" onClick={handleDisconnect} className={`${primaryButton} px-4 py-2`}>
           Disconnect
         </button>
       </div>
     );
   }
 
-  // Not connected: single "Connect wallet" button → opens modal to choose EVM or Stellar
   return (
     <>
       <button
         type="button"
         onClick={() => setShowModal(true)}
-        className="rounded-full bg-[#081F5C] px-5 py-2.5 text-sm font-medium text-[#FFF9F0] shadow-lg transition-colors hover:bg-[#334EAC]"
+        className={`${primaryButton} px-5 py-2.5 shadow-lg`}
       >
         Connect wallet
       </button>

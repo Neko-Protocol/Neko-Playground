@@ -1,15 +1,12 @@
 import { useAccount } from "wagmi";
-import { useWallet as useStellarWallet } from "./useWallet";
+import { useWallet } from "./useWallet";
 
-/**
- * Hook to detect which type of wallet is connected (EVM or Stellar).
- * Returns the wallet type and connection status.
- */
 export type WalletType = "evm" | "stellar" | "none";
 
+/** Detects connected wallet type (EVM vs Stellar) and exposes addresses for UI. */
 export const useWalletType = () => {
   const { isConnected: isEvmConnected, address: evmAddress } = useAccount();
-  const { address: stellarAddress } = useStellarWallet();
+  const { address: stellarAddress } = useWallet();
 
   // Determine wallet type
   const walletType: WalletType =
