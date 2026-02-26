@@ -1,7 +1,6 @@
 "use client";
 
 import PoolDetail from "@/features/pools/components/pages/PoolDetail";
-import { use } from "react";
 
 interface PageProps {
   params: Promise<{ contractid: string }>;

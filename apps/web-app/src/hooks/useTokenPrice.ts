@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAvailableTokens, getTokenAddress } from "@/lib/helpers/soroswap";
 import type { Token } from "@/lib/helpers/soroswap";
-import oracleClient from "../contracts/oracle";
+import oracleClient from "@/lib/clients/oracle";
 
 /**
  * RWA token codes that should use the oracle
@@ -21,7 +21,6 @@ const TOKEN_PRICE_MAP: Record<string, string> = {
  */
 const fetchRWAOraclePrice = async (tokenContract: string): Promise<number> => {
   try {
-
     // Call lastprice with the token contract as an asset
     // Asset type in Rust: Asset::Stellar(Address) | Asset::Other(Symbol)
     // In TypeScript: {tag: "Stellar", values: readonly [string]} | {tag: "Other", values: readonly [string]}
@@ -54,7 +53,7 @@ const fetchRWAOraclePrice = async (tokenContract: string): Promise<number> => {
         price: priceData.price,
         timestamp: priceData.timestamp,
         priceType: typeof priceData.price,
-        timestampType: typeof priceData.timestamp
+        timestampType: typeof priceData.timestamp,
       });
 
       // Validate timestamp - if it's in the future, use current time
@@ -62,7 +61,9 @@ const fetchRWAOraclePrice = async (tokenContract: string): Promise<number> => {
       const now = Math.floor(Date.now() / 1000);
 
       if (validTimestamp > now) {
-        console.warn(`Oracle returned future timestamp ${validTimestamp}, using current time ${now}`);
+        console.warn(
+          `Oracle returned future timestamp ${validTimestamp}, using current time ${now}`
+        );
         validTimestamp = now;
       }
       // Price is in i128, need to convert to number
@@ -80,7 +81,7 @@ const fetchRWAOraclePrice = async (tokenContract: string): Promise<number> => {
   } catch (error) {
     console.error(
       `Failed to fetch RWA oracle price for ${tokenContract}:`,
-      error,
+      error
     );
     return 0;
   }
@@ -89,15 +90,22 @@ const fetchRWAOraclePrice = async (tokenContract: string): Promise<number> => {
 /**
  * Sleep utility for retry delays
  */
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Get token price in USD from CoinGecko API (for non-RWA tokens)
  */
-const fetchTokenPrice = async (tokenCode: string, retryCount = 0): Promise<number> => {
+const fetchTokenPrice = async (
+  tokenCode: string,
+  retryCount = 0
+): Promise<number> => {
   // Validate input
-  if (!tokenCode || typeof tokenCode !== 'string') {
-    console.error(`Invalid tokenCode provided to fetchTokenPrice:`, tokenCode, typeof tokenCode);
+  if (!tokenCode || typeof tokenCode !== "string") {
+    console.error(
+      `Invalid tokenCode provided to fetchTokenPrice:`,
+      tokenCode,
+      typeof tokenCode
+    );
     return 0;
   }
 
@@ -118,7 +126,6 @@ const fetchTokenPrice = async (tokenCode: string, retryCount = 0): Promise<numbe
   }
 
   try {
-
     // Create AbortController for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -128,16 +135,16 @@ const fetchTokenPrice = async (tokenCode: string, retryCount = 0): Promise<numbe
       {
         signal: controller.signal,
         headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Neko-DApp/1.0'
-        }
+          Accept: "application/json",
+          "User-Agent": "Neko-DApp/1.0",
+        },
       }
     );
 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unknown error');
+      const errorText = await response.text().catch(() => "Unknown error");
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 
@@ -151,25 +158,28 @@ const fetchTokenPrice = async (tokenCode: string, retryCount = 0): Promise<numbe
     }
 
     return price;
-
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.warn(`Failed to fetch price for ${tokenCode} (attempt ${retryCount + 1}):`, errorMessage);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    console.warn(
+      `Failed to fetch price for ${tokenCode} (attempt ${retryCount + 1}):`,
+      errorMessage
+    );
 
     // Check if we should retry
-    const shouldRetry = retryCount < MAX_RETRIES && (
+    const shouldRetry =
+      retryCount < MAX_RETRIES &&
       // Retry on network errors
-      errorMessage.includes('Failed to fetch') ||
-      errorMessage.includes('NetworkError') ||
-      errorMessage.includes('AbortError') ||
-      // Retry on rate limiting
-      errorMessage.includes('429') ||
-      // Retry on server errors
-      errorMessage.includes('500') ||
-      errorMessage.includes('502') ||
-      errorMessage.includes('503') ||
-      errorMessage.includes('504')
-    );
+      (errorMessage.includes("Failed to fetch") ||
+        errorMessage.includes("NetworkError") ||
+        errorMessage.includes("AbortError") ||
+        // Retry on rate limiting
+        errorMessage.includes("429") ||
+        // Retry on server errors
+        errorMessage.includes("500") ||
+        errorMessage.includes("502") ||
+        errorMessage.includes("503") ||
+        errorMessage.includes("504"));
 
     if (shouldRetry) {
       const delay = BASE_DELAY * Math.pow(2, retryCount); // Exponential backoff
@@ -213,13 +223,13 @@ export const useTokenPrice = (token: Token | string | undefined) => {
       }
 
       // If token is a string, it might already be a token code
-      if (typeof token === 'string') {
+      if (typeof token === "string") {
         return token;
       }
 
       return null;
     } catch (error) {
-      console.error('Error in getTokenCode:', error);
+      console.error("Error in getTokenCode:", error);
       return null;
     }
   };
@@ -233,8 +243,12 @@ export const useTokenPrice = (token: Token | string | undefined) => {
   } = useQuery<number, Error>({
     queryKey: ["tokenPrice", tokenCode, token],
     queryFn: async () => {
-      if (!tokenCode || typeof tokenCode !== 'string') {
-        console.warn(`Invalid tokenCode in useTokenPrice:`, tokenCode, typeof tokenCode);
+      if (!tokenCode || typeof tokenCode !== "string") {
+        console.warn(
+          `Invalid tokenCode in useTokenPrice:`,
+          tokenCode,
+          typeof tokenCode
+        );
         return 0;
       }
 
