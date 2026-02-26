@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { MappedBalances } from "@/lib/helpers/wallet";
-import { fetchBalances } from "@/lib/helpers/wallet";
+import type { MappedBalances } from "@/lib/helpers/stellar/wallet";
+import { fetchBalances } from "@/lib/helpers/stellar/wallet";
 import { signStellarTransactionWithWallet } from "@/lib/helpers/sign-stellar-transaction";
 import { stellarNetwork, networkPassphrase } from "@/lib/constants/network";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
