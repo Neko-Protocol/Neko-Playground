@@ -13,7 +13,7 @@ import {
   getAvailableTokens,
 } from "@/lib/helpers/stellar/soroswap";
 import { networkPassphrase } from "@/lib/constants/network";
-import { fromSmallestUnit } from "@/lib/helpers/stellar/swapUtils";
+import { fromSmallestUnit } from "@/lib/helpers/stellar/tokenUtils";
 
 import type { BasePoolAdapter } from "../types/adapter.types";
 import type {

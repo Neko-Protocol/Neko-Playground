@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Client as RwaLendingClient, networks } from "@neko/lending";
 import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
-import { fromSmallestUnit } from "@/lib/helpers/stellar/swapUtils";
+import { fromSmallestUnit } from "@/lib/helpers/stellar/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 
 interface LendingPool {

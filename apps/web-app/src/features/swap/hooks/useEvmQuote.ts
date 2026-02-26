@@ -12,7 +12,7 @@ import {
   formatSwapAmount,
   fromSmallestUnit,
   getEvmTokenSymbol,
-} from "@/lib/helpers/stellar/swapUtils";
+} from "@/lib/helpers/stellar/tokenUtils";
 
 /**
  * Fetches a CoW Swap quote for an EVM swap.

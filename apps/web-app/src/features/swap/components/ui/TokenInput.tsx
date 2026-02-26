@@ -2,7 +2,7 @@ import React from "react";
 import {
   formatSwapAmount,
   sanitizeAmountInput,
-} from "@/lib/helpers/stellar/swapUtils";
+} from "@/lib/helpers/stellar/tokenUtils";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import type { EVMToken } from "@/lib/types/evmToken";
 

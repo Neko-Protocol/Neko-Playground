@@ -14,7 +14,7 @@ import {
 } from "@stellar/stellar-sdk";
 import { Client as RwaLendingClient, networks } from "@neko/lending";
 import { rpcUrl, networkPassphrase, horizonUrl } from "../constants/network";
-import { toSmallestUnit } from "../helpers/stellar/swapUtils";
+import { toSmallestUnit } from "../helpers/stellar/tokenUtils";
 import {
   approveToken,
   addCollateral,

@@ -1,5 +1,5 @@
 import React from "react";
-import { sanitizeAmountInput } from "@/lib/helpers/stellar/swapUtils";
+import { sanitizeAmountInput } from "@/lib/helpers/stellar/tokenUtils";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import type { EVMToken } from "@/lib/types/evmToken";
 

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import React, { useMemo } from "react";
 import { usePools } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
-import { fromSmallestUnit } from "@/lib/helpers/stellar/swapUtils";
+import { fromSmallestUnit } from "@/lib/helpers/stellar/tokenUtils";
 
 interface PoolCardData {
   id: string;

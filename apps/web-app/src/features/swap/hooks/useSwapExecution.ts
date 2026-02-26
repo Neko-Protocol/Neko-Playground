@@ -18,7 +18,7 @@ import {
   type CowSwapLimitOrderRequest,
 } from "@/lib/helpers/evm/cowswap";
 import { getTokensForChain } from "@/lib/constants/evmConfig";
-import { getEvmTokenSymbol } from "@/lib/helpers/stellar/swapUtils";
+import { getEvmTokenSymbol } from "@/lib/helpers/stellar/tokenUtils";
 import { useWallet } from "@/hooks/useWallet";
 import { isUserRejection } from "@/lib/helpers/isUserRejection";
 
