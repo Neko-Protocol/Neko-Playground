@@ -1,8 +1,5 @@
 import { Horizon } from "@stellar/stellar-sdk";
-import { stellarNetwork, horizonUrl } from "../../constants/network";
-import { getStellarWalletKit } from "../stellar-wallet-kit";
-
-export const getWallet = () => getStellarWalletKit();
+import { stellarNetwork, horizonUrl } from "@/lib/constants/network";
 
 const getHorizon = (): Horizon.Server | null => {
   if (typeof window === "undefined") {

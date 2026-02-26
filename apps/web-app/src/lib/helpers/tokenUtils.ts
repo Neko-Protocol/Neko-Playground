@@ -1,10 +1,10 @@
 /**
- * Utility functions for swap operations
+ * Utility functions for swap operations (shared Stellar + EVM)
  */
 
 import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
-import { getAvailableTokens } from "./soroswap";
-import type { Token } from "./soroswap";
+import { getAvailableTokens } from "./stellar/soroswap";
+import type { Token } from "./stellar/soroswap";
 import {
   EVM_TOKEN_ADDRESS_TO_SYMBOL,
   EVM_TOKEN_ICON_MAP,

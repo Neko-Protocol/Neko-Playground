@@ -1,5 +1,5 @@
-import { getStellarWalletKit } from "./stellar-wallet-kit";
-import { getCurrentNetworkPassphrase } from "./stellar-network";
+import { getStellarWalletKit } from "./walletKit";
+import { getCurrentNetworkPassphrase } from "../network";
 
 export interface SignStellarTransactionParams {
   unsignedTransactionXdr: string;
