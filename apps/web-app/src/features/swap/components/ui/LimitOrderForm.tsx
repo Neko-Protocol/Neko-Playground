@@ -1,4 +1,5 @@
 import React from "react";
+import { sanitizeAmountInput } from "@/lib/helpers/stellar/swapUtils";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import type { EVMToken } from "@/lib/types/evmToken";
 
@@ -16,11 +17,7 @@ export const LimitOrderForm: React.FC<LimitOrderFormProps> = ({
   getTokenId,
 }) => {
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9.]/g, "");
-    const parts = value.split(".");
-    const formattedValue =
-      parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : value;
-    onLimitPriceChange(formattedValue);
+    onLimitPriceChange(sanitizeAmountInput(e.target.value));
   };
 
   return (

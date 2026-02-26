@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount, useChainId, useWalletClient } from "wagmi";
+import { ORDER_HISTORY_LIMIT } from "@/features/swap/constants/swapConfig";
 import {
   getCowSwapOpenOrders,
   getCowSwapOrderHistory,
@@ -17,6 +18,7 @@ import type { CowSwapOrder } from "@/lib/types/cowswapTypes";
 export const OrderManagement: React.FC = () => {
   const { address } = useAccount();
   const chainId = useChainId();
+  const { data: walletClient } = useWalletClient();
   const [activeTab, setActiveTab] = useState<"open" | "history">("open");
   const [openOrders, setOpenOrders] = useState<CowSwapOrderWithPrice[]>([]);
   const [orderHistory, setOrderHistory] = useState<CowSwapOrder[]>([]);
@@ -49,7 +51,7 @@ export const OrderManagement: React.FC = () => {
 
     try {
       const history = await getCowSwapOrderHistory(
-        { owner: address, limit: 20 },
+        { owner: address, limit: ORDER_HISTORY_LIMIT },
         chainId
       );
       setOrderHistory(history.orders || []);
@@ -74,13 +76,13 @@ export const OrderManagement: React.FC = () => {
     orderId: string,
     onChain: boolean = false
   ) => {
-    if (!address) return;
+    if (!address || !walletClient) return;
 
     try {
       const result = await cancelCowSwapOrder(
         { orderId, onChain },
         chainId,
-        {} as any // Would need wallet client
+        walletClient
       );
 
       if (result.success) {
@@ -170,18 +172,7 @@ export const OrderManagement: React.FC = () => {
         <div className="space-y-3">
           {(openOrders || []).length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-400 mb-2">Order Management</p>
-              <p className="text-sm text-gray-500 mb-4">
-                Coming soon - Track and manage your CoW Protocol orders
-              </p>
-              <a
-                href="https://explorer.cow.fi"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[#334EAC] hover:text-[#081F5C] text-sm font-medium transition-colors"
-              >
-                View on CoW Explorer →
-              </a>
+              <p className="text-gray-400">No open orders</p>
             </div>
           ) : (
             openOrders.map((order) => (
@@ -248,18 +239,7 @@ export const OrderManagement: React.FC = () => {
         <div className="space-y-3">
           {(orderHistory || []).length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-400 mb-2">Order History</p>
-              <p className="text-sm text-gray-500 mb-4">
-                Coming soon - View your completed CoW Protocol orders
-              </p>
-              <a
-                href="https://explorer.cow.fi"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[#334EAC] hover:text-[#081F5C] text-sm font-medium transition-colors"
-              >
-                View on CoW Explorer →
-              </a>
+              <p className="text-gray-400">No order history</p>
             </div>
           ) : (
             orderHistory.map((order) => (
