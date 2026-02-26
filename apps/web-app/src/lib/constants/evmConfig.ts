@@ -18,13 +18,13 @@ export const SUPPORTED_CHAINS: ChainConfig[] = [
   {
     id: 1,
     name: "Ethereum",
-    icon: "/chains/ethereum-eth chain.svg",
+    icon: "/chains/ethereum.svg",
     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   },
   {
     id: 56,
     name: "BNB Chain",
-    icon: "/chains/BNB Chain.svg",
+    icon: "/chains/bnb.svg",
     nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
   },
 ];

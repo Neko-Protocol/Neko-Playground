@@ -260,7 +260,7 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
                   disabled={isDisabled}
                 >
                   <img
-                    src="/wallets/ethereum-eth-logo.png"
+                    src="/crypto/png/ethereum-eth-logo.png"
                     alt="Ethereum"
                     className="w-6 h-6 shrink-0"
                   />
@@ -284,7 +284,7 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
             disabled={isConnectingStellar || isEvmConnected}
           >
             <img
-              src="/wallets/stellar-xlm-logo.png"
+              src="/crypto/png/stellar-xlm-logo.png"
               alt="Stellar"
               className="w-6 h-6 shrink-0"
             />
