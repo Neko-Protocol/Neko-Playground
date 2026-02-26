@@ -2,10 +2,8 @@ import { Horizon } from "@stellar/stellar-sdk";
 import { stellarNetwork, horizonUrl } from "../constants/network";
 import { getStellarWalletKit } from "./stellar-wallet-kit";
 
-/** Reexport del Kit para compatibilidad; usar getStellarWalletKit() desde helpers. */
 export const getWallet = () => getStellarWalletKit();
 
-// Create Horizon server instance lazily (only when needed and in browser)
 const getHorizon = (): Horizon.Server | null => {
   if (typeof window === "undefined") {
     return null;

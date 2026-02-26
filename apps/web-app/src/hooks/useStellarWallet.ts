@@ -1,11 +1,5 @@
 "use client";
 
-/**
- * Hook para conectar y desconectar la wallet Stellar.
- * Abre el modal del Kit, guarda address y walletName en el store al conectar,
- * y limpia el Kit y el store al desconectar.
- */
-
 import { ISupportedWallet } from "@creit.tech/stellar-wallets-kit";
 import { getStellarWalletKit } from "@/lib/helpers/stellar-wallet-kit";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";

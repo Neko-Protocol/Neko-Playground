@@ -7,7 +7,6 @@ import { signStellarTransactionWithWallet } from "@/lib/helpers/sign-stellar-tra
 import { stellarNetwork, networkPassphrase } from "@/lib/constants/network";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 
-/** Hook con datos de la wallet Stellar: dirección, balances y firma de transacciones. */
 export function useWallet() {
   const { address: stellarAddress } = useStellarWalletStore();
   const address = stellarAddress ?? undefined;
