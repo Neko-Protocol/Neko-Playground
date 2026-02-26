@@ -75,6 +75,19 @@ export const getExplorerUrl = (txHash: string, network?: string): string => {
 };
 
 /**
+ * Extracts a symbol string from any token variant used in EVM swaps.
+ * Falls back to `fallback` when the token doesn't carry a symbol.
+ */
+export const getEvmTokenSymbol = (
+  token: Token | string | EVMToken,
+  fallback: string = ""
+): string => {
+  if (typeof token === "string") return token;
+  if (isEVMToken(token)) return token.symbol || fallback;
+  return fallback;
+};
+
+/**
  * Strips non-numeric characters and prevents multiple decimal points.
  * Suitable for amount input fields.
  */

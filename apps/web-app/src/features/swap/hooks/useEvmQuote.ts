@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { usePublicClient, useWalletClient } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
+import type { EVMToken } from "@/lib/types/evmToken";
 import {
   getCowSwapQuote,
   type CowSwapQuoteRequest,
@@ -11,6 +11,7 @@ import { getTokensForChain } from "@/lib/constants/evmConfig";
 import {
   formatSwapAmount,
   fromSmallestUnit,
+  getEvmTokenSymbol,
 } from "@/lib/helpers/stellar/swapUtils";
 
 /**
@@ -44,18 +45,8 @@ export function useEvmQuote(
       return null;
     }
 
-    const tokenInSymbol =
-      typeof tokenIn === "string"
-        ? tokenIn
-        : isEVMToken(tokenIn)
-          ? tokenIn.symbol || "ETH"
-          : "ETH";
-    const tokenOutSymbol =
-      typeof tokenOut === "string"
-        ? tokenOut
-        : isEVMToken(tokenOut)
-          ? tokenOut.symbol || "USDC"
-          : "USDC";
+    const tokenInSymbol = getEvmTokenSymbol(tokenIn, "ETH");
+    const tokenOutSymbol = getEvmTokenSymbol(tokenOut, "USDC");
 
     const tokenInObj = EVM_TOKENS[tokenInSymbol];
     if (!tokenInObj) return null;
