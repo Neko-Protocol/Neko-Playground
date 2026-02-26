@@ -55,7 +55,7 @@ const Navbar: React.FC = () => {
           })}
         </nav>
 
-        {/* Right Side: Wallet Button */}
+        {/* Right Side: Connect wallet (EVM or Stellar) */}
         <div className="flex items-center gap-4">
           <WalletButton />
         </div>

@@ -508,7 +508,7 @@ export const CONTRACT_ERRORS_BY_CONTRACT: Record<
  */
 export const CONTRACT_ERRORS: Record<number, ContractErrorInfo> = (() => {
   const flattened: Record<number, ContractErrorInfo> = {};
-  const priorityOrder = ["rwa-lending","rwa-token","rwa-oracle","rwa-perps"];
+  const priorityOrder = ["rwa-lending", "rwa-token", "rwa-oracle", "rwa-perps"];
 
   for (const contractName of priorityOrder) {
     const contractErrors = CONTRACT_ERRORS_BY_CONTRACT[contractName];

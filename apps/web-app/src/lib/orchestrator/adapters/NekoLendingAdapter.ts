@@ -11,7 +11,7 @@
 import { Client as RwaLendingClient, networks } from "@neko/lending";
 import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { fromSmallestUnit } from "@/lib/helpers/stellar/tokenUtils";
+import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { depositToPool, withdrawFromPool } from "@/lib/helpers/stellar/lending";
 
 import type { BasePoolAdapter } from "../types/adapter.types";

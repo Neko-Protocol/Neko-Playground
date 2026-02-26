@@ -1,13 +1,17 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WalletProvider } from "@/providers/WalletProvider";
 import { NotificationProvider } from "@/providers/NotificationProvider";
 import { ReactNode, useState } from "react";
+import dynamic from "next/dynamic";
+
 import "@rainbow-me/rainbowkit/styles.css";
-import { WagmiProvider } from "wagmi";
-import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
-import { wagmiConfig } from "@/lib/config/wagmi.config";
+
+const EvmWalletProviders = dynamic(
+  () =>
+    import("@/providers/EvmWalletProviders").then((mod) => mod.EvmWalletProviders),
+  { ssr: false }
+);
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -24,13 +28,9 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={wagmiConfig}>
-        <RainbowKitProvider>
-          <WalletProvider>
-            <NotificationProvider>{children}</NotificationProvider>
-          </WalletProvider>
-        </RainbowKitProvider>
-      </WagmiProvider>
+      <EvmWalletProviders>
+        <NotificationProvider>{children}</NotificationProvider>
+      </EvmWalletProviders>
     </QueryClientProvider>
   );
 }

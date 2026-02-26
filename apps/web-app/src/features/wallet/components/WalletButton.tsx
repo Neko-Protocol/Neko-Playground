@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useDisconnect } from "wagmi";
+import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { useWalletType } from "@/hooks/useWalletType";
-import { WalletSelectorModal } from "./WalletSelectorModal";
+import { ConnectWalletModal } from "./ConnectWalletModal";
 
-export const WalletButton = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+function truncateAddress(value: string, start = 4, end = 4): string {
+  if (value.length <= start + end) return value;
+  return `${value.slice(0, start)}…${value.slice(-end)}`;
+}
+
+export const WalletButton: React.FC = () => {
   const {
     walletType,
     isEvmConnected,
@@ -13,49 +20,63 @@ export const WalletButton = () => {
     evmAddress,
     stellarAddress,
   } = useWalletType();
+  const { disconnect: disconnectStellar } = useStellarWallet();
+  const { disconnect: disconnectEvm } = useDisconnect();
+  const [showModal, setShowModal] = useState(false);
+  const address = walletType === "evm" ? evmAddress : stellarAddress;
+  const displayAddress = address ? truncateAddress(address) : "";
 
-  // Determine button text and status
-  const getButtonContent = () => {
-    if (isEvmConnected && evmAddress) {
-      return {
-        text: `${evmAddress.substring(0, 4)}...${evmAddress.substring(evmAddress.length - 4)}`,
-        indicator: "evm",
-      };
+  const handleDisconnect = () => {
+    if (walletType === "evm") {
+      disconnectEvm();
+    } else {
+      void disconnectStellar();
     }
-    if (isStellarConnected && stellarAddress) {
-      return {
-        text: `${stellarAddress.substring(0, 4)}...${stellarAddress.substring(stellarAddress.length - 4)}`,
-        indicator: "stellar",
-      };
-    }
-    return {
-      text: "Connect Wallet",
-      indicator: null,
-    };
   };
 
-  const { text, indicator } = getButtonContent();
-  const isConnected = walletType !== "none";
+  // EVM connected: use RainbowKit ConnectButton
+  if (isEvmConnected && evmAddress) {
+    return (
+      <div className="flex items-center gap-2">
+        <ConnectButton chainStatus="icon" showBalance={false} />
+      </div>
+    );
+  }
 
+  // Stellar connected: only address + Disconnect (no Fund Account, no Testnet pill)
+  if (isStellarConnected && stellarAddress) {
+    return (
+      <div className="flex items-center gap-2">
+        <span
+          className="rounded-full bg-[#081F5C]/10 px-3 py-1.5 text-sm font-medium text-[#081F5C]"
+          title={stellarAddress}
+        >
+          {displayAddress}
+        </span>
+        <button
+          type="button"
+          onClick={handleDisconnect}
+          className="rounded-full bg-[#081F5C] px-4 py-2 text-sm font-medium text-[#FFF9F0] transition-colors hover:bg-[#334EAC]"
+        >
+          Disconnect
+        </button>
+      </div>
+    );
+  }
+
+  // Not connected: single "Connect wallet" button → opens modal to choose EVM or Stellar
   return (
     <>
       <button
-        onClick={() => setIsModalOpen(true)}
-        className="bg-[#081F5C] hover:bg-[#334EAC] text-[#FFF9F0] font-bold py-4 px-6 rounded-full transition-colors duration-200 shadow-md flex items-center gap-2 border border-[#334EAC]/30"
+        type="button"
+        onClick={() => setShowModal(true)}
+        className="rounded-full bg-[#081F5C] px-5 py-2.5 text-sm font-medium text-[#FFF9F0] shadow-lg transition-colors hover:bg-[#334EAC]"
       >
-        {isConnected && indicator && (
-          <div
-            className={`w-2 h-2 rounded-full ${
-              indicator === "evm" ? "bg-green-500" : "bg-[#39bfb7]"
-            }`}
-          ></div>
-        )}
-        <span>{text}</span>
+        Connect wallet
       </button>
-
-      <WalletSelectorModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+      <ConnectWalletModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
       />
     </>
   );
