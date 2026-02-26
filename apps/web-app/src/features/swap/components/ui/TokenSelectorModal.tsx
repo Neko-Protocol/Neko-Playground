@@ -286,17 +286,10 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
   }, [filteredTokens, getTokenBalance]);
 
   const handleTokenClick = (tokenCode: string) => {
-    console.log("handleTokenClick called:", {
-      tokenCode,
-      swapMode,
-      localChainId,
-    });
     if (swapMode === "evm") {
-      console.log("Calling onSelectToken with EVM token:", tokenCode);
       onSelectToken(tokenCode, localChainId);
     } else {
       const token = availableTokens[tokenCode].contract;
-      console.log("Calling onSelectToken with Stellar token:", token);
       onSelectToken(token);
     }
     setSearchQuery("");

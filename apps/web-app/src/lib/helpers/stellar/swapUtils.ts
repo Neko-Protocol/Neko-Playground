@@ -67,30 +67,6 @@ export const fromSmallestUnit = (
 };
 
 /**
- * Get token display name
- */
-export const getTokenDisplayName = (
-  token:
-    | { type: "native" | "contract"; code?: string; contract?: string }
-    | string
-): string => {
-  if (typeof token === "string") {
-    if (token === "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC") {
-      return "XLM";
-    }
-    if (token === "CBBHRKEP5M3NUDRISGLJKGHDHX3DA2CN2AZBQY6WLVUJ7VNLGSKBDUCM") {
-      return "USDC";
-    }
-    return "Token";
-  }
-
-  if (token.type === "native") {
-    return "XLM";
-  }
-  return token.code || "Token";
-};
-
-/**
  * Get explorer URL for a transaction
  */
 export const getExplorerUrl = (txHash: string, network?: string): string => {
