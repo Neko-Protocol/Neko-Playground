@@ -27,6 +27,7 @@ import {
   ETH_FLOW_ABI,
 } from "../constants/cowswapConfig";
 import type { EVMToken } from "../types/evmToken";
+import { isUserRejection } from "../helpers/isUserRejection";
 import type {
   CowSwapQuoteRequest,
   CowSwapQuoteResponse,
@@ -45,6 +46,17 @@ import type {
   CowOrder,
   CowTrade,
 } from "../types/cowswapTypes";
+
+interface CowSdkTradeParameters {
+  kind: OrderKind;
+  sellToken: string;
+  sellTokenDecimals: number;
+  buyToken: string;
+  buyTokenDecimals: number;
+  amount: string;
+  receiver: string;
+  buyAmount?: string;
+}
 
 export class CowSwapService {
   private orderBookApiCache = new Map<SupportedChainId, OrderBookApi>();
@@ -270,27 +282,8 @@ export class CowSwapService {
     }
   }
 
-  /**
-   * Check if error is user rejection
-   */
   private isUserRejectionError(error: unknown): boolean {
-    if (!error) return false;
-
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorString = errorMessage.toLowerCase();
-
-    const rejectionPatterns = [
-      "user denied",
-      "user rejected",
-      "user cancelled",
-      "user canceled",
-      "rejected by user",
-      "denied by user",
-      "action_cancelled",
-      "4001",
-    ];
-
-    return rejectionPatterns.some((pattern) => errorString.includes(pattern));
+    return isUserRejection(error);
   }
 
   /**
@@ -368,7 +361,7 @@ export class CowSwapService {
       walletClient
     );
 
-    const parameters: any = {
+    const parameters: CowSdkTradeParameters = {
       kind: OrderKind.SELL,
       sellToken: this.normalizeTokenAddressForSwap(
         tokenIn.address,
@@ -652,7 +645,7 @@ export class CowSwapService {
     const buyAmountMin =
       (sellAmount * BigInt(Math.floor(limitPrice * 1e6))) / BigInt(1e6);
 
-    const parameters: any = {
+    const parameters: CowSdkTradeParameters = {
       kind: OrderKind.SELL,
       sellToken: this.normalizeTokenAddressForSwap(
         tokenIn.address,

@@ -1,5 +1,8 @@
 import React from "react";
-import { formatSwapAmount } from "@/lib/helpers/stellar/swapUtils";
+import {
+  formatSwapAmount,
+  sanitizeAmountInput,
+} from "@/lib/helpers/stellar/swapUtils";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import type { EVMToken } from "@/lib/types/evmToken";
 
@@ -51,11 +54,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({
   const isFrom = type === "from";
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9.]/g, "");
-    const parts = value.split(".");
-    const formattedValue =
-      parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : value;
-    onAmountChange(formattedValue);
+    onAmountChange(sanitizeAmountInput(e.target.value));
   };
 
   return (

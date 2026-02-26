@@ -3,6 +3,7 @@ import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useEVMTokenPrice } from "@/hooks/useEVMTokenPrice";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import type { EVMToken } from "@/lib/types/evmToken";
+import { SUSPICIOUS_VALUE_THRESHOLD_PCT } from "@/features/swap/constants/swapConfig";
 
 export interface SwapPrices {
   tokenInPrice: number;
@@ -111,8 +112,9 @@ export function useSwapPrices(
     const differencePercent =
       ((expectedOutput - outputAmount) / expectedOutput) * 100;
 
-    // Consider the swap suspiciously low if output is more than 10% lower than expected
-    const isSuspiciouslyLow = differencePercent > 10;
+    // Consider the swap suspiciously low if output is more than threshold% lower than expected
+    const isSuspiciouslyLow =
+      differencePercent > SUSPICIOUS_VALUE_THRESHOLD_PCT;
 
     return {
       expectedOutput,

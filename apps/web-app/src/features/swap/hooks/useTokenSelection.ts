@@ -1,9 +1,14 @@
 import { useState, useMemo, useCallback } from "react";
 import { useChainId, useSwitchChain } from "wagmi";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
+import type { EVMToken } from "@/lib/types/evmToken";
 import { getTokensForChain, DEFAULT_CHAIN_ID } from "@/lib/constants/evmConfig";
-import { getAvailableTokens, TOKENS } from "@/lib/helpers/stellar/soroswap";
+import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
+import {
+  getTokenId as getTokenIdUtil,
+  getTokenIcon,
+} from "@/lib/helpers/stellar/swapUtils";
+import { isUserRejection } from "@/lib/helpers/isUserRejection";
 
 export interface TokenSelectionState {
   tokenSelectorOpen: boolean;
@@ -56,49 +61,13 @@ export function useTokenSelection(
   }, []);
 
   const getTokenId = useCallback(
-    (token: Token | string | EVMToken): string => {
-      if (isEVMToken(token)) {
-        return token.symbol || "";
-      }
-
-      if (typeof token === "string") {
-        // Check if it's an EVM token symbol
-        if (EVM_TOKENS[token]) {
-          return token;
-        }
-        // Token is already a string (contract address)
-        // Find which token code matches this contract address
-        for (const [code, info] of Object.entries(availableTokens)) {
-          if (info.contract === token) {
-            return code;
-          }
-        }
-        return token;
-      }
-
-      // Token is an object (legacy format)
-      if (token.type === "native") return "XLM";
-      if (token.contract) {
-        // Find matching token code
-        for (const [code, info] of Object.entries(availableTokens)) {
-          if (info.contract === token.contract) {
-            return code;
-          }
-        }
-        return token.contract;
-      }
-      if (token.code) return token.code;
-      return "";
-    },
+    (token: Token | string | EVMToken): string =>
+      getTokenIdUtil(token, availableTokens, EVM_TOKENS),
     [EVM_TOKENS, availableTokens]
   );
 
   const getTokenIconUrl = useCallback(
-    (token: Token | string | EVMToken): string | null => {
-      // Import getTokenIcon dynamically to avoid circular dependencies
-      const { getTokenIcon } = require("@/lib/helpers/stellar/swapUtils");
-      return getTokenIcon(token as Token | string | EVMToken);
-    },
+    (token: Token | string | EVMToken): string | null => getTokenIcon(token),
     []
   );
 
@@ -126,14 +95,7 @@ export function useTokenSelection(
           resetSwap();
           setTxHash(null);
         } catch (err: unknown) {
-          // Check if user rejected the request - this is not an error, just user cancellation
-          const errorMessage = err instanceof Error ? err.message : String(err);
-          const isUserRejection =
-            errorMessage.toLowerCase().includes("user rejected") ||
-            errorMessage.toLowerCase().includes("user denied") ||
-            errorMessage.includes("4001");
-
-          if (!isUserRejection) {
+          if (!isUserRejection(err)) {
             console.error("Failed to switch chain:", err);
             throw new Error(
               "Failed to switch network. Please switch manually in your wallet."
@@ -154,32 +116,15 @@ export function useTokenSelection(
 
   const selectToken = useCallback(
     async (token: Token | string, chainId?: number) => {
-      console.log("selectToken called:", {
-        token,
-        chainId,
-        tokenSelectorType,
-        currentTokenIn: tokenIn,
-        currentTokenOut: tokenOut,
-        selectedEvmChainId,
-      });
-
       // Update chain if provided, but preserve the token we want to select
       if (chainId && chainId !== selectedEvmChainId) {
-        console.log("Chain change needed");
         try {
-          // Switch wallet chain first
           if (switchChainAsync) {
             await switchChainAsync({ chainId });
           }
           setSelectedEvmChainId(chainId);
-          // Don't reset tokens here - we'll set them below
         } catch (err: unknown) {
-          const errorMessage = err instanceof Error ? err.message : String(err);
-          const isUserRejection =
-            errorMessage.toLowerCase().includes("user rejected") ||
-            errorMessage.toLowerCase().includes("user denied") ||
-            errorMessage.includes("4001");
-          if (!isUserRejection) {
+          if (!isUserRejection(err)) {
             console.error("Failed to switch chain:", err);
           }
         }
@@ -189,32 +134,18 @@ export function useTokenSelection(
       const currentTokenInId = getTokenId(tokenIn);
       const currentTokenOutId = getTokenId(tokenOut);
 
-      console.log("Token IDs:", {
-        newTokenId,
-        currentTokenInId,
-        currentTokenOutId,
-      });
-
-      // Always update the token - force update by creating a new reference if needed
       if (tokenSelectorType === "from") {
-        // If trying to select the same token as tokenOut, swap them
         if (newTokenId === currentTokenOutId && newTokenId !== "") {
-          console.log("Swapping tokens (from matches out)");
           setTokenOut(tokenIn);
           setTokenIn(token);
         } else {
-          console.log("Setting tokenIn to:", token);
-          // Force update by ensuring it's a new value
           setTokenIn(token);
         }
       } else {
-        // If trying to select the same token as tokenIn, swap them
         if (newTokenId === currentTokenInId && newTokenId !== "") {
-          console.log("Swapping tokens (to matches in)");
           setTokenIn(tokenOut);
           setTokenOut(token);
         } else {
-          console.log("Setting tokenOut to:", token);
           setTokenOut(token);
         }
       }
