@@ -1,5 +1,5 @@
 import { SoroswapSDK, SupportedNetworks } from "@soroswap/sdk";
-import type { Token } from "../../types/soroswapTypes";
+import type { Token } from "../../../types/soroswapTypes";
 import { getCurrentNetwork, getAvailableTokens, getTokens } from "./tokens";
 
 const SOROSWAP_API_URL = "https://api.soroswap.finance";

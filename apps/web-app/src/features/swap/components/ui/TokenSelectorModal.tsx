@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useWallet } from "@/hooks/useWallet";
-import { getAvailableTokens, type Token } from "@/lib/helpers/soroswap";
-import { getTokenIcon } from "@/lib/helpers/swapUtils";
+import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
+import { getTokenIcon } from "@/lib/helpers/stellar/swapUtils";
 import {
   getTokensForChain,
   SUPPORTED_CHAINS,

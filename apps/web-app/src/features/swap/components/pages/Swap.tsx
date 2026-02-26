@@ -11,10 +11,10 @@ import {
   getTokens,
   getAvailableTokens,
   type Token,
-} from "@/lib/helpers/soroswap";
+} from "@/lib/helpers/stellar/soroswap";
 import type { EVMToken } from "@/lib/types/evmToken";
 import { SUPPORTED_CHAINS } from "@/lib/constants/evmConfig";
-import { extractContractErrorOrNull } from "@/lib/helpers/contractErrors";
+import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { OrderManagement } from "../ui/OrderManagement";
 import TokenSelectorModal from "../ui/TokenSelectorModal";
 

@@ -1,9 +1,9 @@
 import { useState, useMemo, useCallback } from "react";
 import { useChainId, useSwitchChain } from "wagmi";
-import type { Token } from "@/lib/helpers/soroswap";
+import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
 import { getTokensForChain, DEFAULT_CHAIN_ID } from "@/lib/constants/evmConfig";
-import { getAvailableTokens, TOKENS } from "@/lib/helpers/soroswap";
+import { getAvailableTokens, TOKENS } from "@/lib/helpers/stellar/soroswap";
 
 export interface TokenSelectionState {
   tokenSelectorOpen: boolean;
@@ -96,7 +96,7 @@ export function useTokenSelection(
   const getTokenIconUrl = useCallback(
     (token: Token | string | EVMToken): string | null => {
       // Import getTokenIcon dynamically to avoid circular dependencies
-      const { getTokenIcon } = require("@/lib/helpers/swapUtils");
+      const { getTokenIcon } = require("@/lib/helpers/stellar/swapUtils");
       return getTokenIcon(token as Token | string | EVMToken);
     },
     []

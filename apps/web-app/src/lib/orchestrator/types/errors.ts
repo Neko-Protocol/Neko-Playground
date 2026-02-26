@@ -6,7 +6,7 @@
  * being able to narrow to specific sub-types.
  */
 
-import { extractContractError } from "@/lib/helpers/contractErrors";
+import { extractContractError } from "@/lib/helpers/stellar/contractErrors";
 
 /** Base class for all orchestrator errors. */
 export class OrchestratorError extends Error {
