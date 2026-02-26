@@ -7,7 +7,7 @@ import {
   getCowSwapOrderHistory,
   cancelCowSwapOrder,
   type CowSwapOrderWithPrice,
-} from "@/lib/helpers/cowswap";
+} from "@/lib/helpers/evm/cowswap";
 import type { CowSwapOrder } from "@/lib/types/cowswapTypes";
 
 /**

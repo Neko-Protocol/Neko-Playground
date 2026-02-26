@@ -10,9 +10,9 @@
 
 import { Client as RwaLendingClient, networks } from "@neko/lending";
 import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
-import { getAvailableTokens } from "@/lib/helpers/soroswap";
-import { fromSmallestUnit } from "@/lib/helpers/swapUtils";
-import { depositToPool, withdrawFromPool } from "@/lib/helpers/lending";
+import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
+import { fromSmallestUnit } from "@/lib/helpers/stellar/swapUtils";
+import { depositToPool, withdrawFromPool } from "@/lib/helpers/stellar/lending";
 
 import type { BasePoolAdapter } from "../types/adapter.types";
 import type {

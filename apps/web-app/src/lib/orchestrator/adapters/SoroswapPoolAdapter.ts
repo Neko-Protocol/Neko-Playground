@@ -11,9 +11,9 @@ import {
   getPool,
   addLiquidity,
   getAvailableTokens,
-} from "@/lib/helpers/soroswap";
+} from "@/lib/helpers/stellar/soroswap";
 import { networkPassphrase } from "@/lib/constants/network";
-import { fromSmallestUnit } from "@/lib/helpers/swapUtils";
+import { fromSmallestUnit } from "@/lib/helpers/stellar/swapUtils";
 
 import type { BasePoolAdapter } from "../types/adapter.types";
 import type {

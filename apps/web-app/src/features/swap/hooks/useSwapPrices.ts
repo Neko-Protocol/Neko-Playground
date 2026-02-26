@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useEVMTokenPrice } from "@/hooks/useEVMTokenPrice";
-import type { Token } from "@/lib/helpers/soroswap";
+import type { Token } from "@/lib/helpers/stellar/soroswap";
 import type { EVMToken } from "@/lib/types/evmToken";
 
 export interface SwapPrices {

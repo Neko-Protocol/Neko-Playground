@@ -1,14 +1,14 @@
 import { useCallback } from "react";
 import { usePublicClient, useWalletClient } from "wagmi";
 import { parseUnits } from "viem";
-import type { Token } from "@/lib/helpers/soroswap";
+import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
 import {
   getQuote,
   buildTransaction,
   sendTransaction,
   type QuoteRequest,
-} from "@/lib/helpers/soroswap";
+} from "@/lib/helpers/stellar/soroswap";
 import {
   getCowSwapQuote,
   executeCowSwap,
@@ -16,7 +16,7 @@ import {
   type CowSwapQuoteRequest,
   type CowSwapSwapRequest,
   type CowSwapLimitOrderRequest,
-} from "@/lib/helpers/cowswap";
+} from "@/lib/helpers/evm/cowswap";
 import { getTokensForChain } from "@/lib/constants/evmConfig";
 import { useWallet } from "@/hooks/useWallet";
 import { handleSwapError } from "@/features/swap/utils/swapErrorUtils";

@@ -27,8 +27,8 @@ import {
   approveToken,
   addCollateral,
   borrowFromPool,
-} from "@/lib/helpers/lending";
-import { getAvailableTokens } from "@/lib/helpers/soroswap";
+} from "@/lib/helpers/stellar/lending";
+import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpcUrl } from "@/lib/constants/network";
 import { rpc } from "@stellar/stellar-sdk";

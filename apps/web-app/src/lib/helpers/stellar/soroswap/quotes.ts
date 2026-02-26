@@ -20,7 +20,7 @@ import type {
   AddLiquidityResponse,
   PoolInfo,
   GetPoolRequest,
-} from "../../types/soroswapTypes";
+} from "../../../types/soroswapTypes";
 
 const SOROSWAP_API_URL = "https://api.soroswap.finance";
 

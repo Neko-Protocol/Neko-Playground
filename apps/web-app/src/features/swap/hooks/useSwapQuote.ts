@@ -1,15 +1,22 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { usePublicClient, useWalletClient } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
-import type { Token } from "@/lib/helpers/soroswap";
+import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
-import { hasApiKey, getQuote, type QuoteRequest } from "@/lib/helpers/soroswap";
+import {
+  hasApiKey,
+  getQuote,
+  type QuoteRequest,
+} from "@/lib/helpers/stellar/soroswap";
 import {
   getCowSwapQuote,
   type CowSwapQuoteRequest,
-} from "@/lib/helpers/cowswap";
+} from "@/lib/helpers/evm/cowswap";
 import { getTokensForChain } from "@/lib/constants/evmConfig";
-import { formatSwapAmount, fromSmallestUnit } from "@/lib/helpers/swapUtils";
+import {
+  formatSwapAmount,
+  fromSmallestUnit,
+} from "@/lib/helpers/stellar/swapUtils";
 import { QUOTE_TIMEOUT_MS } from "@/lib/constants/cowswapConfig";
 
 export interface SwapQuoteState {

@@ -1,7 +1,7 @@
 import { WalletClient, PublicClient } from "viem";
-import { cowSwapService } from "../services";
-import { EVM_TOKENS } from "../constants/evmConfig";
-import { COW_API_BASE_URLS, COW_API_ENDPOINTS } from "../constants/cowswapConfig";
+import { cowSwapService } from "../../services";
+import { EVM_TOKENS } from "../../constants/evmConfig";
+import { COW_API_BASE_URLS, COW_API_ENDPOINTS } from "../../constants/cowswapConfig";
 import type {
   CowSwapQuoteRequest,
   CowSwapQuoteResponse,
@@ -17,9 +17,9 @@ import type {
   CowSwapOrderHistoryRequest,
   CowSwapOrderHistoryResponse,
   CowOrder,
-} from "../types/cowswapTypes";
+} from "../../types/cowswapTypes";
 
-export { EVM_TOKENS } from "../constants/evmConfig";
+export { EVM_TOKENS } from "../../constants/evmConfig";
 export type {
   CowSwapQuoteRequest,
   CowSwapQuoteResponse,
@@ -34,7 +34,7 @@ export type {
   CowSwapCancelOrderResponse,
   CowSwapOrderHistoryRequest,
   CowSwapOrderHistoryResponse,
-} from "../types/cowswapTypes";
+} from "../../types/cowswapTypes";
 
 /**
  * Get CoW Swap quote using the service

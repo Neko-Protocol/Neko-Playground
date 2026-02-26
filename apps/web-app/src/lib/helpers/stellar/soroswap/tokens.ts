@@ -1,5 +1,5 @@
-import { stellarNetwork } from "../../constants/network";
-import type { Token } from "../../types/soroswapTypes";
+import { stellarNetwork } from "../../../constants/network";
+import type { Token } from "../../../types/soroswapTypes";
 
 // ========================================
 // NETWORK DETECTION

@@ -9,8 +9,8 @@ import {
   depositToPool,
   withdrawFromPool,
   getBTokenBalance,
-} from "@/lib/helpers/lending";
-import { getAvailableTokens } from "@/lib/helpers/soroswap";
+} from "@/lib/helpers/stellar/lending";
+import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { rpc } from "@stellar/stellar-sdk";
