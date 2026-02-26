@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { usePublicClient, useWalletClient } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import type { Token } from "@/lib/helpers/soroswap";
-import { Token as UniswapToken } from "@uniswap/sdk-core";
+import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
 import { hasApiKey, getQuote, type QuoteRequest } from "@/lib/helpers/soroswap";
 import {
   getCowSwapQuote,
@@ -26,8 +26,8 @@ export function useSwapQuote(
   swapMode: "evm" | "stellar",
   address: string | undefined,
   amountIn: string,
-  tokenIn: Token | string | UniswapToken,
-  tokenOut: Token | string | UniswapToken,
+  tokenIn: Token | string | EVMToken,
+  tokenOut: Token | string | EVMToken,
   selectedEvmChainId: number
 ): SwapQuoteState & SwapQuoteActions {
   const [amountOut, setAmountOut] = useState<string>("0.0");
@@ -71,13 +71,13 @@ export function useSwapQuote(
     const tokenInSymbol: string =
       typeof tokenIn === "string"
         ? tokenIn
-        : tokenIn instanceof UniswapToken
+        : isEVMToken(tokenIn)
           ? tokenIn.symbol || "ETH"
           : "ETH";
     const tokenOutSymbol: string =
       typeof tokenOut === "string"
         ? tokenOut
-        : tokenOut instanceof UniswapToken
+        : isEVMToken(tokenOut)
           ? tokenOut.symbol || "USDC"
           : "USDC";
 

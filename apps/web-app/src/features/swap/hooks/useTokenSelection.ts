@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useChainId, useSwitchChain } from "wagmi";
 import type { Token } from "@/lib/helpers/soroswap";
-import { Token as UniswapToken } from "@uniswap/sdk-core";
+import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
 import { getTokensForChain, DEFAULT_CHAIN_ID } from "@/lib/constants/evmConfig";
 import { getAvailableTokens, TOKENS } from "@/lib/helpers/soroswap";
 
@@ -16,16 +16,16 @@ export interface TokenSelectionActions {
   closeTokenSelector: () => void;
   selectToken: (token: Token | string, chainId?: number) => Promise<void>;
   changeChain: (newChainId: number) => Promise<void>;
-  getTokenId: (token: Token | string | UniswapToken) => string;
-  getTokenIconUrl: (token: Token | string | UniswapToken) => string | null;
+  getTokenId: (token: Token | string | EVMToken) => string;
+  getTokenIconUrl: (token: Token | string | EVMToken) => string | null;
 }
 
 export function useTokenSelection(
   swapMode: "evm" | "stellar",
-  tokenIn: Token | string | UniswapToken,
-  tokenOut: Token | string | UniswapToken,
-  setTokenIn: (token: Token | string | UniswapToken) => void,
-  setTokenOut: (token: Token | string | UniswapToken) => void,
+  tokenIn: Token | string | EVMToken,
+  tokenOut: Token | string | EVMToken,
+  setTokenIn: (token: Token | string | EVMToken) => void,
+  setTokenOut: (token: Token | string | EVMToken) => void,
   resetSwap: () => void,
   setTxHash: (hash: string | null) => void
 ): TokenSelectionState & TokenSelectionActions {
@@ -56,13 +56,9 @@ export function useTokenSelection(
   }, []);
 
   const getTokenId = useCallback(
-    (token: Token | string | UniswapToken): string => {
-      // Handle Uniswap Token
-      if (
-        token instanceof UniswapToken ||
-        (typeof token === "object" && "symbol" in token && "address" in token)
-      ) {
-        return (token as UniswapToken).symbol || "";
+    (token: Token | string | EVMToken): string => {
+      if (isEVMToken(token)) {
+        return token.symbol || "";
       }
 
       if (typeof token === "string") {
@@ -98,10 +94,10 @@ export function useTokenSelection(
   );
 
   const getTokenIconUrl = useCallback(
-    (token: Token | string | UniswapToken): string | null => {
+    (token: Token | string | EVMToken): string | null => {
       // Import getTokenIcon dynamically to avoid circular dependencies
       const { getTokenIcon } = require("@/lib/helpers/swapUtils");
-      return getTokenIcon(token as Token | string | UniswapToken);
+      return getTokenIcon(token as Token | string | EVMToken);
     },
     []
   );

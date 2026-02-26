@@ -26,7 +26,7 @@ import {
   ETH_FLOW_CONTRACTS,
   ETH_FLOW_ABI,
 } from "../constants/cowswapConfig";
-import type { Token } from "@uniswap/sdk-core";
+import type { EVMToken } from "../types/evmToken";
 import type {
   CowSwapQuoteRequest,
   CowSwapQuoteResponse,
@@ -68,7 +68,7 @@ export class CowSwapService {
   /**
    * Get EVM token by symbol or address
    */
-  private getEVMToken(token: Token | string, chainId: number = 1): Token {
+  private getEVMToken(token: EVMToken | string, chainId: number = 1): EVMToken {
     if (typeof token === "string") {
       const tokens = getTokensForChain(chainId);
       const tokenBySymbol = Object.values(tokens).find(
@@ -220,7 +220,7 @@ export class CowSwapService {
     request: CowSwapSwapRequest,
     chainId: number,
     walletClient: WalletClient,
-    tokenOut: Token
+    tokenOut: EVMToken
   ): Promise<CowSwapSwapResponse> {
     const ethFlowAddress = ETH_FLOW_CONTRACTS[chainId] as `0x${string}`;
 

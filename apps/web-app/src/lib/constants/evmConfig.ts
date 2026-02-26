@@ -1,4 +1,4 @@
-import { Token, ChainId } from "@uniswap/sdk-core";
+import { createEVMToken, type EVMToken, ChainId } from "@/lib/types/evmToken";
 
 // ========================================
 // SUPPORTED CHAINS
@@ -74,22 +74,22 @@ export const ERC20_ABI = [
 // ========================================
 // ETHEREUM TOKENS
 // ========================================
-export const ETHEREUM_TOKENS: Record<string, Token> = {
-  ETH: new Token(
+export const ETHEREUM_TOKENS: Record<string, EVMToken> = {
+  ETH: createEVMToken(
     ChainId.MAINNET,
     "0x0000000000000000000000000000000000000000",
     18,
     "ETH",
     "Ether"
   ),
-  USDC: new Token(
+  USDC: createEVMToken(
     ChainId.MAINNET,
     "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
     6,
     "USDC",
     "USD Coin"
   ),
-  USDT: new Token(
+  USDT: createEVMToken(
     ChainId.MAINNET,
     "0xdAC17F958D2ee523a2206206994597C13D831ec7",
     6,
@@ -97,70 +97,70 @@ export const ETHEREUM_TOKENS: Record<string, Token> = {
     "Tether USD"
   ),
   // Ondo Tokenized Stocks
-  NVDAon: new Token(
+  NVDAon: createEVMToken(
     ChainId.MAINNET,
     "0x2d1f7226bd1f780af6b9a49dcc0ae00e8df4bdee",
     18,
     "NVDAon",
     "NVIDIA (Ondo Tokenized Stock)"
   ),
-  TSLAon: new Token(
+  TSLAon: createEVMToken(
     ChainId.MAINNET,
     "0xf6b1117ec07684d3958cad8beb1b302bfd21103f",
     18,
     "TSLAon",
     "Tesla (Ondo Tokenized Stock)"
   ),
-  AAPLon: new Token(
+  AAPLon: createEVMToken(
     ChainId.MAINNET,
     "0x14c3abf95cb9c93a8b82c1cdcb76d72cb87b2d4c",
     18,
     "AAPLon",
     "Apple (Ondo Tokenized Stock)"
   ),
-  MSFTon: new Token(
+  MSFTon: createEVMToken(
     ChainId.MAINNET,
     "0xb812837b81a3a6b81d7cd74cfb19a7f2784555e5",
     18,
     "MSFTon",
     "Microsoft (Ondo Tokenized Stock)"
   ),
-  AMZNon: new Token(
+  AMZNon: createEVMToken(
     ChainId.MAINNET,
     "0xbb8774fb97436d23d74c1b882e8e9a69322cfd31",
     18,
     "AMZNon",
     "Amazon (Ondo Tokenized Stock)"
   ),
-  METAon: new Token(
+  METAon: createEVMToken(
     ChainId.MAINNET,
     "0x59644165402b611b350645555b50afb581c71eb2",
     18,
     "METAon",
     "Meta Platforms (Ondo Tokenized Stock)"
   ),
-  SPOTon: new Token(
+  SPOTon: createEVMToken(
     ChainId.MAINNET,
     "0x590f21186489ca1612f49a4b1ff5c66acd6796a9",
     18,
     "SPOTon",
     "Spotify (Ondo Tokenized Stock)"
   ),
-  SHOPon: new Token(
+  SHOPon: createEVMToken(
     ChainId.MAINNET,
     "0x908266c1192628371cff7ad2f5eba4de061a0ac5",
     18,
     "SHOPon",
     "Shopify (Ondo Tokenized Stock)"
   ),
-  MAon: new Token(
+  MAon: createEVMToken(
     ChainId.MAINNET,
     "0xa29dc2102dfc2a0a4a5dcb84af984315567c9858",
     18,
     "MAon",
     "Mastercard (Ondo Tokenized Stock)"
   ),
-  NFLXon: new Token(
+  NFLXon: createEVMToken(
     ChainId.MAINNET,
     "0x032dec3372f25c41ea8054b4987a7c4832cdb338",
     18,
@@ -172,22 +172,22 @@ export const ETHEREUM_TOKENS: Record<string, Token> = {
 // ========================================
 // BNB CHAIN TOKENS
 // ========================================
-export const BNB_TOKENS: Record<string, Token> = {
-  BNB: new Token(
+export const BNB_TOKENS: Record<string, EVMToken> = {
+  BNB: createEVMToken(
     ChainId.BNB,
     "0x0000000000000000000000000000000000000000",
     18,
     "BNB",
     "BNB"
   ),
-  USDC: new Token(
+  USDC: createEVMToken(
     ChainId.BNB,
     "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
     18,
     "USDC",
     "USD Coin"
   ),
-  USDT: new Token(
+  USDT: createEVMToken(
     ChainId.BNB,
     "0x55d398326f99059fF775485246999027B3197955",
     18,
@@ -195,70 +195,70 @@ export const BNB_TOKENS: Record<string, Token> = {
     "Tether USD"
   ),
   // Ondo Tokenized Stocks
-  NVDAon: new Token(
+  NVDAon: createEVMToken(
     ChainId.BNB,
     "0xa9ee28c80f960b889dfbd1902055218cba016f75",
     18,
     "NVDAon",
     "NVIDIA (Ondo Tokenized Stock)"
   ),
-  TSLAon: new Token(
+  TSLAon: createEVMToken(
     ChainId.BNB,
     "0x2494b603319d4d9f9715c9f4496d9e0364b59d93",
     18,
     "TSLAon",
     "Tesla (Ondo Tokenized Stock)"
   ),
-  AAPLon: new Token(
+  AAPLon: createEVMToken(
     ChainId.BNB,
     "0x390a684ef9cade28a7ad0dfa61ab1eb3842618c4",
     18,
     "AAPLon",
     "Apple (Ondo Tokenized Stock)"
   ),
-  MSFTon: new Token(
+  MSFTon: createEVMToken(
     ChainId.BNB,
     "0x6bfe75d1ad432050ea973c3a3dcd88f02e2444c3",
     18,
     "MSFTon",
     "Microsoft (Ondo Tokenized Stock)"
   ),
-  AMZNon: new Token(
+  AMZNon: createEVMToken(
     ChainId.BNB,
     "0x4553cfe1c09f37f38b12dc509f676964e392f8fc",
     18,
     "AMZNon",
     "Amazon (Ondo Tokenized Stock)"
   ),
-  METAon: new Token(
+  METAon: createEVMToken(
     ChainId.BNB,
     "0xd7df5863a3e742f0c767768cdfcb63f09e0422f6",
     18,
     "METAon",
     "Meta Platforms (Ondo Tokenized Stock)"
   ),
-  SPOTon: new Token(
+  SPOTon: createEVMToken(
     ChainId.BNB,
     "0x50356167a4dbc38bea6779c045e24e25facedfdc",
     18,
     "SPOTon",
     "Spotify (Ondo Tokenized Stock)"
   ),
-  SHOPon: new Token(
+  SHOPon: createEVMToken(
     ChainId.BNB,
     "0x43d0b380c33cd004a6a69abd61843881a2de4113",
     18,
     "SHOPon",
     "Shopify (Ondo Tokenized Stock)"
   ),
-  MAon: new Token(
+  MAon: createEVMToken(
     ChainId.BNB,
     "0x25ffda07f585c39848db6573e533d7585679c52d",
     18,
     "MAon",
     "Mastercard (Ondo Tokenized Stock)"
   ),
-  NFLXon: new Token(
+  NFLXon: createEVMToken(
     ChainId.BNB,
     "0x7048f5227b032326cc8dbc53cf3fddd947a2c757",
     18,
@@ -270,13 +270,15 @@ export const BNB_TOKENS: Record<string, Token> = {
 // ========================================
 // MULTI-CHAIN ACCESS
 // ========================================
-export const EVM_TOKENS_BY_CHAIN: Record<number, Record<string, Token>> = {
+export const EVM_TOKENS_BY_CHAIN: Record<number, Record<string, EVMToken>> = {
   1: ETHEREUM_TOKENS,
   56: BNB_TOKENS,
 };
 
 // Helper to get tokens for a specific chain
-export const getTokensForChain = (chainId: number): Record<string, Token> => {
+export const getTokensForChain = (
+  chainId: number
+): Record<string, EVMToken> => {
   return EVM_TOKENS_BY_CHAIN[chainId] || ETHEREUM_TOKENS;
 };
 

@@ -4,15 +4,23 @@ extern crate std;
 use crate::common::storage::Storage;
 use crate::common::types::{MarketConfig, Position, SCALAR_9};
 use crate::{RWAPerpsContract, RWAPerpsContractClient};
-use soroban_sdk::{testutils::Address as _, token, Address, Env};
+use soroban_sdk::{testutils::Address as _, token, Address, Env, Vec, symbol_short, String};
+use rwa_oracle::{RWAOracle, RWAOracleClient, Asset, RWAMetadata, TokenizationInfo, RWAAssetType, ValuationMethod};
 
 // ========== Test Helpers ==========
 
-/// Create a mock oracle contract (placeholder until rwa-oracle is integrated)
-fn create_oracle(env: &Env) -> Address {
-    // For now, just return a generated address
-    // TODO: Integrate with actual rwa-oracle contract when ready
-    Address::generate(env)
+/// Create a mock oracle contract using the actual RWAOracle implementation
+fn create_oracle(env: &Env, admin: &Address) -> Address {
+    let base_asset = Asset::Other(symbol_short!("USD"));
+    let oracle_id = env.register(RWAOracle, (
+        admin,
+        Vec::<Asset>::new(env),
+        base_asset,
+        9u32,      // decimals
+        3600u32,   // resolution
+    ));
+    
+    oracle_id
 }
 
 /// Create and initialize the perps contract
@@ -96,15 +104,60 @@ fn test_set_position(
     });
 }
 
-/// Helper to set current price in storage from tests (wraps in contract context)
+/// Helper to set current price in the oracle from tests
 fn test_set_price(
     env: &Env,
-    contract_address: &Address,
+    _contract_address: &Address,
     rwa_token: &Address,
     price: i128,
 ) {
-    env.as_contract(contract_address, || {
-        Storage::set_current_price(env, rwa_token, price);
+    let perps_client = RWAPerpsContractClient::new(env, _contract_address);
+    let oracle_address = perps_client.get_oracle();
+    let oracle_client = RWAOracleClient::new(env, &oracle_address);
+    let admin = perps_client.get_admin();
+
+    // 1. Ensure asset is registered in the oracle and mapped to the token
+    let asset_id = symbol_short!("RWA");
+    let asset = Asset::Other(asset_id.clone());
+    
+    // Check if asset already exists in oracle, if not add it
+    let assets = oracle_client.assets();
+    if !assets.contains(asset.clone()) {
+        env.as_contract(&oracle_address, || {
+            oracle_client.add_assets(&Vec::from_array(&env, [asset.clone()]));
+        });
+        
+        // Register RWA metadata to map token to asset
+        let metadata = RWAMetadata {
+            asset_id: asset_id.clone(),
+            asset_type: RWAAssetType::Equity,
+            name: String::from_str(env, "RWA"),
+            description: String::from_str(env, "Real World Asset"),
+            underlying_asset: String::from_str(env, "Underlying"),
+            issuer: admin.clone(),
+            jurisdiction: symbol_short!("US"),
+            tokenization_info: TokenizationInfo {
+                token_contract: Some(rwa_token.clone()),
+                total_supply: Some(1_000_000_000),
+                underlying_asset_id: Some(String::from_str(env, "AssetID")),
+                tokenization_date: Some(env.ledger().timestamp()),
+            },
+            external_ids: Vec::new(env),
+            valuation_method: ValuationMethod::Market,
+            metadata: Vec::new(env),
+            legal_docs_uri: None,
+            created_at: env.ledger().timestamp(),
+            updated_at: env.ledger().timestamp(),
+        };
+        
+        env.as_contract(&oracle_address, || {
+            oracle_client.set_rwa_metadata(&asset_id, &metadata);
+        });
+    }
+
+    // 2. Set the price in the oracle
+    env.as_contract(&oracle_address, || {
+        oracle_client.set_asset_price(&asset, &price, &env.ledger().timestamp());
     });
 }
 
@@ -114,7 +167,7 @@ fn test_set_price(
 fn test_initialization() {
     let env = Env::default();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -135,7 +188,7 @@ fn test_double_initialization() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let contract_id = env.register(RWAPerpsContract, ());
     let client = RWAPerpsContractClient::new(&env, &contract_id);
@@ -153,7 +206,7 @@ fn test_initialization_invalid_protocol_fee() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let contract_id = env.register(RWAPerpsContract, ());
     let client = RWAPerpsContractClient::new(&env, &contract_id);
@@ -168,7 +221,7 @@ fn test_initialization_invalid_liquidation_fee() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let contract_id = env.register(RWAPerpsContract, ());
     let client = RWAPerpsContractClient::new(&env, &contract_id);
@@ -184,7 +237,7 @@ fn test_set_oracle() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -201,7 +254,7 @@ fn test_set_protocol_paused() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -222,7 +275,7 @@ fn test_set_protocol_fee_rate() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -236,7 +289,7 @@ fn test_set_invalid_protocol_fee_rate() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -249,7 +302,7 @@ fn test_set_liquidation_fee_rate() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -263,7 +316,7 @@ fn test_set_invalid_liquidation_fee_rate() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -276,7 +329,7 @@ fn test_set_market_config() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -294,7 +347,7 @@ fn test_set_invalid_market_config_zero_leverage() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -313,7 +366,7 @@ fn test_set_invalid_market_config_high_leverage() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -332,7 +385,7 @@ fn test_set_invalid_market_config_high_maintenance() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -352,7 +405,7 @@ fn test_admin_authorization_required() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -371,7 +424,7 @@ fn test_admin_and_liquidation_integration() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -393,7 +446,7 @@ fn test_update_funding_rate() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -416,7 +469,7 @@ fn test_get_funding_rate() {
     let env = Env::default();
     env.mock_all_auths();
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
 
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
@@ -440,7 +493,7 @@ fn test_add_margin_success() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     // Set up margin token
@@ -486,7 +539,7 @@ fn test_add_margin_position_not_found() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -506,7 +559,7 @@ fn test_add_margin_zero_amount() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -532,7 +585,7 @@ fn test_add_margin_negative_amount() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -558,7 +611,7 @@ fn test_add_margin_protocol_paused() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -587,7 +640,7 @@ fn test_add_margin_market_inactive() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -615,7 +668,7 @@ fn test_remove_margin_success() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -667,7 +720,7 @@ fn test_remove_margin_position_not_found() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -687,7 +740,7 @@ fn test_remove_margin_zero_amount() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -715,7 +768,7 @@ fn test_remove_margin_exceeds_available() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -743,7 +796,7 @@ fn test_remove_margin_triggers_liquidation() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -782,7 +835,7 @@ fn test_calculate_margin_ratio_healthy_position() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let rwa_token = Address::generate(&env);
@@ -819,7 +872,7 @@ fn test_calculate_margin_ratio_with_profit() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let rwa_token = Address::generate(&env);
@@ -858,7 +911,7 @@ fn test_calculate_margin_ratio_position_not_found() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let trader = Address::generate(&env);
@@ -876,7 +929,7 @@ fn test_get_available_margin_healthy_position() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let rwa_token = Address::generate(&env);
@@ -916,7 +969,7 @@ fn test_get_available_margin_position_not_found() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let trader = Address::generate(&env);
@@ -934,7 +987,7 @@ fn test_margin_lifecycle() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1000,13 +1053,6 @@ fn test_margin_lifecycle() {
 
 // ========== Position Opening and Closing Tests ==========
 
-// Helper to setup mock oracle with price
-fn setup_mock_oracle_with_price(env: &Env, rwa_token: &Address, price: i128) -> Address {
-    // For now, just set the price directly in storage for testing
-    // In a real test, we would deploy and configure the actual oracle contract
-    let oracle = Address::generate(env);
-    oracle
-}
 
 // Tests for open_position()
 
@@ -1016,7 +1062,7 @@ fn test_open_long_position_success() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     // Setup
@@ -1038,15 +1084,15 @@ fn test_open_long_position_success() {
     let result = client.try_open_position(
         &trader,
         &rwa_token,
-        1_000 * SCALAR_9,  // Long position
-        1000,              // 10x leverage
+        &(1_000 * SCALAR_9),  // Long position
+        &1000,              // 10x leverage
         &(10_000 * SCALAR_9),
     );
 
     assert!(result.is_ok());
 
     // Verify position was created
-    let position = client.get_position(&trader, &rwa_token).unwrap();
+    let position = client.get_position(&trader, &rwa_token);
     assert_eq!(position.size, 1_000 * SCALAR_9);
     assert_eq!(position.entry_price, 100 * SCALAR_9);
     assert_eq!(position.margin, 10_000 * SCALAR_9);
@@ -1059,7 +1105,7 @@ fn test_open_short_position_success() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1079,14 +1125,14 @@ fn test_open_short_position_success() {
     let result = client.try_open_position(
         &trader,
         &rwa_token,
-        -1_000 * SCALAR_9,  // Short position
-        1000,
+        &(-1_000 * SCALAR_9),  // Short position
+        &1000,
         &(10_000 * SCALAR_9),
     );
 
     assert!(result.is_ok());
 
-    let position = client.get_position(&trader, &rwa_token).unwrap();
+    let position = client.get_position(&trader, &rwa_token);
     assert_eq!(position.size, -1_000 * SCALAR_9);
     assert_eq!(position.entry_price, 100 * SCALAR_9);
 }
@@ -1098,7 +1144,7 @@ fn test_open_position_zero_size() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1114,7 +1160,7 @@ fn test_open_position_zero_size() {
     let trader = Address::generate(&env);
 
     // Try to open position with zero size
-    client.open_position(&trader, &rwa_token, 0, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &0, &1000, &(10_000 * SCALAR_9));
 }
 
 #[test]
@@ -1124,7 +1170,7 @@ fn test_open_position_zero_leverage() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1140,7 +1186,7 @@ fn test_open_position_zero_leverage() {
     let trader = Address::generate(&env);
 
     // Try to open position with zero leverage
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 0, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &0, &(10_000 * SCALAR_9));
 }
 
 #[test]
@@ -1150,7 +1196,7 @@ fn test_open_position_zero_margin() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1166,7 +1212,7 @@ fn test_open_position_zero_margin() {
     let trader = Address::generate(&env);
 
     // Try to open position with zero margin
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &0);
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &0);
 }
 
 #[test]
@@ -1176,7 +1222,7 @@ fn test_open_position_exceeds_max_leverage() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1193,7 +1239,7 @@ fn test_open_position_exceeds_max_leverage() {
     give_tokens_to_trader(&env, &margin_token, &admin, &trader, 20_000 * SCALAR_9);
 
     // Try to open position with leverage > max_leverage (1000)
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 2000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &2000, &(10_000 * SCALAR_9));
 }
 
 #[test]
@@ -1203,7 +1249,7 @@ fn test_open_position_insufficient_margin() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1222,7 +1268,7 @@ fn test_open_position_insufficient_margin() {
     // Position value = 1,000 * 100 = 100,000
     // Initial margin requirement (10%) = 10,000
     // Try to open with only 5,000 margin
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(5_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(5_000 * SCALAR_9));
 }
 
 #[test]
@@ -1232,7 +1278,7 @@ fn test_open_position_already_exists() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1249,10 +1295,10 @@ fn test_open_position_already_exists() {
     give_tokens_to_trader(&env, &margin_token, &admin, &trader, 40_000 * SCALAR_9);
 
     // Open first position
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // Try to open second position (should fail)
-    client.open_position(&trader, &rwa_token, 500 * SCALAR_9, 1000, &(5_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(500 * SCALAR_9), &1000, &(5_000 * SCALAR_9));
 }
 
 #[test]
@@ -1262,7 +1308,7 @@ fn test_open_position_market_not_found() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1274,7 +1320,7 @@ fn test_open_position_market_not_found() {
     let trader = Address::generate(&env);
 
     // Try to open position without market config
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 }
 
 #[test]
@@ -1284,7 +1330,7 @@ fn test_open_position_market_inactive() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1301,7 +1347,7 @@ fn test_open_position_market_inactive() {
     let trader = Address::generate(&env);
 
     // Try to open position on inactive market
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 }
 
 #[test]
@@ -1311,7 +1357,7 @@ fn test_open_position_protocol_paused() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1327,7 +1373,7 @@ fn test_open_position_protocol_paused() {
     let trader = Address::generate(&env);
 
     // Try to open position when paused
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 }
 
 // Tests for close_position()
@@ -1338,7 +1384,7 @@ fn test_close_position_full_with_profit() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1358,7 +1404,7 @@ fn test_close_position_full_with_profit() {
     give_tokens_to_trader(&env, &margin_token, &admin, &contract_address, 100_000 * SCALAR_9);
 
     // Open position
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // Price increases by 10%
     test_set_price(&env, &contract_address, &rwa_token, 110 * SCALAR_9);
@@ -1378,7 +1424,7 @@ fn test_close_position_full_with_loss() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1396,7 +1442,7 @@ fn test_close_position_full_with_loss() {
     give_tokens_to_trader(&env, &margin_token, &admin, &contract_address, 100_000 * SCALAR_9);
 
     // Open position
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // Price decreases by 5%
     test_set_price(&env, &contract_address, &rwa_token, 95 * SCALAR_9);
@@ -1416,7 +1462,7 @@ fn test_close_position_partial() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1434,14 +1480,14 @@ fn test_close_position_partial() {
     give_tokens_to_trader(&env, &margin_token, &admin, &contract_address, 100_000 * SCALAR_9);
 
     // Open position
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // Close 40% of position
     let result = client.try_close_position(&trader, &rwa_token, &(400 * SCALAR_9));
     assert!(result.is_ok());
 
     // Verify position still exists with reduced size
-    let position = client.get_position(&trader, &rwa_token).unwrap();
+    let position = client.get_position(&trader, &rwa_token);
     assert_eq!(position.size, 600 * SCALAR_9);
     // Margin should be reduced proportionally: 10,000 * 0.6 = 6,000
     assert_eq!(position.margin, 6_000 * SCALAR_9);
@@ -1454,7 +1500,7 @@ fn test_close_position_not_found() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1477,7 +1523,7 @@ fn test_close_position_zero_size() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1494,7 +1540,7 @@ fn test_close_position_zero_size() {
     give_tokens_to_trader(&env, &margin_token, &admin, &trader, 20_000 * SCALAR_9);
 
     // Open position
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // Try to close zero size
     client.close_position(&trader, &rwa_token, &0);
@@ -1507,7 +1553,7 @@ fn test_close_position_exceeds_size() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1524,7 +1570,7 @@ fn test_close_position_exceeds_size() {
     give_tokens_to_trader(&env, &margin_token, &admin, &trader, 20_000 * SCALAR_9);
 
     // Open position of 1,000 units
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // Try to close 2,000 units (more than position size)
     client.close_position(&trader, &rwa_token, &(2_000 * SCALAR_9));
@@ -1537,7 +1583,7 @@ fn test_close_position_protocol_paused() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1554,7 +1600,7 @@ fn test_close_position_protocol_paused() {
     give_tokens_to_trader(&env, &margin_token, &admin, &trader, 20_000 * SCALAR_9);
 
     // Open position
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // Pause protocol
     client.set_protocol_paused(&true);
@@ -1571,7 +1617,7 @@ fn test_get_position_success() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1588,10 +1634,10 @@ fn test_get_position_success() {
     give_tokens_to_trader(&env, &margin_token, &admin, &trader, 20_000 * SCALAR_9);
 
     // Open position
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // Get position
-    let position = client.get_position(&trader, &rwa_token).unwrap();
+    let position = client.get_position(&trader, &rwa_token);
     assert_eq!(position.size, 1_000 * SCALAR_9);
     assert_eq!(position.margin, 10_000 * SCALAR_9);
 }
@@ -1603,7 +1649,7 @@ fn test_get_position_not_found() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let trader = Address::generate(&env);
@@ -1619,7 +1665,7 @@ fn test_get_user_positions_multiple() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1642,8 +1688,8 @@ fn test_get_user_positions_multiple() {
     give_tokens_to_trader(&env, &margin_token, &admin, &trader, 40_000 * SCALAR_9);
 
     // Open positions on both tokens
-    client.open_position(&trader, &rwa_token1, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
-    client.open_position(&trader, &rwa_token2, 500 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token1, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token2, &(500 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // Get all positions
     let positions = client.get_user_positions(&trader);
@@ -1656,7 +1702,7 @@ fn test_get_user_positions_empty() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let trader = Address::generate(&env);
@@ -1674,7 +1720,7 @@ fn test_position_lifecycle() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1692,17 +1738,17 @@ fn test_position_lifecycle() {
     give_tokens_to_trader(&env, &margin_token, &admin, &contract_address, 100_000 * SCALAR_9);
 
     // 1. Open position
-    client.open_position(&trader, &rwa_token, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // 2. Verify position exists
-    let position = client.get_position(&trader, &rwa_token).unwrap();
+    let position = client.get_position(&trader, &rwa_token);
     assert_eq!(position.size, 1_000 * SCALAR_9);
 
     // 3. Partial close (50%)
     client.close_position(&trader, &rwa_token, &(500 * SCALAR_9));
 
     // 4. Verify position updated
-    let position = client.get_position(&trader, &rwa_token).unwrap();
+    let position = client.get_position(&trader, &rwa_token);
     assert_eq!(position.size, 500 * SCALAR_9);
     assert_eq!(position.margin, 5_000 * SCALAR_9);
 
@@ -1720,7 +1766,7 @@ fn test_multiple_positions_different_tokens() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1742,8 +1788,8 @@ fn test_multiple_positions_different_tokens() {
         client.open_position(
             &trader,
             &rwa_token,
-            (1_000 * i) * SCALAR_9,
-            1000,
+            &((1_000 * i) * SCALAR_9),
+            &1000,
             &((10_000 * i) * SCALAR_9),
         );
     }
@@ -1759,7 +1805,7 @@ fn test_long_and_short_pnl_calculation() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1782,10 +1828,10 @@ fn test_long_and_short_pnl_calculation() {
     give_tokens_to_trader(&env, &margin_token, &admin, &contract_address, 200_000 * SCALAR_9);
 
     // Open long position on token1
-    client.open_position(&trader, &rwa_token1, 1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token1, &(1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // Open short position on token2
-    client.open_position(&trader, &rwa_token2, -1_000 * SCALAR_9, 1000, &(10_000 * SCALAR_9));
+    client.open_position(&trader, &rwa_token2, &(-1_000 * SCALAR_9), &1000, &(10_000 * SCALAR_9));
 
     // Price increases by 10% for both
     test_set_price(&env, &contract_address, &rwa_token1, 110 * SCALAR_9);
@@ -1806,7 +1852,7 @@ fn test_leverage_validation_boundaries() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1826,8 +1872,8 @@ fn test_leverage_validation_boundaries() {
     let result = client.try_open_position(
         &trader,
         &rwa_token,
-        1_000 * SCALAR_9,
-        1000, // Exactly max_leverage
+        &(1_000 * SCALAR_9),
+        &1000, // Exactly max_leverage
         &(10_000 * SCALAR_9),
     );
     assert!(result.is_ok());
@@ -1839,7 +1885,7 @@ fn test_margin_requirements_edge_cases() {
     env.mock_all_auths();
 
     let admin = Address::generate(&env);
-    let oracle = create_oracle(&env);
+    let oracle = create_oracle(&env, &admin);
     let client = create_perps_contract(&env, admin.clone(), oracle.clone());
 
     let margin_token = create_margin_token(&env, &admin);
@@ -1861,8 +1907,8 @@ fn test_margin_requirements_edge_cases() {
     let result = client.try_open_position(
         &trader,
         &rwa_token,
-        1_000 * SCALAR_9,
-        1000,
+        &(1_000 * SCALAR_9),
+        &1000,
         &(10_000 * SCALAR_9), // Exactly the required initial margin
     );
     assert!(result.is_ok());

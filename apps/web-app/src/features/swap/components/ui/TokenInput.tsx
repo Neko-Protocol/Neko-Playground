@@ -1,7 +1,7 @@
 import React from "react";
 import { formatSwapAmount } from "@/lib/helpers/swapUtils";
 import type { Token } from "@/lib/helpers/soroswap";
-import { Token as UniswapToken } from "@uniswap/sdk-core";
+import type { EVMToken } from "@/lib/types/evmToken";
 
 export type SwapMode = "evm" | "stellar";
 
@@ -10,7 +10,7 @@ interface TokenInputProps {
   label: string;
   amount: string;
   onAmountChange: (amount: string) => void;
-  token: Token | string | UniswapToken;
+  token: Token | string | EVMToken;
   onTokenClick: () => void;
   balance?: string;
   isLoadingBalance?: boolean;
@@ -19,8 +19,8 @@ interface TokenInputProps {
   isLoadingQuote?: boolean;
   swapMode: SwapMode;
   chainIcon?: string | null;
-  getTokenId: (token: Token | string | UniswapToken) => string;
-  getTokenIconUrl: (token: Token | string | UniswapToken) => string | null;
+  getTokenId: (token: Token | string | EVMToken) => string;
+  getTokenIconUrl: (token: Token | string | EVMToken) => string | null;
   onMaxClick?: () => void;
   disabled?: boolean;
   showSwapWarning?: boolean;

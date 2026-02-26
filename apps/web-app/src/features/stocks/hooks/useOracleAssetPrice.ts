@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import oracleClient from "@/contracts/oracle";
+import oracleClient from "@/lib/clients/oracle";
 import type { Asset } from "@neko/oracle";
 import { formatAsset } from "../utils/oracleUtils";
 

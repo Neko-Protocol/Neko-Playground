@@ -1,4 +1,5 @@
 use soroban_sdk::{panic_with_error, Address, Env, Map, Symbol, symbol_short};
+use rwa_oracle::{Asset, RWAOracleClient};
 use crate::common::types::{Position, MarketConfig, PerpsStorage, STORAGE, ADMIN_KEY};
 use crate::common::error::Error;
 
@@ -83,17 +84,33 @@ impl Storage {
     }
 
     /// Get current price for an RWA token from oracle
-    /// This is a placeholder - in production, this would call the oracle contract
+    /// This now calls the actual RWA Oracle contract via SEP-40 interface
     pub fn get_current_price(env: &Env, rwa_token: &Address) -> Option<i128> {
-        let key = (PRICE_KEY, rwa_token.clone());
-        env.storage().persistent().get(&key)
+        let storage = Self::get(env);
+        let oracle_client = RWAOracleClient::new(env, &storage.oracle);
+        
+        // 1. Get asset ID from token address
+        let asset_id = match oracle_client.try_get_asset_id_from_token(rwa_token) {
+            Ok(Ok(id)) => id,
+            _ => {
+                // Fallback to storage price for testing/compatibility if oracle fails
+                let key = (PRICE_KEY, rwa_token.clone());
+                return env.storage().persistent().get(&key);
+            }
+        };
+
+        // 2. Get last price from oracle using SEP-40 interface
+        let asset = Asset::Other(asset_id);
+        match oracle_client.try_lastprice(&asset) {
+            Ok(Ok(Some(price_data))) => Some(price_data.price),
+            _ => {
+                // Fallback to storage price
+                let key = (PRICE_KEY, rwa_token.clone());
+                env.storage().persistent().get(&key)
+            }
+        }
     }
 
-    /// Set current price (for testing purposes)
-    pub fn set_current_price(env: &Env, rwa_token: &Address, price: i128) {
-        let key = (PRICE_KEY, rwa_token.clone());
-        env.storage().persistent().set(&key, &price);
-    }
 
     /// Get margin token address
     pub fn get_margin_token(env: &Env) -> Option<Address> {

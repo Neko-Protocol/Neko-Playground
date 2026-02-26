@@ -1,8 +1,8 @@
-import type { Token } from "@uniswap/sdk-core";
+import type { EVMToken } from "./evmToken";
 
 export interface CowSwapQuoteRequest {
-  tokenIn: Token | string;
-  tokenOut: Token | string;
+  tokenIn: EVMToken | string;
+  tokenOut: EVMToken | string;
   amountIn: string;
 }
 
@@ -13,8 +13,8 @@ export interface CowSwapQuoteResponse {
 }
 
 export interface CowSwapSwapRequest {
-  tokenIn: Token | string;
-  tokenOut: Token | string;
+  tokenIn: EVMToken | string;
+  tokenOut: EVMToken | string;
   amountIn: string;
   amountOutMinimum: string;
   recipient: string;
@@ -26,8 +26,8 @@ export interface CowSwapSwapResponse {
 
 // Limit Order Types
 export interface CowSwapLimitOrderRequest {
-  tokenIn: Token | string;
-  tokenOut: Token | string;
+  tokenIn: EVMToken | string;
+  tokenOut: EVMToken | string;
   amountIn: string;
   limitPrice: string; // Price in terms of tokenOut per tokenIn
   recipient: string;
@@ -41,8 +41,8 @@ export interface CowSwapLimitOrderResponse {
 
 // TWAP Order Types
 export interface CowSwapTwapOrderRequest {
-  tokenIn: Token | string;
-  tokenOut: Token | string;
+  tokenIn: EVMToken | string;
+  tokenOut: EVMToken | string;
   amountIn: string;
   totalParts: number; // Number of parts to split the order into
   partFrequency: number; // Frequency in seconds between parts

@@ -7,7 +7,11 @@ import {
   TransactionBuilder,
   Horizon,
 } from "@stellar/stellar-sdk";
-import { rpcUrl, networkPassphrase, horizonUrl } from "../contracts/util";
+import {
+  rpcUrl,
+  networkPassphrase,
+  horizonUrl,
+} from "@/lib/config/stellar.config";
 import { useWallet } from "./useWallet";
 import { fromSmallestUnit } from "@/lib/helpers/swapUtils";
 import { getTokens, getAvailableTokens } from "@/lib/helpers/soroswap";
@@ -19,7 +23,7 @@ import { getTokenAddress } from "@/lib/helpers/soroswap";
 const getTokenBalanceFromContract = async (
   contractAddress: string,
   walletAddress: string,
-  decimals: number = 7,
+  decimals: number = 7
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, { allowHttp: true });
@@ -29,7 +33,7 @@ const getTokenBalanceFromContract = async (
     // Call balance(address) function
     const operation = contract.call(
       "balance",
-      new Address(walletAddress).toScVal(),
+      new Address(walletAddress).toScVal()
     );
 
     // Get account for transaction from Horizon
@@ -66,7 +70,7 @@ const getTokenBalanceFromContract = async (
     // Type guard to ensure retval is ScVal - scValToNative accepts ScVal which is a complex type
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const balanceValue = scValToNative(
-      retval as Parameters<typeof scValToNative>[0],
+      retval as Parameters<typeof scValToNative>[0]
     );
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const balanceBigInt = BigInt(balanceValue);
@@ -76,7 +80,7 @@ const getTokenBalanceFromContract = async (
   } catch (error) {
     console.error(
       `Failed to get balance for contract ${contractAddress}:`,
-      error,
+      error
     );
     return "0";
   }
@@ -86,7 +90,7 @@ const getTokenBalanceFromContract = async (
  * Get XLM balance from Horizon balances
  */
 const getXlmBalance = (
-  balances: Record<string, { balance?: string } | undefined>,
+  balances: Record<string, { balance?: string } | undefined>
 ): string => {
   const xlmBalance = balances.xlm?.balance;
   if (xlmBalance) {
@@ -129,7 +133,7 @@ export const useTokenBalance = (
   token:
     | string
     | { type: "native" | "contract"; code?: string; contract?: string }
-    | undefined,
+    | undefined
 ) => {
   const { address, balances } = useWallet();
 

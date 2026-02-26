@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import type { Token } from "@/lib/helpers/soroswap";
-import { Token as UniswapToken } from "@uniswap/sdk-core";
+import type { EVMToken } from "@/lib/types/evmToken";
 
 export type SwapMode = "evm" | "stellar";
 export type OrderType = "swap" | "limit" | "twap";
@@ -12,8 +12,8 @@ export interface SwapState {
   orderType: OrderType;
   amountIn: string;
   amountOut: string;
-  tokenIn: Token | string | UniswapToken;
-  tokenOut: Token | string | UniswapToken;
+  tokenIn: Token | string | EVMToken;
+  tokenOut: Token | string | EVMToken;
   limitPrice: string;
   twapParts: string;
   twapFrequency: string;
@@ -25,8 +25,8 @@ export interface SwapStateActions {
   setOrderType: (type: OrderType) => void;
   setAmountIn: (amount: string) => void;
   setAmountOut: (amount: string) => void;
-  setTokenIn: (token: Token | string | UniswapToken) => void;
-  setTokenOut: (token: Token | string | UniswapToken) => void;
+  setTokenIn: (token: Token | string | EVMToken) => void;
+  setTokenOut: (token: Token | string | EVMToken) => void;
   setLimitPrice: (price: string) => void;
   setTwapParts: (parts: string) => void;
   setTwapFrequency: (frequency: string) => void;
@@ -38,8 +38,8 @@ export interface SwapStateActions {
 }
 
 export function useSwapState(
-  defaultTokenIn: Token | string | UniswapToken,
-  defaultTokenOut: Token | string | UniswapToken
+  defaultTokenIn: Token | string | EVMToken,
+  defaultTokenOut: Token | string | EVMToken
 ): SwapState & SwapStateActions {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,29 +47,23 @@ export function useSwapState(
   const [orderType, setOrderType] = useState<OrderType>("swap");
   const [amountIn, setAmountIn] = useState<string>("");
   const [amountOut, setAmountOut] = useState<string>("0.0");
-  const [tokenIn, setTokenIn] = useState<Token | string | UniswapToken>(
+  const [tokenIn, setTokenIn] = useState<Token | string | EVMToken>(
     defaultTokenIn
   );
-  const [tokenOut, setTokenOut] = useState<Token | string | UniswapToken>(
+  const [tokenOut, setTokenOut] = useState<Token | string | EVMToken>(
     defaultTokenOut
   );
 
   // Wrapper functions to ensure state updates are detected
-  const setTokenInWrapper = useCallback(
-    (token: Token | string | UniswapToken) => {
-      console.log("setTokenInWrapper called with:", token);
-      setTokenIn(token);
-    },
-    []
-  );
+  const setTokenInWrapper = useCallback((token: Token | string | EVMToken) => {
+    console.log("setTokenInWrapper called with:", token);
+    setTokenIn(token);
+  }, []);
 
-  const setTokenOutWrapper = useCallback(
-    (token: Token | string | UniswapToken) => {
-      console.log("setTokenOutWrapper called with:", token);
-      setTokenOut(token);
-    },
-    []
-  );
+  const setTokenOutWrapper = useCallback((token: Token | string | EVMToken) => {
+    console.log("setTokenOutWrapper called with:", token);
+    setTokenOut(token);
+  }, []);
   const [limitPrice, setLimitPrice] = useState<string>("");
   const [twapParts, setTwapParts] = useState<string>("10");
   const [twapFrequency, setTwapFrequency] = useState<string>("3600");

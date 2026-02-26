@@ -1,4 +1,5 @@
-use soroban_sdk::{Address, Env, Symbol, symbol_short};
+#![allow(deprecated)]
+use soroban_sdk::{Address, Env, symbol_short};
 
 pub struct Events;
 
