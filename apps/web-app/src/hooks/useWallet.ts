@@ -2,12 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { MappedBalances } from "@/lib/helpers/wallet";
-import { fetchBalances, getWallet } from "@/lib/helpers/wallet";
+import { fetchBalances } from "@/lib/helpers/wallet";
+import { signStellarTransactionWithWallet } from "@/lib/helpers/sign-stellar-transaction";
 import { stellarNetwork, networkPassphrase } from "@/lib/constants/network";
-import { useWalletStore } from "@/stores/walletStore";
+import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 
-export const useWallet = () => {
-  const { address } = useWalletStore();
+/** Hook con datos de la wallet Stellar: dirección, balances y firma de transacciones. */
+export function useWallet() {
+  const { address: stellarAddress } = useStellarWalletStore();
+  const address = stellarAddress ?? undefined;
 
   const {
     data: balances = {} as MappedBalances,
@@ -26,12 +29,12 @@ export const useWallet = () => {
     if (!address) {
       throw new Error("Connect Stellar wallet to sign");
     }
-    const kit = getWallet();
-    const result = await kit.signTransaction(xdr, {
-      address: options?.address ?? address,
-      networkPassphrase: options?.networkPassphrase ?? networkPassphrase,
+    const signerPublicKey = options?.address ?? address;
+    const signedTxXdr = await signStellarTransactionWithWallet({
+      unsignedTransactionXdr: xdr,
+      signerPublicKey,
     });
-    return result;
+    return { signedTxXdr };
   };
 
   return {
@@ -46,4 +49,4 @@ export const useWallet = () => {
     },
     signTransaction,
   };
-};
+}
