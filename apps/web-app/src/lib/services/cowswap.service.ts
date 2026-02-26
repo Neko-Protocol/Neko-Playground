@@ -536,6 +536,94 @@ export class CowSwapService {
   }
 
   /**
+   * Calculate traffic light status based on order parameters
+   */
+  calculateOrderStatus(
+    order: CowOrder,
+    _limitPrice: number
+  ): "far" | "close" | "executable" | "executing" {
+    try {
+      const executedSell = BigInt(order.executedSellAmount || "0");
+      const totalSell = BigInt(order.sellAmount);
+
+      if (totalSell === 0n) return "far";
+
+      const executionRatio = Number(executedSell) / Number(totalSell);
+
+      if (executionRatio > 0) {
+        return "executing";
+      }
+
+      const now = Date.now() / 1000;
+      const timeRemaining = order.validTo - now;
+      const totalDuration =
+        order.validTo - new Date(order.creationDate).getTime() / 1000;
+
+      if (totalDuration <= 0) return "far";
+
+      const timeRatio = timeRemaining / totalDuration;
+
+      if (timeRatio < 0.2) {
+        return "executable";
+      } else if (timeRatio < 0.5) {
+        return "close";
+      } else {
+        return "far";
+      }
+    } catch (error) {
+      console.error("Error calculating order status:", error);
+      return "far";
+    }
+  }
+
+  /**
+   * Process raw orders into internal format with business logic
+   */
+  processOrders(
+    rawOrders: CowOrder[],
+    _chainId: number
+  ): CowSwapOrderWithPrice[] {
+    const processedOrders: CowSwapOrderWithPrice[] = [];
+
+    for (const order of rawOrders) {
+      if (order.status === "open") {
+        const sellAmount = BigInt(order.sellAmount);
+        const buyAmount = BigInt(order.buyAmount);
+        const limitPrice =
+          sellAmount > 0n ? Number(buyAmount) / Number(sellAmount) : 0;
+
+        const progressStatus = this.calculateOrderStatus(order, limitPrice);
+        const explorerUrl = `https://explorer.cow.fi/orders/${order.uid}`;
+
+        processedOrders.push({
+          orderId: order.uid,
+          owner: order.owner,
+          sellToken: order.sellToken,
+          buyToken: order.buyToken,
+          sellAmount: order.sellAmount,
+          buyAmount: order.buyAmount,
+          executedSellAmount: order.executedSellAmount || "0",
+          executedBuyAmount: order.executedBuyAmount || "0",
+          executedFeeAmount: order.executedFeeAmount || "0",
+          status: order.status,
+          creationDate: order.creationDate,
+          validTo: order.validTo,
+          receiver: order.receiver,
+          appData: order.appData,
+          kind: order.kind,
+          partiallyFillable: order.partiallyFillable,
+          explorerUrl,
+          limitPrice: limitPrice.toString(),
+          executionPrice: limitPrice.toString(),
+          progressStatus,
+        });
+      }
+    }
+
+    return processedOrders;
+  }
+
+  /**
    * Create a limit order using CoW Protocol
    * Note: CoW Protocol handles limit orders differently than traditional exchanges.
    * Limit orders in CoW Protocol are executed when solvers find matching opportunities.
