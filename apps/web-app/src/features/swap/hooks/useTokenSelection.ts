@@ -8,6 +8,7 @@ import {
   getTokenId as getTokenIdUtil,
   getTokenIcon,
 } from "@/lib/helpers/stellar/swapUtils";
+import { isUserRejection } from "@/lib/helpers/isUserRejection";
 
 export interface TokenSelectionState {
   tokenSelectorOpen: boolean;
@@ -94,14 +95,7 @@ export function useTokenSelection(
           resetSwap();
           setTxHash(null);
         } catch (err: unknown) {
-          // Check if user rejected the request - this is not an error, just user cancellation
-          const errorMessage = err instanceof Error ? err.message : String(err);
-          const isUserRejection =
-            errorMessage.toLowerCase().includes("user rejected") ||
-            errorMessage.toLowerCase().includes("user denied") ||
-            errorMessage.includes("4001");
-
-          if (!isUserRejection) {
+          if (!isUserRejection(err)) {
             console.error("Failed to switch chain:", err);
             throw new Error(
               "Failed to switch network. Please switch manually in your wallet."
@@ -130,12 +124,7 @@ export function useTokenSelection(
           }
           setSelectedEvmChainId(chainId);
         } catch (err: unknown) {
-          const errorMessage = err instanceof Error ? err.message : String(err);
-          const isUserRejection =
-            errorMessage.toLowerCase().includes("user rejected") ||
-            errorMessage.toLowerCase().includes("user denied") ||
-            errorMessage.includes("4001");
-          if (!isUserRejection) {
+          if (!isUserRejection(err)) {
             console.error("Failed to switch chain:", err);
           }
         }
