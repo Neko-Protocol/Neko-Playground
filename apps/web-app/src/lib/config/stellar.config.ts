@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { WalletNetwork } from "@creit.tech/stellar-wallets-kit";
-import { Network, NetworkType } from "../debug/types/types";
+
+type NetworkType = "mainnet" | "testnet" | "futurenet" | "custom";
+interface Network {
+  id: NetworkType;
+  label: string;
+  passphrase: string;
+  rpcUrl: string;
+  horizonUrl: string;
+}
 
 const envSchema = z.object({
   PUBLIC_STELLAR_NETWORK: z.enum([
@@ -57,7 +65,6 @@ export const labPrefix = () => {
   }
 };
 
-// NOTE: needs to be exported for contract files in this directory
 export const rpcUrl = env.PUBLIC_STELLAR_RPC_URL;
 
 export const horizonUrl = env.PUBLIC_STELLAR_HORIZON_URL;

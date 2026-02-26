@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import oracleClient from "@/contracts/oracle";
+import oracleClient from "@/lib/clients/oracle";
 export const useOracle = () => {
   // Fetch all assets
   const {
