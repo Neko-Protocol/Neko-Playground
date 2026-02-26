@@ -20,7 +20,7 @@ import {
   addCollateral,
   borrowFromPool,
 } from "../helpers/lending";
-import { extractContractError } from "../helpers/contractErrors";
+import { StellarContractError } from "../helpers/contractErrorsStellarV2";
 import type {
   LendingOperationResult,
   CollateralOperationResult,
@@ -93,7 +93,10 @@ export class LendingService {
       return { xdr: transaction.toXDR() };
     } catch (error) {
       console.error("Error building approve transaction:", error);
-      const friendlyError = extractContractError(error, "rwa-token");
+      const friendlyError = new StellarContractError(
+        error,
+        "rwa-token"
+      ).message();
       return {
         xdr: "",
         error: friendlyError,
@@ -150,7 +153,10 @@ export class LendingService {
           !errorMessage.includes("require_auth") &&
           !errorMessage.includes("InvalidAction")
         ) {
-          const friendlyError = extractContractError(simError, "rwa-lending");
+          const friendlyError = new StellarContractError(
+            simError,
+            "rwa-lending"
+          ).message();
           throw new Error(friendlyError);
         }
       }
@@ -163,7 +169,10 @@ export class LendingService {
       return { xdr: preparedTx.toXDR() };
     } catch (error) {
       console.error("Error building deposit transaction:", error);
-      const friendlyError = extractContractError(error, "rwa-lending");
+      const friendlyError = new StellarContractError(
+        error,
+        "rwa-lending"
+      ).message();
       return {
         xdr: "",
         error: friendlyError,
@@ -220,7 +229,10 @@ export class LendingService {
           !errorMessage.includes("require_auth") &&
           !errorMessage.includes("InvalidAction")
         ) {
-          const friendlyError = extractContractError(simError, "rwa-lending");
+          const friendlyError = new StellarContractError(
+            simError,
+            "rwa-lending"
+          ).message();
           throw new Error(friendlyError);
         }
       }
@@ -233,7 +245,10 @@ export class LendingService {
       return { xdr: preparedTx.toXDR() };
     } catch (error) {
       console.error("Error building withdraw transaction:", error);
-      const friendlyError = extractContractError(error, "rwa-lending");
+      const friendlyError = new StellarContractError(
+        error,
+        "rwa-lending"
+      ).message();
       return {
         xdr: "",
         error: friendlyError,
@@ -290,7 +305,10 @@ export class LendingService {
           !errorMessage.includes("require_auth") &&
           !errorMessage.includes("InvalidAction")
         ) {
-          const friendlyError = extractContractError(simError, "rwa-lending");
+          const friendlyError = new StellarContractError(
+            simError,
+            "rwa-lending"
+          ).message();
           throw new Error(friendlyError);
         }
       }
@@ -303,7 +321,10 @@ export class LendingService {
       return { xdr: preparedTx.toXDR() };
     } catch (error) {
       console.error("Error building borrow transaction:", error);
-      const friendlyError = extractContractError(error, "rwa-lending");
+      const friendlyError = new StellarContractError(
+        error,
+        "rwa-lending"
+      ).message();
       return {
         xdr: "",
         error: friendlyError,
@@ -357,7 +378,10 @@ export class LendingService {
           !errorMessage.includes("require_auth") &&
           !errorMessage.includes("InvalidAction")
         ) {
-          const friendlyError = extractContractError(simError, "rwa-lending");
+          const friendlyError = new StellarContractError(
+            simError,
+            "rwa-lending"
+          ).message();
           throw new Error(friendlyError);
         }
       }
@@ -370,7 +394,10 @@ export class LendingService {
       return { xdr: preparedTx.toXDR() };
     } catch (error) {
       console.error("Error building add collateral transaction:", error);
-      const friendlyError = extractContractError(error, "rwa-lending");
+      const friendlyError = new StellarContractError(
+        error,
+        "rwa-lending"
+      ).message();
       return {
         xdr: "",
         error: friendlyError,
@@ -430,7 +457,10 @@ export class LendingService {
         "Error building add collateral with approve transactions:",
         error
       );
-      const friendlyError = extractContractError(error, "rwa-lending");
+      const friendlyError = new StellarContractError(
+        error,
+        "rwa-lending"
+      ).message();
       return {
         approveXdr: "",
         addCollateralXdr: "",
@@ -487,7 +517,10 @@ export class LendingService {
         "Error building borrow with collateral transactions:",
         error
       );
-      const friendlyError = extractContractError(error, "rwa-lending");
+      const friendlyError = new StellarContractError(
+        error,
+        "rwa-lending"
+      ).message();
       return {
         approveXdr: "",
         addCollateralXdr: "",

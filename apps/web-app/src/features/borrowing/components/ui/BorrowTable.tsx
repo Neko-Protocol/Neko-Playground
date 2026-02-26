@@ -23,13 +23,17 @@ import { Info } from "@mui/icons-material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { useBorrowPools } from "@/features/borrowing/hooks/useBorrowPools";
 import { useWallet } from "../../../../hooks/useWallet";
-import { approveToken, addCollateral, borrowFromPool } from "@/lib/helpers/lending";
+import {
+  approveToken,
+  addCollateral,
+  borrowFromPool,
+} from "@/lib/helpers/lending";
 import { getAvailableTokens } from "@/lib/helpers/soroswap";
 import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpcUrl } from "@/lib/constants/network";
 import { rpc } from "@stellar/stellar-sdk";
 import { networks } from "@neko/lending";
-import { extractContractErrorOrNull } from "@/lib/helpers/contractErrors";
+import { StellarContractError } from "@/lib/helpers/contractErrorsStellarV2";
 
 interface AssetData {
   id: string;
@@ -77,18 +81,26 @@ const BorrowTable: React.FC = () => {
   const { address, signTransaction, networkPassphrase } = useWallet();
 
   // Get real borrow pools from contract
-  const { data: borrowPools = [], isLoading: isLoadingPools, error: poolsError } = useBorrowPools();
-  
+  const {
+    data: borrowPools = [],
+    isLoading: isLoadingPools,
+    error: poolsError,
+  } = useBorrowPools();
+
   // Removed infinite console logs
 
   // Calculate borrow limit based on collateral
   const borrowLimit = useMemo(() => {
-    if (!selectedAsset || !collateralAmount || isNaN(parseFloat(collateralAmount))) {
+    if (
+      !selectedAsset ||
+      !collateralAmount ||
+      isNaN(parseFloat(collateralAmount))
+    ) {
       return 0;
     }
     const collateralValue = parseFloat(collateralAmount);
-    // Simplified: assumes 1:1 value for demo. 
-    
+    // Simplified: assumes 1:1 value for demo.
+
     return collateralValue * (selectedAsset.collateralFactor / 100);
   }, [selectedAsset, collateralAmount]);
 
@@ -97,11 +109,12 @@ const BorrowTable: React.FC = () => {
     return borrowPools.map((pool, index) => {
       // Format liquidity
       const balanceNum = parseFloat(pool.poolBalance);
-      const liquidity = balanceNum >= 1000
-        ? `$${(balanceNum / 1000).toFixed(2)}k`
-        : balanceNum >= 1000000
-        ? `$${(balanceNum / 1000000).toFixed(2)}M`
-        : `$${balanceNum.toFixed(2)}`;
+      const liquidity =
+        balanceNum >= 1000
+          ? `$${(balanceNum / 1000).toFixed(2)}k`
+          : balanceNum >= 1000000
+            ? `$${(balanceNum / 1000000).toFixed(2)}M`
+            : `$${balanceNum.toFixed(2)}`;
 
       return {
         id: `borrow-${index}`,
@@ -164,7 +177,9 @@ const BorrowTable: React.FC = () => {
     }
 
     if (borrowNum > borrowLimit) {
-      setError(`Borrow amount exceeds your limit of ${borrowLimit.toFixed(2)} ${selectedAsset.assetCode}`);
+      setError(
+        `Borrow amount exceeds your limit of ${borrowLimit.toFixed(2)} ${selectedAsset.assetCode}`
+      );
       return;
     }
 
@@ -174,11 +189,14 @@ const BorrowTable: React.FC = () => {
     try {
       const sorobanServer = new rpc.Server(rpcUrl, { allowHttp: true });
       const availableTokens = getAvailableTokens();
-      const collateralToken = availableTokens[selectedAsset.collateralTokenCode];
+      const collateralToken =
+        availableTokens[selectedAsset.collateralTokenCode];
       const lendingContractId = networks.testnet.contractId;
 
       if (!collateralToken?.contract) {
-        throw new Error(`Collateral token ${selectedAsset.collateralTokenCode} not found`);
+        throw new Error(
+          `Collateral token ${selectedAsset.collateralTokenCode} not found`
+        );
       }
 
       console.log("Step 1: Approving collateral token...");
@@ -187,7 +205,7 @@ const BorrowTable: React.FC = () => {
         lendingContractId,
         collateralAmount,
         collateralToken.decimals || 7,
-        address,
+        address
       );
 
       // Sign approve transaction
@@ -198,7 +216,7 @@ const BorrowTable: React.FC = () => {
       });
       const approveTx = TransactionBuilder.fromXDR(
         signedApprove.signedTxXdr,
-        networkPassphrase || Networks.TESTNET,
+        networkPassphrase || Networks.TESTNET
       );
       const approveResult = await sorobanServer.sendTransaction(approveTx);
       console.log("Approve result:", approveResult);
@@ -208,7 +226,7 @@ const BorrowTable: React.FC = () => {
       // Wait for approve to complete
       if (approveResult.status === "PENDING") {
         console.log("Waiting for approve transaction to complete...");
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise((resolve) => setTimeout(resolve, 5000));
       } else {
         console.log("Approve transaction completed immediately");
       }
@@ -218,20 +236,24 @@ const BorrowTable: React.FC = () => {
         collateralToken.contract,
         collateralAmount,
         collateralToken.decimals || 7,
-        address,
+        address
       );
 
       // Sign add_collateral transaction
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const signedAddCollateral = await signTransaction(addCollateralXdr as any, {
-        networkPassphrase: networkPassphrase || Networks.TESTNET,
-        address: address,
-      });
+      const signedAddCollateral = await signTransaction(
+        addCollateralXdr as any,
+        {
+          networkPassphrase: networkPassphrase || Networks.TESTNET,
+          address: address,
+        }
+      );
       const addCollateralTx = TransactionBuilder.fromXDR(
         signedAddCollateral.signedTxXdr,
-        networkPassphrase || Networks.TESTNET,
+        networkPassphrase || Networks.TESTNET
       );
-      const addCollateralResult = await sorobanServer.sendTransaction(addCollateralTx);
+      const addCollateralResult =
+        await sorobanServer.sendTransaction(addCollateralTx);
       console.log("Add collateral result:", addCollateralResult);
       console.log("Add collateral result status:", addCollateralResult.status);
       console.log("Add collateral result hash:", addCollateralResult.hash);
@@ -239,19 +261,26 @@ const BorrowTable: React.FC = () => {
       // Wait for add_collateral to complete
       if (addCollateralResult.status === "PENDING") {
         console.log("Waiting for add collateral transaction to complete...");
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise((resolve) => setTimeout(resolve, 5000));
       } else {
         console.log("Add collateral transaction completed immediately");
       }
 
       console.log("Step 3: Borrowing...");
-      console.log("Borrow parameters - Asset:", selectedAsset.assetCode, "Amount:", borrowAmount, "Collateral:", collateralAmount);
+      console.log(
+        "Borrow parameters - Asset:",
+        selectedAsset.assetCode,
+        "Amount:",
+        borrowAmount,
+        "Collateral:",
+        collateralAmount
+      );
 
       const borrowXdr = await borrowFromPool(
         selectedAsset.assetCode,
         borrowAmount,
         7, // USDC/XLM decimals
-        address,
+        address
       );
 
       // Sign borrow transaction
@@ -262,22 +291,25 @@ const BorrowTable: React.FC = () => {
       });
       const borrowTx = TransactionBuilder.fromXDR(
         signedBorrow.signedTxXdr,
-        networkPassphrase || Networks.TESTNET,
+        networkPassphrase || Networks.TESTNET
       );
       const borrowResult = await sorobanServer.sendTransaction(borrowTx);
       console.log("Borrow result:", borrowResult);
-      
-      setSuccess(`Successfully borrowed ${borrowNum} ${selectedAsset.assetCode} using ${collateralNum} ${selectedAsset.collateralTokenCode} as collateral`);
+
+      setSuccess(
+        `Successfully borrowed ${borrowNum} ${selectedAsset.assetCode} using ${collateralNum} ${selectedAsset.collateralTokenCode} as collateral`
+      );
       setCollateralAmount("");
       setBorrowAmount("");
     } catch (err) {
-      const friendlyError = extractContractErrorOrNull(err);
+      const friendlyError = new StellarContractError(err).messageOrNull();
       // Only show error if it's not a user cancellation
       if (friendlyError) {
         // Ensure we always pass a string to setError
-        const errorMessage = typeof friendlyError === 'string'
-          ? friendlyError
-          : 'An unexpected error occurred. Please try again.';
+        const errorMessage =
+          typeof friendlyError === "string"
+            ? friendlyError
+            : "An unexpected error occurred. Please try again.";
         setError(errorMessage);
       }
     } finally {
@@ -369,7 +401,9 @@ const BorrowTable: React.FC = () => {
                     <Typography sx={{ color: "#7096D1" }}>
                       No active borrow pools available
                     </Typography>
-                    <Typography sx={{ color: "#7096D1", fontSize: "0.875rem", mt: 1 }}>
+                    <Typography
+                      sx={{ color: "#7096D1", fontSize: "0.875rem", mt: 1 }}
+                    >
                       {borrowPools.length === 0
                         ? "No pools found in contract"
                         : `${borrowPools.length} pool(s) found but filtered out`}
@@ -378,120 +412,128 @@ const BorrowTable: React.FC = () => {
                 </TableRow>
               ) : (
                 assets.map((asset) => (
-                <TableRow
-                  key={asset.id}
-                  sx={{
-                    "&:hover": {
-                      backgroundColor: "rgba(51, 78, 172, 0.1)",
-                    },
-                    "& td": {
-                      borderBottom: "1px solid rgba(51, 78, 172, 0.2)",
-                      py: 2.5,
-                    },
-                  }}
-                >
-                  <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <TableRow
+                    key={asset.id}
+                    sx={{
+                      "&:hover": {
+                        backgroundColor: "rgba(51, 78, 172, 0.1)",
+                      },
+                      "& td": {
+                        borderBottom: "1px solid rgba(51, 78, 172, 0.2)",
+                        py: 2.5,
+                      },
+                    }}
+                  >
+                    <TableCell>
                       <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Box
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            backgroundColor: asset.isActive
+                              ? "#028733ff"
+                              : "#6b7280",
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            color: asset.isActive ? "#028733ff" : "#7096D1",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {asset.id}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Box
+                          sx={{ position: "relative", width: 40, height: 24 }}
+                        >
+                          <Avatar
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              position: "absolute",
+                              left: 0,
+                              border: "2px solid #ffffff",
+                              backgroundColor: "#334EAC",
+                            }}
+                          />
+                          <Avatar
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              position: "absolute",
+                              left: 16,
+                              border: "2px solid #ffffff",
+                              backgroundColor: "#7096D1",
+                            }}
+                          />
+                        </Box>
+                        <Box>
+                          <Typography
+                            sx={{ color: "#081F5C", fontWeight: 500 }}
+                          >
+                            {asset.pool.token1} / {asset.pool.token2}
+                          </Typography>
+                          <Chip
+                            label={asset.pool.fee}
+                            size="small"
+                            sx={{
+                              backgroundColor: "rgba(51, 78, 172, 0.1)",
+                              color: "#081F5C",
+                              fontWeight: 600,
+                              height: 20,
+                              fontSize: "0.7rem",
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ color: "#081F5C" }}>
+                        {asset.borrowApr}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ color: "#081F5C" }}>
+                        {asset.collateralFactorDisplay}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ color: "#081F5C" }}>
+                        {asset.liquidity}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        onClick={() => handleBorrowClick(asset)}
+                        variant="contained"
                         sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          backgroundColor: asset.isActive
-                            ? "#028733ff"
-                            : "#6b7280",
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          color: asset.isActive ? "#028733ff" : "#7096D1",
-                          fontWeight: 500,
+                          backgroundColor: "#081F5C",
+                          color: "#ffffff",
+                          borderRadius: "12px",
+                          px: 3,
+                          py: 1,
+                          textTransform: "none",
+                          fontSize: "0.875rem",
+                          fontWeight: 600,
+                          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                          "&:hover": {
+                            backgroundColor: "#334EAC",
+                          },
                         }}
                       >
-                        {asset.id}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Box sx={{ position: "relative", width: 40, height: 24 }}>
-                        <Avatar
-                          sx={{
-                            width: 24,
-                            height: 24,
-                            position: "absolute",
-                            left: 0,
-                            border: "2px solid #ffffff",
-                            backgroundColor: "#334EAC",
-                          }}
-                        />
-                        <Avatar
-                          sx={{
-                            width: 24,
-                            height: 24,
-                            position: "absolute",
-                            left: 16,
-                            border: "2px solid #ffffff",
-                            backgroundColor: "#7096D1",
-                          }}
-                        />
-                      </Box>
-                      <Box>
-                        <Typography sx={{ color: "#081F5C", fontWeight: 500 }}>
-                          {asset.pool.token1} / {asset.pool.token2}
-                        </Typography>
-                        <Chip
-                          label={asset.pool.fee}
-                          size="small"
-                          sx={{
-                            backgroundColor: "rgba(51, 78, 172, 0.1)",
-                            color: "#081F5C",
-                            fontWeight: 600,
-                            height: 20,
-                            fontSize: "0.7rem",
-                          }}
-                        />
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ color: "#081F5C" }}>
-                      {asset.borrowApr}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ color: "#081F5C" }}>
-                      {asset.collateralFactorDisplay}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ color: "#081F5C" }}>
-                      {asset.liquidity}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      onClick={() => handleBorrowClick(asset)}
-                      variant="contained"
-                      sx={{
-                        backgroundColor: "#081F5C",
-                        color: "#ffffff",
-                        borderRadius: "12px",
-                        px: 3,
-                        py: 1,
-                        textTransform: "none",
-                        fontSize: "0.875rem",
-                        fontWeight: 600,
-                        boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                        "&:hover": {
-                          backgroundColor: "#334EAC",
-                        },
-                      }}
-                    >
-                      Borrow
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                        Borrow
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
             </TableBody>
@@ -552,25 +594,46 @@ const BorrowTable: React.FC = () => {
 
             {/* Error/Success Messages */}
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+              <Alert
+                severity="error"
+                sx={{ mb: 2 }}
+                onClose={() => setError(null)}
+              >
                 {error}
               </Alert>
             )}
             {success && (
-              <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+              <Alert
+                severity="success"
+                sx={{ mb: 2 }}
+                onClose={() => setSuccess(null)}
+              >
                 {success}
               </Alert>
             )}
 
             {/* Collateral Info */}
-            <Box sx={{ mb: 3, p: 2, backgroundColor: "#f3f4f6", borderRadius: "12px" }}>
-              <Typography sx={{ color: "#7096D1", fontSize: "0.875rem", mb: 1 }}>
+            <Box
+              sx={{
+                mb: 3,
+                p: 2,
+                backgroundColor: "#f3f4f6",
+                borderRadius: "12px",
+              }}
+            >
+              <Typography
+                sx={{ color: "#7096D1", fontSize: "0.875rem", mb: 1 }}
+              >
                 Collateral Token
               </Typography>
-              <Typography sx={{ color: "#081F5C", fontWeight: 600, fontSize: "1.25rem" }}>
+              <Typography
+                sx={{ color: "#081F5C", fontWeight: 600, fontSize: "1.25rem" }}
+              >
                 {selectedAsset?.collateralTokenCode}
               </Typography>
-              <Typography sx={{ color: "#7096D1", fontSize: "0.75rem", mt: 0.5 }}>
+              <Typography
+                sx={{ color: "#7096D1", fontSize: "0.75rem", mt: 0.5 }}
+              >
                 Collateral Factor: {selectedAsset?.collateralFactor}%
               </Typography>
             </Box>
@@ -597,11 +660,20 @@ const BorrowTable: React.FC = () => {
             </Box>
 
             {/* Borrow Limit */}
-            <Box sx={{ mb: 3, p: 2, backgroundColor: "#e0f2fe", borderRadius: "12px" }}>
+            <Box
+              sx={{
+                mb: 3,
+                p: 2,
+                backgroundColor: "#e0f2fe",
+                borderRadius: "12px",
+              }}
+            >
               <Typography sx={{ color: "#0369a1", fontSize: "0.875rem" }}>
                 Your Borrow Limit
               </Typography>
-              <Typography sx={{ color: "#0c4a6e", fontWeight: 700, fontSize: "1.5rem" }}>
+              <Typography
+                sx={{ color: "#0c4a6e", fontWeight: 700, fontSize: "1.5rem" }}
+              >
                 {borrowLimit.toFixed(2)} {selectedAsset?.assetCode}
               </Typography>
             </Box>
@@ -625,11 +697,14 @@ const BorrowTable: React.FC = () => {
                   },
                 }}
               />
-              {parseFloat(borrowAmount) > borrowLimit && borrowAmount !== "" && (
-                <Typography sx={{ color: "#dc2626", fontSize: "0.75rem", mt: 0.5 }}>
-                  Amount exceeds your borrow limit
-                </Typography>
-              )}
+              {parseFloat(borrowAmount) > borrowLimit &&
+                borrowAmount !== "" && (
+                  <Typography
+                    sx={{ color: "#dc2626", fontSize: "0.75rem", mt: 0.5 }}
+                  >
+                    Amount exceeds your borrow limit
+                  </Typography>
+                )}
             </Box>
 
             {/* Action Buttons */}
@@ -656,7 +731,11 @@ const BorrowTable: React.FC = () => {
                 fullWidth
                 variant="contained"
                 onClick={handleBorrow}
-                disabled={isProcessing || !address || parseFloat(borrowAmount) > borrowLimit}
+                disabled={
+                  isProcessing ||
+                  !address ||
+                  parseFloat(borrowAmount) > borrowLimit
+                }
                 sx={{
                   borderRadius: "12px",
                   py: 1.5,
@@ -681,7 +760,14 @@ const BorrowTable: React.FC = () => {
 
             {/* Wallet Connection Warning */}
             {!address && (
-              <Typography sx={{ color: "#dc2626", fontSize: "0.75rem", mt: 2, textAlign: "center" }}>
+              <Typography
+                sx={{
+                  color: "#dc2626",
+                  fontSize: "0.75rem",
+                  mt: 2,
+                  textAlign: "center",
+                }}
+              >
                 Please connect your wallet to borrow
               </Typography>
             )}

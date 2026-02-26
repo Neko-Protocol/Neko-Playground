@@ -14,7 +14,7 @@ import { getAvailableTokens } from "@/lib/helpers/soroswap";
 import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { rpc } from "@stellar/stellar-sdk";
-import { extractContractErrorOrNull } from "@/lib/helpers/contractErrors";
+import { StellarContractError } from "@/lib/helpers/contractErrorsStellarV2";
 
 interface PoolData {
   id: string;
@@ -379,7 +379,7 @@ const Lend: React.FC = () => {
 
       handleCloseModal();
     } catch (error) {
-      const errorMessage = extractContractErrorOrNull(error);
+      const errorMessage = new StellarContractError(error).messageOrNull();
       // Only set error state if it's not a user cancellation
       if (errorMessage) {
         // Ensure we always pass a string to setError

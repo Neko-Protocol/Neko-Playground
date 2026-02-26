@@ -19,7 +19,7 @@ import {
   stellarNetwork,
 } from "@/lib/constants/network";
 import { toSmallestUnit } from "./swapUtils";
-import { extractContractError } from "./contractErrors";
+import { StellarContractError } from "./contractErrorsStellarV2";
 
 /**
  * Approve token contract to spend tokens on behalf of the user
@@ -79,7 +79,10 @@ export const approveToken = async (
     return transaction.toXDR();
   } catch (error) {
     console.error("Error building approve transaction:", error);
-    const friendlyError = extractContractError(error, "rwa-token");
+    const friendlyError = new StellarContractError(
+      error,
+      "rwa-token"
+    ).message();
     throw new Error(friendlyError);
   }
 };
@@ -139,7 +142,10 @@ export const depositToPool = async (
         !errorMessage.includes("InvalidAction")
       ) {
         // If it's not an auth error, extract and throw a user-friendly message
-        const friendlyError = extractContractError(simError, "rwa-lending");
+        const friendlyError = new StellarContractError(
+          simError,
+          "rwa-lending"
+        ).message();
         throw new Error(friendlyError);
       }
       // Otherwise, continue - auth will be checked when transaction is signed
@@ -161,7 +167,10 @@ export const depositToPool = async (
       throw error;
     }
     // Otherwise, extract contract error
-    const friendlyError = extractContractError(error, "rwa-lending");
+    const friendlyError = new StellarContractError(
+      error,
+      "rwa-lending"
+    ).message();
     throw new Error(friendlyError);
   }
 };
@@ -221,7 +230,10 @@ export const withdrawFromPool = async (
         !errorMessage.includes("InvalidAction")
       ) {
         // If it's not an auth error, extract and throw a user-friendly message
-        const friendlyError = extractContractError(simError, "rwa-lending");
+        const friendlyError = new StellarContractError(
+          simError,
+          "rwa-lending"
+        ).message();
         throw new Error(friendlyError);
       }
       // Otherwise, continue - auth will be checked when transaction is signed
@@ -241,7 +253,10 @@ export const withdrawFromPool = async (
     ) {
       throw error;
     }
-    const friendlyError = extractContractError(error, "rwa-lending");
+    const friendlyError = new StellarContractError(
+      error,
+      "rwa-lending"
+    ).message();
     throw new Error(friendlyError);
   }
 };
@@ -296,7 +311,10 @@ export const addCollateral = async (
         !errorMessage.includes("require_auth") &&
         !errorMessage.includes("InvalidAction")
       ) {
-        const friendlyError = extractContractError(simError, "rwa-lending");
+        const friendlyError = new StellarContractError(
+          simError,
+          "rwa-lending"
+        ).message();
         throw new Error(friendlyError);
       }
     }
@@ -315,7 +333,10 @@ export const addCollateral = async (
     ) {
       throw error;
     }
-    const friendlyError = extractContractError(error, "rwa-lending");
+    const friendlyError = new StellarContractError(
+      error,
+      "rwa-lending"
+    ).message();
     throw new Error(friendlyError);
   }
 };
@@ -373,7 +394,10 @@ export const borrowFromPool = async (
         !errorMessage.includes("require_auth") &&
         !errorMessage.includes("InvalidAction")
       ) {
-        const friendlyError = extractContractError(simError, "rwa-lending");
+        const friendlyError = new StellarContractError(
+          simError,
+          "rwa-lending"
+        ).message();
         throw new Error(friendlyError);
       }
     }
@@ -392,7 +416,10 @@ export const borrowFromPool = async (
     ) {
       throw error;
     }
-    const friendlyError = extractContractError(error, "rwa-lending");
+    const friendlyError = new StellarContractError(
+      error,
+      "rwa-lending"
+    ).message();
     throw new Error(friendlyError);
   }
 };
