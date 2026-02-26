@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAccount, useChainId, useWalletClient } from "wagmi";
 import { ORDER_HISTORY_LIMIT } from "@/features/swap/constants/swapConfig";
+import { EVM_TOKEN_ADDRESS_TO_SYMBOL } from "@/lib/constants/tokenIcons";
 import {
   getCowSwapOpenOrders,
   getCowSwapOrderHistory,
@@ -100,6 +101,10 @@ export const OrderManagement: React.FC = () => {
     }
   };
 
+  const resolveTokenSymbol = (address: string): string =>
+    EVM_TOKEN_ADDRESS_TO_SYMBOL[address.toLowerCase()] ||
+    address.slice(0, 6) + "…";
+
   // Get traffic light color based on progress status
   const getTrafficLightColor = (status: string) => {
     switch (status) {
@@ -189,8 +194,9 @@ export const OrderManagement: React.FC = () => {
                       title={`Status: ${order.progressStatus}`}
                     />
                     <span className="text-sm font-semibold text-white">
-                      {order.kind.toUpperCase()} {order.sellToken} →{" "}
-                      {order.buyToken}
+                      {order.kind.toUpperCase()}{" "}
+                      {resolveTokenSymbol(order.sellToken)} →{" "}
+                      {resolveTokenSymbol(order.buyToken)}
                     </span>
                   </div>
                   <div className="flex gap-2">
@@ -249,8 +255,9 @@ export const OrderManagement: React.FC = () => {
               >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-white">
-                    {order.kind.toUpperCase()} {order.sellToken} →{" "}
-                    {order.buyToken}
+                    {order.kind.toUpperCase()}{" "}
+                    {resolveTokenSymbol(order.sellToken)} →{" "}
+                    {resolveTokenSymbol(order.buyToken)}
                   </span>
                   <span
                     className={`px-2 py-1 text-xs rounded ${

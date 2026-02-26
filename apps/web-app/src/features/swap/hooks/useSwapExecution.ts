@@ -19,6 +19,7 @@ import {
 } from "@/lib/helpers/evm/cowswap";
 import { getTokensForChain } from "@/lib/constants/evmConfig";
 import { useWallet } from "@/hooks/useWallet";
+import { isUserRejection } from "@/lib/helpers/isUserRejection";
 
 export interface SwapExecutionParams {
   swapMode: "evm" | "stellar";
@@ -203,19 +204,7 @@ export function useSwapExecution() {
             address: address,
           });
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : String(error);
-          const errorString = errorMessage.toLowerCase();
-          if (
-            errorString.includes("user denied") ||
-            errorString.includes("user rejected") ||
-            errorString.includes("user cancelled") ||
-            errorString.includes("user canceled") ||
-            errorString.includes("cancelled") ||
-            errorString.includes("canceled")
-          ) {
-            throw new Error("USER_REJECTED");
-          }
+          if (isUserRejection(error)) throw new Error("USER_REJECTED");
           throw error;
         }
 
