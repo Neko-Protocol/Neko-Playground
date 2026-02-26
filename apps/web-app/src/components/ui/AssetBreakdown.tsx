@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import {
   Table,
   TableBody,
@@ -19,125 +19,17 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Info } from "@mui/icons-material";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
-import { useLendingPools } from "@/features/lending/hooks/useLendingPools";
-import { useBorrowPools } from "@/features/borrowing/hooks/useBorrowPools";
-
-interface AssetData {
-  id: string;
-  pool: {
-    token1: string;
-    token2: string;
-    fee: string;
-  };
-  roi: string;
-  feeApy: string;
-  liquidity: string;
-  isActive: boolean;
-}
-
-const lightTheme = createTheme({
-  palette: {
-    mode: "light",
-    primary: {
-      main: "#083dffff",
-    },
-    background: {
-      default: "#ffffff",
-      paper: "#f9fafb",
-    },
-    text: {
-      primary: "#081F5C",
-      secondary: "#7096D1",
-    },
-  },
-});
+import { nekoLightTheme } from "@/lib/theme/muiTheme";
+import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
 
 const AssetBreakdown: React.FC = () => {
   const router = useRouter();
-
-  // Get real lending pools from contract
-  const {
-    data: lendingPools = [],
-    isLoading: isLoadingLending,
-    error: lendingError,
-  } = useLendingPools();
-
-  // Get real borrow pools from contract
-  const {
-    data: borrowPools = [],
-    isLoading: isLoadingBorrow,
-    error: borrowError,
-  } = useBorrowPools();
-
-  const isLoading = isLoadingLending || isLoadingBorrow;
-  const error = lendingError || borrowError;
-
-  // Combine and transform lending and borrow pools into unified AssetData format
-  const assets: AssetData[] = useMemo(() => {
-    const combinedAssets: AssetData[] = [];
-
-    // Add lending pools (single token pools for supplying liquidity)
-    lendingPools.forEach((pool, index) => {
-      // Calculate APY from interest rate
-      const apy =
-        pool.interestRate > 0 ? `${pool.interestRate.toFixed(2)}%` : "0.00%";
-
-      // Format liquidity
-      const balanceNum = parseFloat(pool.poolBalance);
-      const liquidity =
-        balanceNum >= 1000000
-          ? `$${(balanceNum / 1000000).toFixed(2)}M`
-          : balanceNum >= 1000
-            ? `$${(balanceNum / 1000).toFixed(2)}k`
-            : `$${balanceNum.toFixed(2)}`;
-
-      combinedAssets.push({
-        id: `lending-${index}`,
-        pool: {
-          token1: pool.assetCode,
-          token2: "Lending",
-          fee: "0%",
-        },
-        roi: `${pool.interestRate.toFixed(2)}%`,
-        feeApy: apy,
-        liquidity,
-        isActive: pool.isActive,
-      });
-    });
-
-    // Add borrow pools (RWA token + debt asset pairs)
-    borrowPools.forEach((pool, index) => {
-      // Format liquidity
-      const balanceNum = parseFloat(pool.poolBalance);
-      const liquidity =
-        balanceNum >= 1000000
-          ? `$${(balanceNum / 1000000).toFixed(2)}M`
-          : balanceNum >= 1000
-            ? `$${(balanceNum / 1000).toFixed(2)}k`
-            : `$${balanceNum.toFixed(2)}`;
-
-      combinedAssets.push({
-        id: `borrow-${index}`,
-        pool: {
-          token1: pool.assetCode,
-          token2: pool.collateralTokenCode,
-          fee: `${pool.collateralFactor}%`,
-        },
-        roi: `${pool.interestRate.toFixed(2)}%`,
-        feeApy: `${pool.interestRate.toFixed(2)}%`,
-        liquidity,
-        isActive: pool.isActive,
-      });
-    });
-
-    // Limit to 3 items for dashboard display
-    return combinedAssets.slice(0, 3);
-  }, [lendingPools, borrowPools]);
+  const { assets, isLoading, error } = useDashboardPools();
 
   return (
-    <ThemeProvider theme={lightTheme}>
+    <ThemeProvider theme={nekoLightTheme}>
       <Box sx={{ width: "100%", px: 3, pt: 4 }}>
         <TableContainer
           component={Paper}
