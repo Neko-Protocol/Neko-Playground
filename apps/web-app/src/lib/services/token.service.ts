@@ -5,14 +5,14 @@
 
 import { PublicClient, WalletClient } from "viem";
 import { EVM_TOKENS, getTokensForChain } from "../constants/evmConfig";
-import type { Token } from "@uniswap/sdk-core";
+import type { EVMToken } from "../types/evmToken";
 import type { TokenBalanceResult, TokenInfo } from "../types/tokenTypes";
 
 export class TokenService {
   /**
    * Get token info by symbol or address
    */
-  getTokenInfo(token: Token | string, chainId: number = 1): Token | null {
+  getTokenInfo(token: EVMToken | string, chainId: number = 1): EVMToken | null {
     if (typeof token === "string") {
       const tokens = getTokensForChain(chainId);
       const tokenBySymbol = Object.values(tokens).find(

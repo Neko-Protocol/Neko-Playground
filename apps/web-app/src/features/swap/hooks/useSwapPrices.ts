@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useEVMTokenPrice } from "@/hooks/useEVMTokenPrice";
 import type { Token } from "@/lib/helpers/soroswap";
-import { Token as UniswapToken } from "@uniswap/sdk-core";
+import type { EVMToken } from "@/lib/types/evmToken";
 
 export interface SwapPrices {
   tokenInPrice: number;
@@ -23,8 +23,8 @@ export function useSwapPrices(
   swapMode: "evm" | "stellar",
   amountIn: string,
   amountOut: string,
-  tokenIn: Token | string | UniswapToken,
-  tokenOut: Token | string | UniswapToken
+  tokenIn: Token | string | EVMToken,
+  tokenOut: Token | string | EVMToken
 ): SwapPrices {
   // Get Stellar token prices
   const { price: stellarTokenInPrice, isLoading: isLoadingStellarPrice } =
@@ -44,13 +44,13 @@ export function useSwapPrices(
   const { price: evmTokenInPrice, isLoading: isLoadingEvmPrice } =
     useEVMTokenPrice(
       swapMode === "evm"
-        ? (tokenIn as UniswapToken | string | undefined)
+        ? (tokenIn as EVMToken | string | undefined)
         : undefined
     );
   const { price: evmTokenOutPrice, isLoading: isLoadingEvmOutPrice } =
     useEVMTokenPrice(
       swapMode === "evm"
-        ? (tokenOut as UniswapToken | string | undefined)
+        ? (tokenOut as EVMToken | string | undefined)
         : undefined
     );
 

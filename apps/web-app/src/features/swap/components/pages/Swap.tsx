@@ -12,7 +12,7 @@ import {
   getAvailableTokens,
   type Token,
 } from "@/lib/helpers/soroswap";
-import { Token as UniswapToken } from "@uniswap/sdk-core";
+import type { EVMToken } from "@/lib/types/evmToken";
 import { SUPPORTED_CHAINS } from "@/lib/constants/evmConfig";
 import { extractContractErrorOrNull } from "@/lib/helpers/contractErrors";
 import { OrderManagement } from "../ui/OrderManagement";
@@ -153,7 +153,7 @@ const Swap: React.FC = () => {
     if (swapMode !== "evm") return undefined;
     if (typeof tokenIn === "string") return tokenIn;
     if (typeof tokenIn === "object" && "symbol" in tokenIn) {
-      return (tokenIn as UniswapToken).symbol;
+      return (tokenIn as EVMToken).symbol;
     }
     return undefined;
   }, [swapMode, tokenIn]);
@@ -172,7 +172,7 @@ const Swap: React.FC = () => {
   const isSellingNativeETH = useMemo(() => {
     if (swapMode !== "evm") return false;
     const symbol =
-      typeof tokenIn === "string" ? tokenIn : (tokenIn as UniswapToken)?.symbol;
+      typeof tokenIn === "string" ? tokenIn : (tokenIn as EVMToken)?.symbol;
     return symbol === "ETH" && selectedEvmChainId === 1;
   }, [swapMode, tokenIn, selectedEvmChainId]);
 

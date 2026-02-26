@@ -3,7 +3,7 @@
  * Handles token price fetching from various sources (CoinGecko, etc.)
  */
 
-import { Token } from "@uniswap/sdk-core";
+import { isEVMToken, type EVMToken } from "../types/evmToken";
 import type { TokenPriceResult, PriceFetchOptions } from "../types/priceTypes";
 
 export class PriceService {
@@ -257,10 +257,10 @@ export class PriceService {
   }
 
   /**
-   * Get price for Token object (from Uniswap SDK)
+   * Get price for EVM token object
    */
   async getTokenPriceFromToken(
-    token: Token | string | undefined,
+    token: EVMToken | string | undefined,
     options: PriceFetchOptions = {}
   ): Promise<TokenPriceResult> {
     if (!token) {
@@ -275,7 +275,7 @@ export class PriceService {
 
     if (typeof token === "string") {
       tokenSymbol = token;
-    } else if (token instanceof Token) {
+    } else if (isEVMToken(token)) {
       tokenSymbol = token.symbol || null;
     }
 

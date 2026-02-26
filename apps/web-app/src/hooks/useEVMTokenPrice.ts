@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Token } from "@uniswap/sdk-core";
+import type { EVMToken } from "@/lib/types/evmToken";
 import { EVM_TOKENS } from "@/lib/constants/evmConfig";
 import { priceService } from "@/lib/services";
 
 export const useEVMTokenPrice = (
-  token: Token | string | undefined
+  token: EVMToken | string | undefined
 ): { price: number; isLoading: boolean; error: string | null } => {
   const getTokenSymbol = (): string | null => {
     if (!token) return null;
@@ -17,7 +17,7 @@ export const useEVMTokenPrice = (
       );
     }
 
-    if (token instanceof Token) {
+    if ("symbol" in token && "chainId" in token) {
       return token.symbol || null;
     }
 

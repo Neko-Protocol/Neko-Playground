@@ -1,12 +1,12 @@
 import React from "react";
 import type { Token } from "@/lib/helpers/soroswap";
-import { Token as UniswapToken } from "@uniswap/sdk-core";
+import type { EVMToken } from "@/lib/types/evmToken";
 
 interface LimitOrderFormProps {
   limitPrice: string;
   onLimitPriceChange: (price: string) => void;
-  tokenOut: Token | string | UniswapToken;
-  getTokenId: (token: Token | string | UniswapToken) => string;
+  tokenOut: Token | string | EVMToken;
+  getTokenId: (token: Token | string | EVMToken) => string;
 }
 
 export const LimitOrderForm: React.FC<LimitOrderFormProps> = ({

@@ -140,7 +140,7 @@ export const getTokenIcon = (
   let tokenCode: string | null = null;
   let isEVM = false;
 
-  // Handle Uniswap Token objects (EVM tokens)
+  // Handle EVM token objects
   if (
     typeof token === "object" &&
     "symbol" in token &&

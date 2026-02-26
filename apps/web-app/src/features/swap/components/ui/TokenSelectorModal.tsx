@@ -10,7 +10,7 @@ import {
   DEFAULT_CHAIN_ID,
   type ChainConfig,
 } from "@/lib/constants/evmConfig";
-import { Token as UniswapToken } from "@uniswap/sdk-core";
+import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
 
 interface TokenSelectorModalProps {
   isOpen: boolean;
@@ -187,13 +187,10 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
     return chain?.icon || null;
   }, [localChainId]);
 
-  const getTokenId = (token: Token | string | UniswapToken): string => {
+  const getTokenId = (token: Token | string | EVMToken): string => {
     if (swapMode === "evm") {
-      if (
-        token instanceof UniswapToken ||
-        (typeof token === "object" && "symbol" in token && "address" in token)
-      ) {
-        return (token as UniswapToken).symbol || "";
+      if (isEVMToken(token)) {
+        return token.symbol || "";
       }
       if (typeof token === "string") {
         if (evmTokens[token]) {
@@ -410,11 +407,11 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                       : availableTokens[code];
                   const tokenName =
                     swapMode === "evm"
-                      ? (tokenInfo as UniswapToken)?.name || code
+                      ? (tokenInfo as EVMToken)?.name || code
                       : (tokenInfo as { name: string })?.name || code;
                   const tokenIcon =
                     swapMode === "evm"
-                      ? getTokenIcon(tokenInfo as UniswapToken | string)
+                      ? getTokenIcon(tokenInfo as EVMToken | string)
                       : (tokenInfo as { contract?: string })?.contract
                         ? getTokenIcon(
                             (tokenInfo as { contract: string }).contract
@@ -461,11 +458,11 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                       : availableTokens[code];
                   const tokenName =
                     swapMode === "evm"
-                      ? (tokenInfo as UniswapToken)?.name || code
+                      ? (tokenInfo as EVMToken)?.name || code
                       : (tokenInfo as { name: string })?.name || code;
                   const tokenIcon =
                     swapMode === "evm"
-                      ? getTokenIcon(tokenInfo as UniswapToken | string)
+                      ? getTokenIcon(tokenInfo as EVMToken | string)
                       : (tokenInfo as { contract?: string })?.contract
                         ? getTokenIcon(
                             (tokenInfo as { contract: string }).contract
