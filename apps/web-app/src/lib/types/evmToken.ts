@@ -1,5 +1,4 @@
 /**
- * EVM token type (replaces @uniswap/sdk-core Token).
  * Used for EVM chain tokens in swap, CoW Swap, and price services.
  */
 export interface EVMToken {
