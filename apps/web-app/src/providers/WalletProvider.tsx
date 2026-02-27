@@ -6,7 +6,7 @@ import {
   useState,
   useTransition,
 } from "react";
-import { getWallet, type MappedBalances } from "@/lib/helpers/wallet";
+import { getWallet, type MappedBalances } from "@/lib/helpers/stellar/wallet";
 import storage from "@/lib/helpers/storage";
 import { useBalances } from "@/hooks/useBalances";
 

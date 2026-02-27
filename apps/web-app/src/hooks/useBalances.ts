@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchBalances, type MappedBalances } from "@/lib/helpers/wallet";
+import {
+  fetchBalances,
+  type MappedBalances,
+} from "@/lib/helpers/stellar/wallet";
 
 /**
  * Hook to fetch wallet balances using React Query.
@@ -36,7 +39,7 @@ export const useBalances = (
      * Default: 2
      */
     retry?: number;
-  },
+  }
 ) => {
   const {
     enabled = true,

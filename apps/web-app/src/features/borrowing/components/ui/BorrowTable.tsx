@@ -27,8 +27,8 @@ import {
   approveToken,
   addCollateral,
   borrowFromPool,
-} from "@/lib/helpers/lending";
-import { getAvailableTokens } from "@/lib/helpers/soroswap";
+} from "@/lib/helpers/stellar/lending";
+import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpcUrl } from "@/lib/constants/network";
 import { rpc } from "@stellar/stellar-sdk";
@@ -96,9 +96,16 @@ const BorrowTable: React.FC = () => {
       !collateralAmount ||
       isNaN(parseFloat(collateralAmount))
     ) {
+    if (
+      !selectedAsset ||
+      !collateralAmount ||
+      isNaN(parseFloat(collateralAmount))
+    ) {
       return 0;
     }
     const collateralValue = parseFloat(collateralAmount);
+    // Simplified: assumes 1:1 value for demo.
+
     // Simplified: assumes 1:1 value for demo.
 
     return collateralValue * (selectedAsset.collateralFactor / 100);
@@ -111,9 +118,9 @@ const BorrowTable: React.FC = () => {
       const balanceNum = parseFloat(pool.poolBalance);
       const liquidity =
         balanceNum >= 1000
-          ? `$${(balanceNum / 1000).toFixed(2)}k`
+          ? `$${(balanceNum / 1000).toFixed(2)}M`
           : balanceNum >= 1000000
-            ? `$${(balanceNum / 1000000).toFixed(2)}M`
+            ? `$${(balanceNum / 1000000).toFixed(2)}K`
             : `$${balanceNum.toFixed(2)}`;
 
       return {

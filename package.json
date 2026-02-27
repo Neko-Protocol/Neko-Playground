@@ -7,13 +7,12 @@
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
-    "build": "npm run generate:errors && turbo run build",
+    "build": "turbo run build",
     "start": "turbo run start",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md,yml,yaml}\"",
-    "generate:errors": "node scripts/generate-error-types.js",
-    "check:errors": "node scripts/generate-error-types.js && git diff --exit-code apps/web-app/src/lib/constants/generated/contract-errors.ts",
+    "generate:errors": "bash apps/web-app/scripts/generate-error-contract-stellar-enums.bash && bash apps/web-app/scripts/generate-error-contract-evm-enum.bash",
     "prepare": "npx husky"
   },
   "workspaces": [

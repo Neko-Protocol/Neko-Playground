@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import MainStats from "@/components/ui/MainStats";
-import AssetBreakdown from "@/components/ui/AssetBreakdown";
+import MainStats from "@/features/dashboard/components/ui/MainStats";
+import AssetBreakdown from "@/features/dashboard/components/ui/AssetBreakdown";
 
 const Dashboard: React.FC = () => {
   return (

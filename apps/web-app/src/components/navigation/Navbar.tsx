@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { WalletButton } from "@/features/wallet/components/WalletButton";
+import { WalletButton } from "@/components/ui/WalletButton";
 
 const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -55,7 +55,7 @@ const Navbar: React.FC = () => {
           })}
         </nav>
 
-        {/* Right Side: Wallet Button */}
+        {/* Right Side: Connect wallet (EVM or Stellar) */}
         <div className="flex items-center gap-4">
           <WalletButton />
         </div>

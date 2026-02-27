@@ -14,13 +14,14 @@ import {
 } from "@stellar/stellar-sdk";
 import { Client as RwaLendingClient, networks } from "@neko/lending";
 import { rpcUrl, networkPassphrase, horizonUrl } from "../constants/network";
-import { toSmallestUnit } from "../helpers/swapUtils";
+import { toSmallestUnit } from "../helpers/tokenUtils";
 import {
   approveToken,
   addCollateral,
   borrowFromPool,
-} from "../helpers/lending";
+} from "../helpers/stellar/lending";
 import { StellarContractError } from "../helpers/contractErrorsStellarV2";
+
 import type {
   LendingOperationResult,
   CollateralOperationResult,

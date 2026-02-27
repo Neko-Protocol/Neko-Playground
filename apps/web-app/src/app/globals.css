@@ -18,9 +18,10 @@
   font-weight: 800;
 }
 
+/* Scroll fix: overscroll-behavior: none blocks scroll on iOS/touch devices */
 html {
   overflow-x: hidden;
-  overscroll-behavior: none;
+  overflow-y: auto;
 }
 
 body {
@@ -30,12 +31,8 @@ body {
     radial-gradient(circle at 0% 0%, #d0e3ff 0%, transparent 40%),
     radial-gradient(circle at 100% 100%, #bad6eb 0%, transparent 40%), #eaf4ff; /* Lighter blue base */
   background-attachment: fixed; /* Keeps gradient in place during scroll */
-  overscroll-behavior: none; /* Prevents scrolling beyond content boundaries */
   overflow-x: hidden;
-}
-
-#root {
-  overscroll-behavior: none;
+  overflow-y: auto;
 }
 
 @theme inline {
