@@ -3,11 +3,11 @@
 import React, { useMemo, useState } from "react";
 import { use } from "react";
 import Link from "next/link";
-import { formatLiquidity } from "@/lib/helpers/formatUtils";
-import { orchestrator, usePoolInfo, useUserPosition } from "@/lib/orchestrator";
-import type { PoolAction } from "@/lib/orchestrator";
+import { orchestrator, useUserPosition } from "@/lib/orchestrator";
+import type { PoolAction, TokenInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { useWallet } from "@/hooks/useWallet";
+import { usePoolDetail } from "@/features/pools/hooks/usePoolDetail";
 import { PoolActionModal } from "../PoolActionModal";
 
 interface PoolDetailProps {
@@ -19,14 +19,14 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   const contractid = decodeURIComponent(rawId);
   const [actionModal, setActionModal] = useState<PoolAction | null>(null);
   const { address } = useWallet();
-  const { data: pool, isLoading, error } = usePoolInfo(contractid);
+  const { data: pool, isLoading, error } = usePoolDetail(contractid);
   const { data: position } = useUserPosition(contractid, address);
 
   // Must run before any early return to satisfy Rules of Hooks
   const supportedActions = useMemo(
     () =>
       pool
-        ? pool.supportedActions.filter((a) =>
+        ? pool.supportedActions.filter((a: PoolAction) =>
             orchestrator.supportsAction(contractid, a)
           )
         : [],
@@ -67,25 +67,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     );
   }
 
-  const token1 = pool.tokens[0]?.code ?? "?";
-  const token2 =
-    pool.tokens.length > 1
-      ? (pool.tokens[1]?.code ??
-        (pool.type === "blend" || pool.type === "neko" ? "Lending" : "?"))
-      : pool.type === "blend" || pool.type === "neko"
-        ? "Lending"
-        : "?";
-  const decimals = pool.tokens[0]?.decimals ?? 7;
-  const tvlFormatted = formatLiquidity(
-    fromSmallestUnit(pool.tvl.toString(), decimals)
-  );
-  const apyFormatted = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
-  const typeLabel =
-    pool.type === "blend" || pool.type === "neko"
-      ? "Lending"
-      : pool.type === "soroswap"
-        ? "AMM"
-        : pool.type;
+  const { token1, token2, tvlFormatted, apyFormatted, typeLabel } = pool;
 
   return (
     <div className="w-full min-h-screen px-4 py-8">
@@ -146,7 +128,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
             <div className="bg-[#294cab] rounded-xl p-4 border border-white/10">
               <p className="text-[#BAD6EB] text-xs mb-1">Tokens</p>
               <p className="text-white text-lg font-bold">
-                {pool.tokens.map((t) => t.code).join(" / ")}
+                {pool.tokens.map((t: TokenInfo) => t.code).join(" / ")}
               </p>
             </div>
           </div>

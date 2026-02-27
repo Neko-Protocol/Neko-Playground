@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useLendingPools } from "@/features/lending/hooks/useLendingPools";
 import { useBorrowPools } from "@/features/borrowing/hooks/useBorrowPools";
 import type { AssetData } from "@/features/dashboard/types/dashboard";
-import { formatLiquidity } from "@/features/dashboard/utils/dashboardUtils";
+import { formatLiquidity } from "@/lib/helpers/formatUtils";
 
 const DASHBOARD_POOL_LIMIT = 3;
 
@@ -28,12 +28,12 @@ export function useDashboardPools(): UseDashboardPoolsResult {
   const assets = useMemo<AssetData[]>(() => {
     const combined: AssetData[] = [];
 
-    lendingPools.forEach((pool, index) => {
+    lendingPools.forEach((pool) => {
       const apy =
         pool.interestRate > 0 ? `${pool.interestRate.toFixed(2)}%` : "0.00%";
 
       combined.push({
-        id: `lending-${index}`,
+        id: `lending-${pool.assetCode}`,
         pool: {
           token1: pool.assetCode,
           token2: "Lending",
@@ -46,9 +46,9 @@ export function useDashboardPools(): UseDashboardPoolsResult {
       });
     });
 
-    borrowPools.forEach((pool, index) => {
+    borrowPools.forEach((pool) => {
       combined.push({
-        id: `borrow-${index}`,
+        id: `borrow-${pool.assetCode}-${pool.collateralTokenCode}`,
         pool: {
           token1: pool.assetCode,
           token2: pool.collateralTokenCode,

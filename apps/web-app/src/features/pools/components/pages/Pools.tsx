@@ -1,59 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useMemo } from "react";
-import { formatLiquidity } from "@/lib/helpers/formatUtils";
-import { usePools } from "@/lib/orchestrator";
-import type { PoolInfo } from "@/lib/orchestrator";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
-
-interface PoolCardData {
-  id: string;
-  token1: string;
-  token2: string;
-  fee: string;
-  roi: string;
-  feeApy: string;
-  liquidity: string;
-  isActive: boolean;
-  type: string;
-}
+import React from "react";
+import { usePoolsData } from "@/features/pools/hooks/usePoolsData";
 
 const Pools: React.FC = () => {
   const router = useRouter();
+  const { pools, isLoading, error } = usePoolsData();
 
-  const { data: allPools = [], isLoading, error } = usePools();
-
-  const pools: PoolCardData[] = useMemo(() => {
-    return allPools.map((pool: PoolInfo) => {
-      const token1 = pool.tokens[0]?.code ?? "?";
-      const token2 =
-        pool.tokens.length > 1
-          ? (pool.tokens[1]?.code ?? "?")
-          : pool.type === "blend"
-            ? "Lending"
-            : "?";
-
-      const decimals = pool.tokens[0]?.decimals ?? 7;
-      const liquidity = formatLiquidity(
-        fromSmallestUnit(pool.tvl.toString(), decimals)
-      );
-
-      const apy = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
-
-      return {
-        id: pool.id,
-        token1,
-        token2,
-        fee: "0%",
-        roi: apy,
-        feeApy: apy,
-        liquidity,
-        isActive: pool.state === "active",
-        type: pool.type,
-      };
-    });
-  }, [allPools]);
+  const isLendingType = (type: string) => type === "blend" || type === "neko";
 
   return (
     <div className="w-full min-h-screen">
@@ -166,17 +121,19 @@ const Pools: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="relative z-10 flex">
-                  <button
-                    className="flex-1 bg-[#081F5C] hover:bg-[#12328a] text-[#FFF9F0] px-4 py-3 rounded-xl text-sm font-bold transition-colors duration-200 border border-[#334EAC]/30"
-                    onClick={() => {
-                      router.push("/dashboard/lending");
-                    }}
-                  >
-                    Lend
-                  </button>
-                </div>
+                {/* Action Buttons: Lend for lending pools, else only Pool Details */}
+                {isLendingType(pool.type) && (
+                  <div className="relative z-10 flex">
+                    <button
+                      className="flex-1 bg-[#081F5C] hover:bg-[#12328a] text-[#FFF9F0] px-4 py-3 rounded-xl text-sm font-bold transition-colors duration-200 border border-[#334EAC]/30"
+                      onClick={() => {
+                        router.push("/dashboard/lending");
+                      }}
+                    >
+                      Lend
+                    </button>
+                  </div>
+                )}
 
                 {/* Status Indicator */}
                 <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
