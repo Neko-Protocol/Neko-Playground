@@ -51,6 +51,12 @@ body {
   --color-neko-navy-hover: #12328a;
   --color-neko-cream: #fff9f0;
   --color-neko-gray: #f3f4f6;
+  /* Wallet UI (pill, modals) */
+  --color-wallet-neutral-bg: #f0f2f5;
+  --color-wallet-neutral-text: #4a5362;
+  --color-wallet-success: #2ed06e;
+  --color-wallet-error: #ff3b30;
+  --color-wallet-muted: #c1c7d0;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
