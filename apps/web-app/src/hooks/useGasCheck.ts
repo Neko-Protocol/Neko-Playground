@@ -1,6 +1,15 @@
 import { useAccount, useBalance, useChainId, useGasPrice } from "wagmi";
 import { useMemo } from "react";
 import { formatEther, parseEther } from "viem";
+import {
+  mainnet,
+  bsc,
+  polygon,
+  optimism,
+  arbitrum,
+  base,
+  sepolia,
+} from "viem/chains";
 
 // Estimated gas limits for different operations
 const GAS_LIMITS = {
@@ -15,11 +24,42 @@ const GAS_LIMITS = {
   bufferDivisor: 100n,
 };
 
-// Minimum gas balance recommended (in wei) - approximately $1-2 worth
-const MIN_GAS_BALANCE: Record<number, bigint> = {
-  1: parseEther("0.001"), // ~$3 on Ethereum
-  56: parseEther("0.005"), // ~$3 on BNB Chain
+// Chain config for native symbol and minimum gas balance (aligned with wagmi.config chains)
+const CHAIN_GAS_CONFIG: Record<
+  number,
+  { symbol: string; minGasBalance: bigint }
+> = {
+  [mainnet.id]: {
+    symbol: mainnet.nativeCurrency.symbol,
+    minGasBalance: parseEther("0.001"),
+  },
+  [bsc.id]: {
+    symbol: bsc.nativeCurrency.symbol,
+    minGasBalance: parseEther("0.005"),
+  },
+  [polygon.id]: {
+    symbol: polygon.nativeCurrency.symbol,
+    minGasBalance: parseEther("1"), // MATIC
+  },
+  [optimism.id]: {
+    symbol: optimism.nativeCurrency.symbol,
+    minGasBalance: parseEther("0.001"),
+  },
+  [arbitrum.id]: {
+    symbol: arbitrum.nativeCurrency.symbol,
+    minGasBalance: parseEther("0.001"),
+  },
+  [base.id]: {
+    symbol: base.nativeCurrency.symbol,
+    minGasBalance: parseEther("0.001"),
+  },
+  [sepolia.id]: {
+    symbol: sepolia.nativeCurrency.symbol,
+    minGasBalance: parseEther("0.001"),
+  },
 };
+
+const DEFAULT_CHAIN_CONFIG = CHAIN_GAS_CONFIG[mainnet.id];
 
 export interface GasCheckResult {
   hasEnoughGas: boolean;
@@ -99,21 +139,24 @@ export const useGasCheck = (
     return totalGasLimit * gasPrice;
   }, [gasPrice, isEthFlow, needsApproval]);
 
-  // Get native token symbol
-  const nativeSymbol = useMemo(() => {
-    return effectiveChainId === 56 ? "BNB" : "ETH";
+  // Get native token symbol and min gas from chain config
+  const { symbol: nativeSymbol, minGasBalance } = useMemo(() => {
+    const config = CHAIN_GAS_CONFIG[effectiveChainId] ?? DEFAULT_CHAIN_CONFIG;
+    return {
+      symbol: config.symbol,
+      minGasBalance: config.minGasBalance,
+    };
   }, [effectiveChainId]);
 
   // Check if user has enough gas
   const hasEnoughGas = useMemo(() => {
     if (!balance?.value) return false;
 
-    const minBalance = MIN_GAS_BALANCE[effectiveChainId] || MIN_GAS_BALANCE[1];
     const requiredBalance =
-      estimatedGasCost > minBalance ? estimatedGasCost : minBalance;
+      estimatedGasCost > minGasBalance ? estimatedGasCost : minGasBalance;
 
     return balance.value >= requiredBalance;
-  }, [balance?.value, estimatedGasCost, effectiveChainId]);
+  }, [balance?.value, estimatedGasCost, minGasBalance]);
 
   const isLoading = isLoadingBalance || isLoadingGasPrice;
 
