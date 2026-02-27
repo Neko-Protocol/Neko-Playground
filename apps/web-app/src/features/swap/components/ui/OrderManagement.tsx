@@ -10,7 +10,7 @@ import {
   cancelCowSwapOrder,
   type CowSwapOrderWithPrice,
 } from "@/lib/helpers/evm/cowswap";
-import type { CowSwapOrder } from "@/lib/types/cowswapTypes";
+import type { CowSwapOrder } from "@/lib/types";
 
 /**
  * Order Management Component

@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useChainId, useSwitchChain } from "wagmi";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import type { EVMToken } from "@/lib/types/evmToken";
+import type { EVMToken } from "@/lib/types";
 import { getTokensForChain, DEFAULT_CHAIN_ID } from "@/lib/constants/evmConfig";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import {

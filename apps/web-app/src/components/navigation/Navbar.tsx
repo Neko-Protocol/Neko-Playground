@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { WalletButton } from "@/components/ui/WalletButton";
+import { WalletButton } from "@/components/ui";
 
 const Navbar: React.FC = () => {
   const pathname = usePathname();

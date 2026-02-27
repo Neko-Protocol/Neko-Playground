@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/hooks";
 import { parseBalance } from "@/features/dashboard/utils/dashboardUtils";
 import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
 

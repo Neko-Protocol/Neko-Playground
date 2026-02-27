@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { EVMToken } from "@/lib/types/evmToken";
+import type { EVMToken } from "@/lib/types";
 import { EVM_TOKENS } from "@/lib/constants/evmConfig";
 import { priceService } from "@/lib/services";
 

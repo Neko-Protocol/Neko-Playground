@@ -8,7 +8,7 @@ import {
   COW_API_BASE_URLS,
   COW_API_ENDPOINTS,
 } from "@/lib/constants/cowswapConfig";
-import type { CowOrder, CowOrderStatus } from "@/lib/types/cowswapTypes";
+import type { CowOrder, CowOrderStatus } from "@/lib/types";
 
 /**
  * GET /api/cow/orders/[uid] - Get specific order by UID

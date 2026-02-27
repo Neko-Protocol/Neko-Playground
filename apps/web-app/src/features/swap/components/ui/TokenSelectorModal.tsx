@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { useWallet } from "@/hooks/useWallet";
-import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { useWallet, useTokenPrice } from "@/hooks";
 import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 import {
@@ -11,7 +10,7 @@ import {
   DEFAULT_CHAIN_ID,
   type ChainConfig,
 } from "@/lib/constants/evmConfig";
-import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
+import { isEVMToken, type EVMToken } from "@/lib/types";
 
 interface TokenSelectorModalProps {
   isOpen: boolean;

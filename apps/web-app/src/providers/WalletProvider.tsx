@@ -8,7 +8,7 @@ import {
 } from "react";
 import { getWallet, type MappedBalances } from "@/lib/helpers/stellar/wallet";
 import storage from "@/lib/helpers/storage";
-import { useBalances } from "@/hooks/useBalances";
+import { useBalances } from "@/hooks";
 
 const getWalletInstance = () => {
   if (typeof window === "undefined") {

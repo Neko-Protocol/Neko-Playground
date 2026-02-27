@@ -7,7 +7,7 @@ import {
   type MappedBalances,
 } from "@/lib/helpers/stellar/wallet";
 import { stellarNetwork, networkPassphrase } from "@/lib/constants/network";
-import { useStellarWalletStore } from "@/stores/stellarWalletStore";
+import { useStellarWalletStore } from "@/stores";
 
 export function useWallet() {
   const { address: stellarAddress } = useStellarWalletStore();

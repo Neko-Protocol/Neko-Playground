@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NotificationProvider } from "@/providers/NotificationProvider";
+import { NotificationProvider } from "@/providers";
 import { ReactNode, useState } from "react";
 import dynamic from "next/dynamic";
 
@@ -9,7 +9,9 @@ import "@rainbow-me/rainbowkit/styles.css";
 
 const EvmWalletProviders = dynamic(
   () =>
-    import("@/providers/EvmWalletProviders").then((mod) => mod.EvmWalletProviders),
+    import("@/providers/EvmWalletProviders").then(
+      (mod) => mod.EvmWalletProviders
+    ),
   { ssr: false }
 );
 

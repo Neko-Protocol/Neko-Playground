@@ -10,8 +10,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
-import { useWallet } from "@/hooks/useWallet";
-import { useNotification } from "@/hooks/useNotification";
+import { useWallet, useNotification } from "@/hooks";
 import { rpcUrl } from "@/lib/constants/network";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
 import { orchestrator } from "../core/Orchestrator";

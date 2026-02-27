@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useDisconnect } from "wagmi";
-import { useStellarWallet } from "@/hooks/useStellarWallet";
-import { useWalletType } from "@/hooks/useWalletType";
+import { useStellarWallet, useWalletType } from "@/hooks";
 import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
 import { truncateAddress } from "@/lib/utils";
 
@@ -12,8 +11,13 @@ const primaryButton =
   "rounded-full bg-[#081F5C] text-sm font-medium text-[#FFF9F0] transition-colors hover:bg-[#334EAC]";
 
 export const WalletButton: React.FC = () => {
-  const { walletType, isEvmConnected, isStellarConnected, evmAddress, stellarAddress } =
-    useWalletType();
+  const {
+    walletType,
+    isEvmConnected,
+    isStellarConnected,
+    evmAddress,
+    stellarAddress,
+  } = useWalletType();
   const { disconnect: disconnectStellar } = useStellarWallet();
   const { disconnect: disconnectEvm } = useDisconnect();
   const [showModal, setShowModal] = useState(false);
@@ -44,7 +48,11 @@ export const WalletButton: React.FC = () => {
         >
           {displayAddress}
         </span>
-        <button type="button" onClick={handleDisconnect} className={`${primaryButton} px-4 py-2`}>
+        <button
+          type="button"
+          onClick={handleDisconnect}
+          className={`${primaryButton} px-4 py-2`}
+        >
           Disconnect
         </button>
       </div>

@@ -3,9 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { ConnectButton, useAccountModal } from "@rainbow-me/rainbowkit";
 import { useAccount, useDisconnect } from "wagmi";
-import { useWallet } from "@/hooks/useWallet";
-import { useStellarWallet } from "@/hooks/useStellarWallet";
-import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
+import { useWallet, useStellarWallet } from "@/hooks";
+import { HoverBorderGradient } from "@/components/ui";
 import { Copy, Check } from "lucide-react";
 
 interface WalletSelectorModalProps {

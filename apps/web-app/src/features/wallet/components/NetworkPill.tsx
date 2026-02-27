@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Icon } from "@stellar/design-system";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/hooks";
 import { stellarNetwork } from "@/lib/constants/network";
 
 // Format network name with first letter capitalized

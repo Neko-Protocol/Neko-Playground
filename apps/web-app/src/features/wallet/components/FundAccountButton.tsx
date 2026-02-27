@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { useNotification } from "@/hooks/useNotification";
-import { useWallet } from "@/hooks/useWallet";
+import { useNotification, useWallet } from "@/hooks";
 import { Button, Tooltip } from "@stellar/design-system";
 import { getFriendbotUrl } from "@/lib/helpers/stellar/friendbot";
 

@@ -4,7 +4,7 @@ import {
   sanitizeAmountInput,
 } from "@/lib/helpers/tokenUtils";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import type { EVMToken } from "@/lib/types/evmToken";
+import type { EVMToken } from "@/lib/types";
 
 export type SwapMode = "evm" | "stellar";
 

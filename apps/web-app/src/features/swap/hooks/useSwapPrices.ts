@@ -1,8 +1,7 @@
 import { useMemo } from "react";
-import { useTokenPrice } from "@/hooks/useTokenPrice";
-import { useEVMTokenPrice } from "@/hooks/useEVMTokenPrice";
+import { useTokenPrice, useEVMTokenPrice } from "@/hooks";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import type { EVMToken } from "@/lib/types/evmToken";
+import type { EVMToken } from "@/lib/types";
 import { SUSPICIOUS_VALUE_THRESHOLD_PCT } from "@/features/swap/constants/swapConfig";
 
 export interface SwapPrices {

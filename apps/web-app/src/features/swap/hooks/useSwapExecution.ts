@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { usePublicClient, useWalletClient } from "wagmi";
 import { parseUnits } from "viem";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import type { EVMToken } from "@/lib/types/evmToken";
+import type { EVMToken } from "@/lib/types";
 import {
   getQuote,
   buildTransaction,
@@ -19,7 +19,7 @@ import {
 } from "@/lib/helpers/evm/cowswap";
 import { getTokensForChain } from "@/lib/constants/evmConfig";
 import { getEvmTokenSymbol } from "@/lib/helpers/tokenUtils";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/hooks";
 import { isUserRejection } from "@/lib/helpers/isUserRejection";
 
 export interface SwapExecutionParams {

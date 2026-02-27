@@ -2,7 +2,7 @@
 
 import { ISupportedWallet } from "@creit.tech/stellar-wallets-kit";
 import { getStellarWalletKit } from "@/lib/helpers/stellar/wallet";
-import { useStellarWalletStore } from "@/stores/stellarWalletStore";
+import { useStellarWalletStore } from "@/stores";
 
 export function useStellarWallet() {
   const { address, walletName, setWallet, clearWallet } =
