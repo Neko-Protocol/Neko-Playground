@@ -25,7 +25,8 @@ const envSchema = z.object({
 
 const envVars = {
   PUBLIC_STELLAR_NETWORK: process.env.NEXT_PUBLIC_STELLAR_NETWORK,
-  PUBLIC_STELLAR_NETWORK_PASSPHRASE: process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE,
+  PUBLIC_STELLAR_NETWORK_PASSPHRASE:
+    process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE,
   PUBLIC_STELLAR_RPC_URL: process.env.NEXT_PUBLIC_STELLAR_RPC_URL,
   PUBLIC_STELLAR_HORIZON_URL: process.env.NEXT_PUBLIC_STELLAR_HORIZON_URL,
 };
@@ -68,6 +69,10 @@ export const labPrefix = () => {
 export const rpcUrl = env.PUBLIC_STELLAR_RPC_URL;
 
 export const horizonUrl = env.PUBLIC_STELLAR_HORIZON_URL;
+
+/** Stellar testnet native XLM contract address (wrapper asset) */
+export const XLM_TESTNET_ADDRESS =
+  "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
 
 const networkToId = (network: string): NetworkType => {
   switch (network) {

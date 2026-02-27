@@ -42,6 +42,7 @@ export const useTokenPrice = (token: Token | string | undefined) => {
     data: price = 0,
     isLoading,
     error,
+    isFetched,
   } = useQuery<number, Error>({
     queryKey: ["tokenPrice", tokenCode, token],
     queryFn: async () => {
@@ -63,9 +64,12 @@ export const useTokenPrice = (token: Token | string | undefined) => {
     throwOnError: false,
   });
 
+  const priceError =
+    error?.message ?? (isFetched && price === 0 ? "Price unavailable" : null);
+
   return {
     price,
     isLoading,
-    error: error ? error.message : null,
+    error: priceError,
   };
 };

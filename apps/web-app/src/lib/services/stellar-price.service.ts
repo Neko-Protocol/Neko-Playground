@@ -4,11 +4,7 @@
  */
 
 import oracleClient from "@/lib/clients/oracle";
-
-/**
- * RWA token codes that should use the oracle
- */
-const RWA_TOKENS = ["NVDA", "AAPL", "PLTR", "TSLA", "META"];
+import { PRICE_ERROR_DELAY_MS, RWA_TOKENS } from "@/lib/constants/wallet";
 
 /**
  * Map token codes to CoinGecko IDs (for non-RWA tokens)
@@ -16,11 +12,6 @@ const RWA_TOKENS = ["NVDA", "AAPL", "PLTR", "TSLA", "META"];
 const TOKEN_PRICE_MAP: Record<string, string> = {
   XLM: "stellar",
   USDC: "usd-coin",
-};
-
-const COINGECKO_FALLBACKS: Record<string, number> = {
-  USDC: 1.0,
-  XLM: 0.1,
 };
 
 const MAX_RETRIES = 3;
@@ -75,19 +66,21 @@ export class StellarPriceService {
         return Number(priceValue) / Math.pow(10, decimals);
       }
 
+      await sleep(PRICE_ERROR_DELAY_MS);
       return 0;
     } catch (error) {
       console.error(
         `Failed to fetch RWA oracle price for ${contractAddress}:`,
         error
       );
+      await sleep(PRICE_ERROR_DELAY_MS);
       return 0;
     }
   }
 
   /**
    * Get token price in USD from CoinGecko (for non-RWA tokens).
-   * Uses retries with exponential backoff and fallbacks for USDC/XLM.
+   * Uses retries with exponential backoff. No fallback prices; returns 0 on failure so UI can show an error.
    */
   async getTokenPrice(tokenCode: string, retryCount = 0): Promise<number> {
     if (!tokenCode || typeof tokenCode !== "string") {
@@ -97,9 +90,8 @@ export class StellarPriceService {
     const coinGeckoId = TOKEN_PRICE_MAP[tokenCode];
 
     if (!coinGeckoId) {
-      const fallback = COINGECKO_FALLBACKS[tokenCode];
-      if (fallback !== undefined) return fallback;
       console.warn(`No CoinGecko ID mapping found for token: ${tokenCode}`);
+      await sleep(PRICE_ERROR_DELAY_MS);
       return 0;
     }
 
@@ -160,8 +152,7 @@ export class StellarPriceService {
         return this.getTokenPrice(tokenCode, retryCount + 1);
       }
 
-      const fallback = COINGECKO_FALLBACKS[tokenCode];
-      if (fallback !== undefined) return fallback;
+      await sleep(PRICE_ERROR_DELAY_MS);
       return 0;
     }
   }
