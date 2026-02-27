@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { WalletNetwork } from "@creit.tech/stellar-wallets-kit";
-import { Network, NetworkType } from "../../debug/types/types";
+
+export type NetworkType = "mainnet" | "testnet" | "futurenet" | "custom";
+export interface Network {
+  id: NetworkType;
+  label: string;
+  passphrase: string;
+  rpcUrl: string;
+  horizonUrl: string;
+}
 
 const envSchema = z.object({
   PUBLIC_STELLAR_NETWORK: z.enum([
@@ -61,6 +69,10 @@ export const labPrefix = () => {
 
 // NOTE: needs to be exported for contract files in this directory
 export const rpcUrl = env.PUBLIC_STELLAR_RPC_URL;
+
+/** Set to true when RPC URL is HTTP (e.g. local dev). Pass as allowHttp to Soroban Contract Client. */
+export const allowHttpForSoroban =
+  typeof rpcUrl === "string" && rpcUrl.startsWith("http:");
 
 export const horizonUrl = env.PUBLIC_STELLAR_HORIZON_URL;
 

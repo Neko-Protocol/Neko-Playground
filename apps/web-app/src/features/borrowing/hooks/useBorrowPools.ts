@@ -1,7 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Client as RwaLendingClient, networks } from "@neko/lending";
-import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
+import {
+  rpcUrl,
+  networkPassphrase,
+  allowHttpForSoroban,
+} from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { parseInterestRateFromContractResult } from "@/lib/helpers/lendingUtils";
@@ -48,6 +52,7 @@ export const useBorrowPools = () => {
         contractId: contractId,
         rpcUrl: rpcUrl,
         networkPassphrase: networkPassphrase,
+        ...(allowHttpForSoroban && { allowHttp: true }),
       });
 
       // Get pool state

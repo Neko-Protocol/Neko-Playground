@@ -9,7 +9,11 @@
  */
 
 import { Client as RwaLendingClient, networks } from "@neko/lending";
-import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
+import {
+  rpcUrl,
+  networkPassphrase,
+  allowHttpForSoroban,
+} from "@/lib/constants/network";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { depositToPool, withdrawFromPool } from "@/lib/helpers/stellar/lending";
@@ -67,6 +71,7 @@ export class NekoLendingAdapter implements BasePoolAdapter {
       contractId: networks.testnet.contractId,
       rpcUrl,
       networkPassphrase,
+      ...(allowHttpForSoroban && { allowHttp: true }),
     });
   }
 

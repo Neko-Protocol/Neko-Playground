@@ -12,7 +12,12 @@ import {
   xdr,
 } from "@stellar/stellar-sdk";
 import { Client as RwaLendingClient, networks } from "@neko/lending";
-import { rpcUrl, networkPassphrase, horizonUrl } from "@/lib/constants/network";
+import {
+  rpcUrl,
+  networkPassphrase,
+  horizonUrl,
+  allowHttpForSoroban,
+} from "@/lib/constants/network";
 import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 
 /**
@@ -232,7 +237,7 @@ export const getBTokenBalance = async (
       contractId: networks.testnet.contractId,
       rpcUrl: rpcUrl,
       networkPassphrase: networkPassphrase,
-      allowHttp: true, // Allow HTTP connections for local/testnet
+      ...(allowHttpForSoroban && { allowHttp: true }),
     });
 
     const balanceTx = await client.get_b_token_balance(
@@ -410,7 +415,7 @@ export const getBorrowLimit = async (
       contractId: networks.testnet.contractId,
       rpcUrl: rpcUrl,
       networkPassphrase: networkPassphrase,
-      allowHttp: true, // Allow HTTP connections for local/testnet
+      ...(allowHttpForSoroban && { allowHttp: true }),
     });
 
     const borrowLimitTx = await client.calculate_borrow_limit(
@@ -569,7 +574,7 @@ export const getCollateral = async (
       contractId: networks.testnet.contractId,
       rpcUrl: rpcUrl,
       networkPassphrase: networkPassphrase,
-      allowHttp: true, // Allow HTTP connections for local/testnet
+      ...(allowHttpForSoroban && { allowHttp: true }),
     });
 
     const collateralTx = await client.get_collateral(
