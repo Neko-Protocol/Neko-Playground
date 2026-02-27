@@ -4,6 +4,7 @@ import { Client as RwaLendingClient, networks } from "@neko/lending";
 import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
+import { parseInterestRateFromContractResult } from "@/lib/helpers/lendingUtils";
 
 interface LendingPool {
   asset: string;
@@ -88,52 +89,16 @@ export const useLendingPools = () => {
             decimals
           );
 
-          // Get interest rate
+          // Get interest rate (basis points → percentage)
           let interestRate = 0;
           try {
             const interestRateTx = await client.get_interest_rate(
               { asset: assetCode },
               { simulate: true }
             );
-            const interestRateResult = interestRateTx.result;
-
-            let rateValue = 0;
-
-            if (
-              interestRateResult !== null &&
-              interestRateResult !== undefined
-            ) {
-              const result = interestRateResult as {
-                tag?: string;
-                values?: unknown[];
-                unwrap?: () => bigint;
-                isOk?: () => boolean;
-              };
-
-              if (typeof result.unwrap === "function") {
-                try {
-                  const unwrapped = result.unwrap();
-                  rateValue = Number(unwrapped);
-                } catch {
-                  // unwrap() failed, try other methods
-                }
-              } else if (
-                result.tag === "Ok" &&
-                Array.isArray(result.values) &&
-                result.values.length > 0
-              ) {
-                const val = result.values[0];
-                rateValue = typeof val === "bigint" ? Number(val) : Number(val);
-              } else if (typeof interestRateResult === "bigint") {
-                rateValue = Number(interestRateResult);
-              } else if (typeof interestRateResult === "number") {
-                rateValue = interestRateResult;
-              } else if (typeof interestRateResult === "string") {
-                rateValue = parseInt(interestRateResult, 10);
-              }
-
-              interestRate = rateValue / 100;
-            }
+            interestRate = parseInterestRateFromContractResult(
+              interestRateTx.result
+            );
           } catch {
             // If interest rate fetch fails, use 0
           }
