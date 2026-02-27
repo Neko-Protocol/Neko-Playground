@@ -96,18 +96,10 @@ const BorrowTable: React.FC = () => {
       !collateralAmount ||
       isNaN(parseFloat(collateralAmount))
     ) {
-    if (
-      !selectedAsset ||
-      !collateralAmount ||
-      isNaN(parseFloat(collateralAmount))
-    ) {
       return 0;
     }
     const collateralValue = parseFloat(collateralAmount);
     // Simplified: assumes 1:1 value for demo.
-
-    // Simplified: assumes 1:1 value for demo.
-
     return collateralValue * (selectedAsset.collateralFactor / 100);
   }, [selectedAsset, collateralAmount]);
 
