@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { use } from "react";
 import Link from "next/link";
+import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import { orchestrator, usePoolInfo, useUserPosition } from "@/lib/orchestrator";
 import type { PoolAction } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
@@ -75,13 +76,9 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         ? "Lending"
         : "?";
   const decimals = pool.tokens[0]?.decimals ?? 7;
-  const tvlHuman = parseFloat(fromSmallestUnit(pool.tvl.toString(), decimals));
-  const tvlFormatted =
-    tvlHuman >= 1_000_000
-      ? `$${(tvlHuman / 1_000_000).toFixed(2)}M`
-      : tvlHuman >= 1_000
-        ? `$${(tvlHuman / 1_000).toFixed(2)}k`
-        : `$${tvlHuman.toFixed(2)}`;
+  const tvlFormatted = formatLiquidity(
+    fromSmallestUnit(pool.tvl.toString(), decimals)
+  );
   const apyFormatted = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
   const typeLabel =
     pool.type === "blend" || pool.type === "neko"

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import React, { useMemo } from "react";
+import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import { usePools } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
@@ -34,15 +35,9 @@ const Pools: React.FC = () => {
             : "?";
 
       const decimals = pool.tokens[0]?.decimals ?? 7;
-      const tvlHuman = parseFloat(
+      const liquidity = formatLiquidity(
         fromSmallestUnit(pool.tvl.toString(), decimals)
       );
-      const liquidity =
-        tvlHuman >= 1_000_000
-          ? `$${(tvlHuman / 1_000_000).toFixed(2)}M`
-          : tvlHuman >= 1_000
-            ? `$${(tvlHuman / 1_000).toFixed(2)}k`
-            : `$${tvlHuman.toFixed(2)}`;
 
       const apy = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
 

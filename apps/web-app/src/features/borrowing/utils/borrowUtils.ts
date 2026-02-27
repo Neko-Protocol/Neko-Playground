@@ -2,18 +2,8 @@
  * Pure helpers for borrowing: formatting, calculations
  */
 
+import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { BorrowPool, BorrowTableAsset } from "../types/borrowing";
-
-/** Format pool balance for display (e.g. $1.5k, $2.00M) */
-export function formatLiquidityDisplay(balanceNum: number): string {
-  if (balanceNum >= 1_000_000) {
-    return `$${(balanceNum / 1_000_000).toFixed(2)}M`;
-  }
-  if (balanceNum >= 1000) {
-    return `$${(balanceNum / 1000).toFixed(2)}k`;
-  }
-  return `$${balanceNum.toFixed(2)}`;
-}
 
 /** Borrow limit from collateral amount and collateral factor (percentage, e.g. 75) */
 export function calculateBorrowLimit(
@@ -31,8 +21,7 @@ export function calculateBorrowLimit(
  */
 export function poolsToTableAssets(pools: BorrowPool[]): BorrowTableAsset[] {
   return pools.map((pool, index) => {
-    const balanceNum = parseFloat(pool.poolBalance);
-    const liquidity = formatLiquidityDisplay(balanceNum);
+    const liquidity = formatLiquidity(pool.poolBalance);
     return {
       id: `borrow-${index}`,
       pool: {
