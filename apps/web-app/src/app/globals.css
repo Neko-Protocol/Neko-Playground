@@ -40,6 +40,17 @@ body {
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  /* Neko semantic colors (pools, dashboard) */
+  --color-neko-navy: #081f5c;
+  --color-neko-blue: #7096d1;
+  --color-neko-accent: #294cab;
+  --color-neko-border: #334eac;
+  --color-neko-teal: #39bfb7;
+  --color-neko-teal-light: #68f9f2;
+  --color-neko-muted: #bad6eb;
+  --color-neko-navy-hover: #12328a;
+  --color-neko-cream: #fff9f0;
+  --color-neko-gray: #f3f4f6;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
