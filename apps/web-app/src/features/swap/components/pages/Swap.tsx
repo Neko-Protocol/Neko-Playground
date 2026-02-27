@@ -11,7 +11,7 @@ import {
   getTokens,
   getAvailableTokens,
   type Token,
-} from "@/lib/helpers/soroswap";
+} from "@/lib/helpers/stellar/soroswap";
 import type { EVMToken } from "@/lib/types/evmToken";
 import { SUPPORTED_CHAINS } from "@/lib/constants/evmConfig";
 import { StellarContractError } from "@/lib/helpers/contractErrorsStellarV2";

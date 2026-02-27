@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Client as RwaLendingClient, networks } from "@neko/lending";
 import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
-import { fromSmallestUnit } from "@/lib/helpers/swapUtils";
-import { getAvailableTokens } from "@/lib/helpers/soroswap";
+import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 
 interface BorrowPool {
   asset: string;
@@ -29,33 +29,36 @@ export const useBorrowPools = () => {
   const availableTokens = useMemo(() => getAvailableTokens(), []);
 
   // All RWA tokens configured as collateral (memoized)
-  const rwaTokens = useMemo(() =>
-    ["NVDA", "AAPL", "PLTR", "TSLA", "META"].filter((code) => {
-      const token = availableTokens[code];
-      return token && token.contract;
-    }),
+  const rwaTokens = useMemo(
+    () =>
+      ["NVDA", "AAPL", "PLTR", "TSLA", "META"].filter((code) => {
+        const token = availableTokens[code];
+        return token && token.contract;
+      }),
     [availableTokens]
   );
 
   // Known debt assets that can be borrowed (memoized)
-  const debtAssets = useMemo(() =>
-    ["USDC", "XLM"].filter((code) => {
-      const token = availableTokens[code];
-      return token && token.contract;
-    }),
+  const debtAssets = useMemo(
+    () =>
+      ["USDC", "XLM"].filter((code) => {
+        const token = availableTokens[code];
+        return token && token.contract;
+      }),
     [availableTokens]
   );
 
   // Memoize the query function to prevent re-creation on every render
-  const queryFn = useMemo(() => async (): Promise<BorrowPool[]> => {
-    // Create RWA lending client with new contract ID
-    const contractId = networks.testnet.contractId;
+  const queryFn = useMemo(
+    () => async (): Promise<BorrowPool[]> => {
+      // Create RWA lending client with new contract ID
+      const contractId = networks.testnet.contractId;
 
-    const client = new RwaLendingClient({
-      contractId: contractId,
-      rpcUrl: rpcUrl,
-      networkPassphrase: networkPassphrase,
-    });
+      const client = new RwaLendingClient({
+        contractId: contractId,
+        rpcUrl: rpcUrl,
+        networkPassphrase: networkPassphrase,
+      });
 
       // Get pool state
       let poolState;
@@ -65,7 +68,7 @@ export const useBorrowPools = () => {
       } catch {
         return [];
       }
-      
+
       const isPoolActive = poolState?.tag === "Active";
 
       if (!isPoolActive) {
@@ -117,13 +120,17 @@ export const useBorrowPools = () => {
             // Convert balance to human-readable format
             const decimals = debtToken.decimals || 7;
             // Handle different types: bigint, string, or number
-            const balanceStr = typeof balanceValue === 'bigint' 
-              ? balanceValue.toString() 
-              : typeof balanceValue === 'string'
-              ? balanceValue
-              : String(balanceValue);
+            const balanceStr =
+              typeof balanceValue === "bigint"
+                ? balanceValue.toString()
+                : typeof balanceValue === "string"
+                  ? balanceValue
+                  : String(balanceValue);
             const balanceBigInt = BigInt(balanceStr);
-            const poolBalance = fromSmallestUnit(balanceBigInt.toString(), decimals);
+            const poolBalance = fromSmallestUnit(
+              balanceBigInt.toString(),
+              decimals
+            );
 
             // Get interest rate for borrowing
             let interestRate = 0;
@@ -133,22 +140,25 @@ export const useBorrowPools = () => {
                 { simulate: true }
               );
               const interestRateResult = interestRateTx.result;
-              
+
               // Result<i128> from Stellar SDK has structure: { tag: "Ok", values: [bigint] } or { tag: "Err", values: [...] }
               // Or it could be an object with unwrap() method
               let rateValue = 0;
-              
-              if (interestRateResult !== null && interestRateResult !== undefined) {
+
+              if (
+                interestRateResult !== null &&
+                interestRateResult !== undefined
+              ) {
                 // Try to access the value through various means
-                const result = interestRateResult as { 
-                  tag?: string; 
+                const result = interestRateResult as {
+                  tag?: string;
                   values?: unknown[];
                   unwrap?: () => bigint;
                   isOk?: () => boolean;
                 };
-                
+
                 // Method 1: Check if it has unwrap method (Stellar SDK Result type)
-                if (typeof result.unwrap === 'function') {
+                if (typeof result.unwrap === "function") {
                   try {
                     const unwrapped = result.unwrap();
                     rateValue = Number(unwrapped);
@@ -157,16 +167,21 @@ export const useBorrowPools = () => {
                   }
                 }
                 // Method 2: Check for tag/values structure
-                else if (result.tag === 'Ok' && Array.isArray(result.values) && result.values.length > 0) {
+                else if (
+                  result.tag === "Ok" &&
+                  Array.isArray(result.values) &&
+                  result.values.length > 0
+                ) {
                   const val = result.values[0];
-                  rateValue = typeof val === 'bigint' ? Number(val) : Number(val);
+                  rateValue =
+                    typeof val === "bigint" ? Number(val) : Number(val);
                 }
                 // Method 3: Direct bigint/number/string
-                else if (typeof interestRateResult === 'bigint') {
+                else if (typeof interestRateResult === "bigint") {
                   rateValue = Number(interestRateResult);
-                } else if (typeof interestRateResult === 'number') {
+                } else if (typeof interestRateResult === "number") {
                   rateValue = interestRateResult;
-                } else if (typeof interestRateResult === 'string') {
+                } else if (typeof interestRateResult === "string") {
                   rateValue = parseInt(interestRateResult, 10);
                 }
 
@@ -195,8 +210,10 @@ export const useBorrowPools = () => {
         }
       }
 
-    return pools;
-  }, [rwaTokens, debtAssets]);
+      return pools;
+    },
+    [rwaTokens, debtAssets]
+  );
 
   return useQuery<BorrowPool[]>({
     queryKey: ["borrowPools"],
@@ -207,4 +224,3 @@ export const useBorrowPools = () => {
     throwOnError: false,
   });
 };
-

@@ -4,7 +4,7 @@ import React, { useState, useTransition } from "react";
 import { useNotification } from "@/hooks/useNotification";
 import { useWallet } from "@/hooks/useWallet";
 import { Button, Tooltip } from "@stellar/design-system";
-import { getFriendbotUrl } from "@/lib/helpers/friendbot";
+import { getFriendbotUrl } from "@/lib/helpers/stellar/friendbot";
 
 const FundAccountButton: React.FC = () => {
   const { addNotification } = useNotification();

@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAvailableTokens, getTokenAddress } from "@/lib/helpers/soroswap";
-import type { Token } from "@/lib/helpers/soroswap";
+import {
+  getAvailableTokens,
+  getTokenAddress,
+} from "@/lib/helpers/stellar/soroswap";
+import type { Token } from "@/lib/helpers/stellar/soroswap";
 import oracleClient from "@/lib/clients/oracle";
 
 /**

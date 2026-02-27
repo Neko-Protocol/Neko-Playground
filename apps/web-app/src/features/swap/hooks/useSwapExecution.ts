@@ -1,14 +1,14 @@
 import { useCallback } from "react";
 import { usePublicClient, useWalletClient } from "wagmi";
 import { parseUnits } from "viem";
-import type { Token } from "@/lib/helpers/soroswap";
-import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
+import type { Token } from "@/lib/helpers/stellar/soroswap";
+import type { EVMToken } from "@/lib/types/evmToken";
 import {
   getQuote,
   buildTransaction,
   sendTransaction,
   type QuoteRequest,
-} from "@/lib/helpers/soroswap";
+} from "@/lib/helpers/stellar/soroswap";
 import {
   getCowSwapQuote,
   executeCowSwap,
@@ -16,10 +16,11 @@ import {
   type CowSwapQuoteRequest,
   type CowSwapSwapRequest,
   type CowSwapLimitOrderRequest,
-} from "@/lib/helpers/cowswap";
+} from "@/lib/helpers/evm/cowswap";
 import { getTokensForChain } from "@/lib/constants/evmConfig";
+import { getEvmTokenSymbol } from "@/lib/helpers/tokenUtils";
 import { useWallet } from "@/hooks/useWallet";
-import { handleSwapError } from "@/features/swap/utils/swapErrorUtils";
+import { isUserRejection } from "@/lib/helpers/isUserRejection";
 
 export interface SwapExecutionParams {
   swapMode: "evm" | "stellar";
@@ -82,18 +83,8 @@ export function useSwapExecution() {
       ) {
         const EVM_TOKENS = getTokensForChain(selectedEvmChainId);
 
-        const tokenInSymbol: string =
-          typeof tokenIn === "string"
-            ? tokenIn
-            : isEVMToken(tokenIn)
-              ? (tokenIn.symbol ?? "ETH")
-              : "ETH";
-        const tokenOutSymbol: string =
-          typeof tokenOut === "string"
-            ? tokenOut
-            : isEVMToken(tokenOut)
-              ? (tokenOut.symbol ?? "USDC")
-              : "USDC";
+        const tokenInSymbol = getEvmTokenSymbol(tokenIn, "ETH");
+        const tokenOutSymbol = getEvmTokenSymbol(tokenOut, "USDC");
 
         const tokenInObj = EVM_TOKENS[tokenInSymbol];
         if (!tokenInObj) {
@@ -204,7 +195,8 @@ export function useSwapExecution() {
             address: address,
           });
         } catch (error) {
-          handleSwapError(error);
+          if (isUserRejection(error)) throw new Error("USER_REJECTED");
+          throw error;
         }
 
         const signedXdrString =

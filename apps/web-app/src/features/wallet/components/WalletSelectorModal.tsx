@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { ConnectButton, useAccountModal } from "@rainbow-me/rainbowkit";
 import { useAccount, useDisconnect } from "wagmi";
 import { useWallet } from "@/hooks/useWallet";
-import { connectWallet, disconnectWallet } from "@/lib/helpers/wallet";
+import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { Copy, Check } from "lucide-react";
 
@@ -19,6 +19,8 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
 }) => {
   const { isConnected: isEvmConnected, address: evmAddress } = useAccount();
   const { address: stellarAddress } = useWallet();
+  const { connect: connectStellar, disconnect: disconnectStellar } =
+    useStellarWallet();
   const { openAccountModal } = useAccountModal();
   const { disconnect: disconnectEvm } = useDisconnect();
   const [isConnectingStellar, setIsConnectingStellar] = useState(false);
@@ -26,18 +28,15 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
   const prevEvmStateRef = useRef(isEvmConnected);
   const prevStellarStateRef = useRef(!!stellarAddress);
 
-  // Reset tracking when modal opens
   useEffect(() => {
     if (isOpen) {
       prevEvmStateRef.current = isEvmConnected;
       prevStellarStateRef.current = !!stellarAddress;
     } else {
-      // Reset connecting state when modal closes
       setIsConnectingStellar(false);
     }
   }, [isOpen, isEvmConnected, stellarAddress]);
 
-  // Close modal only when a NEW wallet connection is established (while modal is open)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -46,11 +45,9 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
       !!stellarAddress && !prevStellarStateRef.current;
 
     if (newEvmConnection || newStellarConnection) {
-      // Update previous states
       prevEvmStateRef.current = isEvmConnected;
       prevStellarStateRef.current = !!stellarAddress;
 
-      // Small delay to show the connection state
       const timer = setTimeout(() => {
         onClose();
       }, 1500);
@@ -59,17 +56,15 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
   }, [isOpen, isEvmConnected, stellarAddress, onClose]);
 
   const handleConnectStellar = async () => {
-    // Prevent connecting if EVM is already connected
     if (isEvmConnected) {
       alert(
         "Please disconnect your EVM wallet first before connecting a Stellar wallet."
       );
       return;
     }
-
     setIsConnectingStellar(true);
     try {
-      await connectWallet();
+      await connectStellar();
     } catch (error) {
       console.error("Failed to connect Stellar wallet:", error);
       setIsConnectingStellar(false);
@@ -82,13 +77,11 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
         disconnectEvm();
       }
       if (stellarAddress) {
-        await disconnectWallet();
+        await disconnectStellar();
       }
-      // Close modal after successful disconnect
       onClose();
     } catch (error) {
       console.error("Error disconnecting wallet:", error);
-      // Still close modal even if there's an error
       onClose();
     }
   };
@@ -105,7 +98,6 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
 
   if (!isOpen) return null;
 
-  // If a wallet is connected, show connection status
   if (isEvmConnected || stellarAddress) {
     const connectedAddress = evmAddress || stellarAddress;
     const walletType = isEvmConnected ? "EVM" : "Stellar";
@@ -114,15 +106,11 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
     return (
       <>
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={onClose}
           />
-
-          {/* Modal Content */}
           <div className="relative w-full max-w-md bg-white border border-gray-300 rounded-2xl shadow-2xl overflow-hidden">
-            {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-300">
               <h2 className="text-xl font-bold text-gray-900">
                 Wallet Connected
@@ -146,8 +134,6 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
                 </svg>
               </button>
             </div>
-
-            {/* Connected Status */}
             <div className="p-6">
               <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-300">
                 <div className={`w-3 h-3 rounded-full ${indicatorColor}`}></div>
@@ -173,7 +159,6 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
                   </button>
                 )}
               </div>
-
               <div className="mt-4 flex gap-2">
                 {isEvmConnected && openAccountModal && (
                   <button
@@ -202,21 +187,16 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
     );
   }
 
-  // No wallet connected - show connection options
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-
-      {/* Modal Content */}
       <div
         className="relative w-full max-w-md bg-white border border-gray-300 rounded-2xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-300">
           <h2 className="text-xl font-bold text-gray-900">Connect Wallet</h2>
           <button
@@ -238,12 +218,9 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
             </svg>
           </button>
         </div>
-
-        {/* Wallet Options */}
         <div className="p-6 space-y-4 flex flex-col items-center">
-          {/* EVM Wallet Option */}
           <ConnectButton.Custom>
-            {({ account, chain, openConnectModal, mounted }) => {
+            {({ openConnectModal, mounted }) => {
               const ready = mounted;
               const isDisabled = !ready || !!stellarAddress;
               return (
@@ -260,7 +237,7 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
                   disabled={isDisabled}
                 >
                   <img
-                    src="/wallets/ethereum-eth-logo.png"
+                    src="/crypto/png/ethereum-eth-logo.png"
                     alt="Ethereum"
                     className="w-6 h-6 shrink-0"
                   />
@@ -270,7 +247,6 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
             }}
           </ConnectButton.Custom>
 
-          {/* Stellar Wallet Option */}
           <HoverBorderGradient
             containerClassName="rounded-full w-[240px]"
             as="button"
@@ -284,7 +260,7 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
             disabled={isConnectingStellar || isEvmConnected}
           >
             <img
-              src="/wallets/stellar-xlm-logo.png"
+              src="/crypto/png/stellar-xlm-logo.png"
               alt="Stellar"
               className="w-6 h-6 shrink-0"
             />
