@@ -37,7 +37,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
   const addNotification = useCallback(
     (message: string, type: NotificationType) => {
       const newNotification = {
-        id: `${type}-${Date.now().toString()}`,
+        id:
+          (typeof crypto !== "undefined" && crypto.randomUUID?.()) ||
+          `${type}-${Date.now().toString()}`,
         message,
         type,
         isVisible: true,
@@ -60,7 +62,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
   return (
     <NotificationContext value={contextValue}>
       {children}
-      <div className="notification-container">
+      <div className="notification-container" role="status" aria-live="polite">
         {notifications.map((notification) => (
           <div
             key={notification.id}

@@ -13,7 +13,12 @@ import {
   xdr,
 } from "@stellar/stellar-sdk";
 import { Client as RwaLendingClient, networks } from "@neko/lending";
-import { rpcUrl, networkPassphrase, horizonUrl } from "../constants/network";
+import {
+  rpcUrl,
+  networkPassphrase,
+  horizonUrl,
+  allowHttpForSoroban,
+} from "../constants/network";
 import { toSmallestUnit } from "../helpers/tokenUtils";
 import {
   approveToken,
@@ -39,6 +44,7 @@ export class LendingService {
       contractId: networks.testnet.contractId,
       rpcUrl: rpcUrl,
       networkPassphrase: networkPassphrase,
+      ...(allowHttpForSoroban && { allowHttp: true }),
     });
   }
 

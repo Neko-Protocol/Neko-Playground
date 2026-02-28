@@ -9,11 +9,16 @@ import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletMo
 import { truncateAddress } from "@/lib/utils";
 
 const primaryButton =
-  "rounded-full bg-[#081F5C] text-sm font-medium text-[#FFF9F0] transition-colors hover:bg-[#334EAC]";
+  "rounded-full bg-[var(--color-neko-navy)] text-sm font-medium text-[var(--color-neko-cream)] transition-colors hover:bg-[var(--color-neko-border)]";
 
 export const WalletButton: React.FC = () => {
-  const { walletType, isEvmConnected, isStellarConnected, evmAddress, stellarAddress } =
-    useWalletType();
+  const {
+    walletType,
+    isEvmConnected,
+    isStellarConnected,
+    evmAddress,
+    stellarAddress,
+  } = useWalletType();
   const { disconnect: disconnectStellar } = useStellarWallet();
   const { disconnect: disconnectEvm } = useDisconnect();
   const [showModal, setShowModal] = useState(false);
@@ -39,12 +44,16 @@ export const WalletButton: React.FC = () => {
     return (
       <div className="flex items-center gap-2">
         <span
-          className="rounded-full bg-[#081F5C]/10 px-3 py-1.5 text-sm font-medium text-[#081F5C]"
+          className="rounded-full bg-[var(--color-neko-navy)]/10 px-3 py-1.5 text-sm font-medium text-[var(--color-neko-navy)]"
           title={stellarAddress}
         >
           {displayAddress}
         </span>
-        <button type="button" onClick={handleDisconnect} className={`${primaryButton} px-4 py-2`}>
+        <button
+          type="button"
+          onClick={handleDisconnect}
+          className={`${primaryButton} px-4 py-2`}
+        >
           Disconnect
         </button>
       </div>

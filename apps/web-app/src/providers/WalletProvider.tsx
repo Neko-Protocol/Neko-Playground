@@ -9,6 +9,7 @@ import {
 import { getWallet, type MappedBalances } from "@/lib/helpers/stellar/wallet";
 import storage from "@/lib/helpers/storage";
 import { useBalances } from "@/hooks/useBalances";
+import { POLL_INTERVAL, STORAGE_KEYS } from "@/lib/constants/wallet";
 
 const getWalletInstance = () => {
   if (typeof window === "undefined") {
@@ -36,8 +37,6 @@ export interface WalletContextType {
    */
   refetchBalances: () => Promise<void>;
 }
-
-const POLL_INTERVAL = 1000;
 
 export const WalletContext = // eslint-disable-line react-refresh/only-export-components
   createContext<WalletContextType>({
@@ -72,20 +71,20 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     setAddress(undefined);
     setNetwork(undefined);
     setNetworkPassphrase(undefined);
-    storage.setItem("walletId", "");
-    storage.setItem("walletAddress", "");
-    storage.setItem("walletNetwork", "");
-    storage.setItem("networkPassphrase", "");
+    storage.setItem(STORAGE_KEYS.walletId, "");
+    storage.setItem(STORAGE_KEYS.walletAddress, "");
+    storage.setItem(STORAGE_KEYS.walletNetwork, "");
+    storage.setItem(STORAGE_KEYS.networkPassphrase, "");
   };
 
   const updateCurrentWalletState = async () => {
     // There is no way, with StellarWalletsKit, to check if the wallet is
     // installed/connected/authorized. We need to manage that on our side by
     // checking our storage item.
-    const walletId = storage.getItem("walletId");
-    const walletNetwork = storage.getItem("walletNetwork");
-    const walletAddr = storage.getItem("walletAddress");
-    const passphrase = storage.getItem("networkPassphrase");
+    const walletId = storage.getItem(STORAGE_KEYS.walletId);
+    const walletNetwork = storage.getItem(STORAGE_KEYS.walletNetwork);
+    const walletAddr = storage.getItem(STORAGE_KEYS.walletAddress);
+    const passphrase = storage.getItem(STORAGE_KEYS.networkPassphrase);
 
     if (
       !address &&
@@ -115,13 +114,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           wallet.getNetwork(),
         ]);
 
-        if (!a.address) storage.setItem("walletId", "");
+        if (!a.address) storage.setItem(STORAGE_KEYS.walletId, "");
         if (
           a.address !== address ||
           n.network !== network ||
           n.networkPassphrase !== networkPassphrase
         ) {
-          storage.setItem("walletAddress", a.address);
+          storage.setItem(STORAGE_KEYS.walletAddress, a.address);
           setAddress(a.address);
           setNetwork(n.network);
           setNetworkPassphrase(n.networkPassphrase);
@@ -140,34 +139,22 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
     let isMounted = true;
 
-    // Create recursive polling function to check wallet state continuously
-    const pollWalletState = async () => {
+    const pollWalletState = () => {
       if (!isMounted) return;
-
-      await updateCurrentWalletState();
-
-      if (isMounted) {
-        timer = setTimeout(() => void pollWalletState(), POLL_INTERVAL);
-      }
+      void updateCurrentWalletState();
     };
 
-    // Get the wallet address when the component is mounted for the first time
     startTransition(async () => {
       await updateCurrentWalletState();
-      // Start polling after initial state is loaded
-
-      if (isMounted) {
-        timer = setTimeout(() => void pollWalletState(), POLL_INTERVAL);
-      }
     });
 
-    // Clear the timeout and stop polling when the component unmounts
+    const intervalId = setInterval(pollWalletState, POLL_INTERVAL);
+
     return () => {
       isMounted = false;
-      if (timer) clearTimeout(timer);
+      clearInterval(intervalId);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- it SHOULD only run once per component mount
 

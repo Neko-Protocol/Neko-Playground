@@ -14,6 +14,4 @@ export interface PriceFetchOptions {
   forceRefresh?: boolean;
   /** Timeout in milliseconds */
   timeout?: number;
-  /** Fallback prices for stable coins */
-  enableFallbacks?: boolean;
 }

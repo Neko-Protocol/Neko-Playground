@@ -76,7 +76,7 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
           <button
             type="button"
             onClick={handleEVM}
-            className="flex items-center gap-3 rounded-xl border-2 border-[#334EAC] bg-white px-4 py-3.5 text-left font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
+            className="flex items-center gap-3 rounded-xl border-2 border-[var(--color-neko-border)] bg-white px-4 py-3.5 text-left font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
           >
             <Image
               src={EVM_ICON}
@@ -91,7 +91,7 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
           <button
             type="button"
             onClick={handleStellar}
-            className="flex items-center gap-3 rounded-xl border-2 border-[#334EAC] bg-white px-4 py-3.5 text-left font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
+            className="flex items-center gap-3 rounded-xl border-2 border-[var(--color-neko-border)] bg-white px-4 py-3.5 text-left font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
           >
             <Image
               src={STELLAR_ICON}

@@ -17,6 +17,7 @@ import {
   networkPassphrase,
   horizonUrl,
   stellarNetwork,
+  allowHttpForSoroban,
 } from "@/lib/constants/network";
 import { toSmallestUnit } from "../tokenUtils";
 import { extractContractError } from "./contractErrors";
@@ -410,6 +411,7 @@ export const getBTokenBalance = async (
       contractId: networks.testnet.contractId,
       rpcUrl: rpcUrl,
       networkPassphrase: networkPassphrase,
+      ...(allowHttpForSoroban && { allowHttp: true }),
     });
 
     const balanceTx = await client.get_b_token_balance(
