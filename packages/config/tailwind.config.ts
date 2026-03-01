@@ -21,6 +21,8 @@ const config: Config = {
           "teal-light": "#68f9f2",
           muted: "#bad6eb",
           "navy-hover": "#12328a",
+          "accent-hover": "#4A73C4",
+          "border-hover": "#3D5AC0",
           cream: "#fff9f0",
           gray: "#f3f4f6",
         },
