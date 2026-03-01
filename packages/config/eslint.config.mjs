@@ -1,16 +1,20 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-	baseDirectory: __dirname,
-});
-
+/** ESLint flat config: Next core-web-vitals + TypeScript, no FlatCompat (avoids circular ref in validator). */
 const eslintConfig = [
-	...compat.extends("next/core-web-vitals", "next/typescript"),
+	...nextCoreWebVitals,
+	...nextTypescript,
+	{
+		rules: {
+			// Prefixing a parameter with _ is the established convention for
+			// "intentionally unused" (e.g., interface implementations, callbacks).
+			"@typescript-eslint/no-unused-vars": [
+				"warn",
+				{ argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+			],
+		},
+	},
 	{
 		ignores: [
 			"node_modules/**",

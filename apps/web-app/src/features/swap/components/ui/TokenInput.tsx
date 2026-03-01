@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import {
   formatSwapAmount,
   sanitizeAmountInput,
@@ -162,10 +163,13 @@ export const TokenInput: React.FC<TokenInputProps> = ({
           >
             <div className="relative">
               {getTokenIconUrl(token) ? (
-                <img
+                <Image
                   src={getTokenIconUrl(token)!}
                   alt={getTokenId(token)}
-                  className={`${isFrom ? "w-5 h-5" : "w-6 h-6"} rounded-full object-contain`}
+                  width={isFrom ? 20 : 24}
+                  height={isFrom ? 20 : 24}
+                  unoptimized
+                  className="rounded-full object-contain"
                 />
               ) : (
                 <div
@@ -175,12 +179,13 @@ export const TokenInput: React.FC<TokenInputProps> = ({
                 </div>
               )}
               {swapMode === "evm" && chainIcon && (
-                <img
+                <Image
                   src={chainIcon}
                   alt="chain"
-                  className={`absolute -bottom-0.5 -right-0.5 ${
-                    isFrom ? "w-2.5 h-2.5" : "w-3 h-3"
-                  } rounded-full border border-[#334EAC] object-contain bg-white`}
+                  width={isFrom ? 10 : 12}
+                  height={isFrom ? 10 : 12}
+                  unoptimized
+                  className={`absolute -bottom-0.5 -right-0.5 rounded-full border border-[#334EAC] object-contain bg-white`}
                 />
               )}
             </div>

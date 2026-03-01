@@ -1,11 +1,21 @@
 import {
   createContext,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   useTransition,
 } from "react";
+
+/** Options accepted by the Stellar wallet's signTransaction. */
+interface StellarSignOptions {
+  networkPassphrase?: string;
+  address?: string;
+  submit?: boolean;
+  submitUrl?: string;
+  [key: string]: unknown;
+}
 import { getWallet, type MappedBalances } from "@/lib/helpers/stellar/wallet";
 import storage from "@/lib/helpers/storage";
 import { useBalances } from "@/hooks/useBalances";
@@ -18,7 +28,7 @@ const getWalletInstance = () => {
   return getWallet();
 };
 
-const signTransaction = (xdr: string, options: any) => {
+const signTransaction = (xdr: string, options: StellarSignOptions) => {
   const wallet = getWalletInstance();
   return wallet.signTransaction(xdr, options);
 };
@@ -30,7 +40,10 @@ export interface WalletContextType {
   isFetchingBalances: boolean;
   network?: string;
   networkPassphrase?: string;
-  signTransaction: (xdr: string, options: any) => Promise<any>;
+  signTransaction: (
+    xdr: string,
+    options: StellarSignOptions
+  ) => Promise<{ signedTxXdr: string }>;
   /**
    * Manually trigger a refetch of balances.
    * Uses React Query's refetch mechanism.
@@ -38,14 +51,13 @@ export interface WalletContextType {
   refetchBalances: () => Promise<void>;
 }
 
-export const WalletContext = // eslint-disable-line react-refresh/only-export-components
-  createContext<WalletContextType>({
-    isPending: true,
-    isFetchingBalances: false,
-    balances: {},
-    refetchBalances: async () => {},
-    signTransaction,
-  });
+export const WalletContext = createContext<WalletContextType>({
+  isPending: true,
+  isFetchingBalances: false,
+  balances: {},
+  refetchBalances: async () => {},
+  signTransaction,
+});
 
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [address, setAddress] = useState<string>();
@@ -158,10 +170,9 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- it SHOULD only run once per component mount
 
-  // Wrapper function for refetch that matches the expected signature
-  const handleRefetchBalances = async () => {
+  const handleRefetchBalances = useCallback(async () => {
     await refetchBalances();
-  };
+  }, [refetchBalances]);
 
   const contextValue = useMemo(
     () => ({
@@ -181,7 +192,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       balances,
       isFetchingBalances,
       isPending,
-      refetchBalances,
+      handleRefetchBalances,
     ]
   );
 

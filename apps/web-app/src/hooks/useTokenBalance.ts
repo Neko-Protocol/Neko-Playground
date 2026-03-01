@@ -69,12 +69,10 @@ const getTokenBalanceFromContract = async (
       return "0";
     }
     // Type guard to ensure retval is ScVal - scValToNative accepts ScVal which is a complex type
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const balanceValue = scValToNative(
       retval as Parameters<typeof scValToNative>[0]
     );
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const balanceBigInt = BigInt(balanceValue);
+    const balanceBigInt = BigInt(balanceValue as string);
 
     // Convert to human-readable format
     return fromSmallestUnit(balanceBigInt.toString(), decimals);

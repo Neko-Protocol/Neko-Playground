@@ -9,7 +9,6 @@ import {
   OrderKind,
   OrderBookApi,
   OrderQuoteSideKindSell,
-  OrderSigningUtils,
 } from "@cowprotocol/cow-sdk";
 import { ViemAdapter } from "@cowprotocol/sdk-viem-adapter";
 import { WalletClient, PublicClient } from "viem";
@@ -37,14 +36,10 @@ import type {
   CowSwapLimitOrderResponse,
   CowSwapTwapOrderRequest,
   CowSwapTwapOrderResponse,
-  CowSwapOrder,
   CowSwapOrderWithPrice,
   CowSwapCancelOrderRequest,
   CowSwapCancelOrderResponse,
-  CowSwapOrderHistoryRequest,
-  CowSwapOrderHistoryResponse,
   CowOrder,
-  CowTrade,
 } from "../types/cowswapTypes";
 
 interface CowSdkTradeParameters {
@@ -687,8 +682,8 @@ export class CowSwapService {
    * Note: TWAP orders are not yet available in CoW Protocol SDK
    */
   async createTwapOrder(
-    request: CowSwapTwapOrderRequest,
-    chainId: number,
+    _request: CowSwapTwapOrderRequest,
+    _chainId: number,
     _publicClient: PublicClient,
     _walletClient: WalletClient
   ): Promise<CowSwapTwapOrderResponse> {

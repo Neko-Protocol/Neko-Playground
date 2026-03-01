@@ -161,7 +161,7 @@ export const useBorrowPools = () => {
 
       return pools;
     },
-    [rwaTokens, debtAssets]
+    [rwaTokens, debtAssets, availableTokens]
   );
 
   return useQuery<BorrowPool[]>({

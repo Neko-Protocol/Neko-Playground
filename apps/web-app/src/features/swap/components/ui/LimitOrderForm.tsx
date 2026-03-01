@@ -35,7 +35,7 @@ export const LimitOrderForm: React.FC<LimitOrderFormProps> = ({
           className="w-full bg-transparent text-white text-2xl font-bold outline-none placeholder-gray-500"
         />
         <div className="text-xs text-gray-400 mt-2">
-          Minimum price you're willing to accept
+          Minimum price you&apos;re willing to accept
         </div>
       </div>
     </div>

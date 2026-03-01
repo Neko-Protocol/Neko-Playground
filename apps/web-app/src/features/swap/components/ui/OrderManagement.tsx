@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAccount, useChainId, useWalletClient } from "wagmi";
 import { ORDER_HISTORY_LIMIT } from "@/features/swap/constants/swapConfig";
 import { EVM_TOKEN_ADDRESS_TO_SYMBOL } from "@/lib/constants/tokenIcons";
@@ -26,13 +26,10 @@ export const OrderManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load open orders
-  const loadOpenOrders = async () => {
+  const loadOpenOrders = useCallback(async () => {
     if (!address) return;
-
     setIsLoading(true);
     setError(null);
-
     try {
       const orders = await getCowSwapOpenOrders(address, chainId);
       setOpenOrders(orders || []);
@@ -41,15 +38,12 @@ export const OrderManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [address, chainId]);
 
-  // Load order history
-  const loadOrderHistory = async () => {
+  const loadOrderHistory = useCallback(async () => {
     if (!address) return;
-
     setIsLoading(true);
     setError(null);
-
     try {
       const history = await getCowSwapOrderHistory(
         { owner: address, limit: ORDER_HISTORY_LIMIT },
@@ -61,16 +55,15 @@ export const OrderManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [address, chainId]);
 
-  // Load data when component mounts or tab changes
   useEffect(() => {
     if (activeTab === "open") {
-      loadOpenOrders();
+      void loadOpenOrders();
     } else {
-      loadOrderHistory();
+      void loadOrderHistory();
     }
-  }, [address, chainId, activeTab]);
+  }, [address, chainId, activeTab, loadOpenOrders, loadOrderHistory]);
 
   // Cancel order handler
   const handleCancelOrder = async (

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { WalletButton } from "@/components/ui/WalletButton";
 
@@ -22,7 +23,13 @@ const Navbar: React.FC = () => {
         {/* Left Side: Logo & Name */}
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/Neko.svg" alt="Neko Logo" className="h-14 w-auto" />
+            <Image
+              src="/Neko.svg"
+              alt="Neko Logo"
+              height={56}
+              width={56}
+              className="h-14 w-auto"
+            />
             <span className="text-3xl font-klein text-[#081F5C] tracking-wide">
               Neko
             </span>
