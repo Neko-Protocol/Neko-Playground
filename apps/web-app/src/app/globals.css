@@ -49,6 +49,8 @@ body {
   --color-neko-teal-light: #68f9f2;
   --color-neko-muted: #bad6eb;
   --color-neko-navy-hover: #12328a;
+  --color-neko-accent-hover: #4a73c4;
+  --color-neko-border-hover: #3d5ac0;
   --color-neko-cream: #fff9f0;
   --color-neko-gray: #f3f4f6;
   /* Wallet UI (pill, modals) */

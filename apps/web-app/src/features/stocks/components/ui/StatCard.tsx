@@ -22,7 +22,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-2xl bg-gradient-to-br from-neko-accent to-neko-border p-6 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:from-[#4A73C4] hover:to-[#3D5AC0]",
+        "rounded-2xl bg-gradient-to-br from-neko-accent to-neko-border p-6 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:from-neko-accent-hover hover:to-neko-border-hover",
         className
       )}
     >
