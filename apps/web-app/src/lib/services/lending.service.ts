@@ -26,6 +26,7 @@ import {
   borrowFromPool,
 } from "../helpers/stellar/lending";
 import { extractContractError } from "../helpers/stellar/contractErrors";
+import { LENDING_CONFIG } from "../constants/lending";
 import type {
   LendingOperationResult,
   CollateralOperationResult,
@@ -571,8 +572,7 @@ export class LendingService {
         // Borrow limit is in USD value (from oracle calculations)
         // Convert from smallest unit (assuming 7 decimals for USD)
         const limitValue = Number(borrowLimitResult.ok);
-        // Since this is USD value, we can divide by 1e7 to get human-readable
-        return (limitValue / 1e7).toFixed(2);
+        return (limitValue / LENDING_CONFIG.borrowLimitDivisor).toFixed(2);
       } else {
         return "0";
       }

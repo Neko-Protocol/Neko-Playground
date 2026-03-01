@@ -3,6 +3,23 @@
  * Used by useBorrowPools, useLendingPools, and other lending-related code
  */
 
+/**
+ * Normalize contract/balance values (bigint | string | number) to string.
+ * Reused wherever contract results are coerced for BigInt/display.
+ */
+export function stringifyValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return "0";
+  }
+  if (typeof value === "bigint") {
+    return value.toString();
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  return String(value);
+}
+
 /** Contract result shape for get_interest_rate (Result<i128>) */
 type InterestRateResult =
   | { tag?: string; values?: unknown[]; unwrap?: () => bigint }
