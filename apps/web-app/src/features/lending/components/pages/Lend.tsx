@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Modal, Box, Typography, IconButton, TextField } from "@mui/material";
 import { useLendingPools } from "@/features/lending/hooks/useLendingPools";
 import { useWallet } from "../../../../hooks/useWallet";
@@ -87,13 +87,11 @@ const Lend: React.FC = () => {
 
   const [selectedPool, setSelectedPool] = useState<PoolData | null>(null);
 
-  // Update selectedPool when pools are loaded
+  // Update selectedPool when pools are loaded or refreshed
   React.useEffect(() => {
     if (pools.length > 0 && !selectedPool) {
       setSelectedPool(pools[0]);
-    }
-    // Also update selectedPool if it exists but data might have changed
-    if (selectedPool && pools.length > 0) {
+    } else if (selectedPool && pools.length > 0) {
       const updatedPool = pools.find(
         (p) => p.assetCode === selectedPool.assetCode
       );
@@ -101,7 +99,7 @@ const Lend: React.FC = () => {
         setSelectedPool(updatedPool);
       }
     }
-  }, [pools]);
+  }, [pools, selectedPool]);
 
   const handleLendClick = () => {
     setError(null);
@@ -184,12 +182,11 @@ const Lend: React.FC = () => {
     }
   }, [amount, isDepositModal, selectedPool?.bTokenRate]);
 
-  const loadBTokenBalance = async () => {
+  const loadBTokenBalance = useCallback(async () => {
     if (!selectedPool || !address) {
       setBTokenBalance(null);
       return;
     }
-
     setIsLoadingBalance(true);
     try {
       const balance = await getBTokenBalance(selectedPool.assetCode, address);
@@ -200,7 +197,7 @@ const Lend: React.FC = () => {
     } finally {
       setIsLoadingBalance(false);
     }
-  };
+  }, [selectedPool, address]);
 
   // Load bToken balance when pool or address changes
   React.useEffect(() => {
@@ -209,7 +206,7 @@ const Lend: React.FC = () => {
     } else {
       setBTokenBalance(null);
     }
-  }, [selectedPool?.assetCode, address]);
+  }, [selectedPool, address, loadBTokenBalance]);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);

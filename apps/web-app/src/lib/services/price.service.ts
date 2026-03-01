@@ -3,8 +3,11 @@
  * Handles token price fetching from various sources (CoinGecko, etc.)
  */
 
+import { PRICE_ERROR_DELAY_MS } from "@/lib/constants/wallet";
 import { isEVMToken, type EVMToken } from "../types/evmToken";
 import type { TokenPriceResult, PriceFetchOptions } from "../types/priceTypes";
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class PriceService {
   private priceCache = new Map<string, TokenPriceResult>();
@@ -29,12 +32,6 @@ export class PriceService {
     NFLX: "netflix-ondo-tokenized-stock",
   };
 
-  // Fallback prices for stable coins
-  private readonly FALLBACK_PRICES: Record<string, number> = {
-    USDC: 1.0,
-    USDT: 1.0,
-  };
-
   /**
    * Check if cached price is still valid
    */
@@ -43,13 +40,6 @@ export class PriceService {
     const now = new Date();
     const age = now.getTime() - cached.lastUpdated.getTime();
     return age < this.CACHE_DURATION;
-  }
-
-  /**
-   * Get fallback price for stable coins
-   */
-  private getFallbackPrice(tokenSymbol: string): number {
-    return this.FALLBACK_PRICES[tokenSymbol] || 0;
   }
 
   /**
@@ -133,11 +123,7 @@ export class PriceService {
     tokenSymbol: string,
     options: PriceFetchOptions = {}
   ): Promise<TokenPriceResult> {
-    const {
-      forceRefresh = false,
-      timeout = this.REQUEST_TIMEOUT,
-      enableFallbacks = true,
-    } = options;
+    const { forceRefresh = false, timeout = this.REQUEST_TIMEOUT } = options;
 
     // Check cache first (unless force refresh)
     // For RWA tokens, also check cache with underlying symbol
@@ -162,19 +148,7 @@ export class PriceService {
     const coinGeckoId = this.getCoinGeckoId(tokenSymbol);
 
     if (!coinGeckoId) {
-      // No CoinGecko ID available, use fallback if enabled
-      if (enableFallbacks) {
-        const fallbackPrice = this.getFallbackPrice(tokenSymbol);
-        const result: TokenPriceResult = {
-          price: fallbackPrice,
-          source: "fallback",
-          lastUpdated: new Date(),
-        };
-        this.priceCache.set(tokenSymbol, result);
-        return result;
-      }
-
-      // No fallback available
+      await sleep(PRICE_ERROR_DELAY_MS);
       const result: TokenPriceResult = {
         price: 0,
         source: "unavailable",
@@ -196,19 +170,7 @@ export class PriceService {
     } catch (error) {
       console.warn(`Failed to fetch price for ${tokenSymbol}:`, error);
 
-      // Try fallback on API failure
-      if (enableFallbacks) {
-        const fallbackPrice = this.getFallbackPrice(tokenSymbol);
-        const result: TokenPriceResult = {
-          price: fallbackPrice,
-          source: "fallback",
-          lastUpdated: new Date(),
-        };
-        this.priceCache.set(tokenSymbol, result);
-        return result;
-      }
-
-      // Return zero price on complete failure
+      await sleep(PRICE_ERROR_DELAY_MS);
       const result: TokenPriceResult = {
         price: 0,
         source: "error",

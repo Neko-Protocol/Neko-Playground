@@ -1,14 +1,25 @@
 import {
   createContext,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   useTransition,
 } from "react";
+
+/** Options accepted by the Stellar wallet's signTransaction. */
+interface StellarSignOptions {
+  networkPassphrase?: string;
+  address?: string;
+  submit?: boolean;
+  submitUrl?: string;
+  [key: string]: unknown;
+}
 import { getWallet, type MappedBalances } from "@/lib/helpers/stellar/wallet";
 import storage from "@/lib/helpers/storage";
 import { useBalances } from "@/hooks";
+import { POLL_INTERVAL, STORAGE_KEYS } from "@/lib/constants/wallet";
 
 const getWalletInstance = () => {
   if (typeof window === "undefined") {
@@ -17,7 +28,7 @@ const getWalletInstance = () => {
   return getWallet();
 };
 
-const signTransaction = (xdr: string, options: any) => {
+const signTransaction = (xdr: string, options: StellarSignOptions) => {
   const wallet = getWalletInstance();
   return wallet.signTransaction(xdr, options);
 };
@@ -29,7 +40,10 @@ export interface WalletContextType {
   isFetchingBalances: boolean;
   network?: string;
   networkPassphrase?: string;
-  signTransaction: (xdr: string, options: any) => Promise<any>;
+  signTransaction: (
+    xdr: string,
+    options: StellarSignOptions
+  ) => Promise<{ signedTxXdr: string }>;
   /**
    * Manually trigger a refetch of balances.
    * Uses React Query's refetch mechanism.
@@ -37,16 +51,13 @@ export interface WalletContextType {
   refetchBalances: () => Promise<void>;
 }
 
-const POLL_INTERVAL = 1000;
-
-export const WalletContext = // eslint-disable-line react-refresh/only-export-components
-  createContext<WalletContextType>({
-    isPending: true,
-    isFetchingBalances: false,
-    balances: {},
-    refetchBalances: async () => {},
-    signTransaction,
-  });
+export const WalletContext = createContext<WalletContextType>({
+  isPending: true,
+  isFetchingBalances: false,
+  balances: {},
+  refetchBalances: async () => {},
+  signTransaction,
+});
 
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [address, setAddress] = useState<string>();
@@ -72,20 +83,20 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     setAddress(undefined);
     setNetwork(undefined);
     setNetworkPassphrase(undefined);
-    storage.setItem("walletId", "");
-    storage.setItem("walletAddress", "");
-    storage.setItem("walletNetwork", "");
-    storage.setItem("networkPassphrase", "");
+    storage.setItem(STORAGE_KEYS.walletId, "");
+    storage.setItem(STORAGE_KEYS.walletAddress, "");
+    storage.setItem(STORAGE_KEYS.walletNetwork, "");
+    storage.setItem(STORAGE_KEYS.networkPassphrase, "");
   };
 
   const updateCurrentWalletState = async () => {
     // There is no way, with StellarWalletsKit, to check if the wallet is
     // installed/connected/authorized. We need to manage that on our side by
     // checking our storage item.
-    const walletId = storage.getItem("walletId");
-    const walletNetwork = storage.getItem("walletNetwork");
-    const walletAddr = storage.getItem("walletAddress");
-    const passphrase = storage.getItem("networkPassphrase");
+    const walletId = storage.getItem(STORAGE_KEYS.walletId);
+    const walletNetwork = storage.getItem(STORAGE_KEYS.walletNetwork);
+    const walletAddr = storage.getItem(STORAGE_KEYS.walletAddress);
+    const passphrase = storage.getItem(STORAGE_KEYS.networkPassphrase);
 
     if (
       !address &&
@@ -115,13 +126,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           wallet.getNetwork(),
         ]);
 
-        if (!a.address) storage.setItem("walletId", "");
+        if (!a.address) storage.setItem(STORAGE_KEYS.walletId, "");
         if (
           a.address !== address ||
           n.network !== network ||
           n.networkPassphrase !== networkPassphrase
         ) {
-          storage.setItem("walletAddress", a.address);
+          storage.setItem(STORAGE_KEYS.walletAddress, a.address);
           setAddress(a.address);
           setNetwork(n.network);
           setNetworkPassphrase(n.networkPassphrase);
@@ -140,41 +151,28 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
     let isMounted = true;
 
-    // Create recursive polling function to check wallet state continuously
-    const pollWalletState = async () => {
+    const pollWalletState = () => {
       if (!isMounted) return;
-
-      await updateCurrentWalletState();
-
-      if (isMounted) {
-        timer = setTimeout(() => void pollWalletState(), POLL_INTERVAL);
-      }
+      void updateCurrentWalletState();
     };
 
-    // Get the wallet address when the component is mounted for the first time
     startTransition(async () => {
       await updateCurrentWalletState();
-      // Start polling after initial state is loaded
-
-      if (isMounted) {
-        timer = setTimeout(() => void pollWalletState(), POLL_INTERVAL);
-      }
     });
 
-    // Clear the timeout and stop polling when the component unmounts
+    const intervalId = setInterval(pollWalletState, POLL_INTERVAL);
+
     return () => {
       isMounted = false;
-      if (timer) clearTimeout(timer);
+      clearInterval(intervalId);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- it SHOULD only run once per component mount
 
-  // Wrapper function for refetch that matches the expected signature
-  const handleRefetchBalances = async () => {
+  const handleRefetchBalances = useCallback(async () => {
     await refetchBalances();
-  };
+  }, [refetchBalances]);
 
   const contextValue = useMemo(
     () => ({
@@ -194,7 +192,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       balances,
       isFetchingBalances,
       isPending,
-      refetchBalances,
+      handleRefetchBalances,
     ]
   );
 

@@ -11,6 +11,7 @@ import {
   type ChainConfig,
 } from "@/lib/constants/evmConfig";
 import { isEVMToken, type EVMToken } from "@/lib/types";
+import Image from "next/image";
 
 interface TokenSelectorModalProps {
   isOpen: boolean;
@@ -30,7 +31,6 @@ interface TokenItemProps {
   usdValue: string;
   isSelected: boolean;
   onClick: () => void;
-  swapMode: "evm" | "stellar";
   showBalance?: boolean;
   chainIcon?: string;
 }
@@ -58,10 +58,13 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({
               : "bg-white text-gray-700 hover:bg-gray-100"
           }`}
         >
-          <img
+          <Image
             src={chain.icon}
             alt={chain.name}
-            className="w-5 h-5 rounded-full object-contain"
+            width={20}
+            height={20}
+            unoptimized
+            className="rounded-full object-contain"
           />
           <span className="text-sm font-medium">{chain.name}</span>
         </button>
@@ -78,7 +81,6 @@ const TokenItem: React.FC<TokenItemProps> = ({
   usdValue,
   isSelected,
   onClick,
-  swapMode,
   showBalance = true,
   chainIcon,
 }) => {
@@ -106,10 +108,13 @@ const TokenItem: React.FC<TokenItemProps> = ({
     >
       <div className="relative shrink-0">
         {displayIcon ? (
-          <img
+          <Image
             src={displayIcon}
             alt={code}
-            className="w-10 h-10 rounded-full shadow-md object-contain p-1"
+            width={40}
+            height={40}
+            unoptimized
+            className="rounded-full shadow-md object-contain p-1"
           />
         ) : (
           <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#334EAC] to-[#081F5C] flex items-center justify-center text-white font-bold text-sm shadow-md">
@@ -117,10 +122,13 @@ const TokenItem: React.FC<TokenItemProps> = ({
           </div>
         )}
         {chainIcon && (
-          <img
+          <Image
             src={chainIcon}
             alt="chain"
-            className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white shadow-sm object-contain bg-white"
+            width={16}
+            height={16}
+            unoptimized
+            className="absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-white shadow-sm object-contain bg-white"
           />
         )}
       </div>
@@ -158,7 +166,10 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
   const { balances } = useWallet();
   const { price: xlmPrice } = useTokenPrice("XLM");
   const [localChainId, setLocalChainId] = useState(selectedChainId);
-  const availableTokens = swapMode === "stellar" ? getAvailableTokens() : {};
+  const availableTokens = useMemo(
+    () => (swapMode === "stellar" ? getAvailableTokens() : {}),
+    [swapMode]
+  );
 
   // Get tokens for the selected chain
   const evmTokens = useMemo(
@@ -268,7 +279,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
 
       return { balance: "0", usdValue: "0" };
     },
-    [balances, swapMode]
+    [balances, swapMode, xlmPrice]
   );
 
   const userTokens = useMemo(() => {
@@ -422,7 +433,6 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                       usdValue={usdValue}
                       isSelected={isSelected}
                       onClick={() => handleTokenClick(code)}
-                      swapMode={swapMode}
                       chainIcon={
                         swapMode === "evm"
                           ? currentChainIcon || undefined
@@ -473,7 +483,6 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                       usdValue="0"
                       isSelected={isSelected}
                       onClick={() => handleTokenClick(code)}
-                      swapMode={swapMode}
                       showBalance={false}
                       chainIcon={
                         swapMode === "evm"

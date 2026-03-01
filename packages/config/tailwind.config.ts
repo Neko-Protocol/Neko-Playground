@@ -10,7 +10,22 @@ const config: Config = {
     "./packages/shared/src/**/*.{ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        neko: {
+          navy: "#081f5c",
+          blue: "#7096d1",
+          accent: "#294cab",
+          border: "#334eac",
+          teal: "#39bfb7",
+          "teal-light": "#68f9f2",
+          muted: "#bad6eb",
+          "navy-hover": "#12328a",
+          cream: "#fff9f0",
+          gray: "#f3f4f6",
+        },
+      },
+    },
   },
   plugins: [],
 };

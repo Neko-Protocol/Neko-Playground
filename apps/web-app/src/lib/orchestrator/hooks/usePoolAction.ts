@@ -32,7 +32,7 @@ interface PoolActionParams {
  *  4. Invalidates pool queries so data refreshes.
  */
 export function usePoolAction() {
-  const { address, signTransaction, networkPassphrase } = useWallet();
+  const { address, signTransaction } = useWallet();
   const { addNotification } = useNotification();
   const queryClient = useQueryClient();
 

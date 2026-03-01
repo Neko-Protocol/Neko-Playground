@@ -1,21 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Client as RwaLendingClient, networks } from "@neko/lending";
-import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
+import {
+  rpcUrl,
+  networkPassphrase,
+  allowHttpForSoroban,
+} from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-
-interface BorrowPool {
-  asset: string;
-  assetCode: string;
-  collateralToken: string; // RWA token contract used as collateral
-  collateralTokenCode: string; // RWA token code (e.g., "NVDA")
-  collateralFactor: number; // Collateral factor as percentage (e.g., 75 for 75%)
-  interestRate: number; // Borrow interest rate as APY percentage
-  poolBalance: string; // Available to borrow
-  poolBalanceUSD: string; // USD value
-  isActive: boolean;
-}
+import { parseInterestRateFromContractResult } from "@/lib/helpers/lendingUtils";
+import type { BorrowPool } from "../types/borrowing";
 
 /**
  * Hook to get all active borrow pools from the RWA lending contract
@@ -58,6 +52,7 @@ export const useBorrowPools = () => {
         contractId: contractId,
         rpcUrl: rpcUrl,
         networkPassphrase: networkPassphrase,
+        ...(allowHttpForSoroban && { allowHttp: true }),
       });
 
       // Get pool state
@@ -132,62 +127,16 @@ export const useBorrowPools = () => {
               decimals
             );
 
-            // Get interest rate for borrowing
+            // Get interest rate for borrowing (basis points → percentage)
             let interestRate = 0;
             try {
               const interestRateTx = await client.get_interest_rate(
                 { asset: debtCode },
                 { simulate: true }
               );
-              const interestRateResult = interestRateTx.result;
-
-              // Result<i128> from Stellar SDK has structure: { tag: "Ok", values: [bigint] } or { tag: "Err", values: [...] }
-              // Or it could be an object with unwrap() method
-              let rateValue = 0;
-
-              if (
-                interestRateResult !== null &&
-                interestRateResult !== undefined
-              ) {
-                // Try to access the value through various means
-                const result = interestRateResult as {
-                  tag?: string;
-                  values?: unknown[];
-                  unwrap?: () => bigint;
-                  isOk?: () => boolean;
-                };
-
-                // Method 1: Check if it has unwrap method (Stellar SDK Result type)
-                if (typeof result.unwrap === "function") {
-                  try {
-                    const unwrapped = result.unwrap();
-                    rateValue = Number(unwrapped);
-                  } catch {
-                    // unwrap() failed, try other methods
-                  }
-                }
-                // Method 2: Check for tag/values structure
-                else if (
-                  result.tag === "Ok" &&
-                  Array.isArray(result.values) &&
-                  result.values.length > 0
-                ) {
-                  const val = result.values[0];
-                  rateValue =
-                    typeof val === "bigint" ? Number(val) : Number(val);
-                }
-                // Method 3: Direct bigint/number/string
-                else if (typeof interestRateResult === "bigint") {
-                  rateValue = Number(interestRateResult);
-                } else if (typeof interestRateResult === "number") {
-                  rateValue = interestRateResult;
-                } else if (typeof interestRateResult === "string") {
-                  rateValue = parseInt(interestRateResult, 10);
-                }
-
-                // Interest rate is stored as basis points (e.g., 213 = 2.13%)
-                interestRate = rateValue / 100;
-              }
+              interestRate = parseInterestRateFromContractResult(
+                interestRateTx.result
+              );
             } catch {
               // If interest rate fetch fails, use 0
             }
@@ -212,7 +161,7 @@ export const useBorrowPools = () => {
 
       return pools;
     },
-    [rwaTokens, debtAssets]
+    [rwaTokens, debtAssets, availableTokens]
   );
 
   return useQuery<BorrowPool[]>({

@@ -1,33 +1,32 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
-import {
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
 import { useOracle } from "../../hooks/useOracle";
 import { useOracleAssetPrice } from "../../hooks/useOracleAssetPrice";
 import { formatAsset } from "../../utils/oracleUtils";
+import { formatPrice, calculatePriceChange } from "../../utils/oracleUtils";
 import { STOCK_INFO } from "../../utils/stockInfo";
+import { useStockInfo } from "../../hooks/useStockInfo";
 import type { Asset } from "@neko/oracle";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { PriceChart } from "../ui/PriceChart";
+import { ROUTES } from "../../constants/oracle";
+import { TIMESTAMP_MS_PER_SECOND } from "../../constants/oracle";
+import type { PriceChartDatum } from "../../types/stocks";
 
 const AssetDetail: React.FC = () => {
   const params = useParams();
   const router = useRouter();
   const symbol = params?.symbol as string | undefined;
 
-  // Get all assets to find the matching one
   const { assets } = useOracle();
 
   const symbolUpper = typeof symbol === "string" ? symbol.toUpperCase() : "";
-
-  // Find the asset that matches the symbol
+  const stockInfoFromOracle = useStockInfo(symbolUpper);
   const asset = React.useMemo(() => {
     if (!assets || !symbolUpper) return null;
     return assets.find((a: Asset) => {
@@ -41,20 +40,23 @@ const AssetDetail: React.FC = () => {
     values: [symbolUpper],
   };
 
-  const { lastPrice, priceHistory, isLoadingPrice, formatPrice } = useOracleAssetPrice(
-    asset || defaultAsset,
-  );
+  const {
+    lastPrice,
+    priceHistory,
+    isLoadingPrice,
+    decimals,
+    error: priceError,
+  } = useOracleAssetPrice(asset || defaultAsset);
 
-  // Calculate price change and prepare chart data
-  const chartData = React.useMemo(() => {
+  const chartData = React.useMemo((): PriceChartDatum[] => {
     if (!priceHistory || priceHistory.length === 0) return [];
-    // Sort by timestamp (oldest first) to ensure chronological order
+    const divisor = Math.pow(10, decimals);
     const sortedHistory = [...priceHistory].sort(
-      (a, b) => Number(a.timestamp) - Number(b.timestamp),
+      (a, b) => Number(a.timestamp) - Number(b.timestamp)
     );
     return sortedHistory.map((p) => {
-      const priceNum = formatPrice(p.price);
-      const date = new Date(Number(p.timestamp) * 1000);
+      const priceNum = Number(p.price) / divisor;
+      const date = new Date(Number(p.timestamp) * TIMESTAMP_MS_PER_SECOND);
       const dateStr = date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
@@ -66,38 +68,39 @@ const AssetDetail: React.FC = () => {
       return {
         timestamp: `${dateStr} ${timeStr}`,
         price: priceNum,
-        fullTimestamp: Number(p.timestamp) * 1000,
-        date: date,
+        fullTimestamp: Number(p.timestamp) * TIMESTAMP_MS_PER_SECOND,
+        date,
       };
     });
-  }, [priceHistory, formatPrice]);
+  }, [priceHistory, decimals]);
 
   const priceChange = React.useMemo(() => {
     if (!priceHistory || priceHistory.length < 2) return 0;
     const latest = priceHistory[priceHistory.length - 1];
     const oldest = priceHistory[0];
-    const currentPriceVal = formatPrice(latest.price);
-    const previousPrice = formatPrice(oldest.price);
-    if (previousPrice === 0) return 0;
-    return ((currentPriceVal - previousPrice) / previousPrice) * 100;
-  }, [priceHistory, formatPrice]);
+    const divisor = Math.pow(10, decimals);
+    const currentPriceVal = Number(latest.price) / divisor;
+    const previousPrice = Number(oldest.price) / divisor;
+    const change = calculatePriceChange(currentPriceVal, previousPrice);
+    return change ?? 0;
+  }, [priceHistory, decimals]);
 
-  const currentPrice = React.useMemo(() => {
+  const currentPriceStr = React.useMemo(() => {
     if (lastPrice) {
-      return formatPrice(lastPrice.price);
+      return formatPrice(lastPrice.price, decimals);
     }
     if (priceHistory && priceHistory.length > 0) {
       const latest = priceHistory[priceHistory.length - 1];
-      return formatPrice(latest.price);
+      return formatPrice(latest.price, decimals);
     }
     return null;
-  }, [lastPrice, priceHistory, formatPrice]);
+  }, [lastPrice, priceHistory, decimals]);
 
   const isPositive = priceChange >= 0;
 
   React.useEffect(() => {
     if (!symbol) {
-      void router.push("/oracle");
+      void router.push(ROUTES.STOCKS_BASE);
     }
   }, [symbol, router]);
 
@@ -105,15 +108,15 @@ const AssetDetail: React.FC = () => {
     return null;
   }
 
-  const stockInfo = STOCK_INFO[symbolUpper];
+  const stockInfo = stockInfoFromOracle ?? STOCK_INFO[symbolUpper];
 
   if (!stockInfo) {
     return (
       <div className="w-full px-4 py-2">
         <div className="w-full px-6 py-8">
           <Link
-            href="/oracle"
-            className="inline-flex items-center gap-2 text-sm text-[#7096D1] hover:text-black transition-colors mb-8"
+            href={ROUTES.STOCKS_BASE}
+            className="inline-flex items-center gap-2 text-sm text-neko-blue hover:text-black transition-colors mb-8"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
@@ -129,25 +132,35 @@ const AssetDetail: React.FC = () => {
   return (
     <div className="w-full px-4 py-2">
       <div className="w-full px-6 py-8">
-        {/* Back Button */}
         <Link
-          href="/oracle"
-          className="inline-flex items-center gap-2 text-sm text-[#7096D1] hover:text-black transition-colors mb-8"
+          href={ROUTES.STOCKS_BASE}
+          className="inline-flex items-center gap-2 text-sm text-neko-blue hover:text-black transition-colors mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Dashboard
         </Link>
 
-        {/* Asset Header with Price */}
+        {priceError && (
+          <div className="rounded-2xl bg-red-50 p-4 shadow-md border border-red-200 mb-6">
+            <p className="text-red-600 font-semibold">
+              Error loading price:{" "}
+              {priceError instanceof Error
+                ? priceError.message
+                : "Unknown error"}
+            </p>
+          </div>
+        )}
+
         <div className="rounded-3xl bg-white p-8 shadow-lg border border-gray-200 mb-8">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            {/* Left side: Logo and Company Info */}
             <div className="flex items-center gap-4 flex-1">
-              <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center p-3 overflow-hidden shrink-0">
-                <img
+              <div className="relative w-16 h-16 rounded-2xl bg-gray-100 overflow-hidden shrink-0 p-3">
+                <Image
                   src={stockInfo.logo || "/placeholder.svg"}
                   alt={stockInfo.name}
-                  className="w-full h-full object-contain"
+                  fill
+                  unoptimized
+                  className="object-contain p-3"
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -155,24 +168,23 @@ const AssetDetail: React.FC = () => {
                   <h1 className="text-3xl font-bold text-black truncate">
                     {stockInfo.name}
                   </h1>
-                  <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-[#39bfb7]/10 text-[#39bfb7] shrink-0">
+                  <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-neko-teal/10 text-neko-teal shrink-0">
                     {symbolUpper}
                   </span>
                 </div>
-                <p className="text-[#7096D1] text-sm leading-relaxed line-clamp-2">
+                <p className="text-neko-blue text-sm leading-relaxed line-clamp-2">
                   {stockInfo.description}
                 </p>
               </div>
             </div>
 
-            {/* Right side: Price Info */}
             <div className="flex items-center gap-4 shrink-0">
               {isLoadingPrice ? (
-                <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-[#39bfb7] border-r-transparent"></div>
-              ) : currentPrice !== null ? (
+                <LoadingSpinner variant="spinner" size="md" />
+              ) : currentPriceStr !== null ? (
                 <div className="flex items-center gap-4">
                   <div className="text-3xl font-bold text-black">
-                    ${currentPrice.toFixed(2)}
+                    {currentPriceStr}
                   </div>
                   {priceHistory && priceHistory.length >= 2 && (
                     <div
@@ -201,62 +213,16 @@ const AssetDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* Price History */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-6">
             <h2 className="text-2xl font-bold text-black">Price History</h2>
           </div>
           {isLoadingPrice ? (
             <div className="text-center py-12">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#39bfb7] border-r-transparent"></div>
-            </div>
-          ) : chartData.length > 0 ? (
-            <div className="bg-white rounded-3xl border border-gray-200 p-6 shadow-lg">
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="timestamp"
-                    stroke="#6b7280"
-                    tick={{ fill: "#6b7280", fontSize: 11 }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                  />
-                  <YAxis
-                    stroke="#6b7280"
-                    tick={{ fill: "#6b7280", fontSize: 12 }}
-                    domain={["auto", "auto"]}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      color: "#000000",
-                    }}
-                    formatter={(value: number) => [
-                      `$${value.toFixed(2)}`,
-                      "Price",
-                    ]}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="price"
-                    stroke="#39bfb7"
-                    strokeWidth={3}
-                    dot={false}
-                    activeDot={{ r: 6, fill: "#39bfb7" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <LoadingSpinner variant="spinner" size="lg" />
             </div>
           ) : (
-            <div className="text-center py-12 bg-white rounded-3xl border border-gray-200 shadow-lg">
-              <p className="text-gray-500 text-lg">
-                No historical data available yet
-              </p>
-            </div>
+            <PriceChart data={chartData} height={400} />
           )}
         </div>
       </div>

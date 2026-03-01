@@ -1,7 +1,6 @@
-export const STOCK_INFO: Record<
-  string,
-  { logo: string; name: string; description: string }
-> = {
+import type { StockInfo } from "../types/stocks";
+
+export const STOCK_INFO: Record<string, StockInfo> = {
   NVDA: {
     logo: "/stocks/nvda.png",
     name: "NVIDIA Corporation",

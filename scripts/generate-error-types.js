@@ -309,6 +309,42 @@ export function getErrorsForContract(
 export function isValidErrorCode(code: number): code is ContractErrorCode {
   return code in CONTRACT_ERRORS;
 }
+
+/**
+ * Errors grouped by contract name, then by error code.
+ * Use this for contract-specific lookups when multiple contracts share the same code.
+ */
+export const CONTRACT_ERRORS_BY_CONTRACT: Record<string, Record<number, ContractErrorInfo>> = (() => {
+  const byContract: Record<string, Record<number, ContractErrorInfo>> = {};
+  for (const [code, info] of Object.entries(CONTRACT_ERRORS)) {
+    const n = Number(code);
+    if (!byContract[info.contract]) byContract[info.contract] = {};
+    byContract[info.contract][n] = info;
+  }
+  return byContract;
+})();
+
+/**
+ * Get error info for a specific contract and error code.
+ * Use when the same numeric code exists in multiple contracts.
+ */
+export function getContractError(
+  contractName: string,
+  code: number
+): ContractErrorInfo | undefined {
+  const contractErrors = CONTRACT_ERRORS_BY_CONTRACT[contractName];
+  return contractErrors ? contractErrors[code] : undefined;
+}
+
+/**
+ * Check if an error code is valid for a specific contract
+ */
+export function isValidContractErrorCode(
+  contractName: string,
+  code: number
+): boolean {
+  return getContractError(contractName, code) !== undefined;
+}
 `;
 
   const outputDir = path.dirname(OUTPUT_FILE);

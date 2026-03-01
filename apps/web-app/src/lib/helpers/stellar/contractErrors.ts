@@ -5,7 +5,6 @@
 
 import {
   CONTRACT_ERRORS,
-  CONTRACT_ERRORS_BY_CONTRACT,
   ContractErrorCode,
   isValidErrorCode,
   getContractError,
@@ -53,11 +52,11 @@ export function extractContractError(
   // Handle object errors more carefully
   let errorString: string;
   if (typeof error === "object") {
-    const errorObj = error as any;
-    if (errorObj.message && typeof errorObj.message === "string") {
+    const errorObj = error as Record<string, unknown>;
+    if (typeof errorObj.message === "string") {
       errorString = errorObj.message;
     } else if (errorObj.name && errorObj.message) {
-      errorString = `${errorObj.name}: ${errorObj.message}`;
+      errorString = `${String(errorObj.name)}: ${String(errorObj.message)}`;
     } else {
       // Fallback: try to stringify but avoid [object Object]
       try {

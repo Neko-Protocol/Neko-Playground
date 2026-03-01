@@ -34,6 +34,9 @@ export type {
 export { priceService } from "./price.service";
 export type { TokenPriceResult, PriceFetchOptions } from "../types/priceTypes";
 
+// Stellar Price Service
+export { stellarPriceService } from "./stellar-price.service";
+
 // Token Service
 export { tokenService } from "./token.service";
 export type { TokenBalanceResult, TokenInfo } from "../types/tokenTypes";

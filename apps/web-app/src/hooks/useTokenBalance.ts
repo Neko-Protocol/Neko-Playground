@@ -11,6 +11,7 @@ import {
   rpcUrl,
   networkPassphrase,
   horizonUrl,
+  XLM_TESTNET_ADDRESS,
 } from "@/lib/config/stellar.config";
 import { useWallet } from "./useWallet";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
@@ -68,12 +69,10 @@ const getTokenBalanceFromContract = async (
       return "0";
     }
     // Type guard to ensure retval is ScVal - scValToNative accepts ScVal which is a complex type
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const balanceValue = scValToNative(
       retval as Parameters<typeof scValToNative>[0]
     );
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const balanceBigInt = BigInt(balanceValue);
+    const balanceBigInt = BigInt(balanceValue as string);
 
     // Convert to human-readable format
     return fromSmallestUnit(balanceBigInt.toString(), decimals);
@@ -107,11 +106,8 @@ const getTokenDecimals = (tokenAddress: string): number => {
   const tokens = getTokens();
   const availableTokens = getAvailableTokens();
 
-  // Check if it's XLM (current network or hardcoded testnet fallback)
-  if (
-    tokenAddress === tokens.XLM ||
-    tokenAddress === "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC" // testnet XLM fallback
-  ) {
+  // Check if it's XLM (current network or testnet fallback)
+  if (tokenAddress === tokens.XLM || tokenAddress === XLM_TESTNET_ADDRESS) {
     return 7;
   }
 
@@ -147,7 +143,7 @@ export const useTokenBalance = (
   const isXlm =
     tokenAddress === tokens.XLM ||
     (typeof token !== "string" && token?.type === "native") ||
-    tokenAddress === "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"; // testnet XLM fallback
+    tokenAddress === XLM_TESTNET_ADDRESS;
 
   // For Soroban tokens, use contract simulation (always call hook, but disable when XLM)
   const {

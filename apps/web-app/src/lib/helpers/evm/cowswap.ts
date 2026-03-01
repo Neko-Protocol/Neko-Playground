@@ -1,7 +1,5 @@
-import { WalletClient, PublicClient } from "viem";
+import type { PublicClient, WalletClient } from "viem";
 import { cowSwapService } from "../../services";
-import { EVM_TOKENS } from "../../constants/evmConfig";
-import { COW_API_BASE_URLS, COW_API_ENDPOINTS } from "../../constants/cowswapConfig";
 import type {
   CowSwapQuoteRequest,
   CowSwapQuoteResponse,
@@ -16,7 +14,6 @@ import type {
   CowSwapCancelOrderResponse,
   CowSwapOrderHistoryRequest,
   CowSwapOrderHistoryResponse,
-  CowOrder,
 } from "../../types/cowswapTypes";
 
 export { EVM_TOKENS } from "../../constants/evmConfig";
@@ -195,97 +192,3 @@ export const getCowSwapOrderHistory = async (
     };
   }
 };
-
-// Helper functions for order processing
-function calculateTrafficLightStatus(
-  order: CowOrder,
-  limitPrice: number
-): "far" | "close" | "executable" | "executing" {
-  try {
-    // Get current execution percentage
-    const executedSell = BigInt(order.executedSellAmount || "0");
-    const totalSell = BigInt(order.sellAmount);
-
-    if (totalSell === 0n) return "far";
-
-    const executionRatio = Number(executedSell) / Number(totalSell);
-
-    // If order is partially executed, it's executing
-    if (executionRatio > 0) {
-      return "executing";
-    }
-
-    // Check time remaining vs total duration
-    const now = Date.now() / 1000;
-    const timeRemaining = order.validTo - now;
-    const totalDuration =
-      order.validTo - new Date(order.creationDate).getTime() / 1000;
-
-    if (totalDuration <= 0) return "far";
-
-    const timeRatio = timeRemaining / totalDuration;
-
-    // Logic for determining status:
-    // - far: order is young or has low chance of execution
-    // - close: getting closer to execution conditions
-    // - executable: ready for execution
-    // - executing: already partially filled
-
-    if (timeRatio < 0.2) {
-      // Less than 20% time remaining - getting urgent
-      return "executable";
-    } else if (timeRatio < 0.5) {
-      // Less than 50% time remaining
-      return "close";
-    } else {
-      // Plenty of time remaining
-      return "far";
-    }
-  } catch (error) {
-    console.error("Error calculating traffic light status:", error);
-    return "far";
-  }
-}
-
-function processOrders(rawOrders: CowOrder[], chainId: number): CowSwapOrderWithPrice[] {
-  const processedOrders = [];
-
-  for (const order of rawOrders) {
-    if (order.status === "open") {
-      // Calculate limit price for display
-      const sellAmount = BigInt(order.sellAmount);
-      const buyAmount = BigInt(order.buyAmount);
-      const limitPrice =
-        sellAmount > 0n ? Number(buyAmount) / Number(sellAmount) : 0;
-
-      // Calculate progress status based on order parameters
-      const progressStatus = calculateTrafficLightStatus(order, limitPrice);
-
-      const explorerUrl = `https://explorer.cow.fi/orders/${order.uid}`;
-
-      processedOrders.push({
-        orderId: order.uid,
-        owner: order.owner,
-        sellToken: order.sellToken,
-        buyToken: order.buyToken,
-        sellAmount: order.sellAmount,
-        buyAmount: order.buyAmount,
-        executedSellAmount: order.executedSellAmount || "0",
-        executedBuyAmount: order.executedBuyAmount || "0",
-        executedFeeAmount: order.executedFeeAmount || "0",
-        status: order.status,
-        creationDate: order.creationDate,
-        validTo: order.validTo,
-        receiver: order.receiver,
-        appData: order.appData,
-        kind: order.kind,
-        partiallyFillable: order.partiallyFillable,
-        explorerUrl,
-        limitPrice: limitPrice.toString(),
-        progressStatus,
-      });
-    }
-  }
-
-  return processedOrders;
-}

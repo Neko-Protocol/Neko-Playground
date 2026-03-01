@@ -417,7 +417,7 @@ export const buildTransaction = async (
 
     const buildResponse = await soroswapSDK.build(
       {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         quote: sdkQuote as any,
         from: request.from,
       },
@@ -450,7 +450,6 @@ export const sendTransaction = async (
   const sdkNetwork = getSDKNetwork();
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const sendResponse = await soroswapSDK.send(
       request.xdr,
       request.launchtube || false,

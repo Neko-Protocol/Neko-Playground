@@ -3,7 +3,7 @@
  * Handles token-related operations like balance fetching and token utilities
  */
 
-import { PublicClient, WalletClient } from "viem";
+import { PublicClient } from "viem";
 import { EVM_TOKENS, getTokensForChain } from "../constants/evmConfig";
 import type { EVMToken } from "../types/evmToken";
 import type { TokenBalanceResult, TokenInfo } from "../types/tokenTypes";
@@ -216,7 +216,7 @@ export class TokenService {
    * Get multiple token balances in batch
    */
   async getTokenBalances(
-    tokens: (Token | string)[],
+    tokens: (EVMToken | string)[],
     walletAddress: `0x${string}`,
     publicClient: PublicClient,
     chainId: number = 1

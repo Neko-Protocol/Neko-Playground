@@ -37,7 +37,6 @@ export const useEVMTokenPrice = (
         return { price: 0, source: "invalid" };
       }
       return await priceService.getTokenPrice(tokenSymbol, {
-        enableFallbacks: true,
         timeout: 5000,
       });
     },
@@ -48,9 +47,16 @@ export const useEVMTokenPrice = (
     throwOnError: false,
   });
 
+  const priceError =
+    error?.message ??
+    (priceResult &&
+    (priceResult.source === "error" || priceResult.source === "unavailable")
+      ? "Price unavailable"
+      : null);
+
   return {
-    price: priceResult?.price || 0,
+    price: priceResult?.price ?? 0,
     isLoading,
-    error: error ? error.message : null,
+    error: priceError,
   };
 };

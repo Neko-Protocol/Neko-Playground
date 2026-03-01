@@ -4,6 +4,7 @@ import React from "react";
 import { useWallet } from "@/hooks";
 import { parseBalance } from "@/features/dashboard/utils/dashboardUtils";
 import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
+import Image from "next/image";
 
 const MainStats: React.FC = () => {
   const { balances, isFetchingBalances, address } = useWallet();
@@ -46,10 +47,11 @@ const MainStats: React.FC = () => {
         {/* Left Card: Portfolio Stats */}
         <div className="md:col-span-2 rounded-3xl bg-[#294cab] p-8 shadow-lg border border-[#334EAC]/90 relative overflow-hidden flex flex-col justify-between min-h-[320px]">
           {/* Neko Thumbs Up Background Image */}
-          <img
+          <Image
             src="/Neko_Thumbs_Up.png"
             alt="Neko Thumbs Up"
-            className="absolute right-5 bottom-3 h-85 w-auto object-contain opacity-30 pointer-events-none"
+            fill
+            className="object-contain opacity-30 pointer-events-none !w-auto !h-[340px] !left-auto !right-5 !bottom-3 !top-auto"
           />
 
           <div className="relative z-10">
