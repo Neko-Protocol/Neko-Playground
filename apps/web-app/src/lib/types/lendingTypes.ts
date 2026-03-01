@@ -20,3 +20,9 @@ export interface BorrowWithCollateralResult {
   borrowXdr: string;
   error?: string;
 }
+
+export interface DepositWithApproveResult {
+  approveXdr: string;
+  depositXdr: string;
+  error?: string;
+}

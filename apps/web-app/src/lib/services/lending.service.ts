@@ -30,6 +30,7 @@ import type {
   LendingOperationResult,
   CollateralOperationResult,
   BorrowWithCollateralResult,
+  DepositWithApproveResult,
 } from "../types/lendingTypes";
 
 export class LendingService {
@@ -244,6 +245,52 @@ export class LendingService {
         xdr: "",
         error: friendlyError,
       };
+    }
+  }
+
+  /**
+   * Deposit tokens with approve - returns two separate transactions to sign sequentially
+   */
+  async depositWithApprove(
+    tokenContractAddress: string,
+    assetCode: string,
+    amount: string,
+    decimals: number = 7,
+    walletAddress: string
+  ): Promise<DepositWithApproveResult> {
+    try {
+      const approveResult = await this.approveToken(
+        tokenContractAddress,
+        networks.testnet.contractId,
+        amount,
+        decimals,
+        walletAddress
+      );
+
+      if (approveResult.error) {
+        return { approveXdr: "", depositXdr: "", error: approveResult.error };
+      }
+
+      const depositResult = await this.depositToPool(
+        assetCode,
+        amount,
+        decimals,
+        walletAddress
+      );
+
+      if (depositResult.error) {
+        return {
+          approveXdr: approveResult.xdr,
+          depositXdr: "",
+          error: depositResult.error,
+        };
+      }
+
+      return { approveXdr: approveResult.xdr, depositXdr: depositResult.xdr };
+    } catch (error) {
+      console.error("Error building deposit with approve transactions:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return { approveXdr: "", depositXdr: "", error: friendlyError };
     }
   }
 
