@@ -13,10 +13,8 @@
 import {
   PoolV2,
   PoolContractV2,
-  PoolEstimate,
   RequestType,
   TokenMetadata,
-  type Network as BlendNetwork,
   type Request,
 } from "@blend-capital/blend-sdk";
 import { TransactionBuilder, rpc, xdr, Horizon } from "@stellar/stellar-sdk";

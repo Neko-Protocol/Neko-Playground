@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { ModalCloseButton } from "./ModalCloseButton";
 
 interface DisconnectedWalletViewProps {
-  onConnectEVM: () => void;
   onConnectStellar: () => void;
   isConnectingStellar: boolean;
   isEvmConnected: boolean;
@@ -15,7 +15,6 @@ interface DisconnectedWalletViewProps {
 }
 
 export const DisconnectedWalletView: React.FC<DisconnectedWalletViewProps> = ({
-  onConnectEVM,
   onConnectStellar,
   isConnectingStellar,
   isEvmConnected,
@@ -45,10 +44,12 @@ export const DisconnectedWalletView: React.FC<DisconnectedWalletViewProps> = ({
               }}
               disabled={isDisabled}
             >
-              <img
+              <Image
                 src="/crypto/png/ethereum-eth-logo.png"
                 alt="Ethereum"
-                className="w-6 h-6 shrink-0"
+                width={24}
+                height={24}
+                className="shrink-0"
               />
               <span className="whitespace-nowrap">Connect EVM Wallet</span>
             </HoverBorderGradient>
@@ -68,10 +69,12 @@ export const DisconnectedWalletView: React.FC<DisconnectedWalletViewProps> = ({
         }}
         disabled={isConnectingStellar || isEvmConnected}
       >
-        <img
+        <Image
           src="/crypto/png/stellar-xlm-logo.png"
           alt="Stellar"
-          className="w-6 h-6 shrink-0"
+          width={24}
+          height={24}
+          className="shrink-0"
         />
         <span className="whitespace-nowrap">
           {isConnectingStellar ? "Connecting..." : "Connect Stellar Wallet"}

@@ -30,12 +30,12 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
   const prevEvmStateRef = useRef(isEvmConnected);
   const prevStellarStateRef = useRef(!!stellarAddress);
 
+  // Snapshot wallet state when the modal opens so the second effect can
+  // detect new connections made while the modal was visible.
   useEffect(() => {
     if (isOpen) {
       prevEvmStateRef.current = isEvmConnected;
       prevStellarStateRef.current = !!stellarAddress;
-    } else {
-      setIsConnectingStellar(false);
     }
   }, [isOpen, isEvmConnected, stellarAddress]);
 
@@ -136,7 +136,6 @@ export const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
           />
         ) : (
           <DisconnectedWalletView
-            onConnectEVM={() => {}}
             onConnectStellar={() => void handleConnectStellar()}
             isConnectingStellar={isConnectingStellar}
             isEvmConnected={isEvmConnected}

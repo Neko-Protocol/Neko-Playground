@@ -6,12 +6,15 @@
  */
 
 /**
- * Valid localStorage key names mapped to an arbitrary value of the correct
- * type. Used to provide both good typing AND good type-ahead, so that you can
- * see a list of valid storage keys while using this module elsewhere.
- * Wallet state is no longer persisted here; use the single source of truth (WalletProvider).
+ * Valid localStorage key names mapped to the type of their stored value.
+ * Extend this union when adding new persisted keys.
  */
-type Schema = Record<string, never>;
+type Schema = {
+  walletId: string;
+  walletAddress: string;
+  walletNetwork: string;
+  networkPassphrase: string;
+};
 
 /**
  * Typed interface that follows the Web Storage API: https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API
@@ -86,4 +89,5 @@ class TypedStorage<T> {
 /**
  * Fully-typed wrapper around localStorage
  */
-export default new TypedStorage<Schema>();
+const storage = new TypedStorage<Schema>();
+export default storage;

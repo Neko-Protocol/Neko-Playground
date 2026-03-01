@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import oracleClient from "@/lib/clients/oracle";
 import type { RWAMetadata } from "@neko/oracle";
+import { ORACLE_PRICE_STALE_MS } from "../constants/oracle";
 
 export const useOracleRWAMetadata = (assetId: string) => {
   const {
@@ -12,7 +13,6 @@ export const useOracleRWAMetadata = (assetId: string) => {
     queryFn: async () => {
       const result = await oracleClient.get_rwa_metadata({ asset_id: assetId });
 
-      // The generated client returns AssembledTransaction with result: { ok: ..., err: ... }
       const resultData = result.result as {
         ok?: RWAMetadata;
         err?: { message?: string };
@@ -27,12 +27,11 @@ export const useOracleRWAMetadata = (assetId: string) => {
 
       return resultData.ok;
     },
+    staleTime: ORACLE_PRICE_STALE_MS,
   });
 
-  const metadata = metadataResult;
-
   return {
-    metadata,
+    metadata: metadataResult,
     isLoading,
     error,
   };

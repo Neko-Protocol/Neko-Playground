@@ -7,7 +7,6 @@ import {
   AlbedoModule,
   xBullModule,
   LobstrModule,
-  WalletNetwork,
 } from "@creit.tech/stellar-wallets-kit";
 import { LedgerModule } from "@creit.tech/stellar-wallets-kit/modules/ledger.module";
 import {

@@ -13,7 +13,6 @@ const DEFAULT_TIMEOUT = 50000;
  * Get API key from environment or localStorage
  */
 export const getApiKey = (): string | null => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const envKey = process.env.NEXT_PUBLIC_SOROSWAP_API_KEY;
   const envKeyStr = typeof envKey === "string" ? envKey : "";
   if (envKeyStr && envKeyStr.trim() !== "") {
@@ -129,14 +128,12 @@ export const makeAPIRequest = async <T>(
     const response = await fetch(url, { ...options, headers });
 
     if (!response.ok) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         `API request failed: ${response.status} ${response.statusText}. ${JSON.stringify(errorData)}`
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const jsonData = await response.json();
     return jsonData as T;
   } catch (error) {
