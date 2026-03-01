@@ -19,6 +19,10 @@ import {
   horizonUrl,
   allowHttpForSoroban,
 } from "../constants/network";
+
+/** Allow HTTP for Horizon when URL is http: (e.g. local dev). */
+const allowHttpForHorizon =
+  typeof horizonUrl === "string" && horizonUrl.startsWith("http:");
 import { toSmallestUnit } from "../helpers/tokenUtils";
 import {
   approveToken,
@@ -39,7 +43,9 @@ export class LendingService {
 
   constructor() {
     this.sorobanServer = new rpc.Server(rpcUrl, { allowHttp: true });
-    this.horizonServer = new Horizon.Server(horizonUrl);
+    this.horizonServer = new Horizon.Server(horizonUrl, {
+      allowHttp: allowHttpForHorizon,
+    });
     this.lendingClient = new RwaLendingClient({
       contractId: networks.testnet.contractId,
       rpcUrl: rpcUrl,
