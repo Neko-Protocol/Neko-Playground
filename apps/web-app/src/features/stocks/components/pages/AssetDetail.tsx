@@ -112,119 +112,107 @@ const AssetDetail: React.FC = () => {
 
   if (!stockInfo) {
     return (
-      <div className="w-full px-4 py-2">
-        <div className="w-full px-6 py-8">
-          <Link
-            href={ROUTES.STOCKS_BASE}
-            className="inline-flex items-center gap-2 text-sm text-neko-blue hover:text-black transition-colors mb-8"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Link>
-          <div className="rounded-3xl bg-white p-12 shadow-lg border border-gray-200 text-center">
-            <p className="text-gray-500 text-lg">Asset not found</p>
-          </div>
+      <div className="w-full max-w-5xl mx-auto px-10 py-10">
+        <Link
+          href={ROUTES.STOCKS_BASE}
+          className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors mb-8"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Link>
+        <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
+          <p className="text-white/40 text-lg">Asset not found</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full px-4 py-2">
-      <div className="w-full px-6 py-8">
-        <Link
-          href={ROUTES.STOCKS_BASE}
-          className="inline-flex items-center gap-2 text-sm text-neko-blue hover:text-black transition-colors mb-8"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
-        </Link>
+    <div className="w-full max-w-5xl mx-auto px-10 py-10">
+      <Link
+        href={ROUTES.STOCKS_BASE}
+        className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors mb-8"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Dashboard
+      </Link>
 
-        {priceError && (
-          <div className="rounded-2xl bg-red-50 p-4 shadow-md border border-red-200 mb-6">
-            <p className="text-red-600 font-semibold">
-              Error loading price:{" "}
-              {priceError instanceof Error
-                ? priceError.message
-                : "Unknown error"}
-            </p>
-          </div>
-        )}
+      {priceError && (
+        <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-4 mb-6">
+          <p className="text-red-400 font-semibold text-sm">
+            Error loading price:{" "}
+            {priceError instanceof Error ? priceError.message : "Unknown error"}
+          </p>
+        </div>
+      )}
 
-        <div className="rounded-3xl bg-white p-8 shadow-lg border border-gray-200 mb-8">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="relative w-16 h-16 rounded-2xl bg-gray-100 overflow-hidden shrink-0 p-3">
-                <Image
-                  src={stockInfo.logo || "/placeholder.svg"}
-                  alt={stockInfo.name}
-                  fill
-                  unoptimized
-                  className="object-contain p-3"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-1">
-                  <h1 className="text-3xl font-bold text-black truncate">
-                    {stockInfo.name}
-                  </h1>
-                  <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-neko-teal/10 text-neko-teal shrink-0">
-                    {symbolUpper}
-                  </span>
-                </div>
-                <p className="text-neko-blue text-sm leading-relaxed line-clamp-2">
-                  {stockInfo.description}
-                </p>
-              </div>
+      {/* Asset header card */}
+      <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-6 mb-6">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="relative w-16 h-16 rounded-2xl bg-[#2A2A2A] overflow-hidden shrink-0">
+              <Image
+                src={stockInfo.logo || "/placeholder.svg"}
+                alt={stockInfo.name}
+                fill
+                unoptimized
+                className="object-contain p-3"
+              />
             </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-1.5">
+                <h1 className="text-2xl font-bold text-white truncate">
+                  {stockInfo.name}
+                </h1>
+                <span
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold shrink-0"
+                  style={{ color: "#229EDF", backgroundColor: "rgba(34,158,223,0.10)" }}
+                >
+                  {symbolUpper}
+                </span>
+              </div>
+              <p className="text-white/40 text-sm leading-relaxed line-clamp-2">
+                {stockInfo.description}
+              </p>
+            </div>
+          </div>
 
-            <div className="flex items-center gap-4 shrink-0">
-              {isLoadingPrice ? (
-                <LoadingSpinner variant="spinner" size="md" />
-              ) : currentPriceStr !== null ? (
-                <div className="flex items-center gap-4">
-                  <div className="text-3xl font-bold text-black">
-                    {currentPriceStr}
+          <div className="flex items-center gap-4 shrink-0">
+            {isLoadingPrice ? (
+              <LoadingSpinner variant="spinner" size="md" />
+            ) : currentPriceStr !== null ? (
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-bold text-white">{currentPriceStr}</span>
+                {priceHistory && priceHistory.length >= 2 && (
+                  <div
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                      isPositive
+                        ? "bg-green-500/10 text-green-400"
+                        : "bg-red-500/10 text-red-400"
+                    }`}
+                  >
+                    {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                    {isPositive ? "+" : ""}{priceChange.toFixed(2)}%
                   </div>
-                  {priceHistory && priceHistory.length >= 2 && (
-                    <div
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
-                        isPositive
-                          ? "bg-green-500/10 text-green-600"
-                          : "bg-red-500/10 text-red-600"
-                      }`}
-                    >
-                      {isPositive ? (
-                        <TrendingUp className="h-4 w-4" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4" />
-                      )}
-                      <span className="text-base font-semibold">
-                        {isPositive ? "+" : ""}
-                        {priceChange.toFixed(2)}%
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-gray-500">No price data available</p>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-white/40 text-sm">No price data available</p>
+            )}
           </div>
         </div>
+      </div>
 
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl font-bold text-black">Price History</h2>
+      {/* Price history */}
+      <div>
+        <h2 className="text-xl font-bold text-white mb-5">Price History</h2>
+        {isLoadingPrice ? (
+          <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 flex items-center justify-center py-16">
+            <LoadingSpinner variant="spinner" size="lg" />
           </div>
-          {isLoadingPrice ? (
-            <div className="text-center py-12">
-              <LoadingSpinner variant="spinner" size="lg" />
-            </div>
-          ) : (
-            <PriceChart data={chartData} height={400} />
-          )}
-        </div>
+        ) : (
+          <PriceChart data={chartData} height={400} />
+        )}
       </div>
     </div>
   );

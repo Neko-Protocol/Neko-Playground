@@ -23,6 +23,7 @@ const config: Config = {
           "navy-hover": "#12328a",
           cream: "#fff9f0",
           gray: "#f3f4f6",
+          dark: "#121212",
         },
       },
     },

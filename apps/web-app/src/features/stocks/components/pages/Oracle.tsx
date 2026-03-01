@@ -9,6 +9,7 @@ import { AssetPriceCard } from "../ui/AssetPriceCard";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Activity, Database, Clock, Layers } from "lucide-react";
 import { MAX_ASSETS_DISPLAY } from "../../constants/oracle";
+import { BannerPage } from "@/components/ui/BannerPage";
 
 const OracleVisualizer: React.FC = () => {
   const {
@@ -30,14 +31,14 @@ const OracleVisualizer: React.FC = () => {
   return (
     <div className="w-full min-h-screen">
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-10">
-          <h1 className="text-5xl font-bold text-neko-navy tracking-tight mb-3">
-            Oracle Dashboard
-          </h1>
-          <p className="text-neko-blue text-lg leading-relaxed">
-            Real-time price data and RWA metadata from the RWACLE
-          </p>
-        </div>
+        <BannerPage
+          title="Discover Assets"
+          subtitle="Real-time price data and RWA metadata from the RWACLE"
+          badge="See prices in real time"
+          imageSrc="/banners/oracle.svg"
+          imageAlt="Discover Assets illustration"
+          className="mb-10"
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
           <StatCard
@@ -74,52 +75,38 @@ const OracleVisualizer: React.FC = () => {
         </div>
 
         {assetsError && (
-          <div className="rounded-2xl bg-red-50 p-6 shadow-md border border-red-200 mb-8">
-            <p className="text-red-600 font-semibold">
+          <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-5 mb-8">
+            <p className="text-red-400 font-semibold text-sm">
               Error loading assets:{" "}
-              {assetsError instanceof Error
-                ? assetsError.message
-                : "Unknown error"}
+              {assetsError instanceof Error ? assetsError.message : "Unknown error"}
             </p>
           </div>
         )}
 
         {isLoading ? (
-          <div className="rounded-2xl bg-gradient-to-br from-neko-accent to-neko-border p-12 shadow-xl">
-            <div className="flex flex-col items-center justify-center gap-4">
-              <LoadingSpinner variant="dots" size="lg" />
-              <span className="text-white text-lg font-medium">
-                Loading oracle data...
-              </span>
-            </div>
+          <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 flex flex-col items-center justify-center gap-4">
+            <LoadingSpinner variant="dots" size="lg" />
+            <span className="text-white/60 text-base font-medium">Loading oracle data…</span>
           </div>
         ) : filteredAssets.length > 0 ? (
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold text-neko-navy mb-2">
-                Assets & Prices
-              </h2>
-              <p className="text-neko-blue text-base">
-                Live price feeds from the oracle
-              </p>
+              <h2 className="text-2xl font-bold text-white mb-1">Assets & Prices</h2>
+              <p className="text-white/40 text-sm">Live price feeds from the oracle</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAssets
-                .slice(0, MAX_ASSETS_DISPLAY)
-                .map((asset: Asset) => (
-                  <AssetPriceCard
-                    key={formatAsset(asset)}
-                    asset={asset}
-                    decimals={decimals}
-                  />
-                ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredAssets.slice(0, MAX_ASSETS_DISPLAY).map((asset: Asset) => (
+                <AssetPriceCard
+                  key={formatAsset(asset)}
+                  asset={asset}
+                  decimals={decimals}
+                />
+              ))}
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl bg-gradient-to-br from-neko-accent to-neko-border p-12 shadow-xl text-center">
-            <p className="text-white text-lg font-medium">
-              No assets found in the oracle
-            </p>
+          <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
+            <p className="text-white/40 text-base">No assets found in the oracle</p>
           </div>
         )}
       </div>

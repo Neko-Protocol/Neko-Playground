@@ -30,12 +30,12 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
   orderType,
   onClick,
 }) => {
+  const baseClass =
+    "w-full font-bold py-4 text-base rounded-2xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2";
+
   if (!address) {
     return (
-      <button
-        disabled
-        className="w-full bg-[#334EAC]/30 text-[#081F5C] font-bold py-4 text-base rounded-xl cursor-not-allowed"
-      >
+      <button disabled className={`${baseClass} bg-white/10 text-white/40`}>
         Connect Wallet
       </button>
     );
@@ -43,10 +43,7 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
 
   if (!canGetQuote) {
     return (
-      <button
-        disabled
-        className="w-full bg-[#2b46a7] text-[#ffffff] font-bold py-4 text-base rounded-xl cursor-not-allowed"
-      >
+      <button disabled className={`${baseClass} bg-[#229EDF]/40 text-white/60`}>
         Enter Amount
       </button>
     );
@@ -56,7 +53,7 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
     return (
       <button
         disabled
-        className="w-full bg-[#dc2626] text-white font-bold py-4 text-base rounded-xl cursor-not-allowed flex items-center justify-center gap-2"
+        className={`${baseClass} bg-red-500/20 text-red-400 border border-red-500/30`}
       >
         <Warning className="w-5 h-5" />
         Insufficient {gasSymbol} for Gas
@@ -68,12 +65,8 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
     if (txHash) {
       return `${orderType === "swap" ? "Swap" : "Limit Order"} Completed!`;
     }
-    if (isLoading) {
-      return "Processing...";
-    }
-    if (orderType === "swap") {
-      return "Swap";
-    }
+    if (isLoading) return "Processing...";
+    if (orderType === "swap") return "Swap";
     return "Place Limit Order";
   };
 
@@ -81,7 +74,7 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
     <button
       onClick={onClick}
       disabled={isLoading || !!txHash || isLoadingQuote}
-      className="w-full bg-[linear-gradient(to_right,#334EAC,#081F5C)] hover:bg-[linear-gradient(to_right,#081F5C,#334EAC)] text-white font-bold py-4 text-base rounded-xl transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+      className={`${baseClass} bg-[#229EDF] hover:bg-[#1a8bc7] text-white shadow-lg shadow-[#229EDF]/20`}
     >
       {getButtonText()}
     </button>

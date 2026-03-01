@@ -1,26 +1,21 @@
+"use client";
+
 import React, { useState, useMemo } from "react";
+import Image from "next/image";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Avatar,
-  Chip,
-  IconButton,
-  Tooltip,
-  Box,
-  Typography,
-  Button,
-  Modal,
-  TextField,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import { Info } from "@mui/icons-material";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+  Hash,
+  Layers,
+  TrendingDown,
+  Shield,
+  Droplets,
+  Zap,
+  ChevronFirst,
+  ChevronLast,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Info,
+} from "lucide-react";
 import { useBorrowPools } from "@/features/borrowing/hooks/useBorrowPools";
 import { useBorrowExecution } from "@/features/borrowing/hooks/useBorrowExecution";
 import {
@@ -29,91 +24,266 @@ import {
 } from "@/features/borrowing/utils/borrowUtils";
 import type { BorrowTableAsset } from "@/features/borrowing/types/borrowing";
 
-const lightTheme = createTheme({
-  palette: {
-    mode: "light",
-    primary: {
-      main: "#083dffff",
-    },
-    background: {
-      default: "#ffffff",
-      paper: "#f9fafb",
-    },
-    text: {
-      primary: "#081F5C",
-      secondary: "#7096D1",
-    },
-  },
-});
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
 
-const BorrowTable: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState<BorrowTableAsset | null>(
-    null
+const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function IdBadge({ id, isActive }: { id: string; isActive: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+        isActive
+          ? "text-[#76C464]"
+          : "bg-white/5 text-white/40"
+      }`}
+      style={isActive ? { backgroundColor: "rgba(118,196,100,0.30)" } : undefined}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-[#76C464]" : "bg-white/20"}`}
+      />
+      {id}
+    </span>
   );
+}
+
+function PoolCell({ token1, token2, fee }: { token1: string; token2: string; fee: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      {/* Overlapping token icons */}
+      <div className="relative w-9 h-6 shrink-0">
+        <div className="absolute left-0 top-0 h-6 w-6 rounded-full border-2 border-[#1C1C1C] bg-[#1a2a4a] flex items-center justify-center">
+          <Image src="/crypto/svg/stellar-xlm-logo.svg" alt={token1} width={14} height={14} unoptimized />
+        </div>
+        <div className="absolute left-3.5 top-0 h-6 w-6 rounded-full border-2 border-[#1C1C1C] bg-[#1a2a4a] flex items-center justify-center">
+          <Image src="/crypto/svg/stellar-xlm-logo.svg" alt={token2} width={14} height={14} unoptimized />
+        </div>
+      </div>
+      <span className="text-white font-medium text-sm">
+        {token1}/{token2}
+      </span>
+      <span className="rounded-full bg-[#2F2F2F] px-2 py-0.5 text-xs font-semibold text-white/50">
+        {fee}
+      </span>
+    </div>
+  );
+}
+
+function ColHeader({ icon: Icon, label, tooltip }: { icon: React.ElementType; label: string; tooltip?: string }) {
+  return (
+    <th className="px-4 py-3 text-left">
+      <div className="flex items-center gap-1.5 text-white/40 text-xs font-semibold uppercase tracking-wide">
+        <Icon className="h-3.5 w-3.5" />
+        {label}
+        {tooltip && (
+          <div className="group relative">
+            <Info className="h-3 w-3 cursor-help" />
+            <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block w-48 rounded-lg bg-[#2A2A2A] px-2 py-1 text-[10px] text-white/70 shadow-xl">
+              {tooltip}
+            </div>
+          </div>
+        )}
+      </div>
+    </th>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Borrow Modal
+// ---------------------------------------------------------------------------
+
+interface BorrowModalProps {
+  asset: BorrowTableAsset;
+  isOpen: boolean;
+  onClose: () => void;
+  isProcessing: boolean;
+  error: string | null;
+  success: string | null;
+  onClearError: () => void;
+  onClearSuccess: () => void;
+  onSubmit: (collateral: string, borrow: string) => Promise<void>;
+  isWalletConnected: boolean;
+}
+
+function BorrowModal({
+  asset,
+  isOpen,
+  onClose,
+  isProcessing,
+  error,
+  success,
+  onClearError,
+  onClearSuccess,
+  onSubmit,
+  isWalletConnected,
+}: BorrowModalProps) {
   const [collateralAmount, setCollateralAmount] = useState("");
   const [borrowAmount, setBorrowAmount] = useState("");
+
+  const borrowLimit = useMemo(() => {
+    if (!collateralAmount) return 0;
+    return calculateBorrowLimit(parseFloat(collateralAmount), asset.collateralFactor);
+  }, [collateralAmount, asset.collateralFactor]);
+
+  const borrowLimitExceeded = parseFloat(borrowAmount) > borrowLimit && borrowAmount !== "";
+  const canSubmit =
+    isWalletConnected &&
+    Number.isFinite(parseFloat(collateralAmount)) &&
+    parseFloat(collateralAmount) > 0 &&
+    Number.isFinite(parseFloat(borrowAmount)) &&
+    parseFloat(borrowAmount) > 0 &&
+    !borrowLimitExceeded;
+
+  const handleSubmit = async () => {
+    await onSubmit(collateralAmount, borrowAmount);
+    setCollateralAmount("");
+    setBorrowAmount("");
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-[#1C1C1C] border border-white/10 rounded-3xl w-full max-w-md p-6 shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-white text-xl font-bold">Borrow {asset.assetCode}</h3>
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Alerts */}
+        {error && (
+          <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-500/10 border border-red-500/20 p-3">
+            <p className="text-red-400 text-sm flex-1">{error}</p>
+            <button onClick={onClearError} className="text-red-400/60 hover:text-red-400">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 flex items-start gap-2 rounded-xl bg-green-500/10 border border-green-500/20 p-3">
+            <p className="text-green-400 text-sm flex-1">{success}</p>
+            <button onClick={onClearSuccess} className="text-green-400/60 hover:text-green-400">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Collateral info */}
+        <div className="mb-4 rounded-2xl bg-white/5 p-4">
+          <p className="text-white/40 text-xs mb-1">Collateral Token</p>
+          <p className="text-white font-semibold text-lg">{asset.collateralTokenCode}</p>
+          <p className="text-white/30 text-xs mt-0.5">Collateral Factor: {asset.collateralFactor}%</p>
+        </div>
+
+        {/* Collateral amount */}
+        <div className="mb-4">
+          <label className="text-white/60 text-sm font-medium block mb-1.5">
+            Collateral Amount ({asset.collateralTokenCode})
+          </label>
+          <input
+            type="number"
+            placeholder="0.00"
+            value={collateralAmount}
+            onChange={(e) => setCollateralAmount(e.target.value)}
+            disabled={isProcessing}
+            className="w-full bg-[#2A2A2A] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 outline-none focus:border-[#229EDF]/50 transition-colors disabled:opacity-50"
+          />
+        </div>
+
+        {/* Borrow limit */}
+        <div className="mb-4 rounded-2xl bg-[#229EDF]/10 border border-[#229EDF]/20 p-4">
+          <p className="text-[#229EDF]/70 text-xs">Your Borrow Limit</p>
+          <p className="text-[#229EDF] font-bold text-2xl">
+            {borrowLimit.toFixed(2)} {asset.assetCode}
+          </p>
+        </div>
+
+        {/* Borrow amount */}
+        <div className="mb-6">
+          <label className="text-white/60 text-sm font-medium block mb-1.5">
+            Borrow Amount ({asset.assetCode})
+          </label>
+          <input
+            type="number"
+            placeholder="0.00"
+            value={borrowAmount}
+            onChange={(e) => setBorrowAmount(e.target.value)}
+            disabled={isProcessing}
+            className="w-full bg-[#2A2A2A] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 outline-none focus:border-[#229EDF]/50 transition-colors disabled:opacity-50"
+          />
+          {borrowLimitExceeded && (
+            <p className="text-red-400 text-xs mt-1">Amount exceeds your borrow limit</p>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={isProcessing}
+            className="flex-1 rounded-xl border border-white/10 py-3 text-white/60 font-semibold text-sm hover:bg-white/5 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isProcessing || !canSubmit}
+            className="flex-1 rounded-xl bg-[#229EDF] py-3 text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isProcessing ? "Processing…" : !isWalletConnected ? "Connect Wallet" : "Borrow"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main table
+// ---------------------------------------------------------------------------
+
+const BorrowTable: React.FC = () => {
+  const [selectedAsset, setSelectedAsset] = useState<BorrowTableAsset | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const {
-    data: borrowPools = [],
-    isLoading: isLoadingPools,
-    error: poolsError,
-  } = useBorrowPools();
-
+  const { data: borrowPools = [], isLoading, error: poolsError } = useBorrowPools();
   const {
     handleBorrow,
     isLoading: isProcessing,
     error: executionError,
     clearError,
-    isWalletConnected: address,
+    isWalletConnected,
   } = useBorrowExecution();
 
   const assets = useMemo(() => poolsToTableAssets(borrowPools), [borrowPools]);
-
-  const borrowLimit = useMemo(() => {
-    if (!selectedAsset || !collateralAmount) return 0;
-    const collateralValue = parseFloat(collateralAmount);
-    return calculateBorrowLimit(
-      collateralValue,
-      selectedAsset.collateralFactor
-    );
-  }, [selectedAsset, collateralAmount]);
+  const totalRows = assets.length;
+  const totalPages = Math.ceil(totalRows / rowsPerPage);
+  const paginatedAssets = assets.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
   const handleBorrowClick = (asset: BorrowTableAsset) => {
     setSelectedAsset(asset);
-    setCollateralAmount("");
-    setBorrowAmount("");
     setSuccess(null);
     clearError();
-    setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    setIsModalOpen(false);
     setSelectedAsset(null);
-    setCollateralAmount("");
-    setBorrowAmount("");
     setSuccess(null);
     clearError();
   };
 
-  const onBorrowSubmit = async () => {
+  const handleSubmit = async (collateralAmount: string, borrowAmount: string) => {
     if (!selectedAsset) return;
-
-    const collateralNum = parseFloat(collateralAmount);
-    const borrowNum = parseFloat(borrowAmount);
-
-    if (
-      !Number.isFinite(collateralNum) ||
-      collateralNum <= 0 ||
-      !Number.isFinite(borrowNum) ||
-      borrowNum <= 0
-    ) {
-      return;
-    }
-    if (borrowNum > borrowLimit) return;
-
     const result = await handleBorrow({
       collateralTokenCode: selectedAsset.collateralTokenCode,
       assetCode: selectedAsset.assetCode,
@@ -122,465 +292,166 @@ const BorrowTable: React.FC = () => {
       collateralDecimals: 7,
       borrowDecimals: 7,
     });
-
     if (result?.success && result.message) {
       setSuccess(result.message);
-      setCollateralAmount("");
-      setBorrowAmount("");
     }
   };
 
-  const borrowLimitExceeded =
-    parseFloat(borrowAmount) > borrowLimit && borrowAmount !== "";
-  const canSubmit =
-    address &&
-    Number.isFinite(parseFloat(collateralAmount)) &&
-    parseFloat(collateralAmount) > 0 &&
-    Number.isFinite(parseFloat(borrowAmount)) &&
-    parseFloat(borrowAmount) > 0 &&
-    !borrowLimitExceeded;
-
   return (
-    <ThemeProvider theme={lightTheme}>
-      <Box sx={{ width: "100%", px: 3 }}>
-        <TableContainer
-          component={Paper}
-          sx={{
-            backgroundColor: "#ffffff",
-            borderRadius: "24px",
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-            border: "1px solid rgba(51, 78, 172, 0.2)",
-          }}
-        >
-          <Table sx={{ minWidth: 650 }}>
-            <TableHead>
-              <TableRow
-                sx={{
-                  "& th": {
-                    backgroundColor: "#f3f4f6",
-                    color: "#081F5C",
-                    fontWeight: 600,
-                    fontSize: "0.875rem",
-                    borderBottom: "1px solid rgba(51, 78, 172, 0.2)",
-                    py: 2,
-                  },
-                }}
-              >
-                <TableCell>ID</TableCell>
-                <TableCell>POOL</TableCell>
-                <TableCell>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    BORROW APR
-                    <Tooltip title="Annual interest rate you pay when borrowing">
-                      <IconButton size="small" sx={{ p: 0 }}>
-                        <Info sx={{ fontSize: 16, color: "#081F5C" }} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    COLLATERAL
-                    <Tooltip title="Maximum percentage of collateral value you can borrow">
-                      <IconButton size="small" sx={{ p: 0 }}>
-                        <Info sx={{ fontSize: 16, color: "#081F5C" }} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    LIQUIDITY
-                    <Tooltip title="Total liquidity in pool">
-                      <IconButton size="small" sx={{ p: 0 }}>
-                        <Info sx={{ fontSize: 16, color: "#081F5C" }} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-                <TableCell>ACTIONS</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {isLoadingPools ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    <Typography sx={{ color: "#7096D1" }}>
-                      Loading borrow pools...
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : poolsError ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    <Typography sx={{ color: "#dc2626" }}>
-                      Error loading borrow pools: {String(poolsError)}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : assets.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    <Typography sx={{ color: "#7096D1" }}>
-                      No active borrow pools available
-                    </Typography>
-                    <Typography
-                      sx={{ color: "#7096D1", fontSize: "0.875rem", mt: 1 }}
-                    >
-                      {borrowPools.length === 0
-                        ? "No pools found in contract"
-                        : `${borrowPools.length} pool(s) found but filtered out`}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                assets.map((asset) => (
-                  <TableRow
-                    key={asset.id}
-                    sx={{
-                      "&:hover": {
-                        backgroundColor: "rgba(51, 78, 172, 0.1)",
-                      },
-                      "& td": {
-                        borderBottom: "1px solid rgba(51, 78, 172, 0.2)",
-                        py: 2.5,
-                      },
-                    }}
-                  >
-                    <TableCell>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: "50%",
-                            backgroundColor: asset.isActive
-                              ? "#028733ff"
-                              : "#6b7280",
-                          }}
-                        />
-                        <Typography
-                          sx={{
-                            color: asset.isActive ? "#028733ff" : "#7096D1",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {asset.id}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Box
-                          sx={{ position: "relative", width: 40, height: 24 }}
-                        >
-                          <Avatar
-                            sx={{
-                              width: 24,
-                              height: 24,
-                              position: "absolute",
-                              left: 0,
-                              border: "2px solid #ffffff",
-                              backgroundColor: "#334EAC",
-                            }}
-                          />
-                          <Avatar
-                            sx={{
-                              width: 24,
-                              height: 24,
-                              position: "absolute",
-                              left: 16,
-                              border: "2px solid #ffffff",
-                              backgroundColor: "#7096D1",
-                            }}
-                          />
-                        </Box>
-                        <Box>
-                          <Typography
-                            sx={{ color: "#081F5C", fontWeight: 500 }}
-                          >
-                            {asset.pool.token1} / {asset.pool.token2}
-                          </Typography>
-                          <Chip
-                            label={asset.pool.fee}
-                            size="small"
-                            sx={{
-                              backgroundColor: "rgba(51, 78, 172, 0.1)",
-                              color: "#081F5C",
-                              fontWeight: 600,
-                              height: 20,
-                              fontSize: "0.7rem",
-                            }}
-                          />
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography sx={{ color: "#081F5C" }}>
-                        {asset.borrowApr}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography sx={{ color: "#081F5C" }}>
-                        {asset.collateralFactorDisplay}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography sx={{ color: "#081F5C" }}>
-                        {asset.liquidity}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        onClick={() => handleBorrowClick(asset)}
-                        variant="contained"
-                        sx={{
-                          backgroundColor: "#081F5C",
-                          color: "#ffffff",
-                          borderRadius: "12px",
-                          px: 3,
-                          py: 1,
-                          textTransform: "none",
-                          fontSize: "0.875rem",
-                          fontWeight: 600,
-                          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                          "&:hover": {
-                            backgroundColor: "#334EAC",
-                          },
-                        }}
-                      >
-                        Borrow
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <Modal
-          open={isModalOpen}
-          onClose={handleCloseModal}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Box
-            sx={{
-              backgroundColor: "#ffffff",
-              borderRadius: "24px",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
-              maxWidth: "500px",
-              width: "90%",
-              p: 4,
-              outline: "none",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mb: 3,
-              }}
-            >
-              <Typography
-                variant="h5"
-                sx={{ color: "#081F5C", fontWeight: 700 }}
-              >
-                Borrow {selectedAsset?.assetCode}
-              </Typography>
-              <IconButton
-                onClick={handleCloseModal}
-                sx={{
-                  color: "#7096D1",
-                  "&:hover": {
-                    color: "#081F5C",
-                    backgroundColor: "rgba(51, 78, 172, 0.1)",
-                  },
-                }}
-              >
-                <Typography sx={{ fontSize: "1.5rem", fontWeight: 700 }}>
-                  ×
-                </Typography>
-              </IconButton>
-            </Box>
-
-            {executionError && (
-              <Alert severity="error" sx={{ mb: 2 }} onClose={clearError}>
-                {executionError}
-              </Alert>
-            )}
-            {success && (
-              <Alert
-                severity="success"
-                sx={{ mb: 2 }}
-                onClose={() => setSuccess(null)}
-              >
-                {success}
-              </Alert>
-            )}
-
-            <Box
-              sx={{
-                mb: 3,
-                p: 2,
-                backgroundColor: "#f3f4f6",
-                borderRadius: "12px",
-              }}
-            >
-              <Typography
-                sx={{ color: "#7096D1", fontSize: "0.875rem", mb: 1 }}
-              >
-                Collateral Token
-              </Typography>
-              <Typography
-                sx={{ color: "#081F5C", fontWeight: 600, fontSize: "1.25rem" }}
-              >
-                {selectedAsset?.collateralTokenCode}
-              </Typography>
-              <Typography
-                sx={{ color: "#7096D1", fontSize: "0.75rem", mt: 0.5 }}
-              >
-                Collateral Factor: {selectedAsset?.collateralFactor}%
-              </Typography>
-            </Box>
-
-            <Box sx={{ mb: 3 }}>
-              <Typography sx={{ color: "#081F5C", fontWeight: 600, mb: 1 }}>
-                Collateral Amount ({selectedAsset?.collateralTokenCode})
-              </Typography>
-              <TextField
-                fullWidth
-                type="number"
-                placeholder="0.00"
-                value={collateralAmount}
-                onChange={(e) => setCollateralAmount(e.target.value)}
-                disabled={isProcessing}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "12px",
-                    backgroundColor: "#f9fafb",
-                  },
-                }}
-              />
-            </Box>
-
-            <Box
-              sx={{
-                mb: 3,
-                p: 2,
-                backgroundColor: "#e0f2fe",
-                borderRadius: "12px",
-              }}
-            >
-              <Typography sx={{ color: "#0369a1", fontSize: "0.875rem" }}>
-                Your Borrow Limit
-              </Typography>
-              <Typography
-                sx={{ color: "#0c4a6e", fontWeight: 700, fontSize: "1.5rem" }}
-              >
-                {borrowLimit.toFixed(2)} {selectedAsset?.assetCode}
-              </Typography>
-            </Box>
-
-            <Box sx={{ mb: 3 }}>
-              <Typography sx={{ color: "#081F5C", fontWeight: 600, mb: 1 }}>
-                Borrow Amount ({selectedAsset?.assetCode})
-              </Typography>
-              <TextField
-                fullWidth
-                type="number"
-                placeholder="0.00"
-                value={borrowAmount}
-                onChange={(e) => setBorrowAmount(e.target.value)}
-                disabled={isProcessing}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "12px",
-                    backgroundColor: "#f9fafb",
-                  },
-                }}
-              />
-              {borrowLimitExceeded && (
-                <Typography
-                  sx={{ color: "#dc2626", fontSize: "0.75rem", mt: 0.5 }}
+    <>
+      <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-white/5">
+              <ColHeader icon={Hash} label="ID" />
+              <ColHeader icon={Layers} label="Pool" />
+              <ColHeader icon={TrendingDown} label="Borrow APR" tooltip="Annual interest rate you pay when borrowing" />
+              <ColHeader icon={Shield} label="Collateral" tooltip="Maximum percentage of collateral value you can borrow" />
+              <ColHeader icon={Droplets} label="Liquidity" tooltip="Total liquidity in pool" />
+              <ColHeader icon={Zap} label="Actions" />
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center text-white/40 text-sm">
+                  Loading borrow pools…
+                </td>
+              </tr>
+            ) : poolsError ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center text-red-400 text-sm">
+                  Error loading borrow pools: {String(poolsError)}
+                </td>
+              </tr>
+            ) : assets.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center text-white/40 text-sm">
+                  No active borrow pools available
+                </td>
+              </tr>
+            ) : (
+              paginatedAssets.map((asset) => (
+                <tr
+                  key={asset.id}
+                  className="border-b border-white/5 hover:bg-white/2 transition-colors"
                 >
-                  Amount exceeds your borrow limit
-                </Typography>
-              )}
-            </Box>
-
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                onClick={handleCloseModal}
-                disabled={isProcessing}
-                sx={{
-                  borderRadius: "12px",
-                  py: 1.5,
-                  borderColor: "#7096D1",
-                  color: "#081F5C",
-                  "&:hover": {
-                    borderColor: "#081F5C",
-                    backgroundColor: "rgba(51, 78, 172, 0.1)",
-                  },
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={onBorrowSubmit}
-                disabled={isProcessing || !canSubmit}
-                sx={{
-                  borderRadius: "12px",
-                  py: 1.5,
-                  backgroundColor: "#081F5C",
-                  "&:hover": {
-                    backgroundColor: "#334EAC",
-                  },
-                  "&:disabled": {
-                    backgroundColor: "#d1d5db",
-                  },
-                }}
-              >
-                {isProcessing ? (
-                  <CircularProgress size={24} sx={{ color: "#fff" }} />
-                ) : !address ? (
-                  "Connect Wallet"
-                ) : (
-                  "Borrow"
-                )}
-              </Button>
-            </Box>
-
-            {!address && (
-              <Typography
-                sx={{
-                  color: "#dc2626",
-                  fontSize: "0.75rem",
-                  mt: 2,
-                  textAlign: "center",
-                }}
-              >
-                Please connect your wallet to borrow
-              </Typography>
+                  <td className="px-4 py-4">
+                    <IdBadge id={asset.id} isActive={asset.isActive} />
+                  </td>
+                  <td className="px-4 py-4">
+                    <PoolCell
+                      token1={asset.pool.token1}
+                      token2={asset.pool.token2}
+                      fee={asset.pool.fee}
+                    />
+                  </td>
+                  <td className="px-4 py-4 text-white text-sm">{asset.borrowApr}</td>
+                  <td className="px-4 py-4 text-white text-sm">{asset.collateralFactorDisplay}</td>
+                  <td className="px-4 py-4 text-white text-sm">{asset.liquidity}</td>
+                  <td className="px-4 py-4">
+                    <button
+                      onClick={() => handleBorrowClick(asset)}
+                      className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors"
+                    >
+                      Borrow
+                    </button>
+                  </td>
+                </tr>
+              ))
             )}
-          </Box>
-        </Modal>
-      </Box>
-    </ThemeProvider>
+          </tbody>
+        </table>
+
+        {/* Pagination */}
+        {totalRows > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">
+            <div className="flex items-center gap-2 text-white/40 text-xs">
+              <span>Rows per page</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
+                className="bg-[#2A2A2A] border border-white/10 rounded-lg px-2 py-1 text-white/60 text-xs outline-none cursor-pointer"
+              >
+                {ROWS_PER_PAGE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <span>{page * rowsPerPage} - {Math.min((page + 1) * rowsPerPage, totalRows)} of {totalRows} rows</span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <PageBtn onClick={() => setPage(0)} disabled={page === 0}><ChevronFirst className="h-3.5 w-3.5" /></PageBtn>
+              <PageBtn onClick={() => setPage((p) => p - 1)} disabled={page === 0}><ChevronLeft className="h-3.5 w-3.5" /></PageBtn>
+              {Array.from({ length: totalPages }, (_, i) => i)
+                .filter((i) => i === 0 || i === totalPages - 1 || Math.abs(i - page) <= 1)
+                .reduce<(number | "…")[]>((acc, i, idx, arr) => {
+                  if (idx > 0 && (i as number) - (arr[idx - 1] as number) > 1) acc.push("…");
+                  acc.push(i);
+                  return acc;
+                }, [])
+                .map((item, idx) =>
+                  item === "…" ? (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-white/30 text-xs">…</span>
+                  ) : (
+                    <PageBtn
+                      key={item}
+                      onClick={() => setPage(item as number)}
+                      active={page === item}
+                    >
+                      {(item as number) + 1}
+                    </PageBtn>
+                  )
+                )}
+              <PageBtn onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages - 1}><ChevronRight className="h-3.5 w-3.5" /></PageBtn>
+              <PageBtn onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1}><ChevronLast className="h-3.5 w-3.5" /></PageBtn>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {selectedAsset && (
+        <BorrowModal
+          asset={selectedAsset}
+          isOpen={!!selectedAsset}
+          onClose={handleCloseModal}
+          isProcessing={isProcessing}
+          error={executionError}
+          success={success}
+          onClearError={clearError}
+          onClearSuccess={() => setSuccess(null)}
+          onSubmit={handleSubmit}
+          isWalletConnected={!!isWalletConnected}
+        />
+      )}
+    </>
   );
 };
+
+function PageBtn({
+  children,
+  onClick,
+  disabled,
+  active,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`h-7 min-w-7 rounded-lg px-1.5 text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+        active
+          ? "bg-[#229EDF] text-white"
+          : "text-white/50 hover:bg-white/10 hover:text-white"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default BorrowTable;

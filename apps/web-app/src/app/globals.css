@@ -2,6 +2,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Inconsolata:wght@500&family=Antonio:wght@700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "animate.css";
+
+/* Ensure Tailwind v4 scans all source files for class detection */
+@source "../**/*.{ts,tsx}";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -27,10 +31,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 0% 0%, #d0e3ff 0%, transparent 40%),
-    radial-gradient(circle at 100% 100%, #bad6eb 0%, transparent 40%), #eaf4ff; /* Lighter blue base */
-  background-attachment: fixed; /* Keeps gradient in place during scroll */
+  background: #121212;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -92,8 +93,8 @@ body {
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: #121212;
+  --foreground: oklch(0.92 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);

@@ -1,26 +1,15 @@
 import { ReactNode } from "react";
-import { Layout } from "@stellar/design-system";
-import Navbar from "@/components/navigation/Navbar";
+import { Sidebar } from "@/components/navigation/Sidebar";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <main className="text-[#081F5C] min-h-screen">
-      <Navbar />
-      {children}
-      <Layout.Footer>
-        <span className="text-[#334EAC]">
-          © {new Date().getFullYear()} Neko Protocol. Licensed under the{" "}
-          <a
-            href="https://opensource.org/license/mit"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#0325cb] font-bold"
-          >
-            MIT License
-          </a>
-          .
-        </span>
-      </Layout.Footer>
-    </main>
+    <div className="flex min-h-screen">
+      <Sidebar />
+
+      {/* ml matches the sidebar width (220px) so content never goes under it */}
+      <main className="ml-[270px] flex min-h-screen flex-1 flex-col items-center text-white">
+        {children}
+      </main>
+    </div>
   );
 }

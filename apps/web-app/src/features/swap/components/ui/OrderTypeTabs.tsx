@@ -23,7 +23,7 @@ export const OrderTypeTabs: React.FC<OrderTypeTabsProps> = ({
         onClick={() => onOrderTypeChange("swap")}
         className={`px-5 py-2.5 text-base font-semibold rounded-lg transition-colors ${
           orderType === "swap"
-            ? "text-white bg-[#334EAC]"
+            ? "text-white bg-[#229EDF]"
             : "text-gray-400 hover:text-gray-300"
         }`}
       >
@@ -36,7 +36,7 @@ export const OrderTypeTabs: React.FC<OrderTypeTabsProps> = ({
           isLimitDisabled
             ? "text-gray-500 cursor-not-allowed opacity-50"
             : orderType === "limit"
-              ? "text-white bg-[#334EAC]"
+              ? "text-white bg-[#229EDF]"
               : "text-gray-400 hover:text-gray-300"
         }`}
         title={isLimitDisabled ? "Limit orders are only available with EVM wallets" : undefined}

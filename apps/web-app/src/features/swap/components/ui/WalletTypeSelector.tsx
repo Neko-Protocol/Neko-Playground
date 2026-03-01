@@ -27,7 +27,7 @@ export const WalletTypeSelector: React.FC<WalletTypeSelectorProps> = ({
         disabled={!isStellarConnected}
         className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
           swapMode === "stellar"
-            ? "bg-[#334EAC] text-white"
+            ? "bg-[#229EDF] text-white"
             : "text-gray-400 hover:text-gray-300"
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
@@ -38,7 +38,7 @@ export const WalletTypeSelector: React.FC<WalletTypeSelectorProps> = ({
         disabled={!isEvmConnected}
         className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
           swapMode === "evm"
-            ? "bg-[#334EAC] text-white"
+            ? "bg-[#229EDF] text-white"
             : "text-gray-400 hover:text-gray-300"
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >

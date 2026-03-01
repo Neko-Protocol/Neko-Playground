@@ -12,27 +12,19 @@ export interface StatCardProps {
   className?: string;
 }
 
-export function StatCard({
-  icon,
-  label,
-  value,
-  isLoading = false,
-  className,
-}: StatCardProps) {
+export function StatCard({ icon, label, value, isLoading = false, className }: StatCardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl bg-gradient-to-br from-neko-accent to-neko-border p-6 shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:from-[#4A73C4] hover:to-[#3D5AC0]",
+        "rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 flex flex-col gap-3",
         className
       )}
     >
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-white/10 text-white/70 rounded-lg backdrop-blur-sm">
+      <div className="flex items-center justify-between">
+        <p className="text-white/40 text-xs font-medium">{label}</p>
+        <div className="p-1.5 bg-[#2A2A2A] rounded-lg text-white/40">
           {icon}
         </div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-white/70">
-          {label}
-        </p>
       </div>
       <h3 className="text-3xl font-bold text-white">
         {isLoading ? <LoadingSpinner variant="dots" size="md" /> : value}
