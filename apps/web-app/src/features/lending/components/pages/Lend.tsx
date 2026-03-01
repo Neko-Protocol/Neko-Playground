@@ -4,16 +4,10 @@ import React, { useState, useMemo, useCallback } from "react";
 import { Modal, Box, Typography, IconButton, TextField } from "@mui/material";
 import { useLendingPools } from "@/features/lending/hooks/useLendingPools";
 import { useWallet } from "../../../../hooks/useWallet";
-import {
-  approveToken,
-  depositToPool,
-  withdrawFromPool,
-  getBTokenBalance,
-} from "@/lib/helpers/stellar/lending";
+import { lendingService } from "@/lib/services";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
+import { TransactionBuilder, Networks, rpc } from "@stellar/stellar-sdk";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
-import { rpc } from "@stellar/stellar-sdk";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 
 interface PoolData {
@@ -189,7 +183,10 @@ const Lend: React.FC = () => {
     }
     setIsLoadingBalance(true);
     try {
-      const balance = await getBTokenBalance(selectedPool.assetCode, address);
+      const balance = await lendingService.getBTokenBalance(
+        selectedPool.assetCode,
+        address
+      );
       setBTokenBalance(balance);
     } catch (error) {
       console.error("Error loading bToken balance:", error);
@@ -275,9 +272,6 @@ const Lend: React.FC = () => {
       }
 
       const decimals = token.decimals || 7;
-      // Lending contract ID from the deployed contract
-      const lendingContractId =
-        "CD5WNBT4NEYYLALY776KRRR2WP7BEM4VJPG6QYQE5CRO6C5H4YUQA5KS";
 
       const sorobanServer = new rpc.Server(rpcUrl, {
         allowHttp: stellarNetwork === "LOCAL",
@@ -285,14 +279,20 @@ const Lend: React.FC = () => {
 
       if (isDepositModal) {
         // DEPOSIT FLOW
-        // Step 1: Approve token contract
-        const approveXdr = await approveToken(
+        // Step 1: Build approve + deposit transactions via service
+        const {
+          approveXdr,
+          depositXdr,
+          error: buildError,
+        } = await lendingService.depositWithApprove(
           token.contract,
-          lendingContractId,
+          selectedPool.assetCode,
           amount,
           decimals,
           address
         );
+
+        if (buildError) throw new Error(buildError);
 
         // Step 2: Sign approve transaction
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -312,22 +312,14 @@ const Lend: React.FC = () => {
         // Wait a bit for transaction to be processed
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        // Step 4: Build deposit transaction
-        const depositXdr = await depositToPool(
-          selectedPool.assetCode,
-          amount,
-          decimals,
-          address
-        );
-
-        // Step 5: Sign deposit transaction
+        // Step 4: Sign deposit transaction
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const signedDeposit = await signTransaction(depositXdr as any, {
           networkPassphrase: networkPassphrase || Networks.TESTNET,
           address: address,
         });
 
-        // Step 6: Submit deposit transaction
+        // Step 5: Submit deposit transaction
         const depositTx = TransactionBuilder.fromXDR(
           signedDeposit.signedTxXdr,
           networkPassphrase || Networks.TESTNET
@@ -343,13 +335,16 @@ const Lend: React.FC = () => {
 
         const bTokensAmount = bTokensToBurn;
 
-        // Step 1: Build withdraw transaction
-        const withdrawXdr = await withdrawFromPool(
-          selectedPool.assetCode,
-          bTokensAmount, // bTokens to burn (calculated from tokens amount)
-          decimals,
-          address
-        );
+        // Step 1: Build withdraw transaction via service
+        const { xdr: withdrawXdr, error: buildError } =
+          await lendingService.withdrawFromPool(
+            selectedPool.assetCode,
+            bTokensAmount,
+            decimals,
+            address
+          );
+
+        if (buildError) throw new Error(buildError);
 
         // Step 2: Sign withdraw transaction
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

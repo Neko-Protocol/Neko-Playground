@@ -28,6 +28,7 @@ export type {
   LendingOperationResult,
   CollateralOperationResult,
   BorrowWithCollateralResult,
+  DepositWithApproveResult,
 } from "../types/lendingTypes";
 
 // Price Service
