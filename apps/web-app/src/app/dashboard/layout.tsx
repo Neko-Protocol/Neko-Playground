@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Layout } from "@stellar/design-system";
-import Navbar from "@/components/navigation/Navbar";
+import { Navbar } from "@/components/navigation";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (

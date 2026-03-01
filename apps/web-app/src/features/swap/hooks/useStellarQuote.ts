@@ -1,11 +1,8 @@
 import { useRef, useCallback } from "react";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { getQuote, type QuoteRequest } from "@/lib/helpers/stellar/soroswap";
-import { type EVMToken } from "@/lib/types/evmToken";
-import {
-  formatSwapAmount,
-  fromSmallestUnit,
-} from "@/lib/helpers/tokenUtils";
+import { type EVMToken } from "@/lib/types";
+import { formatSwapAmount, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import {
   DEFAULT_SLIPPAGE_BPS,
   MAX_HOPS,

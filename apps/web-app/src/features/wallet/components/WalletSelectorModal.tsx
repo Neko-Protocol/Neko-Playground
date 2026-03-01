@@ -3,12 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useAccountModal } from "@rainbow-me/rainbowkit";
 import { useAccount, useDisconnect } from "wagmi";
-import { useWallet } from "@/hooks/useWallet";
-import { useStellarWallet } from "@/hooks/useStellarWallet";
-import { useNotification } from "@/hooks/useNotification";
+import { useWallet, useStellarWallet } from "@/hooks";
 import { ConnectedWalletView } from "./ConnectedWalletView";
 import { DisconnectedWalletView } from "./DisconnectedWalletView";
-
+import { useNotification } from "@/hooks/useNotification";
 interface WalletSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;

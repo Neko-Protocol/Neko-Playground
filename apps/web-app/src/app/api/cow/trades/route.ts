@@ -8,7 +8,7 @@ import {
   COW_API_BASE_URLS,
   COW_API_ENDPOINTS,
 } from "@/lib/constants/cowswapConfig";
-import type { CowTradesResponse } from "@/lib/types/cowswapTypes";
+import type { CowTradesResponse } from "@/lib/types";
 
 /**
  * GET /api/cow/trades - Get raw trades for a user

@@ -6,9 +6,9 @@ import Link from "next/link";
 import { orchestrator, useUserPosition } from "@/lib/orchestrator";
 import type { PoolAction, TokenInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
-import { useWallet } from "@/hooks/useWallet";
-import { usePoolDetail } from "@/features/pools/hooks/usePoolDetail";
+import { useWallet } from "@/hooks";
 import { PoolActionModal } from "../PoolActionModal";
+import { usePoolDetail } from "@/features/pools/hooks/usePoolDetail";
 
 interface PoolDetailProps {
   params: Promise<{ contractid: string }>;

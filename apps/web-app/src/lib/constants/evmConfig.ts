@@ -1,4 +1,4 @@
-import { createEVMToken, type EVMToken, ChainId } from "@/lib/types/evmToken";
+import { createEVMToken, type EVMToken, ChainId } from "@/lib/types";
 
 // ========================================
 // SUPPORTED CHAINS

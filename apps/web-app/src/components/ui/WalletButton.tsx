@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useDisconnect } from "wagmi";
-import { useStellarWallet } from "@/hooks/useStellarWallet";
-import { useWalletType } from "@/hooks/useWalletType";
+import { useStellarWallet, useWalletType } from "@/hooks";
 import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
 import { truncateAddress } from "@/lib/utils";
 

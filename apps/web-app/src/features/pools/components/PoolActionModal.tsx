@@ -4,12 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePoolAction, useUserPosition } from "@/lib/orchestrator";
-import { useWallet } from "@/hooks/useWallet";
-import { useTokenBalance } from "@/hooks/useTokenBalance";
-import {
-  toSmallestUnit,
-  fromSmallestUnit,
-} from "@/lib/helpers/tokenUtils";
+import { useWallet, useTokenBalance } from "@/hooks";
+import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import type { PoolInfo, PoolAction } from "@/lib/orchestrator";
 
 interface PoolActionModalProps {

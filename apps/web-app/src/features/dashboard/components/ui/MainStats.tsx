@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/hooks";
 import { parseBalance } from "@/features/dashboard/utils/dashboardUtils";
 import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
+import Image from "next/image";
 
 const MainStats: React.FC = () => {
   const { balances, isFetchingBalances, address } = useWallet();

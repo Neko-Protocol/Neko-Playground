@@ -1,7 +1,7 @@
 import React from "react";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import type { EVMToken } from "@/lib/types/evmToken";
+import type { EVMToken } from "@/lib/types";
 
 interface LimitOrderFormProps {
   limitPrice: string;

@@ -18,7 +18,7 @@ interface StellarSignOptions {
 }
 import { getWallet, type MappedBalances } from "@/lib/helpers/stellar/wallet";
 import storage from "@/lib/helpers/storage";
-import { useBalances } from "@/hooks/useBalances";
+import { useBalances } from "@/hooks";
 import { POLL_INTERVAL, STORAGE_KEYS } from "@/lib/constants/wallet";
 
 const getWalletInstance = () => {

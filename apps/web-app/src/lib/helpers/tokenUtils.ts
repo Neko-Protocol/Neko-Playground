@@ -2,7 +2,7 @@
  * Utility functions for swap operations (shared Stellar + EVM)
  */
 
-import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
+import { isEVMToken, type EVMToken } from "@/lib/types";
 import { getAvailableTokens } from "./stellar/soroswap";
 import type { Token } from "./stellar/soroswap";
 import {

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { usePublicClient, useWalletClient } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import type { EVMToken } from "@/lib/types/evmToken";
+import type { EVMToken } from "@/lib/types";
 import {
   getCowSwapQuote,
   type CowSwapQuoteRequest,

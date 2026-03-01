@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useStellarWallet } from "@/hooks/useStellarWallet";
+import { useStellarWallet } from "@/hooks";
 
 const EVM_ICON = "/crypto/svg/ethereum-eth-logo.svg";
 const STELLAR_ICON = "/crypto/svg/stellar-xlm-logo.svg";

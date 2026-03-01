@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { hasApiKey } from "@/lib/helpers/stellar/soroswap";
-import { type EVMToken } from "@/lib/types/evmToken";
+import { type EVMToken } from "@/lib/types";
 import { useEvmQuote } from "./useEvmQuote";
 import { useStellarQuote } from "./useStellarQuote";
 import {

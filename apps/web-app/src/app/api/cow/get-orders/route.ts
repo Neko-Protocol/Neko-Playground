@@ -8,7 +8,7 @@ import {
   COW_API_BASE_URLS,
   COW_API_ENDPOINTS,
 } from "@/lib/constants/cowswapConfig";
-import type { CowOrder } from "@/lib/types/cowswapTypes";
+import type { CowOrder } from "@/lib/types";
 import { cowSwapService } from "@/lib/services/cowswap.service";
 
 /**
