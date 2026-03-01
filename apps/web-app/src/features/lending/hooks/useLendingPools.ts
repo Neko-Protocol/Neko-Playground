@@ -6,59 +6,44 @@ import {
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit, stringifyValue } from "@/lib/helpers/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { parseInterestRateFromContractResult } from "@/lib/helpers/lendingUtils";
-
-interface LendingPool {
-  asset: string;
-  assetCode: string;
-  poolBalance: string;
-  poolBalanceUSD: string;
-  interestRate: number;
-  bTokenRate: string;
-  isActive: boolean;
-}
+import { LENDING_ASSETS, BTOKEN_DECIMALS } from "../constants";
+import type { LendingPool } from "../types/lending";
 
 /**
  * Hook to get all active lending pools from the RWA lending contract
  */
 export const useLendingPools = () => {
-  // Memoize available tokens to prevent unnecessary re-renders
   const availableTokens = useMemo(() => getAvailableTokens(), []);
 
-  // Memoize debt assets list
   const debtAssets = useMemo(() => {
-    return ["USDC", "XLM"].filter((code) => {
+    return LENDING_ASSETS.filter((code) => {
       const token = availableTokens[code];
       return token && token.contract;
     });
   }, [availableTokens]);
 
-  // Memoize the query function to prevent recreating it on every render
   const queryFn = useMemo(
     () => async () => {
-      const contractId = networks.testnet.contractId;
-
       const client = new RwaLendingClient({
-        contractId: contractId,
-        rpcUrl: rpcUrl,
-        networkPassphrase: networkPassphrase,
+        contractId: networks.testnet.contractId,
+        rpcUrl,
+        networkPassphrase,
         ...(allowHttpForSoroban && { allowHttp: true }),
       });
 
-      // Get pool state
       let poolState;
       try {
         const poolStateTx = await client.get_pool_state({ simulate: true });
         poolState = poolStateTx.result;
-      } catch {
+      } catch (err) {
+        console.warn("useLendingPools: failed to fetch pool state", err);
         return [];
       }
 
-      const isPoolActive = poolState?.tag === "Active";
-
-      if (!isPoolActive) {
+      if (poolState?.tag !== "Active") {
         return [];
       }
 
@@ -67,9 +52,7 @@ export const useLendingPools = () => {
       for (const assetCode of debtAssets) {
         try {
           const token = availableTokens[assetCode];
-          if (!token?.contract) {
-            continue;
-          }
+          if (!token?.contract) continue;
 
           const balanceTx = await client.get_pool_balance(
             { asset: assetCode },
@@ -77,24 +60,15 @@ export const useLendingPools = () => {
           );
           const balanceValue = balanceTx.result;
 
-          if (balanceValue === null || balanceValue === undefined) {
-            continue;
-          }
+          if (balanceValue === null || balanceValue === undefined) continue;
 
           const decimals = token.decimals || 7;
-          const balanceStr =
-            typeof balanceValue === "bigint"
-              ? balanceValue.toString()
-              : typeof balanceValue === "string"
-                ? balanceValue
-                : String(balanceValue);
-          const balanceBigInt = BigInt(balanceStr);
+          const balanceBigInt = BigInt(stringifyValue(balanceValue));
           const poolBalance = fromSmallestUnit(
             balanceBigInt.toString(),
             decimals
           );
 
-          // Get interest rate (basis points → percentage)
           let interestRate = 0;
           try {
             const interestRateTx = await client.get_interest_rate(
@@ -104,11 +78,13 @@ export const useLendingPools = () => {
             interestRate = parseInterestRateFromContractResult(
               interestRateTx.result
             );
-          } catch {
-            // If interest rate fetch fails, use 0
+          } catch (err) {
+            console.warn(
+              `useLendingPools: failed to fetch interest rate for ${assetCode}`,
+              err
+            );
           }
 
-          // Get bToken rate
           let bTokenRate = "1.0";
           try {
             const bTokenRateTx = await client.get_b_token_rate(
@@ -118,22 +94,31 @@ export const useLendingPools = () => {
             const bTokenRateValue = bTokenRateTx.result;
             if (bTokenRateValue) {
               const rateBigInt = BigInt(bTokenRateValue.toString());
-              bTokenRate = fromSmallestUnit(rateBigInt.toString(), 9);
+              bTokenRate = fromSmallestUnit(
+                rateBigInt.toString(),
+                BTOKEN_DECIMALS
+              );
             }
-          } catch {
-            // If bToken rate fetch fails, use 1.0
+          } catch (err) {
+            console.warn(
+              `useLendingPools: failed to fetch bToken rate for ${assetCode}`,
+              err
+            );
           }
 
           pools.push({
             asset: token.contract,
             assetCode,
             poolBalance,
-            poolBalanceUSD: "Calculating...",
             interestRate,
             bTokenRate,
             isActive: true,
           });
-        } catch {
+        } catch (err) {
+          console.warn(
+            `useLendingPools: failed to fetch pool data for ${assetCode}`,
+            err
+          );
           continue;
         }
       }

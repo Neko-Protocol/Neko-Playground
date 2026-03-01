@@ -1,44 +1,31 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Modal, Box, Typography, IconButton, TextField } from "@mui/material";
-import { useLendingPools } from "@/features/lending/hooks/useLendingPools";
-import { useWallet } from "../../../../hooks/useWallet";
+import { useLendingPools } from "../../hooks/useLendingPools";
+import { useLendingExecution } from "../../hooks/useLendingExecution";
+import { useWallet } from "@/hooks/useWallet";
 import { lendingService } from "@/lib/services";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { TransactionBuilder, Networks, rpc } from "@stellar/stellar-sdk";
-import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
-import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
-
-interface PoolData {
-  id: string;
-  name: string;
-  token1: string;
-  token2: string;
-  fee: string;
-  roi: string;
-  feeApy: string;
-  liquidity: string;
-  isActive: boolean;
-  assetCode: string;
-  asset: string;
-  bTokenRate?: string; // bToken rate for calculating conversions
-}
+import {
+  calculateBTokensFromTokens,
+  poolsToPoolData,
+} from "../../utils/lendingUtils";
+import type { PoolData } from "../../types/lending";
 
 const Lend: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isDepositModal, setIsDepositModal] = useState(true); // true for deposit, false for withdraw
+  const [isDepositModal, setIsDepositModal] = useState(true);
   const [amount, setAmount] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [bTokenBalance, setBTokenBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-  const [bTokensToBurn, setBTokensToBurn] = useState<string | null>(null); // Calculated bTokens for withdraw
+  const [bTokensToBurn, setBTokensToBurn] = useState<string | null>(null);
+  const [selectedPool, setSelectedPool] = useState<PoolData | null>(null);
 
-  const { address, signTransaction, networkPassphrase } = useWallet();
+  const { address } = useWallet();
+  const { handleDeposit, handleWithdraw, isLoading, error, clearError } =
+    useLendingExecution();
 
-  // Get real lending pools from contract
   const {
     data: lendingPools = [],
     isLoading: isLoadingPools,
@@ -46,132 +33,34 @@ const Lend: React.FC = () => {
     refetch: refetchPools,
   } = useLendingPools();
 
-  // Convert lending pools to PoolData format
-  const pools: PoolData[] = useMemo(() => {
-    return lendingPools.map((pool, index) => {
-      // Calculate APY from bToken rate
-      // bToken rate increases over time, so we can estimate APY
-      // For now, use interest rate as APY approximation
-      const apy =
-        pool.interestRate > 0 ? `${pool.interestRate.toFixed(2)}%` : "0.00%";
+  const pools: PoolData[] = useMemo(
+    () => poolsToPoolData(lendingPools),
+    [lendingPools]
+  );
 
-      // Format liquidity
-      const balanceNum = parseFloat(pool.poolBalance);
-      const liquidity =
-        balanceNum >= 1000
-          ? `$${(balanceNum / 1000).toFixed(2)}k`
-          : `$${balanceNum.toFixed(2)}`;
-
-      return {
-        id: `pool-${index}`,
-        name: `${pool.assetCode} Pool`,
-        token1: pool.assetCode,
-        token2: "", // Lending pools don't have a second token
-        fee: "0%", // No fee for lending
-        roi: `${pool.interestRate.toFixed(2)}%`,
-        feeApy: apy,
-        liquidity,
-        isActive: pool.isActive,
-        assetCode: pool.assetCode,
-        asset: pool.asset,
-        bTokenRate: pool.bTokenRate, // Store bToken rate for calculations
-      };
-    });
-  }, [lendingPools]);
-
-  const [selectedPool, setSelectedPool] = useState<PoolData | null>(null);
-
-  // Update selectedPool when pools are loaded or refreshed
-  React.useEffect(() => {
+  useEffect(() => {
     if (pools.length > 0 && !selectedPool) {
       setSelectedPool(pools[0]);
     } else if (selectedPool && pools.length > 0) {
       const updatedPool = pools.find(
         (p) => p.assetCode === selectedPool.assetCode
       );
-      if (updatedPool) {
-        setSelectedPool(updatedPool);
-      }
+      if (updatedPool) setSelectedPool(updatedPool);
     }
   }, [pools, selectedPool]);
 
-  const handleLendClick = () => {
-    setError(null);
-    setIsDepositModal(true);
-    setAmount("");
-    setBTokenBalance(null);
-    setIsModalOpen(true);
-    // Load bToken balance if withdrawing
-    if (selectedPool && address) {
-      void loadBTokenBalance();
-    }
-  };
-
-  const handleWithdrawClick = () => {
-    setError(null);
-    setIsDepositModal(false);
-    setAmount("");
-    setBTokenBalance(null);
-    setBTokensToBurn(null);
-    setIsModalOpen(true);
-    // Load bToken balance
-    if (selectedPool && address) {
-      void loadBTokenBalance();
-    }
-  };
-
-  // Calculate bTokens needed to withdraw a given amount of tokens
-  // From contract: tokens = (bTokens × bTokenRate) / SCALAR_9
-  // Therefore: bTokens = (tokens × SCALAR_9) / bTokenRate
-  // Note: bTokenRate in PoolData is already in human-readable format (converted from SCALAR_9 with 9 decimals)
-  // So the formula simplifies to: bTokens = tokens / bTokenRate
-  const calculateBTokensFromTokens = (
-    tokensAmount: string,
-    bTokenRate: string
-  ): string => {
-    if (
-      !tokensAmount ||
-      parseFloat(tokensAmount) <= 0 ||
-      !bTokenRate ||
-      parseFloat(bTokenRate) <= 0
-    ) {
-      return "0";
-    }
-
-    const tokens = parseFloat(tokensAmount);
-    const rate = parseFloat(bTokenRate);
-
-    // Calculate: bTokens = tokens / bTokenRate
-    // Example: If you want to withdraw 100 tokens and rate is 1.05, you need 100/1.05 = ~95.24 bTokens
-    const bTokens = tokens / rate;
-
-    return bTokens.toFixed(7); // Return with 7 decimals
-  };
-
-  // Update bTokens calculation when amount changes (for withdraw)
-  React.useEffect(() => {
+  // Calculate bTokens needed when amount changes (withdraw only)
+  useEffect(() => {
     if (
       !isDepositModal &&
       amount &&
       selectedPool?.bTokenRate &&
       parseFloat(amount) > 0
     ) {
-      const calculated = calculateBTokensFromTokens(
-        amount,
-        selectedPool.bTokenRate
+      setBTokensToBurn(
+        calculateBTokensFromTokens(amount, selectedPool.bTokenRate)
       );
-      console.log("Calculated bTokens:", {
-        amount,
-        bTokenRate: selectedPool.bTokenRate,
-        calculated,
-      });
-      setBTokensToBurn(calculated);
     } else {
-      console.log("bTokens calculation skipped:", {
-        isDepositModal,
-        amount,
-        bTokenRate: selectedPool?.bTokenRate,
-      });
       setBTokensToBurn(null);
     }
   }, [amount, isDepositModal, selectedPool?.bTokenRate]);
@@ -188,16 +77,14 @@ const Lend: React.FC = () => {
         address
       );
       setBTokenBalance(balance);
-    } catch (error) {
-      console.error("Error loading bToken balance:", error);
+    } catch {
       setBTokenBalance("0");
     } finally {
       setIsLoadingBalance(false);
     }
   }, [selectedPool, address]);
 
-  // Load bToken balance when pool or address changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedPool && address) {
       void loadBTokenBalance();
     } else {
@@ -209,6 +96,26 @@ const Lend: React.FC = () => {
     setIsModalOpen(false);
     setAmount("");
     setBTokenBalance(null);
+    clearError();
+  };
+
+  const handleLendClick = () => {
+    clearError();
+    setIsDepositModal(true);
+    setAmount("");
+    setBTokenBalance(null);
+    setIsModalOpen(true);
+    if (selectedPool && address) void loadBTokenBalance();
+  };
+
+  const handleWithdrawClick = () => {
+    clearError();
+    setIsDepositModal(false);
+    setAmount("");
+    setBTokenBalance(null);
+    setBTokensToBurn(null);
+    setIsModalOpen(true);
+    if (selectedPool && address) void loadBTokenBalance();
   };
 
   const handlePoolSelect = (pool: PoolData) => {
@@ -217,172 +124,26 @@ const Lend: React.FC = () => {
   };
 
   const handleConfirm = async () => {
-    console.log("handleConfirm called", {
-      selectedPool,
-      address,
-      amount,
-      isDepositModal,
-      bTokensToBurn,
-    });
+    if (!selectedPool || !amount || parseFloat(amount) <= 0) return;
 
-    if (!selectedPool) {
-      console.error("No pool selected");
-      return;
-    }
+    let result;
 
-    if (!address) {
-      console.error("No wallet address");
-      return;
-    }
-
-    if (!amount || parseFloat(amount) <= 0) {
-      console.error("Invalid amount:", amount);
-      return;
-    }
-
-    // For withdraw, validate bTokens calculation
-    if (!isDepositModal) {
-      if (!selectedPool.bTokenRate) {
-        console.error("No bTokenRate available for pool");
-        return;
-      }
-      if (!bTokensToBurn || parseFloat(bTokensToBurn) <= 0) {
-        console.error("Invalid bTokens calculation:", bTokensToBurn);
-        return;
-      }
+    if (isDepositModal) {
+      result = await handleDeposit({ pool: selectedPool, amount });
+    } else {
+      if (!bTokensToBurn || parseFloat(bTokensToBurn) <= 0) return;
       if (
         bTokenBalance &&
         parseFloat(bTokensToBurn) > parseFloat(bTokenBalance)
       ) {
-        console.error("Insufficient bToken balance:", {
-          bTokensToBurn,
-          bTokenBalance,
-        });
         return;
       }
+      result = await handleWithdraw({ pool: selectedPool, bTokensToBurn });
     }
 
-    setIsLoading(true);
-
-    try {
-      const availableTokens = getAvailableTokens();
-      const token = availableTokens[selectedPool.assetCode];
-      if (!token?.contract) {
-        throw new Error(`Token ${selectedPool.assetCode} not found`);
-      }
-
-      const decimals = token.decimals || 7;
-
-      const sorobanServer = new rpc.Server(rpcUrl, {
-        allowHttp: stellarNetwork === "LOCAL",
-      });
-
-      if (isDepositModal) {
-        // DEPOSIT FLOW
-        // Step 1: Build approve + deposit transactions via service
-        const {
-          approveXdr,
-          depositXdr,
-          error: buildError,
-        } = await lendingService.depositWithApprove(
-          token.contract,
-          selectedPool.assetCode,
-          amount,
-          decimals,
-          address
-        );
-
-        if (buildError) throw new Error(buildError);
-
-        // Step 2: Sign approve transaction
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const signedApprove = await signTransaction(approveXdr as any, {
-          networkPassphrase: networkPassphrase || Networks.TESTNET,
-          address: address,
-        });
-
-        // Step 3: Submit approve transaction
-        const approveTx = TransactionBuilder.fromXDR(
-          signedApprove.signedTxXdr,
-          networkPassphrase || Networks.TESTNET
-        );
-        const approveResult = await sorobanServer.sendTransaction(approveTx);
-        console.log("Approve transaction submitted:", approveResult);
-
-        // Wait a bit for transaction to be processed
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        // Step 4: Sign deposit transaction
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const signedDeposit = await signTransaction(depositXdr as any, {
-          networkPassphrase: networkPassphrase || Networks.TESTNET,
-          address: address,
-        });
-
-        // Step 5: Submit deposit transaction
-        const depositTx = TransactionBuilder.fromXDR(
-          signedDeposit.signedTxXdr,
-          networkPassphrase || Networks.TESTNET
-        );
-        const depositResult = await sorobanServer.sendTransaction(depositTx);
-        console.log("Deposit transaction submitted:", depositResult);
-      } else {
-        // WITHDRAW FLOW
-        // Calculate bTokens needed from tokens amount
-        if (!selectedPool.bTokenRate || !bTokensToBurn) {
-          throw new Error("Unable to calculate bTokens. Please try again.");
-        }
-
-        const bTokensAmount = bTokensToBurn;
-
-        // Step 1: Build withdraw transaction via service
-        const { xdr: withdrawXdr, error: buildError } =
-          await lendingService.withdrawFromPool(
-            selectedPool.assetCode,
-            bTokensAmount,
-            decimals,
-            address
-          );
-
-        if (buildError) throw new Error(buildError);
-
-        // Step 2: Sign withdraw transaction
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const signedWithdraw = await signTransaction(withdrawXdr as any, {
-          networkPassphrase: networkPassphrase || Networks.TESTNET,
-          address: address,
-        });
-
-        // Step 3: Submit withdraw transaction
-        const withdrawTx = TransactionBuilder.fromXDR(
-          signedWithdraw.signedTxXdr,
-          networkPassphrase || Networks.TESTNET
-        );
-        const withdrawResult = await sorobanServer.sendTransaction(withdrawTx);
-        console.log("Withdraw transaction submitted:", withdrawResult);
-      }
-
-      // Wait a bit for transaction to be processed
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
-      // Refresh balances after transaction
-      await loadBTokenBalance();
-      await refetchPools();
-
+    if (result?.success) {
+      await Promise.all([loadBTokenBalance(), refetchPools()]);
       handleCloseModal();
-    } catch (error) {
-      const errorMessage = extractContractErrorOrNull(error);
-      // Only set error state if it's not a user cancellation
-      if (errorMessage) {
-        // Ensure we always pass a string to setError
-        const errorString =
-          typeof errorMessage === "string"
-            ? errorMessage
-            : "An unexpected error occurred. Please try again.";
-        setError(errorString);
-      }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -549,7 +310,6 @@ const Lend: React.FC = () => {
                           <span className="text-white/60">--</span>
                         )}
                       </p>
-                      {/* Show equivalent in real tokens */}
                       {bTokenBalance !== null &&
                         selectedPool.bTokenRate &&
                         parseFloat(bTokenBalance) > 0 && (
@@ -754,12 +514,7 @@ const Lend: React.FC = () => {
                 {isDepositModal ? "Amount to Deposit" : "Amount to Withdraw"}
               </Typography>
               {!isDepositModal && bTokenBalance !== null && (
-                <Typography
-                  sx={{
-                    color: "#7096D1",
-                    fontSize: "0.875rem",
-                  }}
-                >
+                <Typography sx={{ color: "#7096D1", fontSize: "0.875rem" }}>
                   bToken Balance: {bTokenBalance}
                 </Typography>
               )}
@@ -787,7 +542,6 @@ const Lend: React.FC = () => {
                 },
               }}
             />
-            {/* Show bTokens calculation for withdraw */}
             {!isDepositModal && amount && bTokensToBurn && (
               <Box sx={{ mt: 1 }}>
                 <Typography

@@ -2,6 +2,16 @@
  * Utility functions for swap operations (shared Stellar + EVM)
  */
 
+/**
+ * Coerce a bigint, string, or unknown contract result value to a plain string.
+ * Avoids repeated ternary chains across the codebase.
+ */
+export function stringifyValue(value: unknown): string {
+  if (typeof value === "bigint") return value.toString();
+  if (typeof value === "string") return value;
+  return String(value);
+}
+
 import { isEVMToken, type EVMToken } from "@/lib/types";
 import { getAvailableTokens } from "./stellar/soroswap";
 import type { Token } from "./stellar/soroswap";
