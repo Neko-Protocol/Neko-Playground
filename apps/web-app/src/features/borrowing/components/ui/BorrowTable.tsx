@@ -76,22 +76,24 @@ function PoolCell({
   fee: string;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      {/* Overlapping token icons */}
-      <div className="relative w-9 h-6 shrink-0">
-        <div className="absolute left-0 top-0">
-          <TokenAvatar code={token1} />
+    <div className="flex justify-center">
+      <div className="flex items-center gap-3 w-[200px] ml-6">
+        {/* Overlapping token icons */}
+        <div className="relative w-9 h-6 shrink-0">
+          <div className="absolute left-0 top-0">
+            <TokenAvatar code={token1} />
+          </div>
+          <div className="absolute left-3.5 top-0">
+            <TokenAvatar code={token2} />
+          </div>
         </div>
-        <div className="absolute left-3.5 top-0">
-          <TokenAvatar code={token2} />
-        </div>
+        <span className="text-white font-medium text-sm">
+          {token1}/{token2}
+        </span>
+        <span className="rounded-full bg-[#2F2F2F] px-2 py-0.5 text-xs font-semibold text-white/50 shrink-0">
+          {fee}
+        </span>
       </div>
-      <span className="text-white font-medium text-sm">
-        {token1}/{token2}
-      </span>
-      <span className="rounded-full bg-[#2F2F2F] px-2 py-0.5 text-xs font-semibold text-white/50">
-        {fee}
-      </span>
     </div>
   );
 }
@@ -100,14 +102,18 @@ function ColHeader({
   icon: Icon,
   label,
   tooltip,
+  centered,
 }: {
   icon: React.ElementType;
   label: string;
   tooltip?: string;
+  centered?: boolean;
 }) {
   return (
-    <th className="px-4 py-3 text-left">
-      <div className="flex items-center gap-1.5 text-white/40 text-xs font-semibold uppercase tracking-wide">
+    <th className={`px-4 py-3 ${centered ? "text-center" : "text-left"}`}>
+      <div
+        className={`flex items-center gap-1.5 text-white/40 text-xs font-semibold uppercase tracking-wide ${centered ? "justify-center" : ""}`}
+      >
         <Icon className="h-3.5 w-3.5" />
         {label}
         {tooltip && (
@@ -370,24 +376,27 @@ const BorrowTable: React.FC = () => {
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/5">
-              <ColHeader icon={Hash} label="ID" />
-              <ColHeader icon={Layers} label="Pool" />
+              <ColHeader icon={Hash} label="ID" centered />
+              <ColHeader icon={Layers} label="Pool" centered />
               <ColHeader
                 icon={TrendingDown}
                 label="Borrow APR"
                 tooltip="Annual interest rate you pay when borrowing"
+                centered
               />
               <ColHeader
                 icon={Shield}
                 label="Collateral"
                 tooltip="Maximum percentage of collateral value you can borrow"
+                centered
               />
               <ColHeader
                 icon={Droplets}
                 label="Liquidity"
                 tooltip="Total liquidity in pool"
+                centered
               />
-              <ColHeader icon={Zap} label="Actions" />
+              <ColHeader icon={Zap} label="Actions" centered />
             </tr>
           </thead>
           <tbody>
@@ -424,26 +433,26 @@ const BorrowTable: React.FC = () => {
                   key={asset.id}
                   className="border-b border-white/5 hover:bg-white/2 transition-colors"
                 >
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 align-middle text-center">
                     <IdBadge id={asset.id} isActive={asset.isActive} />
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 align-middle w-[280px]">
                     <PoolCell
                       token1={asset.pool.token1}
                       token2={asset.pool.token2}
                       fee={asset.pool.fee}
                     />
                   </td>
-                  <td className="px-4 py-4 text-white text-sm">
+                  <td className="px-4 py-4 align-middle text-center text-white text-sm">
                     {asset.borrowApr}
                   </td>
-                  <td className="px-4 py-4 text-white text-sm">
+                  <td className="px-4 py-4 align-middle text-center text-white text-sm">
                     {asset.collateralFactorDisplay}
                   </td>
-                  <td className="px-4 py-4 text-white text-sm">
+                  <td className="px-4 py-4 align-middle text-center text-white text-sm">
                     {asset.liquidity}
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 align-middle text-center">
                     <button
                       onClick={() => handleBorrowClick(asset)}
                       className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors"

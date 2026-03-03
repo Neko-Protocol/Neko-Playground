@@ -82,13 +82,17 @@ function ProtocolCell({ pool }: { pool: PoolData }) {
 function ColHeader({
   icon: Icon,
   label,
+  centered,
 }: {
   icon: React.ElementType;
   label: string;
+  centered?: boolean;
 }) {
   return (
-    <th className="px-4 py-3 text-left">
-      <div className="flex items-center gap-1.5 text-white/40 text-xs font-semibold uppercase tracking-wide">
+    <th className={`px-4 py-3 ${centered ? "text-center" : "text-left"}`}>
+      <div
+        className={`flex items-center gap-1.5 text-white/40 text-xs font-semibold uppercase tracking-wide ${centered ? "justify-center" : ""}`}
+      >
         <Icon className="h-3.5 w-3.5" />
         {label}
       </div>
@@ -462,10 +466,10 @@ const Lend: React.FC = () => {
           <thead>
             <tr className="border-b border-white/5">
               <ColHeader icon={ArrowLeftRight} label="Protocol" />
-              <ColHeader icon={TrendingUp} label="Supply APY" />
-              <ColHeader icon={Droplets} label="Total liquidity" />
-              <ColHeader icon={Coins} label="bToken Rate" />
-              <ColHeader icon={Zap} label="Actions" />
+              <ColHeader icon={TrendingUp} label="Supply APY" centered />
+              <ColHeader icon={Droplets} label="Total liquidity" centered />
+              <ColHeader icon={Coins} label="bToken Rate" centered />
+              <ColHeader icon={Zap} label="Actions" centered />
             </tr>
           </thead>
           <tbody>
@@ -502,20 +506,22 @@ const Lend: React.FC = () => {
                   key={pool.id}
                   className="border-b border-white/5 hover:bg-white/2 transition-colors"
                 >
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 align-middle">
                     <ProtocolCell pool={pool} />
                   </td>
-                  <td className="px-4 py-4 text-white text-sm">{pool.roi}</td>
-                  <td className="px-4 py-4 text-white text-sm">
+                  <td className="px-4 py-4 align-middle text-center text-white text-sm">
+                    {pool.roi}
+                  </td>
+                  <td className="px-4 py-4 align-middle text-center text-white text-sm">
                     {pool.liquidity}
                   </td>
-                  <td className="px-4 py-4 text-white text-sm">
+                  <td className="px-4 py-4 align-middle text-center text-white text-sm">
                     {pool.bTokenRate
                       ? parseFloat(pool.bTokenRate).toFixed(4)
                       : "1.0000"}
                   </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-2">
+                  <td className="px-4 py-4 align-middle text-center">
+                    <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => openModal(pool, true)}
                         className="rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-1.5 text-white/70 hover:text-white text-xs font-semibold transition-colors"
