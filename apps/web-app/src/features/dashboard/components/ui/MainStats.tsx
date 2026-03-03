@@ -1,11 +1,12 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
+import { DollarSign, Coins, TrendingUp } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { usePortfolioValue } from "@/features/dashboard/hooks/usePortfolioValue";
 import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
+import { StatCard } from "@/features/stocks/components/ui/StatCard";
 
 function formatUsd(value: number): string {
   return value.toLocaleString("en-US", {
@@ -44,123 +45,56 @@ const MainStats: React.FC = () => {
   const isLoading = isFetchingBalances || isLoadingPortfolio;
 
   return (
-    <div className="w-full">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Card: Portfolio Stats */}
-        <div className="md:col-span-2 rounded-3xl bg-neko-accent p-8 shadow-lg border border-[#334EAC]/90 relative overflow-hidden flex flex-col justify-between min-h-[320px]">
-          <Image
-            src="/Neko_Thumbs_Up.png"
-            alt="Neko Thumbs Up"
-            fill
-            className="object-contain opacity-30 pointer-events-none w-auto! h-[340px]! left-auto! right-5! bottom-3! top-auto!"
-          />
+    <div className="space-y-5">
+      {/* Stats row — reuses StatCard from stocks feature */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <StatCard
+          icon={<DollarSign className="h-5 w-5" />}
+          label="Total Portfolio Value"
+          value={address ? formatUsd(totalUsd) : "$0.00"}
+          isLoading={isLoading && !!address}
+        />
+        <StatCard
+          icon={<Coins className="h-5 w-5" />}
+          label="Assets Held"
+          value={address ? holdings.length : 0}
+          isLoading={isLoading && !!address}
+        />
+        <StatCard
+          icon={<TrendingUp className="h-5 w-5" />}
+          label="Avg. Pool APY"
+          value={avgPoolApy !== null ? `${avgPoolApy}%` : "—"}
+        />
+      </div>
 
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-6">
-              <h2 className="text-xl font-bold text-[#FFF9F0] tracking-wide">
-                Portfolio
-              </h2>
-            </div>
-
-            <div className="mb-8">
-              <p className="text-[#7096D1] text-xs font-bold uppercase tracking-widest mb-2 opacity-80">
-                Total Portfolio Value
+      {/* Wallet holdings chart */}
+      <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-6">
+        <h3 className="text-white font-semibold text-sm mb-4">
+          Wallet Holdings
+        </h3>
+        {!address ? (
+          <div className="flex items-center justify-center py-8">
+            <p className="text-white/40 text-sm">
+              Connect your wallet to view holdings
+            </p>
+          </div>
+        ) : chartHoldings.length === 0 ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <p className="text-white/40 text-sm mb-1">No holdings found</p>
+              <p className="text-white/30 text-xs">
+                Fund your account to see balances here
               </p>
-              {!address ? (
-                <h1 className="text-5xl font-bold text-[#FFF9F0] tracking-tight">
-                  $0.00
-                </h1>
-              ) : isLoading ? (
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-48 rounded-xl bg-[#334EAC]/40 animate-pulse" />
-                </div>
-              ) : (
-                <h1 className="text-5xl font-bold text-[#FFF9F0] tracking-tight">
-                  {formatUsd(totalUsd)}
-                </h1>
-              )}
-              <div className="flex items-center gap-2 mt-3">
-                {isLoading && address && (
-                  <div className="flex items-center bg-neko-teal/10 px-2 py-1 rounded-lg">
-                    <div className="w-2 h-2 bg-neko-teal rounded-full animate-pulse mr-1" />
-                    <span className="text-neko-teal font-bold text-sm">
-                      Updating...
-                    </span>
-                  </div>
-                )}
-                {!isLoading && totalUsd === 0 && address && (
-                  <span className="text-[#7096D1] text-sm font-medium">
-                    No balances found
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-[#96b2ff]/90 rounded-2xl p-4 text-center border border-[#334EAC]/20 backdrop-blur-sm">
-                <p className="text-[#FFF9F0] font-bold text-lg mb-1">
-                  {holdings.length}
-                </p>
-                <p className="text-[#000000] text-[10px] font-bold uppercase tracking-wider opacity-70">
-                  Assets Held
-                </p>
-              </div>
-              <div className="bg-[#96b2ff]/90 rounded-2xl p-4 text-center border border-[#334EAC]/20 backdrop-blur-sm">
-                <p className="text-[#FFF9F0] font-bold text-lg mb-1">
-                  {avgPoolApy !== null ? `${avgPoolApy}%` : "—"}
-                </p>
-                <p className="text-[#000000] text-[10px] font-bold uppercase tracking-wider opacity-70">
-                  Avg. Pool APY
-                </p>
-              </div>
             </div>
           </div>
-
-          <div className="absolute -right-10 -top-10 w-64 h-64 bg-[#334EAC]/20 rounded-full blur-3xl pointer-events-none" />
-        </div>
-
-        {/* Right Card: Wallet Holdings Chart */}
-        <div className="rounded-3xl bg-neko-accent p-8 shadow-lg border border-[#334EAC]/50 relative overflow-hidden flex flex-col min-h-[320px]">
-          <div className="relative z-10 flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-[#FFF9F0] tracking-wide">
-                Wallet Holdings
-              </h2>
-              {isLoading && (
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-neko-teal rounded-full animate-pulse" />
-                  <span className="text-[#7096D1] text-xs">Updating...</span>
-                </div>
-              )}
-            </div>
-            {!address ? (
-              <div className="flex-1 flex items-center justify-center">
-                <p className="text-[#7096D1] text-sm text-center">
-                  Connect your wallet to view holdings
-                </p>
-              </div>
-            ) : chartHoldings.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-[#7096D1] text-sm mb-2">
-                    No holdings found
-                  </p>
-                  <p className="text-[#7096D1] text-xs">
-                    Fund your account to see balances here
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col min-h-[200px]">
-                <HoldingsPieChart
-                  holdings={chartHoldings}
-                  totalValue={chartTotal}
-                />
-              </div>
-            )}
+        ) : (
+          <div className="min-h-[220px]">
+            <HoldingsPieChart
+              holdings={chartHoldings}
+              totalValue={chartTotal}
+            />
           </div>
-          <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-[#334EAC]/10 rounded-full blur-2xl pointer-events-none" />
-        </div>
+        )}
       </div>
     </div>
   );
