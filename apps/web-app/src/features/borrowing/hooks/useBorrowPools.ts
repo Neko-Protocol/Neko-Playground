@@ -9,6 +9,7 @@ import {
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { parseInterestRateFromContractResult } from "@/lib/helpers/lendingUtils";
+import { RWA_TOKENS } from "@/lib/constants/wallet";
 import type { BorrowPool } from "../types/borrowing";
 
 /**
@@ -25,7 +26,7 @@ export const useBorrowPools = () => {
   // All RWA tokens configured as collateral (memoized)
   const rwaTokens = useMemo(
     () =>
-      ["NVDA", "AAPL", "PLTR", "TSLA", "META"].filter((code) => {
+      RWA_TOKENS.filter((code) => {
         const token = availableTokens[code];
         return token && token.contract;
       }),
