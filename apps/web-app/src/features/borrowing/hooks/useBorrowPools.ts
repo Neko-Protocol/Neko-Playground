@@ -87,8 +87,8 @@ export const useBorrowPools = () => {
           );
           const factorValue = collateralFactorTx.result;
           if (factorValue) {
-            // Collateral factor is stored as basis points (e.g., 7500 = 75%)
-            collateralFactor = Number(factorValue) / 100;
+            // Collateral factor is stored with 7 decimals (e.g., 7_500_000 = 75%)
+            collateralFactor = Number(factorValue) / 100_000;
           }
         } catch {
           // If collateral factor fetch fails, skip this RWA token

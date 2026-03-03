@@ -118,7 +118,8 @@ export const useLendingPools = () => {
             const bTokenRateValue = bTokenRateTx.result;
             if (bTokenRateValue) {
               const rateBigInt = BigInt(bTokenRateValue.toString());
-              bTokenRate = fromSmallestUnit(rateBigInt.toString(), 9);
+              // b_rate uses 12 decimals (SCALAR_12 = 1_000_000_000_000), initial 1:1 rate
+              bTokenRate = fromSmallestUnit(rateBigInt.toString(), 12);
             }
           } catch {
             // If bToken rate fetch fails, use 1.0
