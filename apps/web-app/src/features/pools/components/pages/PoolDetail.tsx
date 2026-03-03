@@ -137,14 +137,14 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           {address && (
             <div className="relative z-10 mb-8 rounded-xl border border-neko-teal/40 bg-neko-navy/30 p-4">
               <h3 className="text-neko-muted text-sm font-semibold mb-3">
-                Tu posición
+                Your Position
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <p className="text-neko-muted text-xs mb-1">
                     {pool.type === "blend"
-                      ? "Total (incl. intereses)"
-                      : "Depositado"}
+                      ? "Total (incl. interest)"
+                      : "Deposited"}
                   </p>
                   <p className="text-white text-lg font-bold">
                     {position?.depositedFormatted ?? "0"}{" "}
@@ -156,7 +156,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
                   position.rewardsFormatted !== "0" && (
                     <div>
                       <p className="text-neko-muted text-xs mb-1">
-                        Recompensas
+                        Rewards
                       </p>
                       <p className="text-white text-lg font-bold">
                         {position.rewardsFormatted}
@@ -167,7 +167,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
                   position?.metadata?.liabilities != null &&
                   String(position.metadata.liabilities) !== "0" && (
                     <div>
-                      <p className="text-neko-muted text-xs mb-1">Prestado</p>
+                      <p className="text-neko-muted text-xs mb-1">Borrowed</p>
                       <p className="text-white text-lg font-bold">
                         {fromSmallestUnit(
                           String(position.metadata.liabilities),

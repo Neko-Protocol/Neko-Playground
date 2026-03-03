@@ -5,6 +5,7 @@ import { usePoolInfo } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { formatLiquidity } from "../utils/poolUtils";
+import { getPoolTypeLabel } from "../types/pools";
 import type { PoolDetailView } from "../types/pools";
 
 export type PoolDetailData = PoolInfo & PoolDetailView;
@@ -34,12 +35,7 @@ export function usePoolDetail(contractId: string | undefined) {
       fromSmallestUnit(pool.tvl.toString(), decimals)
     );
     const apyFormatted = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
-    const typeLabel =
-      pool.type === "blend" || pool.type === "neko"
-        ? "Lending"
-        : pool.type === "soroswap"
-          ? "AMM"
-          : pool.type;
+    const typeLabel = getPoolTypeLabel(pool.type);
 
     return {
       ...pool,

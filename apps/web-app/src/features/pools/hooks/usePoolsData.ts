@@ -20,7 +20,7 @@ export function usePoolsData() {
       const token2 =
         pool.tokens.length > 1
           ? (pool.tokens[1]?.code ?? "?")
-          : pool.type === "blend"
+          : pool.type === "blend" || pool.type === "neko"
             ? "Lending"
             : "?";
 
@@ -41,6 +41,7 @@ export function usePoolsData() {
         liquidity,
         isActive: pool.state === "active",
         type: pool.type,
+        supportedActions: pool.supportedActions,
       };
     });
   }, [allPools]);
