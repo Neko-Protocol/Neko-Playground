@@ -7,10 +7,13 @@ import { parseBalance } from "@/features/dashboard/utils/dashboardUtils";
 import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
 import { use24hPortfolioChange } from "@/hooks/use24hPortfolioChange";
+import { useUserTotalDeposited } from "@/hooks/useUserTotalDeposited";
 
 const MainStats: React.FC = () => {
   const { balances, isFetchingBalances, address } = useWallet();
   const { assets: poolAssets, isLoading: isLoadingPools } = useDashboardPools();
+  const { data: totalDepositedData, isLoading: isLoadingDeposited } =
+    useUserTotalDeposited(address);
   const {
     change: portfolioChange24h,
     isPositive: change24hPositive,
@@ -141,9 +144,17 @@ const MainStats: React.FC = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-[#96b2ff]/90 rounded-2xl p-4 text-center border border-[#334EAC]/20 backdrop-blur-sm">
-                <p className="text-[#FFF9F0] font-bold text-lg mb-1">N/A</p>
+                <p className="text-[#FFF9F0] font-bold text-lg mb-1">
+                  {!address
+                    ? "N/A"
+                    : isLoadingDeposited
+                      ? "..."
+                      : totalDepositedData && totalDepositedData.totalUsd > 0
+                        ? `$${totalDepositedData.totalUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : "$0.00"}
+                </p>
                 <p className="text-[#000000] text-[10px] font-bold uppercase tracking-wider opacity-70">
-                  Returns last week
+                  Total Deposited
                 </p>
               </div>
               <div className="bg-[#96b2ff]/90 rounded-2xl p-4 text-center border border-[#334EAC]/20 backdrop-blur-sm">
