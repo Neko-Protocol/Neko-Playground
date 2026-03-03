@@ -113,7 +113,6 @@ interface LendModalProps {
   error: string | null;
   bTokenBalance: string | null;
   isLoadingBalance: boolean;
-  bTokensToBurn: string | null;
   onConfirm: (amount: string) => Promise<void>;
   onRefreshBalance: () => void;
   hasWallet: boolean;
@@ -127,12 +126,22 @@ function LendModal({
   error,
   bTokenBalance,
   isLoadingBalance,
-  bTokensToBurn,
   onConfirm,
   onRefreshBalance,
   hasWallet,
 }: LendModalProps) {
   const [amount, setAmount] = useState("");
+
+  const bTokensToBurn = useMemo(() => {
+    if (
+      !amount ||
+      parseFloat(amount) <= 0 ||
+      !pool.bTokenRate ||
+      parseFloat(pool.bTokenRate) <= 0
+    )
+      return null;
+    return (parseFloat(amount) / parseFloat(pool.bTokenRate)).toFixed(7);
+  }, [amount, pool.bTokenRate]);
 
   const canSubmit =
     hasWallet &&
@@ -268,7 +277,6 @@ const Lend: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [bTokenBalance, setBTokenBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-  const [bTokensToBurn, setBTokensToBurn] = useState<string | null>(null);
   const [selectedPool, setSelectedPool] = useState<PoolData | null>(null);
 
   const { address, signTransaction, networkPassphrase } = useWallet();
@@ -346,7 +354,6 @@ const Lend: React.FC = () => {
     setIsDeposit(deposit);
     setError(null);
     setBTokenBalance(null);
-    setBTokensToBurn(null);
     setIsModalOpen(true);
     if (address) void loadBTokenBalance();
   };
@@ -553,7 +560,6 @@ const Lend: React.FC = () => {
           error={error}
           bTokenBalance={bTokenBalance}
           isLoadingBalance={isLoadingBalance}
-          bTokensToBurn={bTokensToBurn}
           onConfirm={handleConfirm}
           onRefreshBalance={() => void loadBTokenBalance()}
           hasWallet={!!address}

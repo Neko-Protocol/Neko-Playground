@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { useWalletType } from "@/hooks/useWalletType";
-import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
 import { truncateAddress } from "@/lib/utils";
 
 const primaryButton =
@@ -11,8 +10,7 @@ const primaryButton =
 
 export const WalletButton: React.FC = () => {
   const { isStellarConnected, stellarAddress } = useWalletType();
-  const { disconnect: disconnectStellar } = useStellarWallet();
-  const [showModal, setShowModal] = useState(false);
+  const { connect, disconnect: disconnectStellar } = useStellarWallet();
   const displayAddress = stellarAddress ? truncateAddress(stellarAddress) : "";
 
   if (isStellarConnected && stellarAddress) {
@@ -36,18 +34,12 @@ export const WalletButton: React.FC = () => {
   }
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setShowModal(true)}
-        className={`${primaryButton} px-5 py-2.5 shadow-lg`}
-      >
-        Connect wallet
-      </button>
-      <ConnectWalletModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-      />
-    </>
+    <button
+      type="button"
+      onClick={() => void connect()}
+      className={`${primaryButton} px-5 py-2.5 shadow-lg`}
+    >
+      Connect wallet
+    </button>
   );
 };
