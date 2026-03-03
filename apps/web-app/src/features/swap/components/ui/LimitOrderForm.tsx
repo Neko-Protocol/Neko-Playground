@@ -1,13 +1,12 @@
 import React from "react";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import type { EVMToken } from "@/lib/types/evmToken";
 
 interface LimitOrderFormProps {
   limitPrice: string;
   onLimitPriceChange: (price: string) => void;
-  tokenOut: Token | string | EVMToken;
-  getTokenId: (token: Token | string | EVMToken) => string;
+  tokenOut: Token | string;
+  getTokenId: (token: Token | string) => string;
 }
 
 export const LimitOrderForm: React.FC<LimitOrderFormProps> = ({

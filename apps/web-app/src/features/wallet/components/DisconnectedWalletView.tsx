@@ -2,23 +2,18 @@
 
 import React from "react";
 import Image from "next/image";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { ModalCloseButton } from "./ModalCloseButton";
 
 interface DisconnectedWalletViewProps {
   onConnectStellar: () => void;
   isConnectingStellar: boolean;
-  isEvmConnected: boolean;
-  stellarAddress: string | undefined;
   onClose: () => void;
 }
 
 export const DisconnectedWalletView: React.FC<DisconnectedWalletViewProps> = ({
   onConnectStellar,
   isConnectingStellar,
-  isEvmConnected,
-  stellarAddress,
   onClose,
 }) => (
   <>
@@ -27,47 +22,17 @@ export const DisconnectedWalletView: React.FC<DisconnectedWalletViewProps> = ({
       <ModalCloseButton onClick={onClose} />
     </div>
     <div className="p-6 space-y-4 flex flex-col items-center">
-      <ConnectButton.Custom>
-        {({ openConnectModal, mounted }) => {
-          const ready = mounted;
-          const isDisabled = !ready || !!stellarAddress;
-          return (
-            <HoverBorderGradient
-              containerClassName="rounded-full w-[240px]"
-              as="button"
-              className="dark:bg-black bg-white text-black dark:text-white flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                e.stopPropagation();
-                if (!isDisabled) {
-                  openConnectModal();
-                }
-              }}
-              disabled={isDisabled}
-            >
-              <Image
-                src="/crypto/png/ethereum-eth-logo.png"
-                alt="Ethereum"
-                width={24}
-                height={24}
-                className="shrink-0"
-              />
-              <span className="whitespace-nowrap">Connect EVM Wallet</span>
-            </HoverBorderGradient>
-          );
-        }}
-      </ConnectButton.Custom>
-
       <HoverBorderGradient
         containerClassName="rounded-full w-[240px]"
         as="button"
         className="dark:bg-black bg-white text-black dark:text-white flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
-          if (!isConnectingStellar && !isEvmConnected) {
+          if (!isConnectingStellar) {
             onConnectStellar();
           }
         }}
-        disabled={isConnectingStellar || isEvmConnected}
+        disabled={isConnectingStellar}
       >
         <Image
           src="/crypto/png/stellar-xlm-logo.png"

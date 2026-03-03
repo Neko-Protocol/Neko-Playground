@@ -1,8 +1,6 @@
 import { useMemo } from "react";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
-import { useEVMTokenPrice } from "@/hooks/useEVMTokenPrice";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import type { EVMToken } from "@/lib/types/evmToken";
 import { SUSPICIOUS_VALUE_THRESHOLD_PCT } from "@/features/swap/constants/swapConfig";
 
 export interface SwapPrices {
@@ -21,49 +19,17 @@ export interface SwapPrices {
 }
 
 export function useSwapPrices(
-  swapMode: "evm" | "stellar",
   amountIn: string,
   amountOut: string,
-  tokenIn: Token | string | EVMToken,
-  tokenOut: Token | string | EVMToken
+  tokenIn: Token | string,
+  tokenOut: Token | string
 ): SwapPrices {
-  // Get Stellar token prices
-  const { price: stellarTokenInPrice, isLoading: isLoadingStellarPrice } =
-    useTokenPrice(
-      swapMode === "stellar"
-        ? (tokenIn as Token | string | undefined)
-        : undefined
-    );
-  const { price: stellarTokenOutPrice, isLoading: isLoadingStellarOutPrice } =
-    useTokenPrice(
-      swapMode === "stellar"
-        ? (tokenOut as Token | string | undefined)
-        : undefined
-    );
-
-  // Get EVM token prices
-  const { price: evmTokenInPrice, isLoading: isLoadingEvmPrice } =
-    useEVMTokenPrice(
-      swapMode === "evm"
-        ? (tokenIn as EVMToken | string | undefined)
-        : undefined
-    );
-  const { price: evmTokenOutPrice, isLoading: isLoadingEvmOutPrice } =
-    useEVMTokenPrice(
-      swapMode === "evm"
-        ? (tokenOut as EVMToken | string | undefined)
-        : undefined
-    );
-
-  // Use the appropriate price based on swap mode
-  const tokenInPrice =
-    swapMode === "evm" ? evmTokenInPrice : stellarTokenInPrice;
-  const tokenOutPrice =
-    swapMode === "evm" ? evmTokenOutPrice : stellarTokenOutPrice;
-  const isLoadingPrice =
-    swapMode === "evm" ? isLoadingEvmPrice : isLoadingStellarPrice;
-  const isLoadingOutPrice =
-    swapMode === "evm" ? isLoadingEvmOutPrice : isLoadingStellarOutPrice;
+  const { price: tokenInPrice, isLoading: isLoadingPrice } = useTokenPrice(
+    tokenIn as Token | string | undefined
+  );
+  const { price: tokenOutPrice, isLoading: isLoadingOutPrice } = useTokenPrice(
+    tokenOut as Token | string | undefined
+  );
 
   // Calculate USD value
   const usdValue = useMemo(() => {
