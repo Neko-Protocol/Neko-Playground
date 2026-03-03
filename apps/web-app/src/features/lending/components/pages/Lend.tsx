@@ -22,6 +22,7 @@ import {
   getBTokenBalance,
 } from "@/lib/helpers/stellar/lending";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
+import { LENDING_CONTRACT_ID } from "@/lib/constants/contracts";
 import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { rpc } from "@stellar/stellar-sdk";
@@ -364,8 +365,7 @@ const Lend: React.FC = () => {
         throw new Error(`Token ${selectedPool.assetCode} not found`);
 
       const decimals = token.decimals || 7;
-      const lendingContractId =
-        "CD5WNBT4NEYYLALY776KRRR2WP7BEM4VJPG6QYQE5CRO6C5H4YUQA5KS";
+      const lendingContractId = LENDING_CONTRACT_ID;
       const sorobanServer = new rpc.Server(rpcUrl, {
         allowHttp: stellarNetwork === "LOCAL",
       });
