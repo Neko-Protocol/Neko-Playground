@@ -5,26 +5,21 @@ import {
   sanitizeAmountInput,
 } from "@/lib/helpers/tokenUtils";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import type { EVMToken } from "@/lib/types/evmToken";
-
-export type SwapMode = "evm" | "stellar";
 
 interface TokenInputProps {
   type: "from" | "to";
   label: string;
   amount: string;
   onAmountChange: (amount: string) => void;
-  token: Token | string | EVMToken;
+  token: Token | string;
   onTokenClick: () => void;
   balance?: string;
   isLoadingBalance?: boolean;
   usdValue?: string;
   isLoadingPrice?: boolean;
   isLoadingQuote?: boolean;
-  swapMode: SwapMode;
-  chainIcon?: string | null;
-  getTokenId: (token: Token | string | EVMToken) => string;
-  getTokenIconUrl: (token: Token | string | EVMToken) => string | null;
+  getTokenId: (token: Token | string) => string;
+  getTokenIconUrl: (token: Token | string) => string | null;
   onMaxClick?: () => void;
   disabled?: boolean;
   showSwapWarning?: boolean;
@@ -43,8 +38,6 @@ export const TokenInput: React.FC<TokenInputProps> = ({
   usdValue,
   isLoadingPrice,
   isLoadingQuote,
-  swapMode,
-  chainIcon,
   getTokenId,
   getTokenIconUrl,
   onMaxClick,
@@ -177,16 +170,6 @@ export const TokenInput: React.FC<TokenInputProps> = ({
                 >
                   {getTokenId(token)[0] || "?"}
                 </div>
-              )}
-              {swapMode === "evm" && chainIcon && (
-                <Image
-                  src={chainIcon}
-                  alt="chain"
-                  width={isFrom ? 10 : 12}
-                  height={isFrom ? 10 : 12}
-                  unoptimized
-                  className={`absolute -bottom-0.5 -right-0.5 rounded-full border border-[#334EAC] object-contain bg-white`}
-                />
               )}
             </div>
             <span>{getTokenId(token) || (isFrom ? "" : "Select token")}</span>

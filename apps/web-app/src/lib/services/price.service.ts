@@ -4,7 +4,6 @@
  */
 
 import { PRICE_ERROR_DELAY_MS } from "@/lib/constants/wallet";
-import { isEVMToken, type EVMToken } from "../types/evmToken";
 import type { TokenPriceResult, PriceFetchOptions } from "../types/priceTypes";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -217,40 +216,6 @@ export class PriceService {
     });
 
     return results;
-  }
-
-  /**
-   * Get price for EVM token object
-   */
-  async getTokenPriceFromToken(
-    token: EVMToken | string | undefined,
-    options: PriceFetchOptions = {}
-  ): Promise<TokenPriceResult> {
-    if (!token) {
-      return {
-        price: 0,
-        source: "invalid_token",
-        lastUpdated: new Date(),
-      };
-    }
-
-    let tokenSymbol: string | null = null;
-
-    if (typeof token === "string") {
-      tokenSymbol = token;
-    } else if (isEVMToken(token)) {
-      tokenSymbol = token.symbol || null;
-    }
-
-    if (!tokenSymbol) {
-      return {
-        price: 0,
-        source: "invalid_token",
-        lastUpdated: new Date(),
-      };
-    }
-
-    return this.getTokenPrice(tokenSymbol, options);
   }
 
   /**

@@ -2,10 +2,8 @@
 
 import React from "react";
 import Image from "next/image";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 
-const EVM_ICON = "/crypto/svg/ethereum-eth-logo.svg";
 const STELLAR_ICON = "/crypto/svg/stellar-xlm-logo.svg";
 
 interface ConnectWalletModalProps {
@@ -17,13 +15,7 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { openConnectModal } = useConnectModal();
   const { connect: connectStellar } = useStellarWallet();
-
-  const handleEVM = () => {
-    onClose();
-    openConnectModal?.();
-  };
 
   const handleStellar = () => {
     onClose();
@@ -73,21 +65,6 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
           </button>
         </div>
         <div className="flex flex-col gap-3 p-6">
-          <button
-            type="button"
-            onClick={handleEVM}
-            className="flex items-center gap-3 rounded-xl border-2 border-[var(--color-neko-border)] bg-white px-4 py-3.5 text-left font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
-          >
-            <Image
-              src={EVM_ICON}
-              alt=""
-              width={32}
-              height={32}
-              className="h-8 w-8 shrink-0"
-              aria-hidden
-            />
-            Connect EVM Wallet
-          </button>
           <button
             type="button"
             onClick={handleStellar}

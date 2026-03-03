@@ -1,8 +1,7 @@
 import { useState, useCallback } from "react";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import type { EVMToken } from "@/lib/types/evmToken";
 
-export type SwapMode = "evm" | "stellar";
+export type SwapMode = "stellar";
 export type OrderType = "swap" | "limit" | "twap";
 
 export interface SwapState {
@@ -12,8 +11,8 @@ export interface SwapState {
   orderType: OrderType;
   amountIn: string;
   amountOut: string;
-  tokenIn: Token | string | EVMToken;
-  tokenOut: Token | string | EVMToken;
+  tokenIn: Token | string;
+  tokenOut: Token | string;
   limitPrice: string;
   twapParts: string;
   twapFrequency: string;
@@ -25,8 +24,8 @@ export interface SwapStateActions {
   setOrderType: (type: OrderType) => void;
   setAmountIn: (amount: string) => void;
   setAmountOut: (amount: string) => void;
-  setTokenIn: (token: Token | string | EVMToken) => void;
-  setTokenOut: (token: Token | string | EVMToken) => void;
+  setTokenIn: (token: Token | string) => void;
+  setTokenOut: (token: Token | string) => void;
   setLimitPrice: (price: string) => void;
   setTwapParts: (parts: string) => void;
   setTwapFrequency: (frequency: string) => void;
@@ -38,21 +37,18 @@ export interface SwapStateActions {
 }
 
 export function useSwapState(
-  defaultTokenIn: Token | string | EVMToken,
-  defaultTokenOut: Token | string | EVMToken
+  defaultTokenIn: Token | string,
+  defaultTokenOut: Token | string
 ): SwapState & SwapStateActions {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [swapMode, setSwapMode] = useState<SwapMode>("stellar");
+  const swapMode: SwapMode = "stellar";
+  const setSwapMode = (_mode: SwapMode) => {};
   const [orderType, setOrderType] = useState<OrderType>("swap");
   const [amountIn, setAmountIn] = useState<string>("");
   const [amountOut, setAmountOut] = useState<string>("0.0");
-  const [tokenIn, setTokenIn] = useState<Token | string | EVMToken>(
-    defaultTokenIn
-  );
-  const [tokenOut, setTokenOut] = useState<Token | string | EVMToken>(
-    defaultTokenOut
-  );
+  const [tokenIn, setTokenIn] = useState<Token | string>(defaultTokenIn);
+  const [tokenOut, setTokenOut] = useState<Token | string>(defaultTokenOut);
 
   const [limitPrice, setLimitPrice] = useState<string>("");
   const [twapParts, setTwapParts] = useState<string>("10");
