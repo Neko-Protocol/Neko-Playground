@@ -10,7 +10,9 @@ import {
   X,
   RefreshCw,
 } from "lucide-react";
+import Image from "next/image";
 import { BannerPage } from "@/components/ui/BannerPage";
+import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 import { useLendingPools } from "@/features/lending/hooks/useLendingPools";
 import { useWallet } from "../../../../hooks/useWallet";
 import {
@@ -49,21 +51,24 @@ interface PoolData {
 // ---------------------------------------------------------------------------
 
 function ProtocolCell({ pool }: { pool: PoolData }) {
-  const initials = pool.token1.slice(0, 3).toUpperCase();
-  const colors: Record<string, string> = {
-    USDC: "#2775CA",
-    XLM: "#7B61FF",
-    XML: "#7B61FF",
-  };
-  const bg = colors[pool.token1] ?? "#229EDF";
+  const icon = getTokenIcon({ type: "contract", code: pool.token1 });
 
   return (
     <div className="flex items-center gap-3">
-      <div
-        className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-        style={{ backgroundColor: bg }}
-      >
-        {initials}
+      <div className="h-9 w-9 rounded-full bg-[#1a2a4a] border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+        {icon ? (
+          <Image
+            src={icon}
+            alt={pool.token1}
+            width={28}
+            height={28}
+            unoptimized
+          />
+        ) : (
+          <span className="text-white text-xs font-bold">
+            {pool.token1.slice(0, 3).toUpperCase()}
+          </span>
+        )}
       </div>
       <span className="text-white font-medium text-sm">{pool.name}</span>
       <span className="rounded bg-[#2A2A2A] px-1.5 py-0.5 text-[10px] font-semibold text-white/50">
@@ -73,7 +78,13 @@ function ProtocolCell({ pool }: { pool: PoolData }) {
   );
 }
 
-function ColHeader({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+function ColHeader({
+  icon: Icon,
+  label,
+}: {
+  icon: React.ElementType;
+  label: string;
+}) {
   return (
     <th className="px-4 py-3 text-left">
       <div className="flex items-center gap-1.5 text-white/40 text-xs font-semibold uppercase tracking-wide">
@@ -119,12 +130,14 @@ function LendModal({
   const [amount, setAmount] = useState("");
 
   const canSubmit =
-    hasWallet && !!amount && parseFloat(amount) > 0 &&
-    (isDeposit || (
-      !!bTokensToBurn &&
-      parseFloat(bTokensToBurn) > 0 &&
-      (bTokenBalance === null || parseFloat(bTokensToBurn) <= parseFloat(bTokenBalance))
-    ));
+    hasWallet &&
+    !!amount &&
+    parseFloat(amount) > 0 &&
+    (isDeposit ||
+      (!!bTokensToBurn &&
+        parseFloat(bTokensToBurn) > 0 &&
+        (bTokenBalance === null ||
+          parseFloat(bTokensToBurn) <= parseFloat(bTokenBalance))));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -134,7 +147,10 @@ function LendModal({
           <h3 className="text-white text-xl font-bold">
             {isDeposit ? "Deposit" : "Withdraw"} — {pool.name}
           </h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="text-white/40 hover:text-white transition-colors"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -144,7 +160,12 @@ function LendModal({
           {[
             { label: "Supply APY", value: pool.roi },
             { label: "Liquidity", value: pool.liquidity },
-            { label: "bToken Rate", value: pool.bTokenRate ? parseFloat(pool.bTokenRate).toFixed(4) : "1.0000" },
+            {
+              label: "bToken Rate",
+              value: pool.bTokenRate
+                ? parseFloat(pool.bTokenRate).toFixed(4)
+                : "1.0000",
+            },
           ].map(({ label, value }) => (
             <div key={label} className="bg-white/5 rounded-xl p-3">
               <p className="text-white/40 text-xs mb-0.5">{label}</p>
@@ -159,7 +180,8 @@ function LendModal({
             <div>
               <p className="text-[#229EDF]/70 text-xs">Your bToken Balance</p>
               <p className="text-[#229EDF] font-bold text-lg">
-                {isLoadingBalance ? "Loading…" : (bTokenBalance ?? "--")} b{pool.token1}
+                {isLoadingBalance ? "Loading…" : (bTokenBalance ?? "--")} b
+                {pool.token1}
               </p>
             </div>
             <button
@@ -167,7 +189,9 @@ function LendModal({
               disabled={isLoadingBalance}
               className="text-[#229EDF]/60 hover:text-[#229EDF] transition-colors disabled:opacity-40"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoadingBalance ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${isLoadingBalance ? "animate-spin" : ""}`}
+              />
             </button>
           </div>
         )}
@@ -175,7 +199,8 @@ function LendModal({
         {/* Amount input */}
         <div className="mb-5">
           <label className="text-white/60 text-sm font-medium block mb-1.5">
-            {isDeposit ? "Amount to Deposit" : "Amount to Withdraw"} ({pool.token1})
+            {isDeposit ? "Amount to Deposit" : "Amount to Withdraw"} (
+            {pool.token1})
           </label>
           <input
             type="number"
@@ -213,7 +238,13 @@ function LendModal({
             disabled={isLoading || !canSubmit}
             className="flex-1 rounded-xl bg-[#229EDF] py-3 text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Processing…" : !hasWallet ? "Connect Wallet" : isDeposit ? "Confirm Deposit" : "Confirm Withdraw"}
+            {isLoading
+              ? "Processing…"
+              : !hasWallet
+                ? "Connect Wallet"
+                : isDeposit
+                  ? "Confirm Deposit"
+                  : "Confirm Withdraw"}
           </button>
         </div>
       </div>
@@ -246,11 +277,13 @@ const Lend: React.FC = () => {
 
   const pools: PoolData[] = useMemo(() => {
     return lendingPools.map((pool, index) => {
-      const apy = pool.interestRate > 0 ? `${pool.interestRate.toFixed(2)}%` : "0.00%";
+      const apy =
+        pool.interestRate > 0 ? `${pool.interestRate.toFixed(2)}%` : "0.00%";
       const balanceNum = parseFloat(pool.poolBalance);
-      const liquidity = balanceNum >= 1000
-        ? `$${(balanceNum / 1000).toFixed(2)}k`
-        : `$${balanceNum.toFixed(2)}`;
+      const liquidity =
+        balanceNum >= 1000
+          ? `$${(balanceNum / 1000).toFixed(2)}k`
+          : `$${balanceNum.toFixed(2)}`;
       return {
         id: `pool-${index}`,
         name: `${pool.assetCode} Pool`,
@@ -268,13 +301,25 @@ const Lend: React.FC = () => {
     });
   }, [lendingPools]);
 
-  const calculateBTokensFromTokens = (tokensAmount: string, bTokenRate: string): string => {
-    if (!tokensAmount || parseFloat(tokensAmount) <= 0 || !bTokenRate || parseFloat(bTokenRate) <= 0) return "0";
+  const calculateBTokensFromTokens = (
+    tokensAmount: string,
+    bTokenRate: string
+  ): string => {
+    if (
+      !tokensAmount ||
+      parseFloat(tokensAmount) <= 0 ||
+      !bTokenRate ||
+      parseFloat(bTokenRate) <= 0
+    )
+      return "0";
     return (parseFloat(tokensAmount) / parseFloat(bTokenRate)).toFixed(7);
   };
 
   const loadBTokenBalance = useCallback(async () => {
-    if (!selectedPool || !address) { setBTokenBalance(null); return; }
+    if (!selectedPool || !address) {
+      setBTokenBalance(null);
+      return;
+    }
     setIsLoadingBalance(true);
     try {
       const balance = await getBTokenBalance(selectedPool.assetCode, address);
@@ -315,41 +360,74 @@ const Lend: React.FC = () => {
     try {
       const availableTokens = getAvailableTokens();
       const token = availableTokens[selectedPool.assetCode];
-      if (!token?.contract) throw new Error(`Token ${selectedPool.assetCode} not found`);
+      if (!token?.contract)
+        throw new Error(`Token ${selectedPool.assetCode} not found`);
 
       const decimals = token.decimals || 7;
-      const lendingContractId = "CD5WNBT4NEYYLALY776KRRR2WP7BEM4VJPG6QYQE5CRO6C5H4YUQA5KS";
-      const sorobanServer = new rpc.Server(rpcUrl, { allowHttp: stellarNetwork === "LOCAL" });
+      const lendingContractId =
+        "CD5WNBT4NEYYLALY776KRRR2WP7BEM4VJPG6QYQE5CRO6C5H4YUQA5KS";
+      const sorobanServer = new rpc.Server(rpcUrl, {
+        allowHttp: stellarNetwork === "LOCAL",
+      });
 
       if (isDeposit) {
-        const approveXdr = await approveToken(token.contract, lendingContractId, amount, decimals, address);
+        const approveXdr = await approveToken(
+          token.contract,
+          lendingContractId,
+          amount,
+          decimals,
+          address
+        );
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const signedApprove = await signTransaction(approveXdr as any, {
           networkPassphrase: networkPassphrase || Networks.TESTNET,
           address,
         });
-        const approveTx = TransactionBuilder.fromXDR(signedApprove.signedTxXdr, networkPassphrase || Networks.TESTNET);
+        const approveTx = TransactionBuilder.fromXDR(
+          signedApprove.signedTxXdr,
+          networkPassphrase || Networks.TESTNET
+        );
         await sorobanServer.sendTransaction(approveTx);
         await new Promise((r) => setTimeout(r, 2000));
 
-        const depositXdr = await depositToPool(selectedPool.assetCode, amount, decimals, address);
+        const depositXdr = await depositToPool(
+          selectedPool.assetCode,
+          amount,
+          decimals,
+          address
+        );
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const signedDeposit = await signTransaction(depositXdr as any, {
           networkPassphrase: networkPassphrase || Networks.TESTNET,
           address,
         });
-        const depositTx = TransactionBuilder.fromXDR(signedDeposit.signedTxXdr, networkPassphrase || Networks.TESTNET);
+        const depositTx = TransactionBuilder.fromXDR(
+          signedDeposit.signedTxXdr,
+          networkPassphrase || Networks.TESTNET
+        );
         await sorobanServer.sendTransaction(depositTx);
       } else {
-        if (!selectedPool.bTokenRate) throw new Error("Unable to calculate bTokens. Please try again.");
-        const bTokensAmount = calculateBTokensFromTokens(amount, selectedPool.bTokenRate);
-        const withdrawXdr = await withdrawFromPool(selectedPool.assetCode, bTokensAmount, decimals, address);
+        if (!selectedPool.bTokenRate)
+          throw new Error("Unable to calculate bTokens. Please try again.");
+        const bTokensAmount = calculateBTokensFromTokens(
+          amount,
+          selectedPool.bTokenRate
+        );
+        const withdrawXdr = await withdrawFromPool(
+          selectedPool.assetCode,
+          bTokensAmount,
+          decimals,
+          address
+        );
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const signedWithdraw = await signTransaction(withdrawXdr as any, {
           networkPassphrase: networkPassphrase || Networks.TESTNET,
           address,
         });
-        const withdrawTx = TransactionBuilder.fromXDR(signedWithdraw.signedTxXdr, networkPassphrase || Networks.TESTNET);
+        const withdrawTx = TransactionBuilder.fromXDR(
+          signedWithdraw.signedTxXdr,
+          networkPassphrase || Networks.TESTNET
+        );
         await sorobanServer.sendTransaction(withdrawTx);
       }
 
@@ -359,7 +437,10 @@ const Lend: React.FC = () => {
       handleCloseModal();
     } catch (err) {
       const msg = extractContractErrorOrNull(err);
-      if (msg) setError(typeof msg === "string" ? msg : "An unexpected error occurred.");
+      if (msg)
+        setError(
+          typeof msg === "string" ? msg : "An unexpected error occurred."
+        );
     } finally {
       setIsLoading(false);
     }
@@ -390,32 +471,48 @@ const Lend: React.FC = () => {
           <tbody>
             {isLoadingPools ? (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-white/40 text-sm">
+                <td
+                  colSpan={5}
+                  className="px-4 py-12 text-center text-white/40 text-sm"
+                >
                   Loading pools…
                 </td>
               </tr>
             ) : poolsError ? (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-red-400 text-sm">
+                <td
+                  colSpan={5}
+                  className="px-4 py-12 text-center text-red-400 text-sm"
+                >
                   Error loading pools: {String(poolsError)}
                 </td>
               </tr>
             ) : pools.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-white/40 text-sm">
+                <td
+                  colSpan={5}
+                  className="px-4 py-12 text-center text-white/40 text-sm"
+                >
                   No active pools available
                 </td>
               </tr>
             ) : (
               pools.map((pool) => (
-                <tr key={pool.id} className="border-b border-white/5 hover:bg-white/2 transition-colors">
+                <tr
+                  key={pool.id}
+                  className="border-b border-white/5 hover:bg-white/2 transition-colors"
+                >
                   <td className="px-4 py-4">
                     <ProtocolCell pool={pool} />
                   </td>
                   <td className="px-4 py-4 text-white text-sm">{pool.roi}</td>
-                  <td className="px-4 py-4 text-white text-sm">{pool.liquidity}</td>
                   <td className="px-4 py-4 text-white text-sm">
-                    {pool.bTokenRate ? parseFloat(pool.bTokenRate).toFixed(4) : "1.0000"}
+                    {pool.liquidity}
+                  </td>
+                  <td className="px-4 py-4 text-white text-sm">
+                    {pool.bTokenRate
+                      ? parseFloat(pool.bTokenRate).toFixed(4)
+                      : "1.0000"}
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">

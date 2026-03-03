@@ -27,9 +27,9 @@ export const useLendingPools = () => {
   // Memoize available tokens to prevent unnecessary re-renders
   const availableTokens = useMemo(() => getAvailableTokens(), []);
 
-  // Memoize debt assets list
+  // All available tokens are potential debt assets — filter to those with a contract
   const debtAssets = useMemo(() => {
-    return ["USDC", "XLM"].filter((code) => {
+    return Object.keys(availableTokens).filter((code) => {
       const token = availableTokens[code];
       return token && token.contract;
     });
