@@ -264,9 +264,12 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                   const { balance, usdValue } = getTokenBalance(code);
                   const tokenInfo = availableTokens[code];
                   const tokenName = tokenInfo?.name || code;
-                  const tokenIcon = tokenInfo?.contract
-                    ? getTokenIcon(tokenInfo.contract)
-                    : null;
+                  const tokenIcon =
+                    code === "XLM"
+                      ? "/assets/xlm-negro-logo.png"
+                      : tokenInfo?.contract
+                        ? getTokenIcon(tokenInfo.contract)
+                        : null;
 
                   return (
                     <TokenItem
@@ -297,9 +300,12 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                     : false;
                   const tokenInfo = availableTokens[code];
                   const tokenName = tokenInfo?.name || code;
-                  const tokenIcon = tokenInfo?.contract
-                    ? getTokenIcon(tokenInfo.contract)
-                    : null;
+                  const tokenIcon =
+                    code === "XLM"
+                      ? "/assets/xlm-negro-logo.png"
+                      : tokenInfo?.contract
+                        ? getTokenIcon(tokenInfo.contract)
+                        : null;
 
                   return (
                     <TokenItem
