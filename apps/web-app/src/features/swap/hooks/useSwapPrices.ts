@@ -31,7 +31,6 @@ export function useSwapPrices(
     tokenOut as Token | string | undefined
   );
 
-  // Calculate USD value
   const usdValue = useMemo(() => {
     if (amountIn && parseFloat(amountIn) > 0 && tokenInPrice > 0) {
       return (parseFloat(amountIn) * tokenInPrice).toFixed(2);
@@ -39,7 +38,6 @@ export function useSwapPrices(
     return "0.00";
   }, [amountIn, tokenInPrice]);
 
-  // Calculate USD value for output amount
   const usdValueOut = useMemo(() => {
     if (amountOut && parseFloat(amountOut) > 0 && tokenOutPrice > 0) {
       return (parseFloat(amountOut) * tokenOutPrice).toFixed(2);
@@ -47,7 +45,6 @@ export function useSwapPrices(
     return "0.00";
   }, [amountOut, tokenOutPrice]);
 
-  // Calculate expected output based on USD prices and compare with actual output
   const swapValueAnalysis = useMemo(() => {
     if (
       !amountIn ||
@@ -69,16 +66,10 @@ export function useSwapPrices(
 
     const inputAmount = parseFloat(amountIn);
     const outputAmount = parseFloat(amountOut);
-
-    // Calculate expected output based on USD price ratio
     const inputUsdValue = inputAmount * tokenInPrice;
     const expectedOutput = inputUsdValue / tokenOutPrice;
-
-    // Calculate the difference percentage
     const differencePercent =
       ((expectedOutput - outputAmount) / expectedOutput) * 100;
-
-    // Consider the swap suspiciously low if output is more than threshold% lower than expected
     const isSuspiciouslyLow =
       differencePercent > SUSPICIOUS_VALUE_THRESHOLD_PCT;
 

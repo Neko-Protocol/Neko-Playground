@@ -9,13 +9,9 @@ import {
 import { useWallet } from "@/hooks/useWallet";
 
 export interface SwapExecutionParams {
-  orderType: "swap" | "limit" | "twap";
   amountIn: string;
   tokenIn: Token | string;
   tokenOut: Token | string;
-  limitPrice?: string;
-  twapParts?: string;
-  twapFrequency?: string;
   address: string | undefined;
   networkPassphrase: string | undefined;
 }
@@ -30,19 +26,10 @@ export function useSwapExecution() {
 
   const executeSwap = useCallback(
     async (params: SwapExecutionParams): Promise<SwapExecutionResult> => {
-      const { orderType, amountIn, tokenIn, tokenOut, limitPrice, address } =
-        params;
+      const { amountIn, tokenIn, tokenOut, address } = params;
 
       if (!amountIn || parseFloat(amountIn) <= 0 || !address) {
         throw new Error("Invalid amount or address");
-      }
-
-      // Validate order-specific parameters
-      if (
-        orderType === "limit" &&
-        (!limitPrice || parseFloat(limitPrice) <= 0)
-      ) {
-        throw new Error("Please enter a valid limit price");
       }
 
       if (!networkPassphrase) {
@@ -62,13 +49,11 @@ export function useSwapExecution() {
         throw new Error("Failed to get quote for swap");
       }
 
-      const buildRequest = {
+      const buildResult = await buildTransaction({
         quote: newQuote,
         from: address,
         to: address,
-      };
-
-      const buildResult = await buildTransaction(buildRequest);
+      });
 
       let signedResult;
       try {
@@ -94,12 +79,10 @@ export function useSwapExecution() {
           ? signedResult
           : JSON.stringify(signedResult));
 
-      const sendRequest = {
+      const sendResult = await sendTransaction({
         xdr: signedXdrString,
         launchtube: false,
-      };
-
-      const sendResult = await sendTransaction(sendRequest);
+      });
 
       if (sendResult.txHash) {
         return { orderId: sendResult.txHash, txHash: sendResult.txHash };

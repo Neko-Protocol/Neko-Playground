@@ -28,8 +28,6 @@ import { useSwapPrices } from "../../hooks/useSwapPrices";
 // UI Components
 import { SwapButton } from "../ui/SwapButton";
 import { TransactionResult } from "../ui/TransactionResult";
-import { LimitOrderForm } from "../ui/LimitOrderForm";
-import { TWAPOrderForm } from "../ui/TWAPOrderForm";
 import { SwapValueWarning } from "../ui/SwapValueWarning";
 import { OrderTypeTabs } from "../ui/OrderTypeTabs";
 
@@ -152,17 +150,11 @@ const Swap: React.FC = () => {
     amountOut,
     tokenIn,
     tokenOut,
-    limitPrice,
-    twapParts,
-    twapFrequency,
     txHash,
     error,
     isLoading,
     setOrderType,
     setAmountIn,
-    setLimitPrice,
-    setTwapParts,
-    setTwapFrequency,
     setTxHash,
     setError,
     setIsLoading,
@@ -226,24 +218,14 @@ const Swap: React.FC = () => {
       return;
     }
 
-    // Validate order-specific parameters
-    if (orderType === "limit" && (!limitPrice || parseFloat(limitPrice) <= 0)) {
-      setError("Please enter a valid limit price");
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
 
     try {
       const result = await executeSwap({
-        orderType,
         amountIn,
         tokenIn,
         tokenOut,
-        limitPrice,
-        twapParts,
-        twapFrequency,
         address,
         networkPassphrase,
       });
@@ -253,7 +235,6 @@ const Swap: React.FC = () => {
         resetSwap();
         setAmountIn("");
         swapState.setAmountOut("0.0");
-        setLimitPrice("");
       }
     } catch (error) {
       if (error instanceof Error && error.message === "USER_REJECTED") {
@@ -408,28 +389,6 @@ const Swap: React.FC = () => {
           </button>
         </div>
       </div>
-
-      {/* Order-specific forms */}
-      {orderType === "limit" && (
-        <div className="mt-4">
-          <LimitOrderForm
-            limitPrice={limitPrice}
-            onLimitPriceChange={setLimitPrice}
-            tokenOut={tokenOut}
-            getTokenId={getTokenId}
-          />
-        </div>
-      )}
-      {orderType === "twap" && (
-        <div className="mt-4">
-          <TWAPOrderForm
-            twapParts={twapParts}
-            onTwapPartsChange={setTwapParts}
-            twapFrequency={twapFrequency}
-            onTwapFrequencyChange={setTwapFrequency}
-          />
-        </div>
-      )}
 
       {/* Error */}
       {error && (
