@@ -52,6 +52,7 @@ export function parseInterestRateFromContractResult(
     rateValue = parseInt(interestRateResult, 10);
   }
 
-  // Contract stores basis points (e.g. 213 = 2.13%)
-  return rateValue / 100;
+  // Contract stores rate with 7 decimals (SCALAR_7 = 10_000_000)
+  // e.g. 100_000 = 1%, so to get percentage: value / SCALAR_7 * 100 = value / 100_000
+  return rateValue / 100_000;
 }

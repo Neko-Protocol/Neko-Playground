@@ -30,7 +30,7 @@ const OracleVisualizer: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-8 py-8 sm:px-12 lg:px-16">
         <BannerPage
           title="Discover Assets"
           subtitle="Real-time price data and RWA metadata from the RWACLE"
@@ -78,7 +78,9 @@ const OracleVisualizer: React.FC = () => {
           <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-5 mb-8">
             <p className="text-red-400 font-semibold text-sm">
               Error loading assets:{" "}
-              {assetsError instanceof Error ? assetsError.message : "Unknown error"}
+              {assetsError instanceof Error
+                ? assetsError.message
+                : "Unknown error"}
             </p>
           </div>
         )}
@@ -86,27 +88,37 @@ const OracleVisualizer: React.FC = () => {
         {isLoading ? (
           <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 flex flex-col items-center justify-center gap-4">
             <LoadingSpinner variant="dots" size="lg" />
-            <span className="text-white/60 text-base font-medium">Loading oracle data…</span>
+            <span className="text-white/60 text-base font-medium">
+              Loading oracle data…
+            </span>
           </div>
         ) : filteredAssets.length > 0 ? (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-1">Assets & Prices</h2>
-              <p className="text-white/40 text-sm">Live price feeds from the oracle</p>
+              <h2 className="text-2xl font-bold text-white mb-1">
+                Assets & Prices
+              </h2>
+              <p className="text-white/40 text-sm">
+                Live price feeds from the oracle
+              </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredAssets.slice(0, MAX_ASSETS_DISPLAY).map((asset: Asset) => (
-                <AssetPriceCard
-                  key={formatAsset(asset)}
-                  asset={asset}
-                  decimals={decimals}
-                />
-              ))}
+              {filteredAssets
+                .slice(0, MAX_ASSETS_DISPLAY)
+                .map((asset: Asset) => (
+                  <AssetPriceCard
+                    key={formatAsset(asset)}
+                    asset={asset}
+                    decimals={decimals}
+                  />
+                ))}
             </div>
           </div>
         ) : (
           <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
-            <p className="text-white/40 text-base">No assets found in the oracle</p>
+            <p className="text-white/40 text-base">
+              No assets found in the oracle
+            </p>
           </div>
         )}
       </div>

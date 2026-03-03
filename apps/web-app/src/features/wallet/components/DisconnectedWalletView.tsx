@@ -35,7 +35,7 @@ export const DisconnectedWalletView: React.FC<DisconnectedWalletViewProps> = ({
         disabled={isConnectingStellar}
       >
         <Image
-          src="/crypto/png/stellar-xlm-logo.png"
+          src="/assets/xlm-negro-logo.png"
           alt="Stellar"
           width={24}
           height={24}

@@ -1,38 +1,29 @@
 import type { StockInfo } from "../types/stocks";
 
 export const STOCK_INFO: Record<string, StockInfo> = {
-  NVDA: {
-    logo: "/stocks/nvda.png",
-    name: "NVIDIA Corporation",
-    description: "Leader in GPU technology and AI computing platforms",
+  USTRY: {
+    logo: "/assets/ustry-logo.png",
+    name: "US Treasury Token",
+    description: "Tokenized US Treasury bonds providing stable yield",
   },
-  AAPL: {
-    logo: "/stocks/aapl.png",
-    name: "Apple Inc.",
-    description:
-      "Technology company specializing in consumer electronics and software",
+  TESOURO: {
+    logo: "/assets/tesouro-logo.png",
+    name: "Tesouro Token",
+    description: "Tokenized Brazilian government bonds (Tesouro Direto)",
   },
-  PLTR: {
-    logo: "/stocks/pltr.png",
-    name: "Palantir Technologies",
-    description:
-      "Data analytics and software company for large-scale data integration",
+  CETES: {
+    logo: "/assets/cetes-logo.png",
+    name: "CETES Token",
+    description: "Tokenized Mexican government treasury certificates (CETES)",
   },
-  TSLA: {
-    logo: "/stocks/tsla.png",
-    name: "Tesla, Inc.",
-    description: "Electric vehicle and clean energy company",
+  USDY: {
+    logo: "/assets/usdy-logo.png",
+    name: "US Dollar Yield",
+    description: "Yield-bearing stablecoin backed by US Treasury bills",
   },
-  META: {
-    logo: "/stocks/meta.png",
-    name: "Meta Platforms Inc.",
-    description:
-      "Social media and technology company focused on virtual and augmented reality",
-  },
-  MSFT: {
-    logo: "/stocks/msft.png",
-    name: "Microsoft Corporation",
-    description:
-      "Technology corporation developing computer software, consumer electronics, and cloud services",
+  PYUSD: {
+    logo: "/assets/pyusd-logo.png",
+    name: "PayPal USD",
+    description: "Stablecoin issued by PayPal, pegged to the US dollar",
   },
 };

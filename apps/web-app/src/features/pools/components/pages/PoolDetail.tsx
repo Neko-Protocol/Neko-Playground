@@ -3,7 +3,9 @@
 import React, { useMemo, useState } from "react";
 import { use } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { orchestrator, useUserPosition } from "@/lib/orchestrator";
+import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 import type { PoolAction, TokenInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { useWallet } from "@/hooks/useWallet";
@@ -86,12 +88,50 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           <div className="relative z-10 mb-8">
             <div className="flex items-center gap-3 mb-4">
               <div className="relative w-16 h-10">
-                <div className="absolute left-0 w-10 h-10 rounded-full bg-neko-teal border-2 border-neko-border flex items-center justify-center text-white text-sm font-bold shadow-md">
-                  {token1[0]}
-                </div>
-                <div className="absolute left-8 w-10 h-10 rounded-full bg-neko-teal-light border-2 border-neko-border flex items-center justify-center text-neko-navy text-sm font-bold shadow-md">
-                  {token2[0]}
-                </div>
+                {(() => {
+                  const icon1 = getTokenIcon({
+                    type: "contract",
+                    code: token1,
+                  });
+                  const icon2 = getTokenIcon({
+                    type: "contract",
+                    code: token2,
+                  });
+                  return (
+                    <>
+                      <div className="absolute left-0 w-10 h-10 rounded-full bg-neko-teal border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md">
+                        {icon1 ? (
+                          <Image
+                            src={icon1}
+                            alt={token1}
+                            width={32}
+                            height={32}
+                            unoptimized
+                          />
+                        ) : (
+                          <span className="text-white text-sm font-bold">
+                            {token1[0]}
+                          </span>
+                        )}
+                      </div>
+                      <div className="absolute left-8 w-10 h-10 rounded-full bg-neko-teal-light border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md">
+                        {icon2 ? (
+                          <Image
+                            src={icon2}
+                            alt={token2}
+                            width={32}
+                            height={32}
+                            unoptimized
+                          />
+                        ) : (
+                          <span className="text-neko-navy text-sm font-bold">
+                            {token2[0]}
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
