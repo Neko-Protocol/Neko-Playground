@@ -1,13 +1,10 @@
 /**
- * Utility functions for swap operations (shared Stellar + EVM)
+ * Utility functions for swap operations (Stellar)
  */
 
-import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
 import { getAvailableTokens } from "./stellar/soroswap";
 import type { Token } from "./stellar/soroswap";
 import {
-  EVM_TOKEN_ADDRESS_TO_SYMBOL,
-  EVM_TOKEN_ICON_MAP,
   STELLAR_TOKEN_ICON_MAP,
   STELLAR_FALLBACK_CONTRACTS,
 } from "@/lib/constants/tokenIcons";
@@ -75,19 +72,6 @@ export const getExplorerUrl = (txHash: string, network?: string): string => {
 };
 
 /**
- * Extracts a symbol string from any token variant used in EVM swaps.
- * Falls back to `fallback` when the token doesn't carry a symbol.
- */
-export const getEvmTokenSymbol = (
-  token: Token | string | EVMToken,
-  fallback: string = ""
-): string => {
-  if (typeof token === "string") return token;
-  if (isEVMToken(token)) return token.symbol || fallback;
-  return fallback;
-};
-
-/**
  * Strips non-numeric characters and prevents multiple decimal points.
  * Suitable for amount input fields.
  */
@@ -98,23 +82,13 @@ export const sanitizeAmountInput = (value: string): string => {
 };
 
 /**
- * Converts a token (any format) to a stable string identifier.
- *
- * @param token - Token in any of the three formats used across the app
- * @param availableTokens - Stellar token registry (code → { contract })
- * @param evmTokens - EVM token registry for the active chain (symbol → token info)
+ * Converts a Stellar token to a stable string identifier.
  */
 export const getTokenId = (
-  token: Token | string | EVMToken,
-  availableTokens: Record<string, { contract: string }>,
-  evmTokens: Record<string, unknown> = {}
+  token: Token | string,
+  availableTokens: Record<string, { contract: string }>
 ): string => {
-  if (isEVMToken(token)) {
-    return token.symbol || "";
-  }
-
   if (typeof token === "string") {
-    if (evmTokens[token]) return token;
     for (const [code, info] of Object.entries(availableTokens)) {
       if (info.contract === token) return code;
     }
@@ -140,59 +114,30 @@ export const getTokenIcon = (
   token:
     | { type: "native" | "contract"; code?: string; contract?: string }
     | string
-    | { symbol?: string; address?: string }
 ): string | null => {
   let tokenCode: string | null = null;
-  let isEVM = false;
 
-  if (
-    typeof token === "object" &&
-    "symbol" in token &&
-    "address" in token &&
-    !("type" in token)
-  ) {
-    tokenCode = token.symbol || null;
-    isEVM = true;
-  } else if (typeof token === "string") {
-    const addressLower = token.toLowerCase();
-
-    if (EVM_TOKEN_ADDRESS_TO_SYMBOL[addressLower]) {
-      tokenCode = EVM_TOKEN_ADDRESS_TO_SYMBOL[addressLower];
-      isEVM = true;
-    } else if (Object.values(EVM_TOKEN_ADDRESS_TO_SYMBOL).includes(token)) {
-      tokenCode = token;
-      isEVM = true;
-    } else if (["ETH", "BNB", "USDC", "USDT"].includes(token.toUpperCase())) {
-      tokenCode = token.toUpperCase();
-      isEVM = true;
-    } else {
-      // Stellar contract address — look up in registry then fallback map
-      try {
-        const availableTokens = getAvailableTokens();
-        for (const [code, info] of Object.entries(availableTokens)) {
-          if (info.contract === token) {
-            tokenCode = code;
-            isEVM = false;
-            break;
-          }
+  if (typeof token === "string") {
+    // Stellar contract address — look up in registry then fallback map
+    try {
+      const availableTokens = getAvailableTokens();
+      for (const [code, info] of Object.entries(availableTokens)) {
+        if (info.contract === token) {
+          tokenCode = code;
+          break;
         }
-      } catch {
-        tokenCode = STELLAR_FALLBACK_CONTRACTS[token] || null;
-        isEVM = false;
       }
+    } catch {
+      tokenCode = STELLAR_FALLBACK_CONTRACTS[token] || null;
+    }
 
-      if (!tokenCode) {
-        tokenCode = token.toUpperCase();
-        isEVM = false;
-      }
+    if (!tokenCode) {
+      tokenCode = token.toUpperCase();
     }
   } else if (typeof token === "object" && "type" in token) {
     tokenCode = token.type === "native" ? "XLM" : token.code || null;
-    isEVM = false;
   }
 
   if (!tokenCode) return null;
-  return isEVM
-    ? (EVM_TOKEN_ICON_MAP[tokenCode] ?? null)
-    : (STELLAR_TOKEN_ICON_MAP[tokenCode] ?? null);
+  return STELLAR_TOKEN_ICON_MAP[tokenCode] ?? null;
 };

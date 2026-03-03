@@ -2,7 +2,6 @@
 
 import React from "react";
 import { usePathname } from "next/navigation";
-import { useDisconnect } from "wagmi";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { NAV_ITEMS } from "./sidebarConfig";
@@ -15,20 +14,14 @@ export const SIDEBAR_WIDTH = "270px";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { walletType, isStellarConnected, isEvmConnected, stellarAddress, evmAddress } =
-    useWalletType();
-  const { disconnect: disconnectEvm } = useDisconnect();
+  const { isStellarConnected, stellarAddress } = useWalletType();
   const { disconnect: disconnectStellar } = useStellarWallet();
 
-  const isConnected = isStellarConnected || isEvmConnected;
-  const activeAddress = stellarAddress ?? evmAddress ?? "";
+  const isConnected = isStellarConnected;
+  const activeAddress = stellarAddress ?? "";
 
   const handleDisconnect = () => {
-    if (walletType === "evm") {
-      disconnectEvm();
-    } else {
-      void disconnectStellar();
-    }
+    void disconnectStellar();
   };
 
   const isActive = (href: string) =>
@@ -54,7 +47,10 @@ export function Sidebar() {
 
       <div className="p-4">
         {isConnected && activeAddress ? (
-          <ConnectedCard address={activeAddress} onDisconnect={handleDisconnect} />
+          <ConnectedCard
+            address={activeAddress}
+            onDisconnect={handleDisconnect}
+          />
         ) : (
           <SetupCard />
         )}

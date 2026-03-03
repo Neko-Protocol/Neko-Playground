@@ -1,28 +1,21 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
 import { ChevronDown, ArrowLeftRight } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
-import { useEVMTokenBalance } from "@/hooks/useEVMTokenBalance";
-import { useGasCheck } from "@/hooks/useGasCheck";
-import { useWalletType } from "@/hooks/useWalletType";
-import { useWalletClient, useChainId } from "wagmi";
 import {
   getTokens,
   getAvailableTokens,
   type Token,
 } from "@/lib/helpers/stellar/soroswap";
-import type { EVMToken } from "@/lib/types/evmToken";
-import { SUPPORTED_CHAINS } from "@/lib/constants/evmConfig";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import {
   sanitizeAmountInput,
   formatSwapAmount,
 } from "@/lib/helpers/tokenUtils";
 import { BannerPage } from "@/components/ui/BannerPage";
-import { OrderManagement } from "../ui/OrderManagement";
 import TokenSelectorModal from "../ui/TokenSelectorModal";
 
 // Hooks
@@ -35,19 +28,13 @@ import { useSwapPrices } from "../../hooks/useSwapPrices";
 // UI Components
 import { SwapButton } from "../ui/SwapButton";
 import { TransactionResult } from "../ui/TransactionResult";
-import { LimitOrderForm } from "../ui/LimitOrderForm";
-import { TWAPOrderForm } from "../ui/TWAPOrderForm";
 import { SwapValueWarning } from "../ui/SwapValueWarning";
 import { OrderTypeTabs } from "../ui/OrderTypeTabs";
-import { WalletTypeSelector } from "../ui/WalletTypeSelector";
-
 
 interface TokenSelectorBtnProps {
-  token: Token | string | EVMToken;
-  getTokenId: (t: Token | string | EVMToken) => string;
-  getTokenIconUrl: (t: Token | string | EVMToken) => string | null;
-  chainIcon?: string | null;
-  swapMode: "evm" | "stellar";
+  token: Token | string;
+  getTokenId: (t: Token | string) => string;
+  getTokenIconUrl: (t: Token | string) => string | null;
   onClick: () => void;
   disabled?: boolean;
 }
@@ -56,8 +43,6 @@ const TokenSelectorBtn: React.FC<TokenSelectorBtnProps> = ({
   token,
   getTokenId,
   getTokenIconUrl,
-  chainIcon,
-  swapMode,
   onClick,
   disabled,
 }) => {
@@ -84,16 +69,6 @@ const TokenSelectorBtn: React.FC<TokenSelectorBtnProps> = ({
           <div className="w-[22px] h-[22px] rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold text-white">
             {tokenId[0] || "?"}
           </div>
-        )}
-        {swapMode === "evm" && chainIcon && (
-          <Image
-            src={chainIcon}
-            alt="chain"
-            width={10}
-            height={10}
-            unoptimized
-            className="absolute -bottom-0.5 -right-0.5 rounded-full border border-[#2A2A2A] object-contain bg-white"
-          />
         )}
       </div>
       <span className="text-white font-medium text-sm truncate">
@@ -145,33 +120,23 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
             : "text-white/40 hover:text-white/70 disabled:cursor-not-allowed"
         }`}
       >
-        {isLoadingBalance ? "..." : `${formatSwapAmount(balance || "0", 6)} Max`}
+        {isLoadingBalance
+          ? "..."
+          : `${formatSwapAmount(balance || "0", 6)} Max`}
       </button>
     </div>
   </div>
 );
 
 const Swap: React.FC = () => {
-  // Wallet detection
-  const { walletType, isEvmConnected, isStellarConnected, evmAddress } =
-    useWalletType();
-  const {
-    address: stellarWalletAddress,
-    network,
-    networkPassphrase,
-  } = useWallet();
-  const { data: walletClient } = useWalletClient();
-  const chainId = useChainId();
+  const { address, network, networkPassphrase } = useWallet();
 
-  // Use the appropriate address based on wallet type
-  const address = walletType === "evm" ? evmAddress : stellarWalletAddress;
-
-  // Get available tokens for current network (Stellar only)
+  // Get available tokens for current network
   const availableTokens = getAvailableTokens();
   const tokenCodes = Object.keys(availableTokens);
   const tokens = getTokens();
 
-  // Tokens are now strings (contract addresses) - initialize with first available tokens
+  // Initialize with first available tokens
   const defaultTokenIn =
     availableTokens[tokenCodes[0]]?.contract || tokens.XLM || "";
   const defaultTokenOut =
@@ -180,24 +145,16 @@ const Swap: React.FC = () => {
   // Swap state management
   const swapState = useSwapState(defaultTokenIn, defaultTokenOut);
   const {
-    swapMode,
     orderType,
     amountIn,
     amountOut,
     tokenIn,
     tokenOut,
-    limitPrice,
-    twapParts,
-    twapFrequency,
     txHash,
     error,
     isLoading,
-    setSwapMode,
     setOrderType,
     setAmountIn,
-    setLimitPrice,
-    setTwapParts,
-    setTwapFrequency,
     setTxHash,
     setError,
     setIsLoading,
@@ -207,7 +164,6 @@ const Swap: React.FC = () => {
 
   // Token selection management
   const tokenSelection = useTokenSelection(
-    swapMode,
     tokenIn,
     tokenOut,
     swapState.setTokenIn,
@@ -218,99 +174,23 @@ const Swap: React.FC = () => {
   const {
     tokenSelectorOpen,
     tokenSelectorType,
-    selectedEvmChainId,
     openTokenSelector,
     closeTokenSelector,
     selectToken,
-    changeChain,
     getTokenId,
     getTokenIconUrl,
   } = tokenSelection;
 
-  // Update swap mode based on connected wallet (only when walletType changes)
-  useEffect(() => {
-    if (walletType === "evm") {
-      setSwapMode("evm");
-      swapState.setTokenIn("ETH");
-      swapState.setTokenOut("USDC");
-    } else if (walletType === "stellar") {
-      setSwapMode("stellar");
-      swapState.setTokenIn(defaultTokenIn);
-      swapState.setTokenOut(defaultTokenOut);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [walletType]); // Only run when walletType changes, not when swapState changes
-
-  // Sync selectedEvmChainId with wallet chain when it changes
-  useEffect(() => {
-    if (chainId && chainId !== selectedEvmChainId && swapMode === "evm") {
-      tokenSelection.changeChain(chainId).catch(() => {
-        // Silently handle chain switch errors
-      });
-    }
-  }, [chainId, swapMode, selectedEvmChainId, tokenSelection]);
-
-  // Get chain icon for badge display
-  const currentChainIcon = useMemo(() => {
-    const chain = SUPPORTED_CHAINS.find((c) => c.id === selectedEvmChainId);
-    return chain?.icon || null;
-  }, [selectedEvmChainId]);
-
-  // Get token balance for "from" token - Stellar
-  const { balance: stellarTokenInBalance, isLoading: isLoadingStellarBalance } =
-    useTokenBalance(
-      swapMode === "stellar"
-        ? (tokenIn as Token | string | undefined)
-        : undefined
-    );
-
-  // Get token symbol for EVM balance lookup
-  const evmTokenSymbol = useMemo(() => {
-    if (swapMode !== "evm") return undefined;
-    if (typeof tokenIn === "string") return tokenIn;
-    if (typeof tokenIn === "object" && "symbol" in tokenIn) {
-      return (tokenIn as EVMToken).symbol;
-    }
-    return undefined;
-  }, [swapMode, tokenIn]);
-
-  // Get token balance for "from" token - EVM
-  const { balance: evmTokenInBalance, isLoading: isLoadingEvmBalance } =
-    useEVMTokenBalance(evmTokenSymbol, selectedEvmChainId);
-
-  // Combined balance based on swap mode
-  const tokenInBalance =
-    swapMode === "evm" ? evmTokenInBalance : stellarTokenInBalance;
-  const isLoadingBalance =
-    swapMode === "evm" ? isLoadingEvmBalance : isLoadingStellarBalance;
-
-  // Check if selling native ETH (uses EthFlow)
-  const isSellingNativeETH = useMemo(() => {
-    if (swapMode !== "evm") return false;
-    const symbol =
-      typeof tokenIn === "string" ? tokenIn : (tokenIn as EVMToken)?.symbol;
-    return symbol === "ETH" && selectedEvmChainId === 1;
-  }, [swapMode, tokenIn, selectedEvmChainId]);
-
-  // Gas check for EVM swaps
-  const {
-    hasEnoughGas,
-    nativeSymbol: gasSymbol,
-    isLoading: isLoadingGas,
-  } = useGasCheck(
-    isSellingNativeETH,
-    false, // needsApproval - we'd need to check this dynamically
-    swapMode === "evm" ? selectedEvmChainId : undefined
-  );
+  // Get token balance for "from" token
+  const { balance: tokenInBalance, isLoading: isLoadingBalance } =
+    useTokenBalance(tokenIn as Token | string | undefined);
 
   // Swap quote management
   const { amountOut: quoteAmountOut, isLoadingQuote } = useSwapQuote(
-    swapMode,
     address,
     amountIn,
     tokenIn,
-    tokenOut,
-    selectedEvmChainId
+    tokenOut
   );
 
   // Update amountOut from quote
@@ -327,7 +207,7 @@ const Swap: React.FC = () => {
     isLoadingPrice,
     isLoadingOutPrice,
     swapValueAnalysis,
-  } = useSwapPrices(swapMode, amountIn, amountOut, tokenIn, tokenOut);
+  } = useSwapPrices(amountIn, amountOut, tokenIn, tokenOut);
 
   // Swap execution
   const { executeSwap } = useSwapExecution();
@@ -338,28 +218,15 @@ const Swap: React.FC = () => {
       return;
     }
 
-    // Validate order-specific parameters
-    if (orderType === "limit" && (!limitPrice || parseFloat(limitPrice) <= 0)) {
-      setError("Please enter a valid limit price");
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
 
     try {
       const result = await executeSwap({
-        swapMode,
-        orderType,
         amountIn,
         tokenIn,
         tokenOut,
-        limitPrice,
-        twapParts,
-        twapFrequency,
         address,
-        evmAddress,
-        selectedEvmChainId,
         networkPassphrase,
       });
 
@@ -368,7 +235,6 @@ const Swap: React.FC = () => {
         resetSwap();
         setAmountIn("");
         swapState.setAmountOut("0.0");
-        setLimitPrice("");
       }
     } catch (error) {
       if (error instanceof Error && error.message === "USER_REJECTED") {
@@ -376,14 +242,9 @@ const Swap: React.FC = () => {
         return;
       }
 
-      // Try to extract contract error for Stellar swaps
       const errorMessage =
-        swapMode === "stellar"
-          ? extractContractErrorOrNull(error, "rwa-perps") ||
-            (error instanceof Error ? error.message : "Failed to complete swap")
-          : error instanceof Error
-            ? error.message
-            : "Failed to complete swap";
+        extractContractErrorOrNull(error, "rwa-perps") ||
+        (error instanceof Error ? error.message : "Failed to complete swap");
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -416,27 +277,15 @@ const Swap: React.FC = () => {
         className="mb-6"
       />
 
-      {/* Order type + wallet type controls */}
+      {/* Order type controls */}
       <div className="flex flex-col gap-3 mb-5">
         <OrderTypeTabs orderType={orderType} onOrderTypeChange={setOrderType} />
-        <WalletTypeSelector
-          swapMode={swapMode}
-          onSwapModeChange={setSwapMode}
-          isEvmConnected={isEvmConnected}
-          isStellarConnected={isStellarConnected}
-        />
       </div>
 
-      {/* Wallet alerts */}
+      {/* Wallet alert */}
       {!address && (
         <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-5 text-center text-white/60 text-sm">
           Connect your wallet to start swapping
-        </div>
-      )}
-      {address && swapMode === "evm" && !walletClient && (
-        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-5 mb-5 text-center text-yellow-400 text-sm">
-          Wallet client not available. Please ensure your EVM wallet is properly
-          connected.
         </div>
       )}
 
@@ -451,8 +300,6 @@ const Swap: React.FC = () => {
               token={tokenIn}
               getTokenId={getTokenId}
               getTokenIconUrl={getTokenIconUrl}
-              chainIcon={currentChainIcon}
-              swapMode={swapMode}
               onClick={() => openTokenSelector("from")}
               disabled={!address || isLoading}
             />
@@ -493,8 +340,6 @@ const Swap: React.FC = () => {
               token={tokenOut}
               getTokenId={getTokenId}
               getTokenIconUrl={getTokenIconUrl}
-              chainIcon={currentChainIcon}
-              swapMode={swapMode}
               onClick={() => openTokenSelector("to")}
               disabled={!address || isLoading}
             />
@@ -545,38 +390,6 @@ const Swap: React.FC = () => {
         </div>
       </div>
 
-      {/* Order-specific forms */}
-      {orderType === "limit" && (
-        <div className="mt-4">
-          <LimitOrderForm
-            limitPrice={limitPrice}
-            onLimitPriceChange={setLimitPrice}
-            tokenOut={tokenOut}
-            getTokenId={getTokenId}
-          />
-        </div>
-      )}
-      {orderType === "twap" && (
-        <div className="mt-4">
-          <TWAPOrderForm
-            twapParts={twapParts}
-            onTwapPartsChange={setTwapParts}
-            twapFrequency={twapFrequency}
-            onTwapFrequencyChange={setTwapFrequency}
-          />
-        </div>
-      )}
-
-      {/* Order management (limit orders only) */}
-      {orderType === "limit" && (
-        <div className="bg-[#1C1C1C] rounded-[20px] p-5 mt-4">
-          <h3 className="text-base font-semibold text-white mb-4">
-            Order Management
-          </h3>
-          <OrderManagement />
-        </div>
-      )}
-
       {/* Error */}
       {error && (
         <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
@@ -589,10 +402,6 @@ const Swap: React.FC = () => {
         <SwapButton
           address={address}
           canGetQuote={!!canGetQuote}
-          swapMode={swapMode}
-          hasEnoughGas={hasEnoughGas}
-          isLoadingGas={isLoadingGas}
-          gasSymbol={gasSymbol}
           isLoading={isLoading}
           txHash={txHash}
           isLoadingQuote={isLoadingQuote}
@@ -605,9 +414,7 @@ const Swap: React.FC = () => {
       {txHash && (
         <TransactionResult
           txHash={txHash}
-          swapMode={swapMode}
           network={network}
-          selectedEvmChainId={selectedEvmChainId}
           orderType={orderType}
         />
       )}
@@ -619,9 +426,6 @@ const Swap: React.FC = () => {
         selectedToken={
           (tokenSelectorType === "from" ? tokenIn : tokenOut) as Token | string
         }
-        swapMode={swapMode}
-        selectedChainId={selectedEvmChainId}
-        onChainChange={changeChain}
       />
     </div>
   );
