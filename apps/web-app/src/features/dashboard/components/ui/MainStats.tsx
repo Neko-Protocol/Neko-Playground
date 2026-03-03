@@ -5,9 +5,11 @@ import Image from "next/image";
 import { useWallet } from "@/hooks/useWallet";
 import { parseBalance } from "@/features/dashboard/utils/dashboardUtils";
 import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
+import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
 
 const MainStats: React.FC = () => {
   const { balances, isFetchingBalances, address } = useWallet();
+  const { assets: poolAssets, isLoading: isLoadingPools } = useDashboardPools();
 
   // Get XLM balance for total value
   const xlmBalance = parseBalance(balances.xlm?.balance);
@@ -40,6 +42,15 @@ const MainStats: React.FC = () => {
   }, [balances]);
 
   const totalValue = holdings.reduce((sum, holding) => sum + holding.value, 0);
+
+  const avgPoolPerformance = React.useMemo(() => {
+    if (isLoadingPools) return null;
+    if (poolAssets.length === 0) return null;
+    const total = poolAssets.reduce((sum, asset) => {
+      return sum + parseFloat(asset.feeApy);
+    }, 0);
+    return (total / poolAssets.length).toFixed(2);
+  }, [poolAssets, isLoadingPools]);
 
   return (
     <div className="w-full px-6 py-8">
@@ -84,52 +95,29 @@ const MainStats: React.FC = () => {
                     </span>
                   </div>
                 )}
-                {!isFetchingBalances && totalValue > 0 && (
-                  <div className="flex items-center bg-[#39bfb7]/10 px-2 py-1 rounded-lg">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 text-[#39bfb7] mr-1"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    {/* TODO: replace with real 24h portfolio change from price feed */}
-                    <span className="text-[#39bfb7] font-bold text-sm">
-                      +2.5%
-                    </span>
-                  </div>
-                )}
                 {!isFetchingBalances && totalValue === 0 && address && (
                   <span className="text-[#7096D1] text-sm font-medium">
                     No balances found
-                  </span>
-                )}
-                {!isFetchingBalances && totalValue > 0 && (
-                  <span className="text-[#7096D1] text-sm font-medium">
-                    past 24h
                   </span>
                 )}
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              {/* TODO: replace +$120.28 with real weekly returns from protocol data */}
               <div className="bg-[#96b2ff]/90 rounded-2xl p-4 text-center border border-[#334EAC]/20 backdrop-blur-sm">
-                <p className="text-[#FFF9F0] font-bold text-lg mb-1">
-                  +$120.28
-                </p>
+                <p className="text-[#FFF9F0] font-bold text-lg mb-1">N/A</p>
                 <p className="text-[#000000] text-[10px] font-bold uppercase tracking-wider opacity-70">
                   Returns last week
                 </p>
               </div>
-              {/* TODO: replace 7.8% with real avg pool performance from useDashboardPools */}
               <div className="bg-[#96b2ff]/90 rounded-2xl p-4 text-center border border-[#334EAC]/20 backdrop-blur-sm">
-                <p className="text-[#FFF9F0] font-bold text-lg mb-1">7.8%</p>
+                <p className="text-[#FFF9F0] font-bold text-lg mb-1">
+                  {isLoadingPools
+                    ? "..."
+                    : avgPoolPerformance !== null
+                      ? `${avgPoolPerformance}%`
+                      : "N/A"}
+                </p>
                 <p className="text-[#000000] text-[10px] font-bold uppercase tracking-wider opacity-70">
                   Avg. Pool Performance
                 </p>
