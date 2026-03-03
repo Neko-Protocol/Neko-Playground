@@ -6,10 +6,16 @@ import { useWallet } from "@/hooks/useWallet";
 import { parseBalance } from "@/features/dashboard/utils/dashboardUtils";
 import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
+import { use24hPortfolioChange } from "@/hooks/use24hPortfolioChange";
 
 const MainStats: React.FC = () => {
   const { balances, isFetchingBalances, address } = useWallet();
   const { assets: poolAssets, isLoading: isLoadingPools } = useDashboardPools();
+  const {
+    change: portfolioChange24h,
+    isPositive: change24hPositive,
+    isLoading: isLoading24h,
+  } = use24hPortfolioChange(balances);
 
   // Get XLM balance for total value
   const xlmBalance = parseBalance(balances.xlm?.balance);
@@ -98,6 +104,36 @@ const MainStats: React.FC = () => {
                 {!isFetchingBalances && totalValue === 0 && address && (
                   <span className="text-[#7096D1] text-sm font-medium">
                     No balances found
+                  </span>
+                )}
+                {!isFetchingBalances && totalValue > 0 && (
+                  <div className="flex items-center bg-[#39bfb7]/10 px-2 py-1 rounded-lg">
+                    {isLoading24h ? (
+                      <div className="w-2 h-2 bg-[#39bfb7] rounded-full animate-pulse mr-1" />
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className={`h-4 w-4 mr-1 ${change24hPositive === false ? "rotate-180 text-red-400" : "text-[#39bfb7]"}`}
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                    <span
+                      className={`font-bold text-sm ${change24hPositive === false ? "text-red-400" : "text-[#39bfb7]"}`}
+                    >
+                      {isLoading24h ? "..." : (portfolioChange24h ?? "N/A")}
+                    </span>
+                  </div>
+                )}
+                {!isFetchingBalances && totalValue > 0 && (
+                  <span className="text-[#7096D1] text-sm font-medium">
+                    past 24h
                   </span>
                 )}
               </div>
