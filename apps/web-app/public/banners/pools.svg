@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 280" fill="none">
+  <!-- Three overlapping circles representing pooled liquidity -->
+  <circle cx="200" cy="140" r="80" fill="white" fill-opacity="0.15"/>
+  <circle cx="260" cy="100" r="60" fill="white" fill-opacity="0.12"/>
+  <circle cx="300" cy="160" r="70" fill="white" fill-opacity="0.10"/>
+
+  <!-- Flow lines connecting the pools -->
+  <path d="M120 180 Q160 140 200 140" stroke="white" stroke-opacity="0.3" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M200 140 Q230 120 260 100" stroke="white" stroke-opacity="0.25" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M260 100 Q280 130 300 160" stroke="white" stroke-opacity="0.2" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M300 160 Q340 180 380 170" stroke="white" stroke-opacity="0.15" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Small token dots -->
+  <circle cx="200" cy="140" r="6" fill="white" fill-opacity="0.6"/>
+  <circle cx="260" cy="100" r="5" fill="white" fill-opacity="0.5"/>
+  <circle cx="300" cy="160" r="5" fill="white" fill-opacity="0.5"/>
+
+  <!-- Decorative small circles -->
+  <circle cx="150" cy="90" r="3" fill="white" fill-opacity="0.2"/>
+  <circle cx="340" cy="80" r="4" fill="white" fill-opacity="0.15"/>
+  <circle cx="370" cy="200" r="3" fill="white" fill-opacity="0.2"/>
+  <circle cx="130" cy="200" r="4" fill="white" fill-opacity="0.12"/>
+</svg>

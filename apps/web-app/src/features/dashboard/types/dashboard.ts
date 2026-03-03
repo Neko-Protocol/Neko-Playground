@@ -9,4 +9,5 @@ export interface AssetData {
   feeApy: string;
   liquidity: string;
   isActive: boolean;
+  type: string;
 }
