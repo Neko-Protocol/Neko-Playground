@@ -24,23 +24,22 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   const { data: pool, isLoading, error } = usePoolDetail(contractid);
   const { data: position } = useUserPosition(contractid, address);
 
-  // Must run before any early return to satisfy Rules of Hooks
   const supportedActions = useMemo(
     () =>
       pool
         ? pool.supportedActions.filter((a: PoolAction) =>
-            orchestrator.supportsAction(contractid, a)
+            orchestrator.supportsAction(contractid, a),
           )
         : [],
-    [contractid, pool]
+    [contractid, pool],
   );
 
   if (isLoading) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center px-4 py-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-neko-border/30 border-t-neko-border mx-auto mb-4" />
-          <p className="text-neko-blue text-lg">Loading pool...</p>
+        <div className="w-full max-w-md rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-white/10 border-t-[#229EDF] mx-auto mb-4" />
+          <p className="text-white/40 text-sm">Loading pool...</p>
         </div>
       </div>
     );
@@ -49,20 +48,20 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   if (error || !pool) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center px-4 py-8">
-        <div className="max-w-2xl w-full bg-red-50 rounded-3xl shadow-lg border border-red-200 p-8 text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-2">
+        <div className="max-w-2xl w-full rounded-2xl bg-red-500/10 border border-red-500/20 p-8 text-center">
+          <h1 className="text-xl font-bold text-red-400 mb-2">
             Pool not found
           </h1>
-          <p className="text-red-500 mb-6">
+          <p className="text-red-400/70 text-sm mb-6">
             {error instanceof Error
               ? error.message
               : "Could not load pool data."}
           </p>
           <Link
             href="/dashboard/pools"
-            className="text-neko-border font-semibold hover:underline"
+            className="text-[#229EDF] font-semibold text-sm hover:underline"
           >
-            ← Back to Pools
+            &larr; Back to Pools
           </Link>
         </div>
       </div>
@@ -76,14 +75,12 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       <div className="max-w-3xl mx-auto">
         <Link
           href="/dashboard/pools"
-          className="inline-flex items-center gap-1 text-neko-blue hover:text-neko-border mb-6 font-medium"
+          className="inline-flex items-center gap-1 text-white/60 hover:text-white mb-6 font-medium text-sm transition-colors"
         >
-          ← Back to Pools
+          &larr; Back to Pools
         </Link>
 
-        <div className="rounded-3xl bg-neko-accent p-8 shadow-xl border border-neko-border/50 relative overflow-hidden">
-          <div className="absolute -right-10 -top-10 w-40 h-40 bg-neko-border/20 rounded-full blur-2xl pointer-events-none" />
-
+        <div className="rounded-2xl bg-[#1C1C1C] p-8 border border-white/5 relative overflow-hidden">
           {/* Header */}
           <div className="relative z-10 mb-8">
             <div className="flex items-center gap-3 mb-4">
@@ -143,7 +140,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
               </div>
               <div
                 className={`ml-auto w-3 h-3 rounded-full ${
-                  pool.state === "active" ? "bg-neko-teal" : "bg-gray-400"
+                  pool.state === "active" ? "bg-[#229EDF]" : "bg-gray-400"
                 } animate-pulse`}
               />
             </div>
@@ -151,22 +148,22 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
           {/* Stats Grid */}
           <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-neko-accent rounded-xl p-4 border border-white/10">
-              <p className="text-neko-muted text-xs mb-1">TVL</p>
+            <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
+              <p className="text-white/40 text-xs mb-1">TVL</p>
               <p className="text-white text-lg font-bold">{tvlFormatted}</p>
             </div>
-            <div className="bg-neko-accent rounded-xl p-4 border border-white/10">
-              <p className="text-neko-muted text-xs mb-1">APY</p>
+            <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
+              <p className="text-white/40 text-xs mb-1">APY</p>
               <p className="text-white text-lg font-bold">{apyFormatted}</p>
             </div>
-            <div className="bg-neko-accent rounded-xl p-4 border border-white/10">
-              <p className="text-neko-muted text-xs mb-1">Status</p>
+            <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
+              <p className="text-white/40 text-xs mb-1">Status</p>
               <p className="text-white text-lg font-bold capitalize">
                 {pool.state}
               </p>
             </div>
-            <div className="bg-neko-accent rounded-xl p-4 border border-white/10">
-              <p className="text-neko-muted text-xs mb-1">Tokens</p>
+            <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
+              <p className="text-white/40 text-xs mb-1">Tokens</p>
               <p className="text-white text-lg font-bold">
                 {pool.tokens.map((t: TokenInfo) => t.code).join(" / ")}
               </p>
@@ -175,13 +172,13 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
           {/* Your position */}
           {address && (
-            <div className="relative z-10 mb-8 rounded-xl border border-neko-teal/40 bg-neko-navy/30 p-4">
-              <h3 className="text-neko-muted text-sm font-semibold mb-3">
+            <div className="relative z-10 mb-8 rounded-xl border border-[#229EDF]/30 bg-[#2A2A2A] p-4">
+              <h3 className="text-white/40 text-sm font-semibold mb-3">
                 Tu posición
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <p className="text-neko-muted text-xs mb-1">
+                  <p className="text-white/40 text-xs mb-1">
                     {pool.type === "blend"
                       ? "Total (incl. intereses)"
                       : "Depositado"}
@@ -195,9 +192,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
                   position?.rewardsFormatted != null &&
                   position.rewardsFormatted !== "0" && (
                     <div>
-                      <p className="text-neko-muted text-xs mb-1">
-                        Recompensas
-                      </p>
+                      <p className="text-white/40 text-xs mb-1">Recompensas</p>
                       <p className="text-white text-lg font-bold">
                         {position.rewardsFormatted}
                       </p>
@@ -207,11 +202,11 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
                   position?.metadata?.liabilities != null &&
                   String(position.metadata.liabilities) !== "0" && (
                     <div>
-                      <p className="text-neko-muted text-xs mb-1">Prestado</p>
+                      <p className="text-white/40 text-xs mb-1">Prestado</p>
                       <p className="text-white text-lg font-bold">
                         {fromSmallestUnit(
                           String(position.metadata.liabilities),
-                          pool.tokens[0]?.decimals ?? 7
+                          pool.tokens[0]?.decimals ?? 7,
                         )}{" "}
                         {pool.tokens[0]?.code ?? ""}
                       </p>
@@ -225,7 +220,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           <div className="relative z-10 flex flex-wrap gap-3">
             {(pool.type === "blend" || pool.type === "neko") && (
               <button
-                className="bg-neko-navy hover:bg-neko-navy-hover text-neko-cream px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-neko-border/30"
+                className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors"
                 onClick={() => setActionModal("deposit")}
               >
                 Lend
@@ -283,7 +278,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
             )}
             {supportedActions.includes("claimRewards") && (
               <button
-                className="bg-neko-teal hover:bg-neko-teal/90 text-neko-navy px-6 py-3 rounded-xl text-sm font-bold transition-colors"
+                className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors"
                 onClick={() => setActionModal("claimRewards")}
               >
                 Claim Rewards
@@ -303,10 +298,10 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
           {/* Contract ID (collapsed) */}
           <details className="relative z-10 mt-8">
-            <summary className="text-neko-muted text-sm cursor-pointer hover:text-white">
+            <summary className="text-white/40 text-sm cursor-pointer hover:text-white transition-colors">
               Contract ID
             </summary>
-            <div className="mt-2 bg-neko-navy/50 text-neko-teal-light font-mono text-xs px-4 py-2 rounded-lg break-all border border-neko-border/30">
+            <div className="mt-2 bg-[#2A2A2A] text-[#229EDF] font-mono text-xs px-4 py-2 rounded-lg break-all border border-white/10">
               {contractid}
             </div>
           </details>

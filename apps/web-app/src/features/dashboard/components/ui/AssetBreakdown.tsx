@@ -24,6 +24,14 @@ function ColHeader({
       <div className="flex items-center gap-1.5 text-white/40 text-xs font-semibold uppercase tracking-wide">
         <Icon className="h-3.5 w-3.5" />
         {label}
+        {tooltip && (
+          <span className="group relative cursor-help">
+            <Info className="h-3 w-3 text-white/20" />
+            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap rounded-lg bg-[#2A2A2A] px-2.5 py-1 text-[10px] font-normal normal-case tracking-normal text-white/70 opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+              {tooltip}
+            </span>
+          </span>
+        )}
       </div>
     </th>
   );

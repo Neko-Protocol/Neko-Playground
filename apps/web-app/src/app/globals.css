@@ -2,7 +2,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Inconsolata:wght@500&family=Antonio:wght@700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "animate.css";
 
 /* Ensure Tailwind v4 scans all source files for class detection */
 @source "../**/*.{ts,tsx}";
