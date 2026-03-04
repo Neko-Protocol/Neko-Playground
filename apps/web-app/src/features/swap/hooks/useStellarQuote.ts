@@ -1,11 +1,7 @@
 import { useRef, useCallback } from "react";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { getQuote, type QuoteRequest } from "@/lib/helpers/stellar/soroswap";
-import { type EVMToken } from "@/lib/types/evmToken";
-import {
-  formatSwapAmount,
-  fromSmallestUnit,
-} from "@/lib/helpers/tokenUtils";
+import { formatSwapAmount, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import {
   DEFAULT_SLIPPAGE_BPS,
   MAX_HOPS,
@@ -18,8 +14,8 @@ import {
  */
 export function useStellarQuote(
   amountIn: string,
-  tokenIn: Token | string | EVMToken,
-  tokenOut: Token | string | EVMToken,
+  tokenIn: Token | string,
+  tokenOut: Token | string,
   apiKeyConfigured: boolean
 ): {
   fetchStellarQuote: () => Promise<string | null>;

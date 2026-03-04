@@ -131,13 +131,14 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
    * this list or switch to an "all-pools" API when available.
    */
   async listPools(): Promise<PoolInfo[]> {
-    const knownPairs = [
-      "XLM-USDC",
-      "XLM-NVDA",
-      "XLM-AAPL",
-      "USDC-NVDA",
-      "USDC-AAPL",
-    ];
+    const tokens = getAvailableTokens();
+    const codes = Object.keys(tokens);
+    const knownPairs: string[] = [];
+    for (let i = 0; i < codes.length; i++) {
+      for (let j = i + 1; j < codes.length; j++) {
+        knownPairs.push(`${codes[i]}-${codes[j]}`);
+      }
+    }
 
     const results = await Promise.allSettled(
       knownPairs.map((pair) => this.getPoolInfo(pair))

@@ -4,7 +4,6 @@
  */
 
 import { PRICE_ERROR_DELAY_MS } from "@/lib/constants/wallet";
-import { isEVMToken, type EVMToken } from "../types/evmToken";
 import type { TokenPriceResult, PriceFetchOptions } from "../types/priceTypes";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -14,22 +13,13 @@ export class PriceService {
   private readonly CACHE_DURATION = 30000; // 30 seconds
   private readonly REQUEST_TIMEOUT = 5000; // 5 seconds
 
-  // CoinGecko ID mapping for tokens
+  // CoinGecko ID mapping for tokens with public market prices.
+  // RWA tokens (USTRY, TESOURO, CETES) use the oracle contract for pricing.
   private readonly COINGECKO_ID_MAP: Record<string, string> = {
-    ETH: "ethereum",
-    BNB: "binancecoin",
+    XLM: "stellar",
     USDC: "usd-coin",
-    USDT: "tether",
-    NVDA: "nvidia-ondo-tokenized-stock",
-    TSLA: "tesla-ondo-tokenized-stock",
-    AAPL: "apple-ondo-tokenized-stock",
-    MSFT: "microsoft-ondo-tokenized-stock",
-    AMZN: "amazon-ondo-tokenized-stock",
-    META: "meta-platforms-ondo-tokenized-stock",
-    SPOT: "spotify-ondo-tokenized-stock",
-    SHOP: "shopify-ondo-tokenized-stock",
-    MA: "mastercard-ondo-tokenized-stock",
-    NFLX: "netflix-ondo-tokenized-stock",
+    USDY: "ondo-us-dollar-yield",
+    PYUSD: "paypal-usd",
   };
 
   /**
@@ -90,30 +80,10 @@ export class PriceService {
   }
 
   /**
-   * Check if token is an RWA token (ends with "on")
-   */
-  private isRWAToken(tokenSymbol: string): boolean {
-    return tokenSymbol.endsWith("on") && tokenSymbol.length > 2;
-  }
-
-  /**
-   * Get underlying token symbol for RWA tokens
-   * e.g., "NVDAon" -> "NVDA"
-   */
-  private getUnderlyingTokenSymbol(tokenSymbol: string): string {
-    if (this.isRWAToken(tokenSymbol)) {
-      return tokenSymbol.slice(0, -2); // Remove "on" suffix
-    }
-    return tokenSymbol;
-  }
-
-  /**
    * Get CoinGecko ID for token symbol
    */
   private getCoinGeckoId(tokenSymbol: string): string | null {
-    // For RWA tokens, get the underlying token's CoinGecko ID
-    const underlyingSymbol = this.getUnderlyingTokenSymbol(tokenSymbol);
-    return this.COINGECKO_ID_MAP[underlyingSymbol] || null;
+    return this.COINGECKO_ID_MAP[tokenSymbol] || null;
   }
 
   /**
@@ -126,22 +96,10 @@ export class PriceService {
     const { forceRefresh = false, timeout = this.REQUEST_TIMEOUT } = options;
 
     // Check cache first (unless force refresh)
-    // For RWA tokens, also check cache with underlying symbol
     if (!forceRefresh) {
       const cached = this.priceCache.get(tokenSymbol);
       if (cached && this.isPriceValid(cached)) {
         return cached;
-      }
-
-      // For RWA tokens, also check if underlying token is cached
-      if (this.isRWAToken(tokenSymbol)) {
-        const underlyingSymbol = this.getUnderlyingTokenSymbol(tokenSymbol);
-        const underlyingCached = this.priceCache.get(underlyingSymbol);
-        if (underlyingCached && this.isPriceValid(underlyingCached)) {
-          // Use the cached price from underlying token
-          this.priceCache.set(tokenSymbol, underlyingCached);
-          return underlyingCached;
-        }
       }
     }
 
@@ -217,40 +175,6 @@ export class PriceService {
     });
 
     return results;
-  }
-
-  /**
-   * Get price for EVM token object
-   */
-  async getTokenPriceFromToken(
-    token: EVMToken | string | undefined,
-    options: PriceFetchOptions = {}
-  ): Promise<TokenPriceResult> {
-    if (!token) {
-      return {
-        price: 0,
-        source: "invalid_token",
-        lastUpdated: new Date(),
-      };
-    }
-
-    let tokenSymbol: string | null = null;
-
-    if (typeof token === "string") {
-      tokenSymbol = token;
-    } else if (isEVMToken(token)) {
-      tokenSymbol = token.symbol || null;
-    }
-
-    if (!tokenSymbol) {
-      return {
-        price: 0,
-        source: "invalid_token",
-        lastUpdated: new Date(),
-      };
-    }
-
-    return this.getTokenPrice(tokenSymbol, options);
   }
 
   /**

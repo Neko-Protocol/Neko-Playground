@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { hasApiKey } from "@/lib/helpers/stellar/soroswap";
-import { type EVMToken } from "@/lib/types/evmToken";
-import { useEvmQuote } from "./useEvmQuote";
 import { useStellarQuote } from "./useStellarQuote";
 import {
   DEBOUNCE_MS,
@@ -20,12 +18,10 @@ export interface SwapQuoteActions {
 }
 
 export function useSwapQuote(
-  swapMode: "evm" | "stellar",
   address: string | undefined,
   amountIn: string,
-  tokenIn: Token | string | EVMToken,
-  tokenOut: Token | string | EVMToken,
-  selectedEvmChainId: number
+  tokenIn: Token | string,
+  tokenOut: Token | string
 ): SwapQuoteState & SwapQuoteActions {
   const [amountOut, setAmountOut] = useState<string>("0.0");
   const [isLoadingQuote, setIsLoadingQuote] = useState<boolean>(false);
@@ -34,12 +30,6 @@ export function useSwapQuote(
   const quoteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const quoteIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { fetchEvmQuote } = useEvmQuote(
-    amountIn,
-    tokenIn,
-    tokenOut,
-    selectedEvmChainId
-  );
   const { fetchStellarQuote, cancelStellarQuote } = useStellarQuote(
     amountIn,
     tokenIn,
@@ -69,15 +59,14 @@ export function useSwapQuote(
     }
 
     try {
-      const result =
-        swapMode === "evm" ? await fetchEvmQuote() : await fetchStellarQuote();
+      const result = await fetchStellarQuote();
       setAmountOut(result ?? "0.0");
     } catch {
       setAmountOut("0.0");
     } finally {
       setIsLoadingQuote(false);
     }
-  }, [address, amountIn, swapMode, fetchEvmQuote, fetchStellarQuote]);
+  }, [address, amountIn, fetchStellarQuote]);
 
   // Debounced quote trigger
   useEffect(() => {
@@ -106,7 +95,7 @@ export function useSwapQuote(
       return;
     }
 
-    if (swapMode === "stellar" && !apiKeyConfigured) {
+    if (!apiKeyConfigured) {
       setAmountOut("0.0");
       return;
     }
@@ -133,7 +122,6 @@ export function useSwapQuote(
     address,
     apiKeyConfigured,
     fetchLiveQuote,
-    swapMode,
     cancelStellarQuote,
   ]);
 
@@ -164,15 +152,7 @@ export function useSwapQuote(
         clearInterval(quoteIntervalRef.current);
       }
     };
-  }, [
-    amountIn,
-    tokenIn,
-    tokenOut,
-    address,
-    apiKeyConfigured,
-    fetchLiveQuote,
-    swapMode,
-  ]);
+  }, [amountIn, tokenIn, tokenOut, address, apiKeyConfigured, fetchLiveQuote]);
 
   return {
     amountOut,

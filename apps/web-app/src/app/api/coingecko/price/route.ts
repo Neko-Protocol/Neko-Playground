@@ -30,7 +30,11 @@ export async function GET(request: NextRequest) {
       headers["x-cg-demo-api-key"] = apiKey;
     }
 
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=${vsCurrencies}`;
+    const include24hrChange = searchParams.get("include_24hr_change");
+    let url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=${vsCurrencies}`;
+    if (include24hrChange === "true") {
+      url += "&include_24hr_change=true";
+    }
 
     const response = await fetch(url, {
       method: "GET",

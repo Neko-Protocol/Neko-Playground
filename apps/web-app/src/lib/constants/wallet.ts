@@ -3,7 +3,7 @@
  */
 
 /** RWA token codes that use the oracle for pricing */
-export const RWA_TOKENS = ["NVDA", "AAPL", "PLTR", "TSLA", "META"];
+export const RWA_TOKENS = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD"];
 
 /** LocalStorage keys used by WalletProvider for Stellar wallet state */
 export const STORAGE_KEYS = {

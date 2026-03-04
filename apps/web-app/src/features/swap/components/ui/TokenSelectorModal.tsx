@@ -6,22 +6,12 @@ import { useWallet } from "@/hooks/useWallet";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
-import {
-  getTokensForChain,
-  SUPPORTED_CHAINS,
-  DEFAULT_CHAIN_ID,
-  type ChainConfig,
-} from "@/lib/constants/evmConfig";
-import { isEVMToken, type EVMToken } from "@/lib/types/evmToken";
 
 interface TokenSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectToken: (token: Token | string, chainId?: number) => void;
+  onSelectToken: (token: Token | string) => void;
   selectedToken?: Token | string;
-  swapMode?: "evm" | "stellar";
-  selectedChainId?: number;
-  onChainChange?: (chainId: number) => void;
 }
 
 interface TokenItemProps {
@@ -33,46 +23,7 @@ interface TokenItemProps {
   isSelected: boolean;
   onClick: () => void;
   showBalance?: boolean;
-  chainIcon?: string;
 }
-
-interface ChainSelectorProps {
-  chains: ChainConfig[];
-  selectedChainId: number;
-  onChainSelect: (chainId: number) => void;
-}
-
-const ChainSelector: React.FC<ChainSelectorProps> = ({
-  chains,
-  selectedChainId,
-  onChainSelect,
-}) => {
-  return (
-    <div className="flex gap-2 p-2 bg-gray-200 rounded-xl">
-      {chains.map((chain) => (
-        <button
-          key={chain.id}
-          onClick={() => onChainSelect(chain.id)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
-            selectedChainId === chain.id
-              ? "bg-[#334EAC] text-white shadow-md"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-          }`}
-        >
-          <Image
-            src={chain.icon}
-            alt={chain.name}
-            width={20}
-            height={20}
-            unoptimized
-            className="rounded-full object-contain"
-          />
-          <span className="text-sm font-medium">{chain.name}</span>
-        </button>
-      ))}
-    </div>
-  );
-};
 
 const TokenItem: React.FC<TokenItemProps> = ({
   code,
@@ -83,10 +34,7 @@ const TokenItem: React.FC<TokenItemProps> = ({
   isSelected,
   onClick,
   showBalance = true,
-  chainIcon,
 }) => {
-  const displayIcon = icon;
-
   const formatBalance = (balance: string): string => {
     const num = parseFloat(balance);
     if (num === 0) return "0";
@@ -108,9 +56,9 @@ const TokenItem: React.FC<TokenItemProps> = ({
       }`}
     >
       <div className="relative shrink-0">
-        {displayIcon ? (
+        {icon ? (
           <Image
-            src={displayIcon}
+            src={icon}
             alt={code}
             width={40}
             height={40}
@@ -121,16 +69,6 @@ const TokenItem: React.FC<TokenItemProps> = ({
           <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#334EAC] to-[#081F5C] flex items-center justify-center text-white font-bold text-sm shadow-md">
             {code[0]}
           </div>
-        )}
-        {chainIcon && (
-          <Image
-            src={chainIcon}
-            alt="chain"
-            width={16}
-            height={16}
-            unoptimized
-            className="absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-white shadow-sm object-contain bg-white"
-          />
         )}
       </div>
 
@@ -160,113 +98,47 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
   onClose,
   onSelectToken,
   selectedToken,
-  swapMode = "stellar",
-  selectedChainId = DEFAULT_CHAIN_ID,
-  onChainChange,
 }) => {
   const { balances } = useWallet();
   const { price: xlmPrice } = useTokenPrice("XLM");
-  const [localChainId, setLocalChainId] = useState(selectedChainId);
-  const availableTokens = useMemo(
-    () => (swapMode === "stellar" ? getAvailableTokens() : {}),
-    [swapMode]
-  );
-
-  // Get tokens for the selected chain
-  const evmTokens = useMemo(
-    () => (swapMode === "evm" ? getTokensForChain(localChainId) : {}),
-    [swapMode, localChainId]
-  );
-
-  const tokenCodes =
-    swapMode === "stellar"
-      ? Object.keys(availableTokens)
-      : Object.keys(evmTokens);
+  const availableTokens = useMemo(() => getAvailableTokens(), []);
+  const tokenCodes = Object.keys(availableTokens);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Sync local chain with prop
-  useEffect(() => {
-    setLocalChainId(selectedChainId);
-  }, [selectedChainId]);
-
-  const handleChainChange = (chainId: number) => {
-    setLocalChainId(chainId);
-    onChainChange?.(chainId);
-  };
-
-  // Get chain icon for current chain
-  const currentChainIcon = useMemo(() => {
-    const chain = SUPPORTED_CHAINS.find((c) => c.id === localChainId);
-    return chain?.icon || null;
-  }, [localChainId]);
-
-  const getTokenId = (token: Token | string | EVMToken): string => {
-    if (swapMode === "evm") {
-      if (isEVMToken(token)) {
-        return token.symbol || "";
+  const getTokenId = (token: Token | string): string => {
+    if (typeof token === "string") {
+      for (const [code, info] of Object.entries(availableTokens)) {
+        if (info.contract === token) return code;
       }
-      if (typeof token === "string") {
-        if (evmTokens[token]) {
-          return token;
-        }
-        const evmToken = Object.values(evmTokens).find(
-          (t) => t.address.toLowerCase() === token.toLowerCase()
-        );
-        return evmToken?.symbol || token;
-      }
-      return "";
-    } else {
-      if (typeof token === "string") {
-        for (const [code, info] of Object.entries(availableTokens)) {
-          if (info.contract === token) {
-            return code;
-          }
-        }
-        return token;
-      }
-      if (typeof token === "object" && "type" in token) {
-        const stellarToken = token as Token;
-        if (stellarToken.type === "native") return "XLM";
-        if (stellarToken.contract) {
-          for (const [code, info] of Object.entries(availableTokens)) {
-            if (info.contract === stellarToken.contract) {
-              return code;
-            }
-          }
-          return stellarToken.contract;
-        }
-        return stellarToken.code || "";
-      }
-      return "";
+      return token;
     }
+    if (typeof token === "object" && "type" in token) {
+      const stellarToken = token as Token;
+      if (stellarToken.type === "native") return "XLM";
+      if (stellarToken.contract) {
+        for (const [code, info] of Object.entries(availableTokens)) {
+          if (info.contract === stellarToken.contract) return code;
+        }
+        return stellarToken.contract;
+      }
+      return stellarToken.code || "";
+    }
+    return "";
   };
 
   const filteredTokens = useMemo(() => {
     const query = searchQuery.toLowerCase();
     return tokenCodes.filter((code) => {
-      if (swapMode === "evm") {
-        const token = evmTokens[code];
-        return (
-          code.toLowerCase().includes(query) ||
-          (token?.name?.toLowerCase().includes(query) ?? false) ||
-          (token?.symbol?.toLowerCase().includes(query) ?? false)
-        );
-      } else {
-        const token = availableTokens[code];
-        return (
-          code.toLowerCase().includes(query) ||
-          token.name.toLowerCase().includes(query)
-        );
-      }
+      const token = availableTokens[code];
+      return (
+        code.toLowerCase().includes(query) ||
+        token.name.toLowerCase().includes(query)
+      );
     });
-  }, [searchQuery, availableTokens, tokenCodes, swapMode, evmTokens]);
+  }, [searchQuery, availableTokens, tokenCodes]);
 
   const getTokenBalance = useCallback(
     (code: string): { balance: string; usdValue: string } => {
-      if (swapMode === "evm") {
-        return { balance: "0", usdValue: "0" };
-      }
-
       if (code === "XLM" && balances.xlm) {
         const balance = parseFloat(
           balances.xlm.balance?.replace(/,/g, "") || "0"
@@ -280,7 +152,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
 
       return { balance: "0", usdValue: "0" };
     },
-    [balances, swapMode, xlmPrice]
+    [balances, xlmPrice]
   );
 
   const userTokens = useMemo(() => {
@@ -293,18 +165,13 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
   const popularTokens = useMemo(() => {
     return filteredTokens.filter((code) => {
       const { balance } = getTokenBalance(code);
-      const isUserToken = parseFloat(balance) > 0;
-      return !isUserToken;
+      return parseFloat(balance) === 0;
     });
   }, [filteredTokens, getTokenBalance]);
 
   const handleTokenClick = (tokenCode: string) => {
-    if (swapMode === "evm") {
-      onSelectToken(tokenCode, localChainId);
-    } else {
-      const token = availableTokens[tokenCode].contract;
-      onSelectToken(token);
-    }
+    const token = availableTokens[tokenCode].contract;
+    onSelectToken(token);
     setSearchQuery("");
     onClose();
   };
@@ -358,17 +225,6 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
           </button>
         </div>
 
-        {/* Chain Selector - Only show for EVM mode */}
-        {swapMode === "evm" && (
-          <div className="px-4 pt-4">
-            <ChainSelector
-              chains={SUPPORTED_CHAINS}
-              selectedChainId={localChainId}
-              onChainSelect={handleChainChange}
-            />
-          </div>
-        )}
-
         <div className="p-4 border-b border-gray-300">
           <div className="relative">
             <svg
@@ -406,22 +262,13 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                     ? getTokenId(selectedToken) === code
                     : false;
                   const { balance, usdValue } = getTokenBalance(code);
-
-                  const tokenInfo =
-                    swapMode === "evm"
-                      ? evmTokens[code]
-                      : availableTokens[code];
-                  const tokenName =
-                    swapMode === "evm"
-                      ? (tokenInfo as EVMToken)?.name || code
-                      : (tokenInfo as { name: string })?.name || code;
+                  const tokenInfo = availableTokens[code];
+                  const tokenName = tokenInfo?.name || code;
                   const tokenIcon =
-                    swapMode === "evm"
-                      ? getTokenIcon(tokenInfo as EVMToken | string)
-                      : (tokenInfo as { contract?: string })?.contract
-                        ? getTokenIcon(
-                            (tokenInfo as { contract: string }).contract
-                          )
+                    code === "XLM"
+                      ? "/assets/xlm-negro-logo.png"
+                      : tokenInfo?.contract
+                        ? getTokenIcon(tokenInfo.contract)
                         : null;
 
                   return (
@@ -434,11 +281,6 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                       usdValue={usdValue}
                       isSelected={isSelected}
                       onClick={() => handleTokenClick(code)}
-                      chainIcon={
-                        swapMode === "evm"
-                          ? currentChainIcon || undefined
-                          : undefined
-                      }
                     />
                   );
                 })}
@@ -456,22 +298,13 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                   const isSelected = selectedToken
                     ? getTokenId(selectedToken) === code
                     : false;
-
-                  const tokenInfo =
-                    swapMode === "evm"
-                      ? evmTokens[code]
-                      : availableTokens[code];
-                  const tokenName =
-                    swapMode === "evm"
-                      ? (tokenInfo as EVMToken)?.name || code
-                      : (tokenInfo as { name: string })?.name || code;
+                  const tokenInfo = availableTokens[code];
+                  const tokenName = tokenInfo?.name || code;
                   const tokenIcon =
-                    swapMode === "evm"
-                      ? getTokenIcon(tokenInfo as EVMToken | string)
-                      : (tokenInfo as { contract?: string })?.contract
-                        ? getTokenIcon(
-                            (tokenInfo as { contract: string }).contract
-                          )
+                    code === "XLM"
+                      ? "/assets/xlm-negro-logo.png"
+                      : tokenInfo?.contract
+                        ? getTokenIcon(tokenInfo.contract)
                         : null;
 
                   return (
@@ -485,11 +318,6 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                       isSelected={isSelected}
                       onClick={() => handleTokenClick(code)}
                       showBalance={false}
-                      chainIcon={
-                        swapMode === "evm"
-                          ? currentChainIcon || undefined
-                          : undefined
-                      }
                     />
                   );
                 })}
