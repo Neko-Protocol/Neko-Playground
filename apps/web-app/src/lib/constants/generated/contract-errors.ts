@@ -7,10 +7,10 @@
  * Generated at: 2026-03-04T00:55:57.804Z
  *
  * Source files:
- *   - apps/contracts/stellar-contracts/rwa-lending/src/common/error.rs
- *   - apps/contracts/stellar-contracts/rwa-oracle/src/common/error.rs
- *   - apps/contracts/stellar-contracts/rwa-perps/src/common/error.rs
- *   - apps/contracts/stellar-contracts/rwa-token/src/common/error.rs
+ *   - apps\contracts\stellar-contracts\rwa-lending\src\common\error.rs
+ *   - apps\contracts\stellar-contracts\rwa-oracle\src\common\error.rs
+ *   - apps\contracts\stellar-contracts\rwa-perps\src\common\error.rs
+ *   - apps\contracts\stellar-contracts\rwa-token\src\common\error.rs
  */
 
 export interface ContractErrorInfo {
