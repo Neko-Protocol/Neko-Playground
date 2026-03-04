@@ -22,9 +22,6 @@ export default function Settings() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <SettingsWalletSection copy={copy} copiedKey={copiedKey} />
         <SettingsNetworkSection copy={copy} copiedKey={copiedKey} />
-        <div className="sm:col-span-2">
-          <SettingsContractsSection />
-        </div>
       </div>
     </div>
   );
