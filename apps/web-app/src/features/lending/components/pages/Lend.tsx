@@ -25,7 +25,7 @@ const Lend: React.FC = () => {
   } = useLend();
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-6 py-8">
+    <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
       <BannerPage
         title="Lend to Pools"
         subtitle="Supply liquidity to pools and earn interest on your assets"

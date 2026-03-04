@@ -40,8 +40,9 @@ export function BorrowTable({
   onRowsPerPageChange,
 }: BorrowTableProps) {
   return (
-    <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
-      <table className="w-full">
+    <div className="w-full overflow-hidden rounded-2xl border border-white/5 bg-[#1C1C1C]">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px]">
         <thead>
           <tr className="border-b border-white/5">
             <ColHeader icon={Hash} label="ID" centered />
@@ -115,7 +116,8 @@ export function BorrowTable({
             ))
           )}
         </tbody>
-      </table>
+        </table>
+      </div>
 
       {totalRows > 0 && (
         <Pagination
