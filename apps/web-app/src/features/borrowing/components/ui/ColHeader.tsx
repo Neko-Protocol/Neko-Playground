@@ -24,7 +24,7 @@ export function ColHeader({
         {tooltip && (
           <div className="group relative">
             <Info className="h-3 w-3 cursor-help" />
-            <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block w-48 rounded-lg bg-[#2A2A2A] px-2 py-1 text-[10px] text-white/70 shadow-xl">
+            <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1 hidden group-hover:block w-48 rounded-lg bg-[#2A2A2A] px-2 py-1 text-[10px] text-white/70 shadow-xl z-50">
               {tooltip}
             </div>
           </div>
