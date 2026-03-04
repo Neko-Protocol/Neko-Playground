@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
+import { DollarSign, Coins, TrendingUp } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
-import { parseBalance } from "@/features/dashboard/utils/dashboardUtils";
+import { usePortfolioValue } from "@/features/dashboard/hooks/usePortfolioValue";
 import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
 import { use24hPortfolioChange } from "@/hooks/use24hPortfolioChange";
@@ -23,34 +23,32 @@ const MainStats: React.FC = () => {
   // Get XLM balance for total value
   const xlmBalance = parseBalance(balances.xlm?.balance);
 
-  // Convert balances to holdings format for chart
-  const holdings = React.useMemo(() => {
-    return Object.entries(balances)
-      .filter(([, balance]) => {
-        const balanceNum = parseBalance(balance.balance);
-        return balanceNum > 0;
-      })
-      .map(([, balance]) => {
-        const balanceNum = parseBalance(balance.balance);
-        let assetName = "Unknown";
+const MainStats: React.FC = () => {
+  const { isFetchingBalances, address } = useWallet();
+  const { totalUsd, holdings, isLoading: isLoadingPortfolio } =
+    usePortfolioValue();
+  const { assets } = useDashboardPools();
 
-        if (balance.asset_type === "native") {
-          assetName = "XLM";
-        } else if (balance.asset_type === "liquidity_pool_shares") {
-          assetName = "LP Shares";
-        } else if (balance.asset_code) {
-          assetName = balance.asset_code;
-        }
+  const avgPoolApy = React.useMemo(() => {
+    if (assets.length === 0) return null;
+    const sum = assets.reduce((acc, a) => {
+      const parsed = parseFloat(a.roi.replace("%", ""));
+      return acc + (Number.isFinite(parsed) ? parsed : 0);
+    }, 0);
+    return (sum / assets.length).toFixed(1);
+  }, [assets]);
 
-        return {
-          name: assetName,
-          value: balanceNum,
-        };
-      })
-      .sort((a, b) => b.value - a.value); // Sort by value descending
-  }, [balances]);
+  const chartHoldings = React.useMemo(
+    () =>
+      holdings.map((h) => ({
+        name: h.code,
+        value: h.valueUsd > 0 ? h.valueUsd : h.balance,
+      })),
+    [holdings]
+  );
 
-  const totalValue = holdings.reduce((sum, holding) => sum + holding.value, 0);
+  const chartTotal = chartHoldings.reduce((sum, h) => sum + h.value, 0);
+  const isLoading = isFetchingBalances || isLoadingPortfolio;
 
   const avgPoolPerformance = React.useMemo(() => {
     if (isLoadingPools) return null;
@@ -62,28 +60,45 @@ const MainStats: React.FC = () => {
   }, [poolAssets, isLoadingPools]);
 
   return (
-    <div className="w-full px-6 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Card: Portfolio Stats */}
-        <div className="md:col-span-2 rounded-3xl bg-[#294cab] p-8 shadow-lg border border-[#334EAC]/90 relative overflow-hidden flex flex-col justify-between min-h-[320px]">
-          {/* Neko Thumbs Up Background Image */}
-          <Image
-            src="/Neko_Thumbs_Up.png"
-            alt="Neko Thumbs Up"
-            fill
-            className="object-contain opacity-30 pointer-events-none !w-auto !h-[340px] !left-auto !right-5 !bottom-3 !top-auto"
-          />
+    <div className="space-y-5">
+      {/* Stats row — reuses StatCard from stocks feature */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <StatCard
+          icon={<DollarSign className="h-5 w-5" />}
+          label="Total Portfolio Value"
+          value={address ? formatUsd(totalUsd) : "$0.00"}
+          isLoading={isLoading && !!address}
+        />
+        <StatCard
+          icon={<Coins className="h-5 w-5" />}
+          label="Assets Held"
+          value={address ? holdings.length : 0}
+          isLoading={isLoading && !!address}
+        />
+        <StatCard
+          icon={<TrendingUp className="h-5 w-5" />}
+          label="Avg. Pool APY"
+          value={avgPoolApy !== null ? `${avgPoolApy}%` : "—"}
+        />
+      </div>
 
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-6">
-              <h2 className="text-xl font-bold text-[#FFF9F0] tracking-wide">
-                Portfolio
-              </h2>
-            </div>
-
-            <div className="mb-8">
-              <p className="text-[#7096D1] text-xs font-bold uppercase tracking-widest mb-2 opacity-80">
-                Total Balance
+      {/* Wallet holdings chart */}
+      <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-6">
+        <h3 className="text-white font-semibold text-sm mb-4">
+          Wallet Holdings
+        </h3>
+        {!address ? (
+          <div className="flex items-center justify-center py-8">
+            <p className="text-white/40 text-sm">
+              Connect your wallet to view holdings
+            </p>
+          </div>
+        ) : chartHoldings.length === 0 ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <p className="text-white/40 text-sm mb-1">No holdings found</p>
+              <p className="text-white/30 text-xs">
+                Fund your account to see balances here
               </p>
               <h1 className="text-5xl font-bold text-[#FFF9F0] tracking-tight">
                 {xlmBalance > 0 ? (
@@ -171,51 +186,14 @@ const MainStats: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Decorative background element */}
-          <div className="absolute -right-10 -top-10 w-64 h-64 bg-[#334EAC]/20 rounded-full blur-3xl pointer-events-none"></div>
-        </div>
-
-        {/* Right Card: App Holdings Graph */}
-        <div className="rounded-3xl bg-[#294cab] p-8 shadow-lg border border-[#334EAC]/50 relative overflow-hidden flex flex-col min-h-[320px]">
-          <div className="relative z-10 flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-[#FFF9F0] tracking-wide">
-                Wallet Holdings
-              </h2>
-              {isFetchingBalances && (
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-[#39bfb7] rounded-full animate-pulse"></div>
-                  <span className="text-[#7096D1] text-xs">Updating...</span>
-                </div>
-              )}
-            </div>
-            {!address ? (
-              <div className="flex-1 flex items-center justify-center">
-                <p className="text-[#7096D1] text-sm text-center">
-                  Connect your wallet to view holdings
-                </p>
-              </div>
-            ) : holdings.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-[#7096D1] text-sm mb-2">
-                    No holdings found
-                  </p>
-                  <p className="text-[#7096D1] text-xs">
-                    Fund your account to see balances here
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col min-h-[200px]">
-                <HoldingsPieChart holdings={holdings} totalValue={totalValue} />
-              </div>
-            )}
+        ) : (
+          <div className="min-h-[220px]">
+            <HoldingsPieChart
+              holdings={chartHoldings}
+              totalValue={chartTotal}
+            />
           </div>
-          {/* Decorative background element */}
-          <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-[#334EAC]/10 rounded-full blur-2xl pointer-events-none"></div>
-        </div>
+        )}
       </div>
     </div>
   );

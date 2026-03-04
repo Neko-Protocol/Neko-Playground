@@ -20,9 +20,9 @@ export const MAX_RECENT_PRICES_IN_CARD = 5;
 /** Timestamp from oracle is in seconds; multiply by this to get milliseconds. */
 export const TIMESTAMP_MS_PER_SECOND = 1000;
 
-/** Base path for stocks/oracle dashboard routes. */
+/** Base path for discover dashboard routes. */
 export const ROUTES = {
-  STOCKS_BASE: "/dashboard/stocks",
+  STOCKS_BASE: "/dashboard/discover",
   /** Path for a single asset detail page. Use with `${ROUTES.STOCKS_BASE}/${symbol}` */
   stockDetail: (symbol: string) => `${ROUTES.STOCKS_BASE}/${symbol}`,
 } as const;

@@ -27,9 +27,9 @@ export const useLendingPools = () => {
   // Memoize available tokens to prevent unnecessary re-renders
   const availableTokens = useMemo(() => getAvailableTokens(), []);
 
-  // Memoize debt assets list
+  // All available tokens are potential debt assets — filter to those with a contract
   const debtAssets = useMemo(() => {
-    return ["USDC", "XLM"].filter((code) => {
+    return Object.keys(availableTokens).filter((code) => {
       const token = availableTokens[code];
       return token && token.contract;
     });
@@ -118,7 +118,8 @@ export const useLendingPools = () => {
             const bTokenRateValue = bTokenRateTx.result;
             if (bTokenRateValue) {
               const rateBigInt = BigInt(bTokenRateValue.toString());
-              bTokenRate = fromSmallestUnit(rateBigInt.toString(), 9);
+              // b_rate uses 12 decimals (SCALAR_12 = 1_000_000_000_000), initial 1:1 rate
+              bTokenRate = fromSmallestUnit(rateBigInt.toString(), 12);
             }
           } catch {
             // If bToken rate fetch fails, use 1.0
