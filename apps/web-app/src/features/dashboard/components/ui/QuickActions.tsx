@@ -22,7 +22,7 @@ const actions = [
   {
     label: "Explore Assets",
     description: "Browse RWA tokens & prices",
-    href: "/dashboard/stocks",
+    href: "/dashboard/discover",
     icon: Compass,
   },
 ] as const;
@@ -45,9 +45,7 @@ const QuickActions: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-semibold text-sm">
-                Connect Wallet
-              </p>
+              <p className="text-white font-semibold text-sm">Connect Wallet</p>
               <p className="text-white/40 text-xs mt-1">
                 Swap tokens, provide liquidity, and explore RWA assets
               </p>
@@ -66,9 +64,7 @@ const QuickActions: React.FC = () => {
   return (
     <div className="w-full">
       <h2 className="text-2xl font-bold text-white mb-1">Quick Actions</h2>
-      <p className="text-white/40 text-sm mb-5">
-        Jump into the protocol
-      </p>
+      <p className="text-white/40 text-sm mb-5">Jump into the protocol</p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {actions.map((action) => (
           <Link

@@ -9,15 +9,18 @@ import {
   TrendingUp,
   Percent,
   Droplets,
+  Info,
 } from "lucide-react";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
 
 function ColHeader({
   icon: Icon,
   label,
+  tooltip,
 }: {
   icon: React.ElementType;
   label: string;
+  tooltip?: string;
 }) {
   return (
     <th className="px-4 py-3 text-left">
