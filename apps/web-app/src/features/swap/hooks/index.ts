@@ -1,10 +1,5 @@
 export { useSwapState } from "./useSwapState";
-export type {
-  SwapState,
-  SwapStateActions,
-  SwapMode,
-  OrderType,
-} from "./useSwapState";
+export type { SwapState, SwapStateActions, OrderType } from "./useSwapState";
 
 export { useTokenSelection } from "./useTokenSelection";
 export type {

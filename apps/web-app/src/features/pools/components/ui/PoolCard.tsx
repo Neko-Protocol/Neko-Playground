@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import type { PoolCardData } from "@/features/pools/types/pools";
+import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 
 interface PoolCardProps {
   pool: PoolCardData;
@@ -28,12 +30,50 @@ export const PoolCard: React.FC<PoolCardProps> = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="relative w-14 h-8">
-            <div className="absolute left-0 w-8 h-8 rounded-full bg-[#229EDF] border-2 border-white/10 flex items-center justify-center text-white text-sm font-bold shadow-md">
-              {pool.token1[0]}
-            </div>
-            <div className="absolute left-6 w-8 h-8 rounded-full bg-[#229EDF]/60 border-2 border-white/10 flex items-center justify-center text-white text-sm font-bold shadow-md">
-              {pool.token2[0]}
-            </div>
+            {(() => {
+              const icon1 = getTokenIcon({
+                type: "contract",
+                code: pool.token1,
+              });
+              const icon2 = getTokenIcon({
+                type: "contract",
+                code: pool.token2,
+              });
+              return (
+                <>
+                  <div className="absolute left-0 w-8 h-8 rounded-full bg-neko-teal border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md">
+                    {icon1 ? (
+                      <Image
+                        src={icon1}
+                        alt={pool.token1}
+                        width={24}
+                        height={24}
+                        unoptimized
+                      />
+                    ) : (
+                      <span className="text-white text-sm font-bold">
+                        {pool.token1[0]}
+                      </span>
+                    )}
+                  </div>
+                  <div className="absolute left-6 w-8 h-8 rounded-full bg-neko-teal-light border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md">
+                    {icon2 ? (
+                      <Image
+                        src={icon2}
+                        alt={pool.token2}
+                        width={24}
+                        height={24}
+                        unoptimized
+                      />
+                    ) : (
+                      <span className="text-neko-navy text-sm font-bold">
+                        {pool.token2[0]}
+                      </span>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
           </div>
           <div>
             <h3 className="text-white text-xl font-bold">

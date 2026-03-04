@@ -1,28 +1,18 @@
 import React from "react";
-import { getCowSwapExplorerUrl } from "@/lib/helpers/evm/cowswap";
 import { getExplorerUrl } from "@/lib/helpers/tokenUtils";
 
 interface TransactionResultProps {
   txHash: string;
-  swapMode: "evm" | "stellar";
   network?: string;
-  selectedEvmChainId?: number;
   orderType: "swap" | "limit" | "twap";
 }
 
 export const TransactionResult: React.FC<TransactionResultProps> = ({
   txHash,
-  swapMode,
   network,
-  selectedEvmChainId,
   orderType,
 }) => {
-  const explorerUrl =
-    swapMode === "evm" && selectedEvmChainId
-      ? getCowSwapExplorerUrl(txHash, selectedEvmChainId)
-      : network
-        ? getExplorerUrl(txHash, network)
-        : "#";
+  const explorerUrl = network ? getExplorerUrl(txHash, network) : "#";
 
   return (
     <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl">
@@ -41,11 +31,7 @@ export const TransactionResult: React.FC<TransactionResultProps> = ({
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm text-green-700 hover:text-green-800 font-semibold"
         >
-          <span>
-            {swapMode === "evm"
-              ? "View on CoW Explorer"
-              : "View on Stellar Expert"}
-          </span>
+          <span>View on Stellar Expert</span>
           <svg
             width="16"
             height="16"

@@ -42,7 +42,7 @@ export function HoldingsPieChart({
           (_, i) => CHART_COLORS[i % CHART_COLORS.length]
         ),
         borderWidth: 3,
-        borderColor: "#294cab",
+        borderColor: "#1C1C1C",
         hoverOffset: 8,
         hoverBorderWidth: 4,
         hoverBorderColor: "#FFF9F0",
@@ -57,7 +57,7 @@ export function HoldingsPieChart({
       legend: {
         position: "right" as const,
         labels: {
-          color: "#BAD6EB",
+          color: "rgba(255,255,255,0.5)",
           usePointStyle: true,
           pointStyle: "circle",
           padding: 20,
@@ -65,11 +65,11 @@ export function HoldingsPieChart({
         },
       },
       tooltip: {
-        backgroundColor: "rgba(8, 31, 92, 0.95)",
-        titleColor: "#FFF9F0",
-        bodyColor: "#BAD6EB",
-        borderColor: "#7096D1",
-        borderWidth: 2,
+        backgroundColor: "rgba(42, 42, 42, 0.95)",
+        titleColor: "#ffffff",
+        bodyColor: "rgba(255,255,255,0.6)",
+        borderColor: "rgba(255,255,255,0.1)",
+        borderWidth: 1,
         padding: 16,
         cornerRadius: 8,
         callbacks: {
@@ -104,10 +104,10 @@ export function HoldingsPieChart({
     <div className={`relative min-h-[200px] ${className}`}>
       <Doughnut data={chartData} options={options} />
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pr-[100px]">
-        <span className="text-[#BAD6EB] text-xs font-medium uppercase tracking-wide">
+        <span className="text-white/40 text-xs font-medium uppercase tracking-wide">
           Total Assets
         </span>
-        <span className="text-[#FFF9F0] text-2xl font-bold mt-1">
+        <span className="text-white text-2xl font-bold mt-1">
           {displayTotal}
         </span>
       </div>
