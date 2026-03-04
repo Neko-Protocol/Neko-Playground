@@ -9,6 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "@blend-capital/blend-sdk": "^3.2.2",
     "@creit.tech/stellar-wallets-kit": "^1.0.0",
     "@emotion/react": "^11.11.0",
