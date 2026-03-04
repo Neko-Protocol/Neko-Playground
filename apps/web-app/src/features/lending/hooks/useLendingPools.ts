@@ -147,8 +147,10 @@ export const useLendingPools = () => {
   return useQuery<LendingPool[]>({
     queryKey: ["lendingPools"],
     queryFn,
-    refetchInterval: 30000,
-    staleTime: 10000,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    refetchInterval: 60_000,
+    placeholderData: (prev) => prev,
     retry: 2,
     throwOnError: false,
   });
