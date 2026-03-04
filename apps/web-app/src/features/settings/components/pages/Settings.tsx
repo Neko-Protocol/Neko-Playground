@@ -5,7 +5,6 @@ import { BannerPage } from "@/components/ui/BannerPage";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { SettingsWalletSection } from "../ui/SettingsWalletSection";
 import { SettingsNetworkSection } from "../ui/SettingsNetworkSection";
-import { SettingsContractsSection } from "../ui/SettingsContractsSection";
 
 export default function Settings() {
   const { copy, copiedKey } = useCopyToClipboard();
