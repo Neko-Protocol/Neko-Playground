@@ -24,9 +24,24 @@ export function LendTable({
         <thead>
           <tr className="border-b border-white/5">
             <ColHeader icon={ArrowLeftRight} label="Protocol" />
-            <ColHeader icon={TrendingUp} label="Supply APY" centered />
-            <ColHeader icon={Droplets} label="Total liquidity" centered />
-            <ColHeader icon={Coins} label="bToken Rate" centered />
+            <ColHeader
+              icon={TrendingUp}
+              tooltip="Annual yield rate you earn by supplying assets"
+              label="Supply APY"
+              centered
+            />
+            <ColHeader
+              icon={Droplets}
+              tooltip="Total liquidity in pool"
+              label="Total liquidity"
+              centered
+            />
+            <ColHeader
+              icon={Coins}
+              tooltip="Rate at which you receive bTokens for each asset deposited"
+              label="bToken Rate"
+              centered
+            />
             <ColHeader icon={Zap} label="Actions" centered />
           </tr>
         </thead>

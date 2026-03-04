@@ -5,7 +5,6 @@ import { BannerPage } from "@/components/ui/BannerPage";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { SettingsWalletSection } from "../ui/SettingsWalletSection";
 import { SettingsNetworkSection } from "../ui/SettingsNetworkSection";
-import { SettingsContractsSection } from "../ui/SettingsContractsSection";
 
 export default function Settings() {
   const { copy, copiedKey } = useCopyToClipboard();
@@ -22,9 +21,6 @@ export default function Settings() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <SettingsWalletSection copy={copy} copiedKey={copiedKey} />
         <SettingsNetworkSection copy={copy} copiedKey={copiedKey} />
-        <div className="sm:col-span-2">
-          <SettingsContractsSection />
-        </div>
       </div>
     </div>
   );

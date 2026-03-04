@@ -103,7 +103,7 @@ export function HoldingsPieChart({
   return (
     <div className={`relative min-h-[200px] ${className}`}>
       <Doughnut data={chartData} options={options} />
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pr-[100px]">
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pr-[82px]">
         <span className="text-white/40 text-xs font-medium uppercase tracking-wide">
           Total Assets
         </span>

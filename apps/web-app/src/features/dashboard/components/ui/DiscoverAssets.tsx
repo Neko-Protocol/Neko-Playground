@@ -15,10 +15,7 @@ const DiscoverAssets: React.FC = () => {
   const { assets, decimals, isLoading } = useOracle();
 
   const filteredAssets = React.useMemo(
-    () =>
-      (assets ?? []).filter(
-        (asset: Asset) => formatAsset(asset) !== "0"
-      ),
+    () => (assets ?? []).filter((asset: Asset) => formatAsset(asset) !== "0"),
     [assets]
   );
 
@@ -34,7 +31,7 @@ const DiscoverAssets: React.FC = () => {
           </p>
         </div>
         <Link
-          href="/dashboard/stocks"
+          href="/dashboard/discover"
           className="flex items-center gap-1.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
         >
           View all
