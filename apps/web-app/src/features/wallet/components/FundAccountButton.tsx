@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { useNotification } from "@/hooks/useNotification";
+import { sileo } from "sileo";
 import { useWallet } from "@/hooks/useWallet";
 import { Button, Tooltip } from "@stellar/design-system";
 import { getFriendbotUrl } from "@/lib/helpers/stellar/friendbot";
 
 const FundAccountButton: React.FC = () => {
-  const { addNotification } = useNotification();
   const [isPending, startTransition] = useTransition();
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const { address } = useWallet();
@@ -20,7 +19,7 @@ const FundAccountButton: React.FC = () => {
         const response = await fetch(getFriendbotUrl(address));
 
         if (response.ok) {
-          addNotification("Account funded successfully!", "success");
+          sileo.success({ title: "Account funded successfully!" });
         } else {
           const body: unknown = await response.json();
           if (
@@ -29,13 +28,22 @@ const FundAccountButton: React.FC = () => {
             "detail" in body &&
             typeof body.detail === "string"
           ) {
-            addNotification(`Error funding account: ${body.detail}`, "error");
+            sileo.error({
+              title: "Error funding account",
+              description: body.detail,
+            });
           } else {
-            addNotification("Error funding account: Unknown error", "error");
+            sileo.error({
+              title: "Error funding account",
+              description: "Unknown error",
+            });
           }
         }
       } catch {
-        addNotification("Error funding account. Please try again.", "error");
+        sileo.error({
+          title: "Error funding account",
+          description: "Please try again.",
+        });
       }
     });
   };

@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpc } from "@stellar/stellar-sdk";
+import { sileo } from "sileo";
 import { useWallet } from "@/hooks/useWallet";
 import { useLendingPools } from "./useLendingPools";
 import {
@@ -104,14 +105,14 @@ export function useLend() {
   }, []);
 
   const handleConfirm = useCallback(
-    async (amount: string) => {
+    (amount: string) => {
       if (!selectedPool || !address || !amount || parseFloat(amount) <= 0)
         return;
 
       setIsLoading(true);
       setError(null);
 
-      try {
+      const runTx = async () => {
         const availableTokens = getAvailableTokens();
         const token = availableTokens[selectedPool.assetCode];
         if (!token?.contract)
@@ -179,18 +180,25 @@ export function useLend() {
         await loadBTokenBalance();
         await refetchPools();
         closeModal();
-      } catch (err) {
-        const msg = extractContractErrorOrNull(err);
-        setError(
-          msg
-            ? typeof msg === "string"
-              ? msg
-              : "An unexpected error occurred."
-            : "An unexpected error occurred."
-        );
-      } finally {
-        setIsLoading(false);
-      }
+      };
+
+      sileo
+        .promise(runTx(), {
+          loading: {
+            title: isDeposit ? "Depositing…" : "Withdrawing…",
+          },
+          success: {
+            title: isDeposit ? "Deposit successful" : "Withdrawal successful",
+          },
+          error: (err) => {
+            const msg = extractContractErrorOrNull(err);
+            const description =
+              typeof msg === "string" ? msg : "An unexpected error occurred.";
+            setError(description);
+            return { title: "Transaction failed", description };
+          },
+        })
+        .finally(() => setIsLoading(false));
     },
     [
       selectedPool,

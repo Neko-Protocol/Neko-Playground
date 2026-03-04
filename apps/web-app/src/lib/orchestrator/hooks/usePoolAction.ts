@@ -5,15 +5,16 @@
  * (deposit, withdraw, claimRewards).
  *
  * Integrates with WalletProvider for transaction signing and
- * NotificationProvider for user feedback.
+ * Sileo toasts for user feedback.
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
+import { sileo } from "sileo";
 import { useWallet } from "@/hooks/useWallet";
-import { useNotification } from "@/hooks/useNotification";
-import { rpcUrl } from "@/lib/constants/network";
+import { rpcUrl, stellarNetwork } from "@/lib/constants/network";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
+import { getExplorerUrl } from "@/lib/helpers/tokenUtils";
 import { orchestrator } from "../core/Orchestrator";
 import { POOLS_QUERY_KEY } from "./usePools";
 import type { PoolAction, TransactionResult } from "../types/pool.types";
@@ -34,7 +35,6 @@ interface PoolActionParams {
  */
 export function usePoolAction() {
   const { address, signTransaction } = useWallet();
-  const { addNotification } = useNotification();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -111,15 +111,26 @@ export function usePoolAction() {
       return txResult.hash;
     },
 
-    onSuccess: (_hash, params) => {
-      addNotification(`${capitalise(params.action)} successful`, "success");
+    onSuccess: (hash, params) => {
+      const actionLabel = capitalise(params.action);
+      sileo.success({
+        title: `${actionLabel} successful`,
+        button: {
+          title: "View tx",
+          onClick: () =>
+            window.open(getExplorerUrl(hash, stellarNetwork), "_blank"),
+        },
+      });
       queryClient.invalidateQueries({ queryKey: [...POOLS_QUERY_KEY] });
     },
 
     onError: (error: unknown, params) => {
       if (isUserCancellationError(error)) return;
       const msg = error instanceof Error ? error.message : "Transaction failed";
-      addNotification(`${capitalise(params.action)} failed: ${msg}`, "error");
+      sileo.error({
+        title: `${capitalise(params.action)} failed`,
+        description: msg,
+      });
     },
   });
 }

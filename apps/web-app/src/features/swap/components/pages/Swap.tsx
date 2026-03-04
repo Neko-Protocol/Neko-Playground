@@ -14,7 +14,9 @@ import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors
 import {
   sanitizeAmountInput,
   formatSwapAmount,
+  getExplorerUrl,
 } from "@/lib/helpers/tokenUtils";
+import { sileo } from "sileo";
 import { BannerPage } from "@/components/ui/BannerPage";
 import TokenSelectorModal from "../ui/TokenSelectorModal";
 
@@ -235,6 +237,19 @@ const Swap: React.FC = () => {
         resetSwap();
         setAmountIn("");
         swapState.setAmountOut("0.0");
+        sileo.success({
+          title: "Swap successful",
+          button: result.txHash
+            ? {
+                title: "View tx",
+                onClick: () =>
+                  window.open(
+                    getExplorerUrl(result.txHash!, network),
+                    "_blank"
+                  ),
+              }
+            : undefined,
+        });
       }
     } catch (error) {
       if (error instanceof Error && error.message === "USER_REJECTED") {
@@ -246,6 +261,10 @@ const Swap: React.FC = () => {
         extractContractErrorOrNull(error, "rwa-perps") ||
         (error instanceof Error ? error.message : "Failed to complete swap");
       setError(errorMessage);
+      sileo.error({
+        title: "Swap failed",
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }

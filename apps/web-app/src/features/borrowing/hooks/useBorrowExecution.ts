@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Networks } from "@stellar/stellar-sdk";
+import { sileo } from "sileo";
 import { useWallet } from "@/hooks/useWallet";
 import {
   approveToken,
@@ -97,19 +98,20 @@ export function useBorrowExecution() {
         );
         await signAndSend(borrowXdr);
 
+        const message = `Successfully borrowed ${borrowNum} ${assetCode} using ${collateralNum} ${collateralTokenCode} as collateral`;
+        sileo.success({ title: message });
         return {
           success: true as const,
-          message: `Successfully borrowed ${borrowNum} ${assetCode} using ${collateralNum} ${collateralTokenCode} as collateral`,
+          message,
         };
       } catch (err) {
         const friendlyError = extractContractErrorOrNull(err);
-        if (friendlyError) {
-          setError(
-            typeof friendlyError === "string"
-              ? friendlyError
-              : "An unexpected error occurred. Please try again."
-          );
-        }
+        const description =
+          typeof friendlyError === "string"
+            ? friendlyError
+            : "An unexpected error occurred. Please try again.";
+        if (friendlyError) setError(description);
+        sileo.error({ title: "Borrow failed", description });
         return { success: false as const, error: err };
       } finally {
         setIsLoading(false);
