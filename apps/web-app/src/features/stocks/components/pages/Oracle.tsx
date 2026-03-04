@@ -89,7 +89,7 @@ const OracleVisualizer: React.FC = () => {
           <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 flex flex-col items-center justify-center gap-4">
             <LoadingSpinner variant="dots" size="lg" />
             <span className="text-white/60 text-base font-medium">
-              Loading oracle data…
+              Loading discover data…
             </span>
           </div>
         ) : filteredAssets.length > 0 ? (
@@ -99,7 +99,7 @@ const OracleVisualizer: React.FC = () => {
                 Assets & Prices
               </h2>
               <p className="text-white/40 text-sm">
-                Live price feeds from the oracle
+                Live price feeds from the discover
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -117,7 +117,7 @@ const OracleVisualizer: React.FC = () => {
         ) : (
           <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
             <p className="text-white/40 text-base">
-              No assets found in the oracle
+              No assets found in discover
             </p>
           </div>
         )}
