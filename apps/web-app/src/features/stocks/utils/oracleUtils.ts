@@ -51,10 +51,3 @@ export const formatAssetType = (type: RWAMetadata["asset_type"]): string => {
   if (!type) return "Unknown";
   return type.tag ?? "Unknown";
 };
-
-export const formatComplianceStatus = (
-  status: RWAMetadata["regulatory_info"]["compliance_status"]
-): string => {
-  if (!status) return "Unknown";
-  return status.tag ?? "Unknown";
-};

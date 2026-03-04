@@ -2,7 +2,6 @@
 
 import { X } from "lucide-react";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 interface ConnectWalletModalProps {
   isOpen: boolean;
@@ -50,10 +49,6 @@ export function ConnectWalletModal({
               </p>
             </div>
           </button>
-
-          <div className="w-full [&>div]:w-full [&>div>button]:w-full [&>div>button]:rounded-2xl [&>div>button]:bg-[#2A2A2A] [&>div>button]:border [&>div>button]:border-white/5 [&>div>button]:p-4 [&>div>button]:text-white [&>div>button]:font-semibold [&>div>button]:text-sm">
-            <ConnectButton label="EVM Wallet" />
-          </div>
         </div>
       </div>
     </div>

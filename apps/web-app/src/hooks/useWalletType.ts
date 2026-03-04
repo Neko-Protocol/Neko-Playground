@@ -9,9 +9,7 @@ export const useWalletType = () => {
 
   return {
     walletType,
-    isEvmConnected: false,
     isStellarConnected: !!stellarAddress,
-    evmAddress: undefined,
     stellarAddress: stellarAddress || undefined,
   };
 };

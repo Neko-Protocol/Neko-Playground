@@ -51,7 +51,6 @@
     "cookie": "^0.8.0",
     "tmp": "^0.2.4",
     "undici": "^6.23.0",
-    "@openzeppelin/contracts": "^4.9.6",
     "next": "16.1.6",
     "elliptic": "^6.6.1"
   }

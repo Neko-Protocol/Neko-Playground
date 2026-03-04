@@ -19,7 +19,6 @@
     "@neko/config": "0.0.0",
     "@neko/lending": "0.0.0",
     "@neko/oracle": "0.0.0",
-    "@reown/appkit-utils": "^1.7.8",
     "@soroswap/sdk": "^0.3.8",
     "@stellar/design-system": "^3.2.7",
     "@stellar/stellar-sdk": "^14.2.0",
