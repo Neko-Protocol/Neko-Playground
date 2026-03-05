@@ -60,37 +60,35 @@ export function BannerPage({
   return (
     <div
       className={cn(
-        // Shape & colour
         "relative w-full max-w-[1169px] overflow-hidden rounded-[24px] bg-[#229EDF]",
-        // Sizing & alignment — centered horizontally, extra top padding
-        "mx-auto flex min-h-[210px] items-center pt-6",
+        "mx-auto flex min-h-[160px] sm:min-h-[210px] items-center pt-6",
         className
       )}
     >
-      {/* ------------------------------------------------------------------ */}
-      {/* Left — text content                                                 */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="relative z-10 flex flex-col justify-center gap-2.5 px-8 py-6">
+      {/* Left — text content */}
+      <div className="relative z-10 flex flex-col justify-center gap-2 sm:gap-2.5 px-5 sm:px-8 py-5 sm:py-6">
         {badge && <Badge label={badge} />}
 
-        <h2 className="text-[2rem] font-bold leading-tight tracking-tight text-white">
+        <h2 className="text-2xl sm:text-[2rem] font-bold leading-tight tracking-tight text-white">
           {title}
         </h2>
 
         {subtitle && (
-          <p className="max-w-sm text-sm leading-relaxed text-white/70">
+          <p className="max-w-xs sm:max-w-sm text-xs sm:text-sm leading-relaxed text-white/70">
             {subtitle}
           </p>
         )}
 
-        {actions && <div className="mt-2 flex items-center gap-3">{actions}</div>}
+        {actions && (
+          <div className="mt-2 flex items-center gap-3">{actions}</div>
+        )}
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Right — illustration                                                */}
-      {/* ------------------------------------------------------------------ */}
+      {/* Right — illustration (hidden on very small screens) */}
       {imageSrc && (
-        <Illustration src={imageSrc} alt={imageAlt} />
+        <div className="hidden sm:block">
+          <Illustration src={imageSrc} alt={imageAlt} />
+        </div>
       )}
     </div>
   );
