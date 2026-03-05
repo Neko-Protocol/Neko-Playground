@@ -30,7 +30,7 @@ export function Sidebar() {
       : pathname === href || pathname?.startsWith(`${href}/`);
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[270px] flex-col border-r border-white/5 bg-[#121212]">
+    <aside className="hidden lg:flex fixed left-0 top-0 z-40 h-screen w-[270px] flex-col border-r border-white/5 bg-[#121212]">
       <SidebarLogo />
 
       <nav className="flex flex-1 flex-col gap-1 px-3">

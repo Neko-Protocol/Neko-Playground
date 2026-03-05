@@ -168,8 +168,10 @@ export const useBorrowPools = () => {
   return useQuery<BorrowPool[]>({
     queryKey: ["borrowPools"],
     queryFn,
-    refetchInterval: 30000, // Refetch every 30 seconds
-    staleTime: 10000, // Consider stale after 10 seconds
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    refetchInterval: 60_000,
+    placeholderData: (prev) => prev,
     retry: 2,
     throwOnError: false,
   });

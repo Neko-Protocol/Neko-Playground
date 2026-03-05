@@ -36,7 +36,7 @@ export function Pagination({
   return (
     <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">
       <div className="flex items-center gap-2 text-white/40 text-xs">
-        <span>Rows per page</span>
+        <span className="hidden sm:inline">Rows per page</span>
         <select
           value={rowsPerPage}
           onChange={(e) => onRowsPerPageChange(Number(e.target.value))}
