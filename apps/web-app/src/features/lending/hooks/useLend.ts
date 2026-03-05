@@ -105,9 +105,9 @@ export function useLend() {
   }, []);
 
   const handleConfirm = useCallback(
-    (amount: string) => {
+    (amount: string): Promise<void> => {
       if (!selectedPool || !address || !amount || parseFloat(amount) <= 0)
-        return;
+        return Promise.resolve();
 
       setIsLoading(true);
       setError(null);
@@ -182,7 +182,7 @@ export function useLend() {
         closeModal();
       };
 
-      sileo
+      return sileo
         .promise(runTx(), {
           loading: {
             title: isDeposit ? "Depositing…" : "Withdrawing…",
