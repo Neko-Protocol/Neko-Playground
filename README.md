@@ -5,23 +5,24 @@
 <h1 align="center">Neko DApp</h1>
 
 <p align="center">
-  <strong>A platform that unifies the RWA experience across Stellar</strong>
+  <strong>A multi-chain DeFi protocol for Real-World Assets on Stellar and EVM networks</strong>
 </p>
 
 <p align="center">
-  Liquidity Pools • Lending & Borrowing • Asset Discovery • Token Swap • Portfolio Management
+  Liquidity pools • Lending & Borrowing • Perpetual Futures • RWA Tokenization • Portfolio Management
 </p>
 
 ## Features
 
-| Feature                 | Description                                                  |
-| ----------------------- | ------------------------------------------------------------ |
-| **Dashboard**           | Real-time portfolio analytics and performance metrics        |
-| **Liquidity Pools**     | Manage and track liquidity positions from multiple protocols |
-| **Lending & Borrowing** | Participate in DeFi lending markets with RWA collateral      |
-| **Asset Discovery**     | Browse and explore RWA assets with detailed price charts     |
-| **Token Swap**          | Seamless token exchange via Soroswap                         |
-| **Settings**            | Network configuration and wallet management                  |
+| Feature                 | Description                                                 |
+| ----------------------- | ----------------------------------------------------------- |
+| **Dashboard**           | Real-time portfolio analytics and performance metrics       |
+| **Liquidity Pools**     | Manage and track NFT-based liquidity positions via SoroSwap |
+| **Lending & Borrowing** | Participate in DeFi lending markets with RWA collateral     |
+| **Perpetual Futures**   | Trade perpetual contracts for RWA stocks                    |
+| **Token Swap**          | Seamless token exchange via CoW Swap                        |
+| **RWA Oracle**          | SEP-40 compliant price feeds for Real-World Assets          |
+| **Multi-Chain**         | Support for both Stellar (Soroban) and EVM networks         |
 
 ## Quick Start
 
@@ -153,20 +154,18 @@ neko-dapp/
 │   │   │   │   ├── api/            # API routes
 │   │   │   │   └── dashboard/      # Dashboard routes
 │   │   │   │       ├── borrowing/
-│   │   │   │       ├── discover/     # RWA asset discovery + [symbol] detail
 │   │   │   │       ├── lending/
-│   │   │   │       ├── pools/        # Pool list + [contractid] detail
-│   │   │   │       ├── settings/
+│   │   │   │       ├── pools/
+│   │   │   │       ├── stocks/
 │   │   │   │       └── swap/
 │   │   │   ├── features/           # Feature-based modules
 │   │   │   │   ├── borrowing/      # Borrow feature
-│   │   │   │   ├── dashboard/      # Dashboard overview
 │   │   │   │   ├── lending/        # Lend feature
-│   │   │   │   ├── pools/          # Liquidity pool management
-│   │   │   │   ├── settings/       # Network & wallet settings
 │   │   │   │   ├── stocks/         # RWA Stocks/Oracle feature
 │   │   │   │   ├── swap/           # Token swap feature
-│   │   │   │   └── wallet/         # Wallet integration
+│   │   │   │   ├── pools/          # Liquidity pool management
+│   │   │   │   ├── wallet/         # Wallet integration
+│   │   │   │   └── dashboard/      # Dashboard overview
 │   │   │   ├── components/         # Shared UI components
 │   │   │   │   ├── ui/             # Reusable UI primitives
 │   │   │   │   ├── charts/         # Chart components
@@ -192,7 +191,6 @@ neko-dapp/
 │   │
 │   └── contracts/                  # Smart contracts
 │       ├── stellar-contracts/      # Stellar/Soroban contracts (Rust)
-│       │   ├── integration_tests/  # Cross-contract integration tests
 │       │   ├── rwa-oracle/         # SEP-40 Oracle for RWA price feeds
 │       │   ├── rwa-token/          # RWA Token with oracle integration
 │       │   ├── rwa-lending/        # Lending protocol (Blend-based)
@@ -238,8 +236,8 @@ neko-dapp/
 
 | Technology          | Version  | Description                     |
 | ------------------- | -------- | ------------------------------- |
-| Next.js             | 16.1.6   | React framework with App Router |
-| React               | 19.2.3   | UI library                      |
+| Next.js             | 16.1     | React framework with App Router |
+| React               | 19.2     | UI library                      |
 | Turbopack           | Built-in | Fast bundler for development    |
 | Tailwind CSS        | 4.x      | Utility-first CSS framework     |
 | Zustand             | -        | Lightweight state management    |
@@ -393,8 +391,7 @@ Available networks:
 - **Lend**: Supply assets to lending pools
 - **Borrow**: Borrow against collateral
 - **Pools**: Manage liquidity positions
-- **Discover**: Browse RWA assets with real-time oracle price charts
-- **Settings**: Network and wallet configuration
+- **Oracle**: Real-time price feeds for RWA tokens
 
 ### Contract Packages
 
