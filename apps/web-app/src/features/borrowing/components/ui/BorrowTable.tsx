@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Hash,
-  Layers,
-  TrendingDown,
-  Shield,
-  Droplets,
-  Zap,
-} from "lucide-react";
+import { Layers, TrendingDown, Shield, Droplets, Zap } from "lucide-react";
 import { ColHeader } from "./ColHeader";
 import { IdBadge } from "./IdBadge";
 import { PoolCell } from "./PoolCell";
@@ -49,7 +42,6 @@ export function BorrowTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/5">
-              <ColHeader icon={Hash} label="ID" centered />
               <ColHeader icon={Layers} label="Pool" centered />
               <ColHeader
                 icon={TrendingDown}
@@ -74,16 +66,16 @@ export function BorrowTable({
           </thead>
           <tbody>
             {isLoading ? (
-              <EmptyRow colSpan={6} message="Loading borrow pools…" />
+              <EmptyRow colSpan={5} message="Loading borrow pools…" />
             ) : poolsError ? (
               <EmptyRow
-                colSpan={6}
+                colSpan={5}
                 message={`Error loading borrow pools: ${String(poolsError)}`}
                 variant="error"
               />
             ) : assets.length === 0 ? (
               <EmptyRow
-                colSpan={6}
+                colSpan={5}
                 message="No active borrow pools available"
               />
             ) : (
@@ -92,9 +84,6 @@ export function BorrowTable({
                   key={asset.id}
                   className="border-b border-white/5 hover:bg-white/2 transition-colors"
                 >
-                  <td className="px-4 py-4 align-middle text-center">
-                    <IdBadge id={asset.id} isActive={asset.isActive} />
-                  </td>
                   <td className="px-4 py-4 align-middle w-[280px]">
                     <PoolCell
                       token1={asset.pool.token1}

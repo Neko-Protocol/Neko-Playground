@@ -160,10 +160,7 @@ export function PoolActionModal({
                   <p className="text-xs text-[#7096D1] bg-[#eaf4ff] rounded-lg px-3 py-2">
                     First-time deposit? You may need to approve the token first
                     from{" "}
-                    <Link
-                      href="/dashboard/lending"
-                      className="underline font-medium"
-                    >
+                    <Link href="/lending" className="underline font-medium">
                       Lending
                     </Link>
                     .

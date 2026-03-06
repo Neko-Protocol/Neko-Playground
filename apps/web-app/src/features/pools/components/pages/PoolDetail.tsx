@@ -59,7 +59,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
               : "Could not load pool data."}
           </p>
           <Link
-            href="/dashboard/pools"
+            href="/pools"
             className="text-[#229EDF] font-semibold text-sm hover:underline"
           >
             &larr; Back to Pools
@@ -74,7 +74,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   return (
     <PageContainer maxWidth="3xl" className="min-h-screen">
       <Link
-        href="/dashboard/pools"
+        href="/pools"
         className="inline-flex items-center gap-1 text-white/60 hover:text-white mb-6 font-medium text-sm transition-colors"
       >
         &larr; Back to Pools

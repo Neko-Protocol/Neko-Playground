@@ -26,7 +26,7 @@ interface PositionRow {
 
 function buildRows(
   pools: PoolInfo[],
-  positions: (PoolPosition | undefined)[],
+  positions: (PoolPosition | undefined)[]
 ): PositionRow[] {
   const rows: PositionRow[] = [];
 
@@ -82,7 +82,7 @@ const MyBalances: React.FC = () => {
   const positions = positionQueries.map((q) => q.data);
   const rows = React.useMemo(
     () => buildRows(allPools, positions),
-    [allPools, positions],
+    [allPools, positions]
   );
 
   const refetchAll = () => {
@@ -176,11 +176,17 @@ const MyBalances: React.FC = () => {
                         {(row.pool.tokens[0]?.code ?? "?")[0]}
                       </div>
                       <div className="absolute left-4 w-6 h-6 rounded-full bg-[#229EDF]/60 border-2 border-[#1C1C1C] flex items-center justify-center text-white text-[10px] font-bold">
-                        {(row.pool.tokens[1]?.code ?? row.pool.tokens[0]?.code ?? "?")[0]}
+                        {
+                          (row.pool.tokens[1]?.code ??
+                            row.pool.tokens[0]?.code ??
+                            "?")[0]
+                        }
                       </div>
                     </div>
                     <span className="text-white font-medium text-sm">
-                      {row.pool.tokens.map((t: TokenInfo) => t.code).join(" / ")}
+                      {row.pool.tokens
+                        .map((t: TokenInfo) => t.code)
+                        .join(" / ")}
                     </span>
                   </div>
                 </td>
@@ -200,9 +206,7 @@ const MyBalances: React.FC = () => {
                 </td>
                 <td className="px-4 py-4 text-right">
                   <button
-                    onClick={() =>
-                      router.push(`/dashboard/pools/${row.pool.id}`)
-                    }
+                    onClick={() => router.push(`/pools/${row.pool.id}`)}
                     className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-3 py-1.5 text-white text-xs font-semibold transition-colors"
                   >
                     View Pool
