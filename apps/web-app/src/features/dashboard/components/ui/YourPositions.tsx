@@ -12,9 +12,11 @@ const YourPositions: React.FC = () => {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-1">Your Positions</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
+            Your Positions
+          </h2>
           <p className="text-white/40 text-sm">Active pool positions</p>
         </div>
         <Link

@@ -23,7 +23,7 @@ function ColHeader({
   tooltip?: string;
 }) {
   return (
-    <th className="px-4 py-3 text-left">
+    <th className="px-3 sm:px-4 py-3 text-left">
       <div className="flex items-center gap-1.5 text-white/40 text-xs font-semibold uppercase tracking-wide">
         <Icon className="h-3.5 w-3.5" />
         {label}
@@ -45,9 +45,11 @@ const AssetBreakdown: React.FC = () => {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-1">Top Pools</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
+            Top Pools
+          </h2>
           <p className="text-white/40 text-sm">
             Overview of the most active pools
           </p>
@@ -61,8 +63,8 @@ const AssetBreakdown: React.FC = () => {
         </Link>
       </div>
 
-      <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
-        <table className="w-full">
+      <div className="w-full rounded-2xl overflow-x-auto overflow-y-hidden border border-white/5 bg-[#1C1C1C]">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="border-b border-white/5">
               <ColHeader icon={Hash} label="ID" />
@@ -105,7 +107,7 @@ const AssetBreakdown: React.FC = () => {
                   className="border-b border-white/5 last:border-b-0 hover:bg-white/2 transition-colors"
                 >
                   {/* ID */}
-                  <td className="px-4 py-3.5">
+                  <td className="px-3 sm:px-4 py-3.5">
                     <span
                       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
                         asset.isActive
@@ -132,7 +134,7 @@ const AssetBreakdown: React.FC = () => {
                   </td>
 
                   {/* Pool */}
-                  <td className="px-4 py-3.5">
+                  <td className="px-3 sm:px-4 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className="relative w-9 h-6 shrink-0">
                         <div className="absolute left-0 top-0 h-6 w-6 rounded-full border-2 border-[#1C1C1C] bg-[#1a2a4a] flex items-center justify-center text-white text-[9px] font-bold">
@@ -152,21 +154,21 @@ const AssetBreakdown: React.FC = () => {
                   </td>
 
                   {/* ROI */}
-                  <td className="px-4 py-3.5">
+                  <td className="px-3 sm:px-4 py-3.5">
                     <span className="text-white text-sm font-medium">
                       {asset.roi}
                     </span>
                   </td>
 
                   {/* Fee APY */}
-                  <td className="px-4 py-3.5">
+                  <td className="px-3 sm:px-4 py-3.5">
                     <span className="text-white text-sm font-medium">
                       {asset.feeApy}
                     </span>
                   </td>
 
                   {/* Liquidity */}
-                  <td className="px-4 py-3.5">
+                  <td className="px-3 sm:px-4 py-3.5">
                     <span className="text-white text-sm font-medium">
                       {asset.liquidity}
                     </span>

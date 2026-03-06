@@ -10,6 +10,7 @@ import type { PoolAction, TokenInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { useWallet } from "@/hooks/useWallet";
 import { usePoolDetail } from "@/features/pools/hooks/usePoolDetail";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { PoolActionModal } from "../PoolActionModal";
 
 interface PoolDetailProps {
@@ -71,243 +72,242 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   const { token1, token2, tvlFormatted, apyFormatted, typeLabel } = pool;
 
   return (
-    <div className="w-full min-h-screen px-4 py-8">
-      <div className="max-w-3xl mx-auto">
-        <Link
-          href="/pools"
-          className="inline-flex items-center gap-1 text-white/60 hover:text-white mb-6 font-medium text-sm transition-colors"
-        >
-          &larr; Back to Pools
-        </Link>
+    <PageContainer maxWidth="3xl" className="min-h-screen">
+      <Link
+        href="/pools"
+        className="inline-flex items-center gap-1 text-white/60 hover:text-white mb-6 font-medium text-sm transition-colors"
+      >
+        &larr; Back to Pools
+      </Link>
 
-        <div className="rounded-2xl bg-[#1C1C1C] p-8 border border-white/5 relative overflow-hidden">
-          {/* Header */}
-          <div className="relative z-10 mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="relative w-16 h-10">
-                {(() => {
-                  const icon1 = getTokenIcon({
-                    type: "contract",
-                    code: token1,
-                  });
-                  const icon2 = getTokenIcon({
-                    type: "contract",
-                    code: token2,
-                  });
-                  return (
-                    <>
-                      <div className="absolute left-0 w-10 h-10 rounded-full bg-neko-teal border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md">
-                        {icon1 ? (
-                          <Image
-                            src={icon1}
-                            alt={token1}
-                            width={32}
-                            height={32}
-                            unoptimized
-                          />
-                        ) : (
-                          <span className="text-white text-sm font-bold">
-                            {token1[0]}
-                          </span>
-                        )}
-                      </div>
-                      <div className="absolute left-8 w-10 h-10 rounded-full bg-neko-teal-light border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md">
-                        {icon2 ? (
-                          <Image
-                            src={icon2}
-                            alt={token2}
-                            width={32}
-                            height={32}
-                            unoptimized
-                          />
-                        ) : (
-                          <span className="text-neko-navy text-sm font-bold">
-                            {token2[0]}
-                          </span>
-                        )}
-                      </div>
-                    </>
-                  );
-                })()}
+      <div className="rounded-2xl bg-[#1C1C1C] p-8 border border-white/5 relative overflow-hidden">
+        {/* Header */}
+        <div className="relative z-10 mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            {/* Icon container sized to fit both overlapping circles without overflowing into text */}
+            <div className="relative w-18 h-10 shrink-0 flex items-center">
+              {(() => {
+                const icon1 = getTokenIcon({
+                  type: "contract",
+                  code: token1,
+                });
+                const icon2 = getTokenIcon({
+                  type: "contract",
+                  code: token2,
+                });
+                return (
+                  <>
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-neko-teal border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md z-1">
+                      {icon1 ? (
+                        <Image
+                          src={icon1}
+                          alt={token1}
+                          width={32}
+                          height={32}
+                          unoptimized
+                        />
+                      ) : (
+                        <span className="text-white text-sm font-bold">
+                          {token1[0]}
+                        </span>
+                      )}
+                    </div>
+                    <div className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-neko-teal-light border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md z-2">
+                      {icon2 ? (
+                        <Image
+                          src={icon2}
+                          alt={token2}
+                          width={32}
+                          height={32}
+                          unoptimized
+                        />
+                      ) : (
+                        <span className="text-neko-navy text-sm font-bold">
+                          {token2[0]}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-white wrap-break-word">
+                {pool.name || `${token1} / ${token2}`}
+              </h1>
+              <div className="inline-block bg-white/10 text-white text-xs font-semibold px-2 py-1 rounded-md mt-1">
+                {typeLabel}
               </div>
+            </div>
+            <div
+              className={`shrink-0 w-3 h-3 rounded-full ${
+                pool.state === "active" ? "bg-[#229EDF]" : "bg-gray-400"
+              } animate-pulse`}
+            />
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
+            <p className="text-white/40 text-xs mb-1">TVL</p>
+            <p className="text-white text-lg font-bold">{tvlFormatted}</p>
+          </div>
+          <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
+            <p className="text-white/40 text-xs mb-1">APY</p>
+            <p className="text-white text-lg font-bold">{apyFormatted}</p>
+          </div>
+          <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
+            <p className="text-white/40 text-xs mb-1">Status</p>
+            <p className="text-white text-lg font-bold capitalize">
+              {pool.state}
+            </p>
+          </div>
+          <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
+            <p className="text-white/40 text-xs mb-1">Tokens</p>
+            <p className="text-white text-lg font-bold">
+              {pool.tokens.map((t: TokenInfo) => t.code).join(" / ")}
+            </p>
+          </div>
+        </div>
+
+        {/* Your position */}
+        {address && (
+          <div className="relative z-10 mb-8 rounded-xl border border-[#229EDF]/30 bg-[#2A2A2A] p-4">
+            <h3 className="text-white/40 text-sm font-semibold mb-3">
+              Tu posición
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-white">
-                  {pool.name || `${token1} / ${token2}`}
-                </h1>
-                <div className="inline-block bg-white/10 text-white text-xs font-semibold px-2 py-1 rounded-md mt-1">
-                  {typeLabel}
-                </div>
+                <p className="text-white/40 text-xs mb-1">
+                  {pool.type === "blend"
+                    ? "Total (incl. intereses)"
+                    : "Depositado"}
+                </p>
+                <p className="text-white text-lg font-bold">
+                  {position?.depositedFormatted ?? "0"}{" "}
+                  {pool.tokens[0]?.code ?? ""}
+                </p>
               </div>
-              <div
-                className={`ml-auto w-3 h-3 rounded-full ${
-                  pool.state === "active" ? "bg-[#229EDF]" : "bg-gray-400"
-                } animate-pulse`}
-              />
+              {pool.type !== "blend" &&
+                position?.rewardsFormatted != null &&
+                position.rewardsFormatted !== "0" && (
+                  <div>
+                    <p className="text-white/40 text-xs mb-1">Recompensas</p>
+                    <p className="text-white text-lg font-bold">
+                      {position.rewardsFormatted}
+                    </p>
+                  </div>
+                )}
+              {pool.type === "blend" &&
+                position?.metadata?.liabilities != null &&
+                String(position.metadata.liabilities) !== "0" && (
+                  <div>
+                    <p className="text-white/40 text-xs mb-1">Prestado</p>
+                    <p className="text-white text-lg font-bold">
+                      {fromSmallestUnit(
+                        String(position.metadata.liabilities),
+                        pool.tokens[0]?.decimals ?? 7
+                      )}{" "}
+                      {pool.tokens[0]?.code ?? ""}
+                    </p>
+                  </div>
+                )}
             </div>
           </div>
+        )}
 
-          {/* Stats Grid */}
-          <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
-              <p className="text-white/40 text-xs mb-1">TVL</p>
-              <p className="text-white text-lg font-bold">{tvlFormatted}</p>
-            </div>
-            <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
-              <p className="text-white/40 text-xs mb-1">APY</p>
-              <p className="text-white text-lg font-bold">{apyFormatted}</p>
-            </div>
-            <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
-              <p className="text-white/40 text-xs mb-1">Status</p>
-              <p className="text-white text-lg font-bold capitalize">
-                {pool.state}
-              </p>
-            </div>
-            <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
-              <p className="text-white/40 text-xs mb-1">Tokens</p>
-              <p className="text-white text-lg font-bold">
-                {pool.tokens.map((t: TokenInfo) => t.code).join(" / ")}
-              </p>
-            </div>
-          </div>
-
-          {/* Your position */}
-          {address && (
-            <div className="relative z-10 mb-8 rounded-xl border border-[#229EDF]/30 bg-[#2A2A2A] p-4">
-              <h3 className="text-white/40 text-sm font-semibold mb-3">
-                Tu posición
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-white/40 text-xs mb-1">
-                    {pool.type === "blend"
-                      ? "Total (incl. intereses)"
-                      : "Depositado"}
-                  </p>
-                  <p className="text-white text-lg font-bold">
-                    {position?.depositedFormatted ?? "0"}{" "}
-                    {pool.tokens[0]?.code ?? ""}
-                  </p>
-                </div>
-                {pool.type !== "blend" &&
-                  position?.rewardsFormatted != null &&
-                  position.rewardsFormatted !== "0" && (
-                    <div>
-                      <p className="text-white/40 text-xs mb-1">Recompensas</p>
-                      <p className="text-white text-lg font-bold">
-                        {position.rewardsFormatted}
-                      </p>
-                    </div>
-                  )}
-                {pool.type === "blend" &&
-                  position?.metadata?.liabilities != null &&
-                  String(position.metadata.liabilities) !== "0" && (
-                    <div>
-                      <p className="text-white/40 text-xs mb-1">Prestado</p>
-                      <p className="text-white text-lg font-bold">
-                        {fromSmallestUnit(
-                          String(position.metadata.liabilities),
-                          pool.tokens[0]?.decimals ?? 7
-                        )}{" "}
-                        {pool.tokens[0]?.code ?? ""}
-                      </p>
-                    </div>
-                  )}
-              </div>
-            </div>
+        {/* Actions */}
+        <div className="relative z-10 flex flex-wrap gap-3">
+          {(pool.type === "blend" || pool.type === "neko") && (
+            <button
+              className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors"
+              onClick={() => setActionModal("deposit")}
+            >
+              Lend
+            </button>
           )}
-
-          {/* Actions */}
-          <div className="relative z-10 flex flex-wrap gap-3">
-            {(pool.type === "blend" || pool.type === "neko") && (
+          {supportedActions.includes("deposit") &&
+            pool.type !== "blend" &&
+            pool.type !== "neko" && (
               <button
-                className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors"
+                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
                 onClick={() => setActionModal("deposit")}
               >
-                Lend
+                Deposit
               </button>
             )}
-            {supportedActions.includes("deposit") &&
-              pool.type !== "blend" &&
-              pool.type !== "neko" && (
-                <button
-                  className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
-                  onClick={() => setActionModal("deposit")}
-                >
-                  Deposit
-                </button>
-              )}
-            {supportedActions.includes("withdraw") && (
-              <button
-                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
-                onClick={() => setActionModal("withdraw")}
-              >
-                Withdraw
-              </button>
-            )}
-            {supportedActions.includes("borrow") && (
-              <button
-                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
-                onClick={() => setActionModal("borrow")}
-              >
-                Borrow
-              </button>
-            )}
-            {supportedActions.includes("repay") && (
-              <button
-                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
-                onClick={() => setActionModal("repay")}
-              >
-                Repay
-              </button>
-            )}
-            {supportedActions.includes("supplyCollateral") && (
-              <button
-                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
-                onClick={() => setActionModal("supplyCollateral")}
-              >
-                Supply Collateral
-              </button>
-            )}
-            {supportedActions.includes("withdrawCollateral") && (
-              <button
-                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
-                onClick={() => setActionModal("withdrawCollateral")}
-              >
-                Withdraw Collateral
-              </button>
-            )}
-            {supportedActions.includes("claimRewards") && (
-              <button
-                className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors"
-                onClick={() => setActionModal("claimRewards")}
-              >
-                Claim Rewards
-              </button>
-            )}
-          </div>
-
-          {actionModal && (
-            <PoolActionModal
-              isOpen={!!actionModal}
-              onClose={() => setActionModal(null)}
-              pool={pool}
-              poolId={contractid}
-              action={actionModal}
-            />
+          {supportedActions.includes("withdraw") && (
+            <button
+              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
+              onClick={() => setActionModal("withdraw")}
+            >
+              Withdraw
+            </button>
           )}
-
-          {/* Contract ID (collapsed) */}
-          <details className="relative z-10 mt-8">
-            <summary className="text-white/40 text-sm cursor-pointer hover:text-white transition-colors">
-              Contract ID
-            </summary>
-            <div className="mt-2 bg-[#2A2A2A] text-[#229EDF] font-mono text-xs px-4 py-2 rounded-lg break-all border border-white/10">
-              {contractid}
-            </div>
-          </details>
+          {supportedActions.includes("borrow") && (
+            <button
+              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
+              onClick={() => setActionModal("borrow")}
+            >
+              Borrow
+            </button>
+          )}
+          {supportedActions.includes("repay") && (
+            <button
+              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
+              onClick={() => setActionModal("repay")}
+            >
+              Repay
+            </button>
+          )}
+          {supportedActions.includes("supplyCollateral") && (
+            <button
+              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
+              onClick={() => setActionModal("supplyCollateral")}
+            >
+              Supply Collateral
+            </button>
+          )}
+          {supportedActions.includes("withdrawCollateral") && (
+            <button
+              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
+              onClick={() => setActionModal("withdrawCollateral")}
+            >
+              Withdraw Collateral
+            </button>
+          )}
+          {supportedActions.includes("claimRewards") && (
+            <button
+              className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors"
+              onClick={() => setActionModal("claimRewards")}
+            >
+              Claim Rewards
+            </button>
+          )}
         </div>
+
+        {actionModal && (
+          <PoolActionModal
+            isOpen={!!actionModal}
+            onClose={() => setActionModal(null)}
+            pool={pool}
+            poolId={contractid}
+            action={actionModal}
+          />
+        )}
+
+        {/* Contract ID (collapsed) */}
+        <details className="relative z-10 mt-8">
+          <summary className="text-white/40 text-sm cursor-pointer hover:text-white transition-colors">
+            Contract ID
+          </summary>
+          <div className="mt-2 bg-[#2A2A2A] text-[#229EDF] font-mono text-xs px-4 py-2 rounded-lg break-all border border-white/10">
+            {contractid}
+          </div>
+        </details>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

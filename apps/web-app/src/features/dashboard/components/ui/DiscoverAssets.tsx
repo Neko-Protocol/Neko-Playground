@@ -21,9 +21,9 @@ const DiscoverAssets: React.FC = () => {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
             Discover Assets
           </h2>
           <p className="text-white/40 text-sm">
@@ -53,7 +53,7 @@ const DiscoverAssets: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {filteredAssets
             .slice(0, DASHBOARD_ASSET_LIMIT)
             .map((asset: Asset) => (

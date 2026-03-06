@@ -34,7 +34,9 @@ const QuickActions: React.FC = () => {
   if (!address) {
     return (
       <div className="w-full">
-        <h2 className="text-2xl font-bold text-white mb-1">Get Started</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
+          Get Started
+        </h2>
         <p className="text-white/40 text-sm mb-5">
           Connect your wallet to start using the protocol
         </p>
@@ -63,9 +65,11 @@ const QuickActions: React.FC = () => {
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-bold text-white mb-1">Quick Actions</h2>
+      <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
+        Quick Actions
+      </h2>
       <p className="text-white/40 text-sm mb-5">Jump into the protocol</p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
         {actions.map((action) => (
           <Link
             key={action.href}

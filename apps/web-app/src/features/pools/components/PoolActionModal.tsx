@@ -113,7 +113,7 @@ export function PoolActionModal({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 animate__animated animate__fadeIn animate__faster"
         onClick={handleClose}
       >
         <div
@@ -121,7 +121,7 @@ export function PoolActionModal({
           aria-hidden
         />
         <div
-          className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-[#334EAC]/20 overflow-hidden"
+          className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-[#334EAC]/20 overflow-hidden animate__animated animate__fadeInUp animate__faster"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between p-6 border-b border-[#334EAC]/20">
