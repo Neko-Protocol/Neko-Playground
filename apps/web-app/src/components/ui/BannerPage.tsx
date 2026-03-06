@@ -60,21 +60,21 @@ export function BannerPage({
   return (
     <div
       className={cn(
-        "relative w-full max-w-[1169px] overflow-hidden rounded-[24px] bg-[#229EDF]",
-        "mx-auto flex min-h-[160px] sm:min-h-[210px] items-center pt-6",
+        "relative w-full max-w-full min-w-0 overflow-hidden rounded-2xl sm:rounded-[24px] bg-[#229EDF]",
+        "mx-auto flex min-h-[140px] sm:min-h-[210px] items-center pt-6",
         className
       )}
     >
-      {/* Left — text content */}
-      <div className="relative z-10 flex flex-col justify-center gap-2 sm:gap-2.5 px-5 sm:px-8 py-5 sm:py-6">
+      {/* Left — text content: min-w-0 so flex allows shrinking and text wraps */}
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center gap-2 sm:gap-2.5 px-4 sm:px-8 py-4 sm:py-6">
         {badge && <Badge label={badge} />}
 
-        <h2 className="text-2xl sm:text-[2rem] font-bold leading-tight tracking-tight text-white">
+        <h2 className="text-xl sm:text-[2rem] font-bold leading-tight tracking-tight text-white wrap-break-word">
           {title}
         </h2>
 
         {subtitle && (
-          <p className="max-w-xs sm:max-w-sm text-xs sm:text-sm leading-relaxed text-white/70">
+          <p className="w-full max-w-full min-w-0 text-xs sm:text-sm leading-relaxed text-white/90 wrap-break-word">
             {subtitle}
           </p>
         )}

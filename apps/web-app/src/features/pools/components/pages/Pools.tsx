@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { Search } from "lucide-react";
 import { BannerPage } from "@/components/ui/BannerPage";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { usePoolsData } from "@/features/pools/hooks/usePoolsData";
 import type { PoolTypeFilter } from "@/features/pools/hooks/usePoolsData";
 import { PoolCard } from "@/features/pools/components/ui/PoolCard";
@@ -33,7 +34,7 @@ const Pools: React.FC = () => {
   const isLendingType = (type: string) => type === "blend" || type === "neko";
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-6 py-8">
+    <PageContainer maxWidth="7xl">
       <BannerPage
         title="Liquidity Pools"
         subtitle="Explore and join liquidity pools to earn fees and interest on your assets"
@@ -130,7 +131,7 @@ const Pools: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
               {pools.map((pool) => (
                 <PoolCard
                   key={pool.id}
@@ -156,7 +157,7 @@ const Pools: React.FC = () => {
       )}
 
       {activeTab === "balances" && <MyBalances />}
-    </div>
+    </PageContainer>
   );
 };
 

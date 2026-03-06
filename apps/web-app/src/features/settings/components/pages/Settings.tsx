@@ -2,6 +2,7 @@
 
 import React from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { SettingsWalletSection } from "../ui/SettingsWalletSection";
 import { SettingsNetworkSection } from "../ui/SettingsNetworkSection";
@@ -10,7 +11,7 @@ export default function Settings() {
   const { copy, copiedKey } = useCopyToClipboard();
 
   return (
-    <div className="w-full max-w-4xl px-4 py-8">
+    <PageContainer maxWidth="4xl">
       <BannerPage
         title="Settings"
         subtitle="Manage your wallet connection and inspect the current network configuration."
@@ -22,6 +23,6 @@ export default function Settings() {
         <SettingsWalletSection copy={copy} copiedKey={copiedKey} />
         <SettingsNetworkSection copy={copy} copiedKey={copiedKey} />
       </div>
-    </div>
+    </PageContainer>
   );
 }
