@@ -14,13 +14,11 @@ const YourPositions: React.FC = () => {
     <div className="w-full">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-1">
-            Your Positions
-          </h2>
+          <h2 className="text-2xl font-bold text-white mb-1">Your Positions</h2>
           <p className="text-white/40 text-sm">Active pool positions</p>
         </div>
         <Link
-          href="/dashboard/pools"
+          href="/pools"
           className="flex items-center gap-1.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
         >
           Manage
@@ -43,7 +41,7 @@ const YourPositions: React.FC = () => {
             Deposit into a pool to start earning yield
           </p>
           <Link
-            href="/dashboard/pools"
+            href="/pools"
             className="inline-flex items-center gap-1.5 rounded-full bg-[#2A2A2A] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#333] transition-colors"
           >
             Explore Pools
@@ -55,7 +53,7 @@ const YourPositions: React.FC = () => {
           {positions.map(({ pool, position }) => (
             <Link
               key={pool.id}
-              href={`/dashboard/pools/${encodeURIComponent(pool.id)}`}
+              href={`/pools/${encodeURIComponent(pool.id)}`}
               className="block rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 hover:border-white/10 hover:bg-[#222222] transition-all duration-200"
             >
               <div className="flex items-center justify-between">

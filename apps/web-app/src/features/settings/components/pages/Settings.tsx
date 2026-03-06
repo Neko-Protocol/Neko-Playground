@@ -10,7 +10,7 @@ export default function Settings() {
   const { copy, copiedKey } = useCopyToClipboard();
 
   return (
-    <div className="w-full max-w-4xl px-4 py-8">
+    <div className="w-full max-w-4xl mx-auto px-4 py-8">
       <BannerPage
         title="Settings"
         subtitle="Manage your wallet connection and inspect the current network configuration."

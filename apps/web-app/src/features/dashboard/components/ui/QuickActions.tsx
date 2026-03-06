@@ -10,19 +10,19 @@ const actions = [
   {
     label: "Swap Tokens",
     description: "Exchange tokens instantly",
-    href: "/dashboard/swap",
+    href: "/swap",
     icon: ArrowLeftRight,
   },
   {
     label: "Add Liquidity",
     description: "Earn yield in pools",
-    href: "/dashboard/pools",
+    href: "/pools",
     icon: Droplets,
   },
   {
     label: "Explore Assets",
     description: "Browse RWA tokens & prices",
-    href: "/dashboard/discover",
+    href: "/discover",
     icon: Compass,
   },
 ] as const;

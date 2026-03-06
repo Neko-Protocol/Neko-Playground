@@ -28,10 +28,10 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     () =>
       pool
         ? pool.supportedActions.filter((a: PoolAction) =>
-            orchestrator.supportsAction(contractid, a),
+            orchestrator.supportsAction(contractid, a)
           )
         : [],
-    [contractid, pool],
+    [contractid, pool]
   );
 
   if (isLoading) {
@@ -58,7 +58,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
               : "Could not load pool data."}
           </p>
           <Link
-            href="/dashboard/pools"
+            href="/pools"
             className="text-[#229EDF] font-semibold text-sm hover:underline"
           >
             &larr; Back to Pools
@@ -74,7 +74,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     <div className="w-full min-h-screen px-4 py-8">
       <div className="max-w-3xl mx-auto">
         <Link
-          href="/dashboard/pools"
+          href="/pools"
           className="inline-flex items-center gap-1 text-white/60 hover:text-white mb-6 font-medium text-sm transition-colors"
         >
           &larr; Back to Pools
@@ -206,7 +206,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
                       <p className="text-white text-lg font-bold">
                         {fromSmallestUnit(
                           String(position.metadata.liabilities),
-                          pool.tokens[0]?.decimals ?? 7,
+                          pool.tokens[0]?.decimals ?? 7
                         )}{" "}
                         {pool.tokens[0]?.code ?? ""}
                       </p>

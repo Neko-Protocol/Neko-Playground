@@ -31,7 +31,7 @@ const DiscoverAssets: React.FC = () => {
           </p>
         </div>
         <Link
-          href="/dashboard/discover"
+          href="/discover"
           className="flex items-center gap-1.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
         >
           View all

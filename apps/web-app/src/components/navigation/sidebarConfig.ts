@@ -9,11 +9,11 @@ import {
 
 export const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Swap", href: "/dashboard/swap", icon: ArrowLeftRight },
-  { label: "Borrow", href: "/dashboard/borrowing", icon: Landmark },
-  { label: "Lend", href: "/dashboard/lending", icon: TrendingUp },
-  { label: "Discover", href: "/dashboard/discover", icon: BarChart2 },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
+  { label: "Swap", href: "/swap", icon: ArrowLeftRight },
+  { label: "Borrow", href: "/borrowing", icon: Landmark },
+  { label: "Lend", href: "/lending", icon: TrendingUp },
+  { label: "Discover", href: "/discover", icon: BarChart2 },
+  { label: "Settings", href: "/settings", icon: Settings },
 ] as const;
 
 export const CARD_STYLES = "rounded-[20px] bg-[#D3D3D3] p-5" as const;
