@@ -168,9 +168,10 @@ export const useBorrowPools = () => {
   return useQuery<BorrowPool[]>({
     queryKey: ["borrowPools"],
     queryFn,
-    staleTime: 60_000,
+    staleTime: 2 * 60_000, // 2 min: avoid refetch when re-entering tab
     gcTime: 10 * 60_000,
-    refetchInterval: 60_000,
+    refetchInterval: 2 * 60_000, // 2 min background refresh
+    refetchOnWindowFocus: false, // don't refetch every time user switches to tab
     placeholderData: (prev) => prev,
     retry: 2,
     throwOnError: false,

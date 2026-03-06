@@ -48,8 +48,8 @@ const MainStats: React.FC = () => {
   const isLoading = isFetchingBalances || isLoadingPortfolio;
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+    <div className="space-y-4 sm:space-y-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
         <StatCard
           icon={<DollarSign className="h-5 w-5" />}
           label="Total Portfolio Value"
@@ -69,7 +69,7 @@ const MainStats: React.FC = () => {
         />
       </div>
 
-      <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-6">
+      <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-4 sm:p-6">
         <h3 className="text-white font-semibold text-sm mb-4">
           Wallet Holdings
         </h3>

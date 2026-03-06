@@ -14,6 +14,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { PriceChart } from "../ui/PriceChart";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { ROUTES } from "../../constants/oracle";
 import { TIMESTAMP_MS_PER_SECOND } from "../../constants/oracle";
 import type { PriceChartDatum } from "../../types/stocks";
@@ -112,7 +113,7 @@ const AssetDetail: React.FC = () => {
 
   if (!stockInfo) {
     return (
-      <div className="w-full max-w-5xl mx-auto px-10 py-10">
+      <PageContainer maxWidth="5xl">
         <Link
           href={ROUTES.STOCKS_BASE}
           className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors mb-8"
@@ -123,12 +124,12 @@ const AssetDetail: React.FC = () => {
         <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
           <p className="text-white/40 text-lg">Asset not found</p>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-10 py-10">
+    <PageContainer maxWidth="5xl">
       <Link
         href={ROUTES.STOCKS_BASE}
         className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors mb-8"
@@ -166,7 +167,10 @@ const AssetDetail: React.FC = () => {
                 </h1>
                 <span
                   className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold shrink-0"
-                  style={{ color: "#229EDF", backgroundColor: "rgba(34,158,223,0.10)" }}
+                  style={{
+                    color: "#229EDF",
+                    backgroundColor: "rgba(34,158,223,0.10)",
+                  }}
                 >
                   {symbolUpper}
                 </span>
@@ -182,7 +186,9 @@ const AssetDetail: React.FC = () => {
               <LoadingSpinner variant="spinner" size="md" />
             ) : currentPriceStr !== null ? (
               <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-white">{currentPriceStr}</span>
+                <span className="text-3xl font-bold text-white">
+                  {currentPriceStr}
+                </span>
                 {priceHistory && priceHistory.length >= 2 && (
                   <div
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold ${
@@ -191,8 +197,13 @@ const AssetDetail: React.FC = () => {
                         : "bg-red-500/10 text-red-400"
                     }`}
                   >
-                    {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                    {isPositive ? "+" : ""}{priceChange.toFixed(2)}%
+                    {isPositive ? (
+                      <TrendingUp className="h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4" />
+                    )}
+                    {isPositive ? "+" : ""}
+                    {priceChange.toFixed(2)}%
                   </div>
                 )}
               </div>
@@ -214,7 +225,7 @@ const AssetDetail: React.FC = () => {
           <PriceChart data={chartData} height={400} />
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

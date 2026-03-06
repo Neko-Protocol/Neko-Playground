@@ -1,6 +1,7 @@
 "use client";
 
 import { BannerPage } from "@/components/ui/BannerPage";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { useLend } from "../../hooks/useLend";
 import { LendTable } from "../ui/LendTable";
 import { LendModal } from "../ui/LendModal";
@@ -25,7 +26,7 @@ const Lend: React.FC = () => {
   } = useLend();
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <PageContainer maxWidth="6xl">
       <BannerPage
         title="Lend to Pools"
         subtitle="Supply liquidity to pools and earn interest on your assets"
@@ -57,7 +58,7 @@ const Lend: React.FC = () => {
           onRefreshBalance={() => void refreshBalance()}
         />
       )}
-    </div>
+    </PageContainer>
   );
 };
 

@@ -16,6 +16,7 @@ import {
   formatSwapAmount,
 } from "@/lib/helpers/tokenUtils";
 import { BannerPage } from "@/components/ui/BannerPage";
+import { PageContainer } from "@/components/ui/PageContainer";
 import TokenSelectorModal from "../ui/TokenSelectorModal";
 
 // Hooks
@@ -266,7 +267,7 @@ const Swap: React.FC = () => {
   const canGetQuote = address && amountIn && parseFloat(amountIn) > 0;
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-8">
+    <PageContainer maxWidth="4xl">
       {/* Banner */}
       <BannerPage
         title="Swap Currency"
@@ -427,7 +428,7 @@ const Swap: React.FC = () => {
           (tokenSelectorType === "from" ? tokenIn : tokenOut) as Token | string
         }
       />
-    </div>
+    </PageContainer>
   );
 };
 

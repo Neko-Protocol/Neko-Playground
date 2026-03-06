@@ -1,6 +1,7 @@
 "use client";
 
 import { BannerPage } from "@/components/ui/BannerPage";
+import { PageContainer } from "@/components/ui/PageContainer";
 import { useBorrow } from "../../hooks/useBorrow";
 import { BorrowTable } from "../ui/BorrowTable";
 import { BorrowModal } from "../ui/BorrowModal";
@@ -30,7 +31,7 @@ const Borrow: React.FC = () => {
   } = useBorrow();
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <PageContainer maxWidth="6xl">
       <BannerPage
         title="Borrow assets"
         subtitle="Select an option and start borrowing assets from liquidity pools"
@@ -67,7 +68,7 @@ const Borrow: React.FC = () => {
           onClearSuccess={clearSuccess}
         />
       )}
-    </div>
+    </PageContainer>
   );
 };
 
