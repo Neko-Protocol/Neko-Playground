@@ -12,11 +12,17 @@ export interface StatCardProps {
   className?: string;
 }
 
-export function StatCard({ icon, label, value, isLoading = false, className }: StatCardProps) {
+export function StatCard({
+  icon,
+  label,
+  value,
+  isLoading = false,
+  className,
+}: StatCardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 flex flex-col gap-3",
+        "rounded-2xl bg-[#1C1C1C] border border-white/5 p-4 sm:p-5 flex flex-col gap-3",
         className
       )}
     >
@@ -26,7 +32,7 @@ export function StatCard({ icon, label, value, isLoading = false, className }: S
           {icon}
         </div>
       </div>
-      <h3 className="text-3xl font-bold text-white">
+      <h3 className="text-2xl sm:text-3xl font-bold text-white wrap-break-word">
         {isLoading ? <LoadingSpinner variant="dots" size="md" /> : value}
       </h3>
     </div>
