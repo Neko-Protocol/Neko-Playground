@@ -8,7 +8,6 @@ import {
   useTransition,
 } from "react";
 
-/** Options accepted by the Stellar wallet's signTransaction. */
 interface StellarSignOptions {
   networkPassphrase?: string;
   address?: string;
@@ -44,10 +43,7 @@ export interface WalletContextType {
     xdr: string,
     options: StellarSignOptions
   ) => Promise<{ signedTxXdr: string }>;
-  /**
-   * Manually trigger a refetch of balances.
-   * Uses React Query's refetch mechanism.
-   */
+
   refetchBalances: () => Promise<void>;
 }
 
@@ -66,7 +62,6 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [isPending, startTransition] = useTransition();
   const popupLock = useRef(false);
 
-  // Use React Query hook for balances with intelligent polling
   const {
     data: balances = {},
     isFetching: isFetchingBalances,
@@ -90,9 +85,6 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const updateCurrentWalletState = async () => {
-    // There is no way, with StellarWalletsKit, to check if the wallet is
-    // installed/connected/authorized. We need to manage that on our side by
-    // checking our storage item.
     const walletId = storage.getItem(STORAGE_KEYS.walletId);
     const walletNetwork = storage.getItem(STORAGE_KEYS.walletNetwork);
     const walletAddr = storage.getItem(STORAGE_KEYS.walletAddress);
@@ -113,9 +105,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       nullify();
     } else {
       if (popupLock.current) return;
-      // If our storage item is there, then we try to get the user's address &
-      // network from their wallet. Note: `getAddress` MAY open their wallet
-      // extension, depending on which wallet they select!
+
       try {
         popupLock.current = true;
         const wallet = getWalletInstance();
@@ -138,11 +128,8 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           setNetworkPassphrase(n.networkPassphrase);
         }
       } catch (e) {
-        // If `getNetwork` or `getAddress` throw errors... sign the user out???
         nullify();
-        // then log the error (instead of throwing) so we have visibility
-        // into the error while working on Scaffold Stellar but we do not
-        // crash the app process
+
         console.error(e);
       } finally {
         popupLock.current = false;

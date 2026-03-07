@@ -3,10 +3,6 @@ import { useNotification } from "@/hooks/useNotification";
 
 const DEFAULT_RESET_MS = 1500;
 
-/**
- * Copy text to clipboard and track which key was last copied (for UI feedback).
- * Optionally shows a success notification.
- */
 export function useCopyToClipboard(options?: {
   resetMs?: number;
   showNotification?: boolean;

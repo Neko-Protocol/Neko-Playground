@@ -131,7 +131,7 @@ export function useLend() {
             decimals,
             address
           );
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           const signedApprove = await signTransaction(approveXdr as any, {
             networkPassphrase: passphrase,
             address,
@@ -147,7 +147,7 @@ export function useLend() {
             decimals,
             address
           );
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           const signedDeposit = await signTransaction(depositXdr as any, {
             networkPassphrase: passphrase,
             address,
@@ -165,7 +165,7 @@ export function useLend() {
             decimals,
             address
           );
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           const signedWithdraw = await signTransaction(withdrawXdr as any, {
             networkPassphrase: passphrase,
             address,

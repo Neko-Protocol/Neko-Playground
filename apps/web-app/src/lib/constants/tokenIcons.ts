@@ -1,21 +1,8 @@
-/** Maps Stellar token symbols to their icon paths */
-export const STELLAR_TOKEN_ICON_MAP: Record<string, string> = {
-  XLM: "/assets/xlm-logo.png",
-  USDC: "/assets/usdc-logo.png",
-  USTRY: "/assets/ustry-logo.png",
-  TESOURO: "/assets/tesouro-logo.png",
-  CETES: "/assets/cetes-logo.png",
-  USDY: "/assets/usdy-logo.png",
-  PYUSD: "/assets/pyusd-logo.png",
-};
+import {
+  getTokenIconMap,
+  getContractToCodeMap,
+} from "@/lib/constants/assets.config";
 
-/** Hardcoded Stellar contract address → symbol fallback (used when getAvailableTokens fails) */
-export const STELLAR_FALLBACK_CONTRACTS: Record<string, string> = {
-  CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC: "XLM",
-  CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA: "USDC",
-  CC6SODKGOTFEDWVNPR6ESJC3GL7NC5Y4DVFKYGATZJ74F2YXHTW4RJ6D: "USTRY",
-  CA55OO3U556GXABJKDYP3QCGZ6AFNZPB27TROYP42AQPFFYPKU5EDOUH: "TESOURO",
-  CCGWKS4GLAGPYIAOLBH6JM5RKUPMUCN47VRAEXAJWJFKXSXQ33VIRUAA: "CETES",
-  CBVLFSVBZGHVAH6CV4JQYPBJSX75VFR2NJC7CQX7QKQ7KOLGQZOZAGQK: "USDY",
-  CBCB5UDYZENTIUVVA7SHQOCVVCDXDMHEKJHHFM3OQKU2E5CAF2B62TIO: "PYUSD",
-};
+export const STELLAR_TOKEN_ICON_MAP = getTokenIconMap();
+
+export const STELLAR_FALLBACK_CONTRACTS = getContractToCodeMap();

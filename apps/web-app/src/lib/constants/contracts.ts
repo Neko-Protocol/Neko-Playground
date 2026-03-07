@@ -1,11 +1,3 @@
-/**
- * Contract Configuration
- * Centralized contract IDs and network configuration for Stellar/Soroban
- */
-
-// Re-export generated contract errors
-// These are auto-generated from Rust source files by scripts/generate-error-types.js
-// Run `npm run generate:errors` to regenerate
 export {
   CONTRACT_ERRORS,
   CONTRACT_ERRORS_BY_CONTRACT,

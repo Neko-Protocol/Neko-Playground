@@ -1,18 +1,13 @@
-/**
- * Stellar Price Service
- * Handles token price fetching for Stellar: RWA Oracle and CoinGecko (non-RWA).
- */
-
 import oracleClient from "@/lib/clients/oracle";
-import { PRICE_ERROR_DELAY_MS, RWA_TOKENS } from "@/lib/constants/wallet";
-
-/**
- * Map token codes to CoinGecko IDs (for non-RWA tokens)
- */
-const TOKEN_PRICE_MAP: Record<string, string> = {
-  XLM: "stellar",
-  USDC: "usd-coin",
-};
+import {
+  PRICE_ERROR_DELAY_MS,
+  STABLECOIN_FALLBACK_USD,
+} from "@/lib/constants/wallet";
+import {
+  getAssetsConfig,
+  getRwaTokenCodes,
+  getStablecoinCodes,
+} from "@/lib/constants/assets.config";
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
@@ -21,16 +16,10 @@ const REQUEST_TIMEOUT_MS = 10000;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class StellarPriceService {
-  /**
-   * Whether the given token code is an RWA token (oracle-backed).
-   */
   isRWAToken(tokenCode: string): boolean {
-    return RWA_TOKENS.includes(tokenCode);
+    return getRwaTokenCodes().includes(tokenCode);
   }
 
-  /**
-   * Get token price from RWA Oracle by contract address.
-   */
   async getRWAOraclePrice(contractAddress: string): Promise<number> {
     try {
       const asset: { tag: "Stellar"; values: readonly [string] } = {
@@ -50,9 +39,11 @@ export class StellarPriceService {
               timestamp: bigint | string | number;
             };
           }
-        | { tag: "None"; values: void };
+        | { tag: "None"; values: void }
+        | null
+        | undefined;
 
-      if (optionResult.tag === "Some") {
+      if (optionResult?.tag === "Some") {
         const priceData = optionResult.values;
         let validTimestamp = Number(priceData.timestamp);
         const now = Math.floor(Date.now() / 1000);
@@ -78,16 +69,13 @@ export class StellarPriceService {
     }
   }
 
-  /**
-   * Get token price in USD from CoinGecko (for non-RWA tokens).
-   * Uses retries with exponential backoff. No fallback prices; returns 0 on failure so UI can show an error.
-   */
   async getTokenPrice(tokenCode: string, retryCount = 0): Promise<number> {
     if (!tokenCode || typeof tokenCode !== "string") {
       return 0;
     }
 
-    const coinGeckoId = TOKEN_PRICE_MAP[tokenCode];
+    const assets = getAssetsConfig();
+    const coinGeckoId = assets[tokenCode]?.coinGeckoId;
 
     if (!coinGeckoId) {
       console.warn(`No CoinGecko ID mapping found for token: ${tokenCode}`);
@@ -155,6 +143,31 @@ export class StellarPriceService {
       await sleep(PRICE_ERROR_DELAY_MS);
       return 0;
     }
+  }
+
+  async getPrice(tokenCode: string, contractAddress?: string): Promise<number> {
+    if (!tokenCode || typeof tokenCode !== "string") return 0;
+
+    const assets = getAssetsConfig();
+    const asset = assets[tokenCode];
+    const isStablecoin = getStablecoinCodes().includes(tokenCode);
+
+    if (asset?.priceSource === "oracle" && contractAddress) {
+      const price = await this.getRWAOraclePrice(contractAddress);
+      if (price > 0) return price;
+      if (isStablecoin) return STABLECOIN_FALLBACK_USD;
+      return 0;
+    }
+
+    if (asset?.coinGeckoId) {
+      const price = await this.getTokenPrice(tokenCode);
+      if (price > 0) return price;
+      if (isStablecoin) return STABLECOIN_FALLBACK_USD;
+      return 0;
+    }
+
+    if (isStablecoin) return STABLECOIN_FALLBACK_USD;
+    return 0;
   }
 }
 

@@ -18,11 +18,6 @@ async function fetch24hChanges(
   return res.json();
 }
 
-/**
- * Computes the portfolio-weighted 24h price change using CoinGecko data.
- * Only tokens with a CoinGecko ID in COINGECKO_IDS are included.
- * Returns a signed percentage string like "+2.4%" or "-1.1%", or null if unavailable.
- */
 export function use24hPortfolioChange(balances: MappedBalances) {
   const entries = Object.values(balances).flatMap((b) => {
     let code: string | null = null;

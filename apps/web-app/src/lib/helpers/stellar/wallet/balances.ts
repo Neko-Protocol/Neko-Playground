@@ -1,5 +1,8 @@
 import { Horizon } from "@stellar/stellar-sdk";
 import { stellarNetwork, horizonUrl } from "@/lib/constants/network";
+import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap/tokens";
+import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
+import { parseBalance } from "@/lib/helpers/formatUtils";
 
 const getHorizon = (): Horizon.Server | null => {
   if (typeof window === "undefined") {
@@ -19,7 +22,19 @@ const getHorizon = (): Horizon.Server | null => {
 
 const formatter = new Intl.NumberFormat();
 
-export type MappedBalances = Record<string, Horizon.HorizonApi.BalanceLine>;
+type HorizonBalance = Horizon.HorizonApi.BalanceLine & { balance: string };
+
+export interface SorobanBalanceEntry {
+  asset_type: "credit_alphanum4";
+  asset_code: string;
+  asset_issuer: string;
+  balance: string;
+}
+
+export type MappedBalances = Record<
+  string,
+  HorizonBalance | SorobanBalanceEntry
+>;
 
 export const fetchBalances = async (address: string) => {
   if (typeof window === "undefined") {
@@ -29,12 +44,14 @@ export const fetchBalances = async (address: string) => {
   if (!horizonInstance) {
     return {};
   }
+  const mapped: MappedBalances = {};
+
   try {
     const { balances } = await horizonInstance
       .accounts()
       .accountId(address)
       .call();
-    const mapped = balances.reduce((acc, b) => {
+    for (const b of balances) {
       const formattedBalance = formatter.format(Number(b.balance));
       const balanceEntry = { ...b, balance: formattedBalance };
       const key =
@@ -43,11 +60,47 @@ export const fetchBalances = async (address: string) => {
           : b.asset_type === "liquidity_pool_shares"
             ? b.liquidity_pool_id
             : `${b.asset_code}:${b.asset_issuer}`;
-      acc[key] = balanceEntry;
-      return acc;
-    }, {} as MappedBalances);
-    return mapped;
-  } catch {
-    return {};
+      mapped[key] = balanceEntry;
+    }
+  } catch (err) {
+    console.warn("Horizon balance fetch failed, continuing with Soroban:", err);
   }
+
+  try {
+    const availableTokens = getAvailableTokens();
+    const sorobanResults = await Promise.allSettled(
+      Object.entries(availableTokens).map(
+        async ([code, info]): Promise<{ code: string; balance: string }> => {
+          if (!info.contract || code === "XLM") return { code, balance: "0" };
+          const balance = await getTokenBalanceFromContract(
+            info.contract,
+            address,
+            info.decimals ?? 7
+          );
+          return { code, balance };
+        }
+      )
+    );
+
+    for (const result of sorobanResults) {
+      if (
+        result.status === "fulfilled" &&
+        parseBalance(result.value.balance) > 0
+      ) {
+        const { code, balance } = result.value;
+        const key = `soroban:${code}`;
+        const sorobanEntry: SorobanBalanceEntry = {
+          asset_type: "credit_alphanum4",
+          asset_code: code,
+          asset_issuer: "soroban",
+          balance: formatter.format(parseBalance(balance)),
+        };
+        mapped[key] = sorobanEntry;
+      }
+    }
+  } catch (err) {
+    console.warn("Soroban balance fetch failed:", err);
+  }
+
+  return mapped;
 };

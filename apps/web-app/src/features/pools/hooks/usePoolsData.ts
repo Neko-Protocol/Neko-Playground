@@ -20,10 +20,6 @@ function matchesTypeFilter(poolType: string, filter: PoolTypeFilter): boolean {
   return true;
 }
 
-/**
- * Fetches all pools and maps them to PoolCardData for the list/card view.
- * Supports filtering by pool type and searching by token name.
- */
 export function usePoolsData() {
   const { data: allPools = [], isLoading, error } = usePools();
   const [typeFilter, setTypeFilter] = useState<PoolTypeFilter>("all");
@@ -61,7 +57,7 @@ export function usePoolsData() {
 
         const decimals = pool.tokens[0]?.decimals ?? 7;
         const liquidity = formatLiquidity(
-          fromSmallestUnit(pool.tvl.toString(), decimals),
+          fromSmallestUnit(pool.tvl.toString(), decimals)
         );
 
         const apy = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";

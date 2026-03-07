@@ -1,13 +1,5 @@
 "use client";
 
-/**
- * usePoolAction — React Query mutation hook for pool write operations
- * (deposit, withdraw, claimRewards).
- *
- * Integrates with WalletProvider for transaction signing and
- * NotificationProvider for user feedback.
- */
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
@@ -25,13 +17,6 @@ interface PoolActionParams {
   tokenIndex?: number;
 }
 
-/**
- * Generic mutation that:
- *  1. Calls the orchestrator to build the unsigned XDR.
- *  2. Signs via `WalletProvider.signTransaction`.
- *  3. Submits the signed tx to Soroban RPC.
- *  4. Invalidates pool queries so data refreshes.
- */
 export function usePoolAction() {
   const { address, signTransaction } = useWallet();
   const { addNotification } = useNotification();
@@ -97,7 +82,6 @@ export function usePoolAction() {
         throw new Error(`Transaction failed: ${txResult.status}`);
       }
 
-      // Wait for on-chain confirmation so refetch gets fresh data
       const confirmed = await server.pollTransaction(txResult.hash, {
         attempts: 30,
       });
