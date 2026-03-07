@@ -136,17 +136,15 @@ const Pools: React.FC = () => {
                 <PoolCard
                   key={pool.id}
                   pool={pool}
-                  onDetailsClick={() =>
-                    router.push(`/dashboard/pools/${pool.id}`)
-                  }
+                  onDetailsClick={() => router.push(`/pools/${pool.id}`)}
                   onLendClick={
                     isLendingType(pool.type)
-                      ? () => router.push("/dashboard/lending")
+                      ? () => router.push("/lending")
                       : undefined
                   }
                   onSwapClick={
                     pool.type === "soroswap"
-                      ? () => router.push("/dashboard/swap")
+                      ? () => router.push("/swap")
                       : undefined
                   }
                 />

@@ -1,7 +1,13 @@
 "use client";
 
-import React from "react";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import React, { useMemo } from "react";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  type Plugin,
+} from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -100,17 +106,42 @@ export function HoldingsPieChart({
             maximumFractionDigits: 1,
           });
 
+  const centerTextPlugin: Plugin<"doughnut"> = useMemo(
+    () => ({
+      id: "centerText",
+      afterDraw(chart) {
+        const { ctx } = chart;
+        const { top, bottom, left, right } = chart.chartArea;
+        const centerX = (left + right) / 2;
+        const centerY = (top + bottom) / 2;
+
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.font = "500 10px Inter, sans-serif";
+        ctx.letterSpacing = "0.05em";
+        ctx.fillText("TOTAL ASSETS", centerX, centerY - 12);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 22px Inter, sans-serif";
+        ctx.letterSpacing = "0em";
+        ctx.fillText(String(displayTotal), centerX, centerY + 10);
+
+        ctx.restore();
+      },
+    }),
+    [displayTotal]
+  );
+
   return (
-    <div className={`relative min-h-[200px] ${className}`}>
-      <Doughnut data={chartData} options={options} />
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pr-[82px]">
-        <span className="text-white/40 text-xs font-medium uppercase tracking-wide">
-          Total Assets
-        </span>
-        <span className="text-white text-2xl font-bold mt-1">
-          {displayTotal}
-        </span>
-      </div>
+    <div className={`relative min-h-[210px] ${className}`}>
+      <Doughnut
+        data={chartData}
+        options={options}
+        plugins={[centerTextPlugin]}
+      />
     </div>
   );
 }
