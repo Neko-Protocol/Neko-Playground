@@ -6,9 +6,6 @@ import {
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { stellarPriceService } from "@/lib/services/stellar-price.service";
 
-/**
- * Hook to get token price in USD
- */
 export const useTokenPrice = (token: Token | string | undefined) => {
   const getTokenCode = (): string | null => {
     if (!token) {

@@ -81,10 +81,10 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       </Link>
 
       <div className="rounded-2xl bg-[#1C1C1C] p-8 border border-white/5 relative overflow-hidden">
-        {/* Header */}
+        {}
         <div className="relative z-10 mb-8">
           <div className="flex items-center gap-4 mb-4">
-            {/* Icon container sized to fit both overlapping circles without overflowing into text */}
+            {}
             <div className="relative w-18 h-10 shrink-0 flex items-center">
               {(() => {
                 const icon1 = getTokenIcon({
@@ -147,7 +147,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {}
         <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
             <p className="text-white/40 text-xs mb-1">TVL</p>
@@ -171,7 +171,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           </div>
         </div>
 
-        {/* Your position */}
+        {}
         {address && (
           <div className="relative z-10 mb-8 rounded-xl border border-[#229EDF]/30 bg-[#2A2A2A] p-4">
             <h3 className="text-white/40 text-sm font-semibold mb-3">
@@ -217,7 +217,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           </div>
         )}
 
-        {/* Actions */}
+        {}
         <div className="relative z-10 flex flex-wrap gap-3">
           {(pool.type === "blend" || pool.type === "neko") && (
             <button
@@ -297,7 +297,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           />
         )}
 
-        {/* Contract ID (collapsed) */}
+        {}
         <details className="relative z-10 mt-8">
           <summary className="text-white/40 text-sm cursor-pointer hover:text-white transition-colors">
             Contract ID

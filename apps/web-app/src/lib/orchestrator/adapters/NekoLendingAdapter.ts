@@ -1,13 +1,3 @@
-/**
- * NekoLendingAdapter — wraps the Neko RWA-Lending contract behind
- * the `BasePoolAdapter` interface.
- *
- * Internally reuses:
- *  - `@neko/lending` generated client for read queries.
- *  - Existing transaction builders from `lib/helpers/lending.ts`
- *    for deposit / withdraw (they return XDR strings).
- */
-
 import { Client as RwaLendingClient, networks } from "@neko/lending";
 import {
   rpcUrl,
@@ -60,9 +50,7 @@ function unwrapResult(value: unknown): bigint {
   if (typeof obj.unwrap === "function") {
     try {
       return BigInt(obj.unwrap());
-    } catch {
-      /* fall through */
-    }
+    } catch {}
   }
 
   if (obj.tag === "Ok" && Array.isArray(obj.values) && obj.values.length > 0) {
@@ -97,10 +85,6 @@ export class NekoLendingAdapter implements BasePoolAdapter {
   private clientFor(assetCode: string): RwaLendingClient {
     return POOL2_ASSETS.has(assetCode) ? this.pool2Client : this.pool1Client;
   }
-
-  // ------------------------------------------------------------------
-  // Reads
-  // ------------------------------------------------------------------
 
   async getPoolInfo(poolId: string): Promise<PoolInfo> {
     const assetCode = poolId;
@@ -221,10 +205,6 @@ export class NekoLendingAdapter implements BasePoolAdapter {
       };
     }
   }
-
-  // ------------------------------------------------------------------
-  // Writes — delegate to existing helpers that return XDR strings
-  // ------------------------------------------------------------------
 
   async deposit(
     poolId: string,

@@ -1,10 +1,8 @@
 import { stellarNetwork } from "../../constants/network";
 
-// Utility to get the correct Friendbot URL based on environment
 export function getFriendbotUrl(address: string) {
   switch (stellarNetwork) {
     case "LOCAL":
-      // Use proxy in development for local
       return `/friendbot?addr=${address}`;
     case "FUTURENET":
       return `https://friendbot-futurenet.stellar.org/?addr=${address}`;

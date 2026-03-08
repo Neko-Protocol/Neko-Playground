@@ -1,11 +1,8 @@
-/**
- * Wallet and price-related constants shared across wallet provider and price services.
- */
+import { getRwaTokenCodes } from "./assets.config";
 
-/** RWA token codes that use the oracle for pricing */
-export const RWA_TOKENS = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD"];
+export const RWA_TOKENS = getRwaTokenCodes();
+export const STABLECOIN_FALLBACK_USD = 1;
 
-/** LocalStorage keys used by WalletProvider for Stellar wallet state */
 export const STORAGE_KEYS = {
   walletId: "walletId",
   walletAddress: "walletAddress",
@@ -13,8 +10,5 @@ export const STORAGE_KEYS = {
   networkPassphrase: "networkPassphrase",
 } as const;
 
-/** Interval (ms) for polling Stellar wallet state in WalletProvider */
 export const POLL_INTERVAL = 1000;
-
-/** Delay (ms) before resolving with error when price fetch fails; keeps loading state visible briefly. */
 export const PRICE_ERROR_DELAY_MS = 800;

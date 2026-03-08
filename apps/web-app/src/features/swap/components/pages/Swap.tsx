@@ -15,18 +15,18 @@ import {
   sanitizeAmountInput,
   formatSwapAmount,
 } from "@/lib/helpers/tokenUtils";
+import { useToast } from "@/hooks/useToast";
+import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import TokenSelectorModal from "../ui/TokenSelectorModal";
 
-// Hooks
 import { useSwapState } from "../../hooks/useSwapState";
 import { useTokenSelection } from "../../hooks/useTokenSelection";
 import { useSwapQuote } from "../../hooks/useSwapQuote";
 import { useSwapExecution } from "../../hooks/useSwapExecution";
 import { useSwapPrices } from "../../hooks/useSwapPrices";
 
-// UI Components
 import { SwapButton } from "../ui/SwapButton";
 import { TransactionResult } from "../ui/TransactionResult";
 import { SwapValueWarning } from "../ui/SwapValueWarning";
@@ -131,19 +131,17 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
 
 const Swap: React.FC = () => {
   const { address, network, networkPassphrase } = useWallet();
+  const { addNotification } = useToast();
 
-  // Get available tokens for current network
   const availableTokens = getAvailableTokens();
   const tokenCodes = Object.keys(availableTokens);
   const tokens = getTokens();
 
-  // Initialize with first available tokens
   const defaultTokenIn =
     availableTokens[tokenCodes[0]]?.contract || tokens.XLM || "";
   const defaultTokenOut =
     availableTokens[tokenCodes[1]]?.contract || tokens.USDC || "";
 
-  // Swap state management
   const swapState = useSwapState(defaultTokenIn, defaultTokenOut);
   const {
     orderType,
@@ -152,18 +150,15 @@ const Swap: React.FC = () => {
     tokenIn,
     tokenOut,
     txHash,
-    error,
     isLoading,
     setOrderType,
     setAmountIn,
     setTxHash,
-    setError,
     setIsLoading,
     resetSwap,
     swapTokens,
   } = swapState;
 
-  // Token selection management
   const tokenSelection = useTokenSelection(
     tokenIn,
     tokenOut,
@@ -182,11 +177,9 @@ const Swap: React.FC = () => {
     getTokenIconUrl,
   } = tokenSelection;
 
-  // Get token balance for "from" token
   const { balance: tokenInBalance, isLoading: isLoadingBalance } =
     useTokenBalance(tokenIn as Token | string | undefined);
 
-  // Swap quote management
   const { amountOut: quoteAmountOut, isLoadingQuote } = useSwapQuote(
     address,
     amountIn,
@@ -194,14 +187,12 @@ const Swap: React.FC = () => {
     tokenOut
   );
 
-  // Update amountOut from quote
   useEffect(() => {
     if (quoteAmountOut) {
       swapState.setAmountOut(quoteAmountOut);
     }
   }, [quoteAmountOut, swapState]);
 
-  // Prices and USD values
   const {
     usdValue,
     usdValueOut,
@@ -210,17 +201,14 @@ const Swap: React.FC = () => {
     swapValueAnalysis,
   } = useSwapPrices(amountIn, amountOut, tokenIn, tokenOut);
 
-  // Swap execution
   const { executeSwap } = useSwapExecution();
 
-  // Handle swap execution
   const handleSwap = async () => {
     if (!amountIn || parseFloat(amountIn) <= 0 || !address) {
       return;
     }
 
     setIsLoading(true);
-    setError(null);
 
     try {
       const result = await executeSwap({
@@ -233,20 +221,27 @@ const Swap: React.FC = () => {
 
       if (result.orderId) {
         setTxHash(result.orderId);
+        addNotification("Success", "success", {
+          ...TOAST_CONFIG.defaultOpts,
+          description: "Swap completed successfully",
+        });
         resetSwap();
         setAmountIn("");
         swapState.setAmountOut("0.0");
       }
-    } catch (error) {
-      if (error instanceof Error && error.message === "USER_REJECTED") {
+    } catch (err) {
+      if (err instanceof Error && err.message === "USER_REJECTED") {
         setIsLoading(false);
         return;
       }
 
       const errorMessage =
-        extractContractErrorOrNull(error, "rwa-perps") ||
-        (error instanceof Error ? error.message : "Failed to complete swap");
-      setError(errorMessage);
+        extractContractErrorOrNull(err, "rwa-perps") ||
+        (err instanceof Error ? err.message : "Failed to complete swap");
+      addNotification("Something went wrong", "error", {
+        ...TOAST_CONFIG.defaultOpts,
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -268,7 +263,7 @@ const Swap: React.FC = () => {
 
   return (
     <PageContainer maxWidth="4xl">
-      {/* Banner */}
+      {}
       <BannerPage
         title="Swap Currency"
         subtitle="Select an option and swap your currencies"
@@ -278,22 +273,22 @@ const Swap: React.FC = () => {
         className="mb-6"
       />
 
-      {/* Order type controls */}
+      {}
       <div className="flex flex-col gap-3 mb-5">
         <OrderTypeTabs orderType={orderType} onOrderTypeChange={setOrderType} />
       </div>
 
-      {/* Wallet alert */}
+      {}
       {!address && (
         <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-5 text-center text-white/60 text-sm">
           Connect your wallet to start swapping
         </div>
       )}
 
-      {/* Two-panel swap interface */}
+      {}
       <div className="relative">
         <div className="grid grid-cols-2 gap-4">
-          {/* From panel */}
+          {}
           <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
             <span className="text-white/50 text-sm font-medium">From</span>
 
@@ -333,7 +328,7 @@ const Swap: React.FC = () => {
             />
           </div>
 
-          {/* To panel */}
+          {}
           <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
             <span className="text-white/50 text-sm font-medium">To</span>
 
@@ -378,7 +373,7 @@ const Swap: React.FC = () => {
           </div>
         </div>
 
-        {/* Centered swap direction button */}
+        {}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           <button
             onClick={swapTokens}
@@ -391,14 +386,8 @@ const Swap: React.FC = () => {
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
-          <p className="text-red-400 text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* Primary CTA */}
+      {}
+      {}
       <div className="mt-5">
         <SwapButton
           address={address}
@@ -411,7 +400,7 @@ const Swap: React.FC = () => {
         />
       </div>
 
-      {/* Transaction result */}
+      {}
       {txHash && (
         <TransactionResult
           txHash={txHash}

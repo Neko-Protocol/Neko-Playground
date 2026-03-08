@@ -7,11 +7,6 @@ import {
   MAX_HOPS,
 } from "@/features/swap/constants/swapConfig";
 
-/**
- * Fetches a Soroswap quote for a Stellar swap.
- * Manages its own AbortController to cancel in-flight requests.
- * Returns `null` when a quote cannot be obtained.
- */
 export function useStellarQuote(
   amountIn: string,
   tokenIn: Token | string,

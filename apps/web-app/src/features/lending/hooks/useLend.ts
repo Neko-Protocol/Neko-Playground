@@ -4,6 +4,8 @@ import { useState, useMemo, useCallback } from "react";
 import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpc } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
+import { useToast } from "@/hooks/useToast";
+import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { useLendingPools } from "./useLendingPools";
 import {
   approveToken,
@@ -31,12 +33,29 @@ export function useLend() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeposit, setIsDeposit] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [bTokenBalance, setBTokenBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [selectedPool, setSelectedPool] = useState<PoolData | null>(null);
 
   const { address, signTransaction, networkPassphrase } = useWallet();
+  const { addNotification } = useToast();
+
+  const showError = useCallback(
+    (msg: string) =>
+      addNotification("Something went wrong", "error", {
+        ...TOAST_CONFIG.defaultOpts,
+        description: msg,
+      }),
+    [addNotification]
+  );
+  const showSuccess = useCallback(
+    (msg: string) =>
+      addNotification("Success", "success", {
+        ...TOAST_CONFIG.defaultOpts,
+        description: msg,
+      }),
+    [addNotification]
+  );
 
   const {
     data: lendingPools = [],
@@ -95,7 +114,6 @@ export function useLend() {
     (pool: PoolData, deposit: boolean) => {
       setSelectedPool(pool);
       setIsDeposit(deposit);
-      setError(null);
       setBTokenBalance(null);
       setIsModalOpen(true);
       if (address) void loadBTokenBalance();
@@ -105,7 +123,6 @@ export function useLend() {
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
-    setError(null);
   }, []);
 
   const handleConfirm = useCallback(
@@ -114,7 +131,6 @@ export function useLend() {
         return;
 
       setIsLoading(true);
-      setError(null);
 
       try {
         const availableTokens = getAvailableTokens();
@@ -138,7 +154,7 @@ export function useLend() {
             decimals,
             address
           );
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           const signedApprove = await signTransaction(approveXdr as any, {
             networkPassphrase: passphrase,
             address,
@@ -155,7 +171,7 @@ export function useLend() {
             address,
             lendingContractId
           );
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           const signedDeposit = await signTransaction(depositXdr as any, {
             networkPassphrase: passphrase,
             address,
@@ -174,7 +190,7 @@ export function useLend() {
             address,
             lendingContractId
           );
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           const signedWithdraw = await signTransaction(withdrawXdr as any, {
             networkPassphrase: passphrase,
             address,
@@ -187,15 +203,16 @@ export function useLend() {
         await new Promise((r) => setTimeout(r, 3000));
         await loadBTokenBalance();
         await refetchPools();
+        showSuccess(
+          isDeposit
+            ? `Successfully deposited ${amount} ${selectedPool.assetCode}`
+            : `Successfully withdrew ${amount} ${selectedPool.assetCode}`
+        );
         closeModal();
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
-        setError(
-          msg
-            ? typeof msg === "string"
-              ? msg
-              : "An unexpected error occurred."
-            : "An unexpected error occurred."
+        showError(
+          typeof msg === "string" ? msg : "An unexpected error occurred."
         );
       } finally {
         setIsLoading(false);
@@ -210,6 +227,8 @@ export function useLend() {
       loadBTokenBalance,
       refetchPools,
       closeModal,
+      showError,
+      showSuccess,
     ]
   );
 
@@ -221,7 +240,6 @@ export function useLend() {
     isModalOpen,
     isDeposit,
     isLoading,
-    error,
     bTokenBalance,
     isLoadingBalance,
     hasWallet: !!address,

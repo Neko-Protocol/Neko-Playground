@@ -23,7 +23,6 @@ const envSchema = z.object({
   PUBLIC_STELLAR_HORIZON_URL: z.string(),
 });
 
-// In Next.js, we use process.env with NEXT_PUBLIC_ prefix
 const envVars = {
   PUBLIC_STELLAR_NETWORK: process.env.NEXT_PUBLIC_STELLAR_NETWORK,
   PUBLIC_STELLAR_NETWORK_PASSPHRASE:
@@ -67,10 +66,8 @@ export const labPrefix = () => {
   }
 };
 
-// NOTE: needs to be exported for contract files in this directory
 export const rpcUrl = env.PUBLIC_STELLAR_RPC_URL;
 
-/** Set to true when RPC URL is HTTP (e.g. local dev). Pass as allowHttp to Soroban Contract Client. */
 export const allowHttpForSoroban =
   typeof rpcUrl === "string" && rpcUrl.startsWith("http:");
 

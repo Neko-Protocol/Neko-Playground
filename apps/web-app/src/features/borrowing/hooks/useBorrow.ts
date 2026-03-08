@@ -12,7 +12,6 @@ export function useBorrow() {
   const [selectedAsset, setSelectedAsset] = useState<BorrowTableAsset | null>(
     null
   );
-  const [success, setSuccess] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -25,8 +24,6 @@ export function useBorrow() {
   const {
     handleBorrow,
     isLoading: isProcessing,
-    error: executionError,
-    clearError,
     isWalletConnected,
   } = useBorrowExecution();
 
@@ -39,20 +36,13 @@ export function useBorrow() {
     (page + 1) * rowsPerPage
   );
 
-  const openModal = useCallback(
-    (asset: BorrowTableAsset) => {
-      setSelectedAsset(asset);
-      setSuccess(null);
-      clearError();
-    },
-    [clearError]
-  );
+  const openModal = useCallback((asset: BorrowTableAsset) => {
+    setSelectedAsset(asset);
+  }, []);
 
   const closeModal = useCallback(() => {
     setSelectedAsset(null);
-    setSuccess(null);
-    clearError();
-  }, [clearError]);
+  }, []);
 
   const handleSubmit = useCallback(
     async (collateralAmount: string, borrowAmount: string) => {
@@ -66,11 +56,9 @@ export function useBorrow() {
         borrowDecimals: 7,
         contractId: selectedAsset.contractId,
       });
-      if (result?.success && result.message) {
-        setSuccess(result.message);
-      }
+      if (result?.success) closeModal();
     },
-    [selectedAsset, handleBorrow]
+    [selectedAsset, handleBorrow, closeModal]
   );
 
   const changeRowsPerPage = useCallback((value: number) => {
@@ -85,8 +73,6 @@ export function useBorrow() {
     poolsError,
     selectedAsset,
     isProcessing,
-    executionError,
-    success,
     isWalletConnected: !!isWalletConnected,
     page,
     totalRows,
@@ -97,7 +83,5 @@ export function useBorrow() {
     openModal,
     closeModal,
     handleSubmit,
-    clearSuccess: () => setSuccess(null),
-    clearError,
   };
 }

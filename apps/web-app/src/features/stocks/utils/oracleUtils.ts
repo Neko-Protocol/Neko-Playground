@@ -1,13 +1,8 @@
 import type { Asset, RWAMetadata } from "@neko/oracle";
 import { ORACLE_DECIMALS, PRICE_DISPLAY_DECIMALS } from "../constants/oracle";
 
-/** Returns the asset identifier string (e.g. ticker). */
 export const formatAsset = (asset: Asset): string => asset.values[0];
 
-/**
- * Format a raw oracle price (bigint) to a display string with fixed decimals.
- * Single source of truth for price formatting across the stocks feature.
- */
 export const formatPrice = (
   price: bigint,
   decimals: number = ORACLE_DECIMALS,
@@ -29,10 +24,6 @@ export const formatPrice = (
   return `$${wholeStr}.${fractionalStr}`;
 };
 
-/**
- * Compute percentage change between current and previous price.
- * Returns null if previous is 0 or inputs are invalid.
- */
 export const calculatePriceChange = (
   current: number,
   previous: number

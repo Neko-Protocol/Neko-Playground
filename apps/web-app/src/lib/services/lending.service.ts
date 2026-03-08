@@ -30,11 +30,19 @@ import {
   borrowFromPool,
 } from "../helpers/stellar/lending";
 import { extractContractError } from "../helpers/stellar/contractErrors";
-import type {
-  LendingOperationResult,
-  CollateralOperationResult,
-  BorrowWithCollateralResult,
-} from "../types/lendingTypes";
+
+type LendingOperationResult = { xdr: string; error?: string };
+type CollateralOperationResult = {
+  approveXdr: string;
+  addCollateralXdr: string;
+  error?: string;
+};
+type BorrowWithCollateralResult = {
+  approveXdr: string;
+  addCollateralXdr: string;
+  borrowXdr: string;
+  error?: string;
+};
 
 export class LendingService {
   private sorobanServer: rpc.Server;
@@ -554,6 +562,49 @@ export class LendingService {
     } catch (error) {
       console.error("Error getting bToken balance:", error);
       return "0";
+    }
+  }
+
+  /**
+   * Get dToken balance for a borrower (raw dTokens)
+   */
+  async getDTokenBalance(
+    assetCode: string,
+    walletAddress: string
+  ): Promise<bigint> {
+    try {
+      const tx = await this.lendingClient.get_d_token_balance(
+        { borrower: walletAddress, asset: assetCode },
+        { simulate: true }
+      );
+
+      const value = tx.result;
+      if (!value) return 0n;
+
+      return typeof value === "bigint" ? value : BigInt(String(value));
+    } catch (error) {
+      console.error("Error getting dToken balance:", error);
+      return 0n;
+    }
+  }
+
+  /**
+   * Get dToken → underlying conversion rate (12-decimal scalar)
+   */
+  async getDTokenRate(assetCode: string): Promise<bigint> {
+    try {
+      const tx = await this.lendingClient.get_d_token_rate(
+        { asset: assetCode },
+        { simulate: true }
+      );
+
+      const value = tx.result;
+      if (!value) return 0n;
+
+      return typeof value === "bigint" ? value : BigInt(String(value));
+    } catch (error) {
+      console.error("Error getting dToken rate:", error);
+      return 0n;
     }
   }
 

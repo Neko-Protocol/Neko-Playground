@@ -7,11 +7,11 @@ import { cn } from "@/lib/utils";
 export interface ReadonlyRowProps {
   label: string;
   value: string;
-  /** When provided, renders an external link instead of the copy button. */
+
   href?: string | null;
-  /** When provided with onCopy, enables copy button. */
+
   copyKey?: string;
-  /** Value to copy when different from displayed value (e.g. full address). */
+
   copyValue?: string;
   onCopy?: (key: string, value: string) => void;
   copiedKey?: string | null;

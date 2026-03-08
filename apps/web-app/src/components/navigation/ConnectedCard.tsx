@@ -24,10 +24,10 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
       <p className="mb-4 text-base font-bold leading-snug text-black">
         You&apos;re
         <br />
-        connect with:
+        connected with:
       </p>
 
-      {/* Address pill — click to reveal options */}
+      {}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -39,7 +39,7 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
         />
       </button>
 
-      {/* Expandable panel — always in DOM, animated via max-height + opacity */}
+      {}
       <div
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
           open ? "max-h-40 opacity-100 mt-2" : "max-h-0 opacity-0 mt-0"

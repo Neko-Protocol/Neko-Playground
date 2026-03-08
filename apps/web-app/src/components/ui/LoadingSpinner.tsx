@@ -6,11 +6,10 @@ import { cn } from "@/lib/utils";
 type LoadingSpinnerVariant = "dots" | "spinner";
 
 export interface LoadingSpinnerProps {
-  /** "dots" = three pulsing dots (e.g. on gradient cards). "spinner" = circular spinner. */
   variant?: LoadingSpinnerVariant;
-  /** Optional class for the container. */
+
   className?: string;
-  /** Size: "sm" | "md" | "lg" (spinner only). */
+
   size?: "sm" | "md" | "lg";
 }
 

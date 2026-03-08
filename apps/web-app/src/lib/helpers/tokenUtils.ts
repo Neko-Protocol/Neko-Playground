@@ -1,7 +1,3 @@
-/**
- * Utility functions for swap operations (Stellar)
- */
-
 import { getAvailableTokens } from "./stellar/soroswap";
 import type { Token } from "./stellar/soroswap";
 import {
@@ -9,9 +5,6 @@ import {
   STELLAR_FALLBACK_CONTRACTS,
 } from "@/lib/constants/tokenIcons";
 
-/**
- * Format amount based on token decimals
- */
 export const formatSwapAmount = (
   amount: string | number,
   decimals: number = 7
@@ -27,9 +20,6 @@ export const formatSwapAmount = (
   return formatter.format(numAmount);
 };
 
-/**
- * Convert amount to smallest unit (stroops for XLM, smallest unit for tokens)
- */
 export const toSmallestUnit = (
   amount: string | number,
   decimals: number = 7
@@ -42,9 +32,6 @@ export const toSmallestUnit = (
   return result;
 };
 
-/**
- * Convert from smallest unit to human-readable format
- */
 export const fromSmallestUnit = (
   amount: string,
   decimals: number = 7
@@ -63,27 +50,17 @@ export const fromSmallestUnit = (
   return `${whole}.${trimmedFractional}`;
 };
 
-/**
- * Get explorer URL for a transaction
- */
 export const getExplorerUrl = (txHash: string, network?: string): string => {
   const networkParam = network === "PUBLIC" ? "" : `/${network?.toLowerCase()}`;
   return `https://stellar.expert/explorer${networkParam}/tx/${txHash}`;
 };
 
-/**
- * Strips non-numeric characters and prevents multiple decimal points.
- * Suitable for amount input fields.
- */
 export const sanitizeAmountInput = (value: string): string => {
   const stripped = value.replace(/[^0-9.]/g, "");
   const parts = stripped.split(".");
   return parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : stripped;
 };
 
-/**
- * Converts a Stellar token to a stable string identifier.
- */
 export const getTokenId = (
   token: Token | string,
   availableTokens: Record<string, { contract: string }>
@@ -106,10 +83,6 @@ export const getTokenId = (
   return "";
 };
 
-/**
- * Get token icon/image path based on token code or address.
- * Returns null if no icon is found.
- */
 export const getTokenIcon = (
   token:
     | { type: "native" | "contract"; code?: string; contract?: string }
@@ -118,7 +91,6 @@ export const getTokenIcon = (
   let tokenCode: string | null = null;
 
   if (typeof token === "string") {
-    // Stellar contract address — look up in registry then fallback map
     try {
       const availableTokens = getAvailableTokens();
       for (const [code, info] of Object.entries(availableTokens)) {

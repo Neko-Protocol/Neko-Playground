@@ -1,0 +1,19 @@
+/* Sileo overrides: uses CSS vars from TOAST_CONFIG (injected by ToastProvider) */
+[data-sileo-viewport] {
+  position: fixed !important;
+  z-index: var(--toast-viewport-z-index, 99999) !important;
+  top: var(--toast-viewport-top, 1.5rem) !important;
+  left: var(--toast-viewport-left, 55%) !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: var(--toast-viewport-transform, translate(-50%, 0)) !important;
+}
+
+[data-sileo-toast] {
+  --sileo-width: var(--toast-viewport-width, 480px);
+  min-width: var(--sileo-width);
+}
+
+[data-sileo-viewport][data-theme="dark"] [data-sileo-description] {
+  color: var(--toast-description-color, rgb(255, 255, 255)) !important;
+}

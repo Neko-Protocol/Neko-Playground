@@ -10,7 +10,6 @@ import {
 } from "../constants/oracle";
 
 export interface UseOracleAssetPriceOptions {
-  /** When provided, uses this value instead of fetching decimals (avoids duplicate query). */
   decimals?: number;
 }
 
@@ -21,7 +20,6 @@ export const useOracleAssetPrice = (
   const assetStr = formatAsset(asset);
   const { decimals: decimalsParam } = options;
 
-  // Use shared cache: same queryKey as useOracle. Only fetch when decimals not passed in.
   const { data: decimalsFromCache } = useQuery({
     queryKey: ["oracle", "decimals"],
     queryFn: async () => {

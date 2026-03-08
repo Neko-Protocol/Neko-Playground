@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { useWallet } from "@/hooks/useWallet";
@@ -8,6 +9,9 @@ import { useHealthFactor } from "../../hooks/useHealthFactor";
 import { HealthFactorBadge } from "../ui/HealthFactorBadge";
 import { BorrowTable } from "../ui/BorrowTable";
 import { BorrowModal } from "../ui/BorrowModal";
+import MyBorrowPositions from "../ui/MyBorrowPositions";
+
+type PageTab = "pools" | "positions";
 
 const Borrow: React.FC = () => {
   const { address } = useWallet();
@@ -15,6 +19,7 @@ const Borrow: React.FC = () => {
     address ?? undefined
   );
 
+  const [activeTab, setActiveTab] = useState<PageTab>("pools");
   const {
     assets,
     paginatedAssets,
@@ -22,8 +27,6 @@ const Borrow: React.FC = () => {
     poolsError,
     selectedAsset,
     isProcessing,
-    executionError,
-    success,
     isWalletConnected,
     page,
     totalRows,
@@ -34,8 +37,6 @@ const Borrow: React.FC = () => {
     openModal,
     closeModal,
     handleSubmit,
-    clearSuccess,
-    clearError,
   } = useBorrow();
 
   return (
@@ -124,20 +125,58 @@ const Borrow: React.FC = () => {
         onPageChange={setPage}
         onRowsPerPageChange={changeRowsPerPage}
       />
+      <div className="flex items-center gap-1 rounded-xl bg-[#1C1C1C] p-1 w-fit mb-6">
+        <button
+          onClick={() => setActiveTab("pools")}
+          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+            activeTab === "pools"
+              ? "bg-[#229EDF] text-white"
+              : "text-white/40 hover:text-white/70"
+          }`}
+        >
+          Pools
+        </button>
+        <button
+          onClick={() => setActiveTab("positions")}
+          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+            activeTab === "positions"
+              ? "bg-[#229EDF] text-white"
+              : "text-white/40 hover:text-white/70"
+          }`}
+        >
+          My Positions
+        </button>
+      </div>
 
-      {selectedAsset && (
-        <BorrowModal
-          asset={selectedAsset}
-          isProcessing={isProcessing}
-          error={executionError}
-          success={success}
-          isWalletConnected={isWalletConnected}
-          onClose={closeModal}
-          onSubmit={handleSubmit}
-          onClearError={clearError}
-          onClearSuccess={clearSuccess}
-        />
+      {activeTab === "pools" && (
+        <>
+          <BorrowTable
+            assets={assets}
+            paginatedAssets={paginatedAssets}
+            isLoading={isLoading}
+            poolsError={poolsError}
+            page={page}
+            totalRows={totalRows}
+            totalPages={totalPages}
+            rowsPerPage={rowsPerPage}
+            onBorrow={openModal}
+            onPageChange={setPage}
+            onRowsPerPageChange={changeRowsPerPage}
+          />
+
+          {selectedAsset && (
+            <BorrowModal
+              asset={selectedAsset}
+              isProcessing={isProcessing}
+              isWalletConnected={isWalletConnected}
+              onClose={closeModal}
+              onSubmit={handleSubmit}
+            />
+          )}
+        </>
       )}
+
+      {activeTab === "positions" && <MyBorrowPositions />}
     </PageContainer>
   );
 };

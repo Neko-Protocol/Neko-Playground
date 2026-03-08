@@ -53,10 +53,6 @@ async function fetchTotalDeposited(userAddress: string) {
   return { totalUsd, positionCount: activePositions.length };
 }
 
-/**
- * Returns the total USD value the user has deposited across all protocol pools.
- * Only counts positions with deposited > 0 and tokens with a known CoinGecko ID.
- */
 export function useUserTotalDeposited(userAddress: string | undefined) {
   return useQuery({
     queryKey: ["userTotalDeposited", userAddress],
