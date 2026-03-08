@@ -24,7 +24,7 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
       <p className="mb-4 text-base font-bold leading-snug text-black">
         You&apos;re
         <br />
-        connect with:
+        connected with:
       </p>
 
       {/* Address pill — click to reveal options */}
