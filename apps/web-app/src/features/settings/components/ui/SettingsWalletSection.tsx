@@ -1,11 +1,25 @@
 "use client";
 
-import React from "react";
-import { Unplug } from "lucide-react";
+import React, { useTransition } from "react";
+import { Unplug, Coins } from "lucide-react";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { ReadonlyRow } from "@/components/ui/ReadonlyRow";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
+import { useWallet } from "@/hooks/useWallet";
+import { useNotification } from "@/hooks/useNotification";
 import { truncateAddress } from "@/lib/utils";
+import { stellarNetwork } from "@/lib/constants/network";
+import {
+  buildFaucetTransaction,
+  getFaucetTokens,
+  addFaucetTokensToWallet,
+} from "@/lib/constants/faucet";
+import { signAndSendTransaction } from "@/lib/helpers/stellar/transaction";
+import {
+  rpcUrl,
+  networkPassphrase,
+  horizonUrl,
+} from "@/lib/config/stellar.config";
 
 export interface SettingsWalletSectionProps {
   copy: (key: string, value: string) => void;
@@ -17,7 +31,10 @@ export function SettingsWalletSection({
   copiedKey,
 }: SettingsWalletSectionProps) {
   const { address, walletName, isConnected, disconnect } = useStellarWallet();
+  const { signTransaction } = useWallet();
+  const { addNotification } = useNotification();
   const [isDisconnecting, setIsDisconnecting] = React.useState(false);
+  const [isMinting, startMintTransition] = useTransition();
 
   const handleDisconnect = React.useCallback(async () => {
     setIsDisconnecting(true);
@@ -27,6 +44,40 @@ export function SettingsWalletSection({
       setIsDisconnecting(false);
     }
   }, [disconnect]);
+
+  const handleMintTestTokens = () => {
+    if (!address) return;
+    startMintTransition(async () => {
+      try {
+        const txXdr = await buildFaucetTransaction(
+          address,
+          rpcUrl,
+          horizonUrl,
+          networkPassphrase
+        );
+
+        await signAndSendTransaction(txXdr, signTransaction, {
+          networkPassphrase,
+          rpcUrl,
+          address,
+        });
+
+        const tokens = getFaucetTokens();
+        addNotification(
+          `Minted: ${tokens.map((t) => t.symbol).join(", ")}`,
+          "success"
+        );
+
+        const added = await addFaucetTokensToWallet(networkPassphrase);
+        if (added.length > 0) {
+          addNotification(`Added to wallet: ${added.join(", ")}`, "success");
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        addNotification(`Failed to mint test tokens: ${msg}`, "error");
+      }
+    });
+  };
 
   return (
     <SectionCard title="Wallet">
@@ -52,6 +103,20 @@ export function SettingsWalletSection({
             copiedKey={copiedKey}
             mono
           />
+
+          {stellarNetwork !== "PUBLIC" && (
+            <button
+              type="button"
+              onClick={handleMintTestTokens}
+              disabled={isMinting}
+              className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-400 transition-colors duration-150 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Coins className="h-4 w-4" />
+              {isMinting
+                ? "Minting tokens…"
+                : "Get Test Tokens (USTRY, CETES, USDY…)"}
+            </button>
+          )}
 
           <button
             type="button"

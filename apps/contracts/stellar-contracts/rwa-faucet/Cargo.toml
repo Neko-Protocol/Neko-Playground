@@ -1,8 +1,8 @@
 [package]
-name = "rwa-token"
-description = "RWA Token contract - A simplified fungible token for Real-World Assets with RWA Oracle price integration"
-version = "0.0.1"
-authors = ["OppiaLabs <contact@oppiasotfwarelabs.com>"]
+name = "rwa-faucet"
+description = "RWA Faucet contract - Bulk mints multiple RWA tokens in a single Soroban invocation"
+version.workspace = true
+authors.workspace = true
 license.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -17,7 +17,6 @@ soroban-sdk = { workspace = true }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
-rwa-oracle = { path = "../rwa-oracle" }
 
 [package.metadata.stellar]
 contract = true

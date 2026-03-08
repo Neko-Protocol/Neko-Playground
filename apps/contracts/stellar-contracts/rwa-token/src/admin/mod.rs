@@ -89,4 +89,10 @@ impl Admin {
     pub fn authorized(env: &Env, id: &Address) -> bool {
         AuthorizationStorage::get(env, id)
     }
+
+    /// Transfer admin role to a new address. Current admin must authorize.
+    pub fn set_admin(env: &Env, new_admin: &Address) {
+        Self::require_admin(env);
+        MetadataStorage::update_admin(env, new_admin);
+    }
 }
