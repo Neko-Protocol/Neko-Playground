@@ -49,6 +49,28 @@ const Borrow: React.FC = () => {
         imageAlt="Borrow illustration"
         className="mb-8"
       />
+      <div className="flex items-center gap-1 rounded-xl bg-[#1C1C1C] p-1 w-fit mb-6">
+        <button
+          onClick={() => setActiveTab("pools")}
+          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+            activeTab === "pools"
+              ? "bg-[#229EDF] text-white"
+              : "text-white/40 hover:text-white/70"
+          }`}
+        >
+          Pools
+        </button>
+        <button
+          onClick={() => setActiveTab("positions")}
+          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+            activeTab === "positions"
+              ? "bg-[#229EDF] text-white"
+              : "text-white/40 hover:text-white/70"
+          }`}
+        >
+          My Positions
+        </button>
+      </div>
 
       {address && (
         <div className="mb-6 flex flex-col sm:flex-row gap-3">
@@ -111,42 +133,6 @@ const Borrow: React.FC = () => {
               ))}
         </div>
       )}
-
-      <BorrowTable
-        assets={assets}
-        paginatedAssets={paginatedAssets}
-        isLoading={isLoading}
-        poolsError={poolsError}
-        page={page}
-        totalRows={totalRows}
-        totalPages={totalPages}
-        rowsPerPage={rowsPerPage}
-        onBorrow={openModal}
-        onPageChange={setPage}
-        onRowsPerPageChange={changeRowsPerPage}
-      />
-      <div className="flex items-center gap-1 rounded-xl bg-[#1C1C1C] p-1 w-fit mb-6">
-        <button
-          onClick={() => setActiveTab("pools")}
-          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === "pools"
-              ? "bg-[#229EDF] text-white"
-              : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          Pools
-        </button>
-        <button
-          onClick={() => setActiveTab("positions")}
-          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === "positions"
-              ? "bg-[#229EDF] text-white"
-              : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          My Positions
-        </button>
-      </div>
 
       {activeTab === "pools" && (
         <>

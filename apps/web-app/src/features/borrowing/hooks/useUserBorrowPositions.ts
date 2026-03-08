@@ -10,6 +10,7 @@ export interface BorrowPosition {
   assetCode: string;
   collateralTokenCode: string;
   dTokens: bigint;
+  dTokensFormatted: string;
   dRate: bigint;
   debtRaw: bigint;
   debtFormatted: string;
@@ -76,12 +77,16 @@ export function useUserBorrowPositions() {
     const debtFormatted =
       debtRaw === 0n
         ? "0"
-        : (Number(debtRaw) / 10 ** STELLAR_DECIMALS).toFixed(4);
+        : (Number(debtRaw) / 10 ** STELLAR_DECIMALS).toFixed(STELLAR_DECIMALS);
+    const dTokensFormatted = (Number(dTokens) / 10 ** STELLAR_DECIMALS).toFixed(
+      STELLAR_DECIMALS
+    );
 
     positions.push({
       assetCode: asset.assetCode,
       collateralTokenCode: asset.collateralTokenCode,
       dTokens,
+      dTokensFormatted,
       dRate,
       debtRaw,
       debtFormatted,
