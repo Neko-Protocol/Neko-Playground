@@ -7,6 +7,7 @@ import { useLend } from "../../hooks/useLend";
 import { LendTable } from "../ui/LendTable";
 import { LendModal } from "../ui/LendModal";
 import MyLendingPositions from "../ui/MyLendingPositions";
+import { UserPositionCard } from "@/features/borrowing/components/ui/UserPositionCard";
 
 type PageTab = "pools" | "positions";
 
@@ -89,7 +90,12 @@ const Lend: React.FC = () => {
         </>
       )}
 
-      {activeTab === "positions" && <MyLendingPositions />}
+      {activeTab === "positions" && (
+        <>
+          <UserPositionCard />
+          <MyLendingPositions />
+        </>
+      )}
     </PageContainer>
   );
 };

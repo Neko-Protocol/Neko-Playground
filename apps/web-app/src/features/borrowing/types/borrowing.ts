@@ -26,6 +26,8 @@ export interface BorrowTableAsset {
   collateralTokenCode: string;
   collateralFactor: number;
   contractId: string;
+  isAggregated?: boolean;
+  orchestratorId?: string;
 }
 
 export interface BorrowExecutionParams {

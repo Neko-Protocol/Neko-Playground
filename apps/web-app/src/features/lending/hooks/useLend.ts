@@ -16,6 +16,10 @@ import {
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { usePools, usePoolAction } from "@/lib/orchestrator";
+import type { PoolInfo } from "@/lib/orchestrator";
+import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolData } from "../types/lending";
 
 function toBTokens(tokensAmount: string, bTokenRate: string): string {
@@ -59,13 +63,24 @@ export function useLend() {
 
   const {
     data: lendingPools = [],
-    isLoading: isLoadingPools,
-    error: poolsError,
+    isLoading: isLoadingNekoPools,
+    error: nekoPoolsError,
     refetch: refetchPools,
   } = useLendingPools();
 
+  const {
+    data: orchestratorPools = [],
+    isLoading: isLoadingOrchestratorPools,
+    error: orchestratorPoolsError,
+  } = usePools();
+
+  const { mutateAsync: executePoolAction } = usePoolAction();
+
+  const isLoadingPools = isLoadingNekoPools || isLoadingOrchestratorPools;
+  const poolsError = nekoPoolsError || orchestratorPoolsError;
+
   const pools: PoolData[] = useMemo(() => {
-    return lendingPools.map((pool, index) => {
+    const nekoPools: PoolData[] = lendingPools.map((pool, index) => {
       const balanceNum = parseFloat(pool.poolBalance);
       const liquidity =
         balanceNum >= 1000
@@ -87,7 +102,40 @@ export function useLend() {
         contractId: pool.contractId,
       };
     });
-  }, [lendingPools]);
+
+    const aggregated: PoolData[] = orchestratorPools
+      .filter(
+        (p: PoolInfo) =>
+          p.type !== "neko" && p.supportedActions.includes("deposit")
+      )
+      .map((p: PoolInfo) => {
+        const token = p.tokens[0];
+        const decimals = token?.decimals ?? 7;
+        const liquidity = formatLiquidity(
+          fromSmallestUnit(p.tvl.toString(), decimals)
+        );
+        const contractId = p.id.split(":")[1] ?? p.id;
+        return {
+          id: `agg-${p.id}`,
+          name: p.name,
+          token1: token?.code ?? "?",
+          token2: "Lending",
+          fee: "0%",
+          roi: p.apy > 0 ? `${p.apy.toFixed(2)}%` : "0.00%",
+          feeApy: p.apy > 0 ? `${p.apy.toFixed(2)}%` : "0.00%",
+          liquidity,
+          isActive: p.state === "active",
+          assetCode: token?.code ?? "?",
+          asset: token?.address ?? "",
+          bTokenRate: undefined,
+          contractId,
+          isAggregated: true,
+          orchestratorId: p.id,
+        };
+      });
+
+    return [...nekoPools, ...aggregated];
+  }, [lendingPools, orchestratorPools]);
 
   const loadBTokenBalance = useCallback(async () => {
     if (!selectedPool || !address) {
@@ -133,6 +181,28 @@ export function useLend() {
       setIsLoading(true);
 
       try {
+        if (selectedPool.isAggregated && selectedPool.orchestratorId) {
+          const decimals = 7;
+          const rawAmount = BigInt(
+            Math.floor(parseFloat(amount) * 10 ** decimals)
+          );
+
+          await executePoolAction({
+            poolId: selectedPool.orchestratorId,
+            action: isDeposit ? "deposit" : "withdraw",
+            amount: rawAmount,
+          });
+
+          await refetchPools();
+          showSuccess(
+            isDeposit
+              ? `Successfully deposited ${amount} ${selectedPool.assetCode}`
+              : `Successfully withdrew ${amount} ${selectedPool.assetCode}`
+          );
+          closeModal();
+          return;
+        }
+
         const availableTokens = getAvailableTokens();
         const token = availableTokens[selectedPool.assetCode];
         if (!token?.contract)
@@ -224,6 +294,7 @@ export function useLend() {
       isDeposit,
       networkPassphrase,
       signTransaction,
+      executePoolAction,
       loadBTokenBalance,
       refetchPools,
       closeModal,

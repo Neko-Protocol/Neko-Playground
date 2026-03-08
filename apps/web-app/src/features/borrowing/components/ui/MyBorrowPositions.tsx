@@ -10,11 +10,25 @@ import {
   Layers,
 } from "lucide-react";
 import { useUserBorrowPositions } from "../../hooks/useUserBorrowPositions";
+import { useUserPositions } from "@/features/dashboard/hooks/useUserPositions";
 import { TokenAvatar } from "./TokenAvatar";
 import { ColHeader } from "./ColHeader";
 
+const STELLAR_DECIMALS = 7;
+
 const MyBorrowPositions: React.FC = () => {
   const { positions, isLoading, hasWallet } = useUserBorrowPositions();
+  const { positions: allPositions, isLoading: isLoadingAggregated } =
+    useUserPositions();
+
+  const aggregatedBorrowPositions = allPositions.filter((p) => {
+    if (p.pool.type === "neko") return false;
+    const liabilities = p.position.metadata?.liabilities;
+    if (typeof liabilities === "bigint") return liabilities > 0n;
+    if (typeof liabilities === "number") return liabilities > 0;
+    if (typeof liabilities === "string") return parseFloat(liabilities) > 0;
+    return false;
+  });
 
   if (!hasWallet) {
     return (
@@ -122,6 +136,114 @@ const MyBorrowPositions: React.FC = () => {
           )}
         </tbody>
       </table>
+
+      {(isLoadingAggregated || aggregatedBorrowPositions.length > 0) && (
+        <>
+          <div className="flex items-center px-4 py-3 border-t border-white/5">
+            <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
+              Aggregated Borrow Positions
+            </span>
+            <span className="ml-2 rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
+              Aggregated
+            </span>
+          </div>
+
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/5">
+                <ColHeader icon={Coins} label="Asset" />
+                <ColHeader
+                  icon={Layers}
+                  label="Liabilities"
+                  tooltip="Outstanding debt in this aggregated pool"
+                  centered
+                />
+                <ColHeader
+                  icon={TrendingDown}
+                  label="Borrow APR"
+                  tooltip="Annual interest rate on your debt"
+                  centered
+                />
+                <ColHeader icon={Hash} label="Protocol" centered />
+              </tr>
+            </thead>
+            <tbody>
+              {isLoadingAggregated ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-4 py-12 text-center text-white/40 text-sm"
+                  >
+                    Loading aggregated positions...
+                  </td>
+                </tr>
+              ) : aggregatedBorrowPositions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-4 py-12 text-center text-white/40 text-sm"
+                  >
+                    No aggregated borrow positions.
+                  </td>
+                </tr>
+              ) : (
+                aggregatedBorrowPositions.map((pos) => {
+                  const tokenCode = pos.pool.tokens[0]?.code ?? "?";
+                  const decimals =
+                    pos.pool.tokens[0]?.decimals ?? STELLAR_DECIMALS;
+                  const liabilities = pos.position.metadata?.liabilities;
+                  let liabilitiesFormatted = "0";
+                  if (typeof liabilities === "bigint") {
+                    liabilitiesFormatted = (
+                      Number(liabilities) /
+                      10 ** decimals
+                    ).toFixed(decimals);
+                  } else if (
+                    typeof liabilities === "number" ||
+                    typeof liabilities === "string"
+                  ) {
+                    liabilitiesFormatted = parseFloat(
+                      String(liabilities)
+                    ).toFixed(decimals);
+                  }
+                  const borrowApy =
+                    typeof pos.pool.metadata.borrowApy === "number"
+                      ? pos.pool.metadata.borrowApy
+                      : pos.pool.apy;
+
+                  return (
+                    <tr
+                      key={pos.pool.id}
+                      className="border-b border-white/5 hover:bg-white/2 transition-colors"
+                    >
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <TokenAvatar code={tokenCode} />
+                          <span className="text-white font-medium text-sm">
+                            {tokenCode}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-center text-white font-bold text-sm tabular-nums">
+                        {liabilitiesFormatted}{" "}
+                        <span className="text-white/40 font-normal">
+                          {tokenCode}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center text-white text-sm">
+                        {borrowApy.toFixed(2)}%
+                      </td>
+                      <td className="px-4 py-4 text-center text-white/60 text-sm">
+                        {pos.pool.name}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   );
 };
