@@ -90,12 +90,7 @@ const Lend: React.FC = () => {
         </>
       )}
 
-      {activeTab === "positions" && (
-        <>
-          <UserPositionCard />
-          <MyLendingPositions />
-        </>
-      )}
+      {activeTab === "positions" && <MyLendingPositions />}
     </PageContainer>
   );
 };

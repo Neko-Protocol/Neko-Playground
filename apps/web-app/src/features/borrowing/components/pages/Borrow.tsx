@@ -163,12 +163,7 @@ const Borrow: React.FC = () => {
         </>
       )}
 
-      {activeTab === "positions" && (
-        <>
-          <UserPositionCard />
-          <MyBorrowPositions />
-        </>
-      )}
+      {activeTab === "positions" && <MyBorrowPositions />}
     </PageContainer>
   );
 };
