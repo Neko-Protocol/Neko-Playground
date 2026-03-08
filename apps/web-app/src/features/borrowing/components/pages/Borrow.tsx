@@ -10,6 +10,7 @@ import { HealthFactorBadge } from "../ui/HealthFactorBadge";
 import { BorrowTable } from "../ui/BorrowTable";
 import { BorrowModal } from "../ui/BorrowModal";
 import MyBorrowPositions from "../ui/MyBorrowPositions";
+import { UserPositionCard } from "../ui/UserPositionCard";
 
 type PageTab = "pools" | "positions";
 
@@ -162,7 +163,12 @@ const Borrow: React.FC = () => {
         </>
       )}
 
-      {activeTab === "positions" && <MyBorrowPositions />}
+      {activeTab === "positions" && (
+        <>
+          <UserPositionCard />
+          <MyBorrowPositions />
+        </>
+      )}
     </PageContainer>
   );
 };
