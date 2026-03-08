@@ -589,6 +589,44 @@ export class LendingService {
   }
 
   /**
+   * Get health factor for a borrower from a specific lending contract.
+   * Returns a float (7 decimals: 10_000_000 = 1.0) or null if no open position.
+   */
+  async getHealthFactor(
+    borrower: string,
+    contractId: string
+  ): Promise<number | null> {
+    try {
+      const client = new RwaLendingClient({
+        contractId,
+        rpcUrl: rpcUrl,
+        networkPassphrase: networkPassphrase,
+        ...(allowHttpForSoroban && { allowHttp: true }),
+      });
+
+      const tx = await client.calculate_health_factor(
+        { borrower },
+        { simulate: true }
+      );
+
+      const result = tx.result;
+      if (!result) return null;
+
+      if (result.isOk()) {
+        const raw = Number(result.unwrap());
+        // u32::MAX means no active borrow (infinite health factor)
+        if (raw === 4294967295) return null;
+        return raw / 10_000_000;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error getting health factor:", error);
+      return null;
+    }
+  }
+
+  /**
    * Get collateral balance for a user and RWA token
    */
   async getCollateral(
