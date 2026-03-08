@@ -5,7 +5,6 @@ export type OrderType = "swap" | "limit" | "twap";
 
 export interface SwapState {
   isLoading: boolean;
-  error: string | null;
   orderType: OrderType;
   amountIn: string;
   amountOut: string;
@@ -21,7 +20,6 @@ export interface SwapStateActions {
   setTokenIn: (token: Token | string) => void;
   setTokenOut: (token: Token | string) => void;
   setTxHash: (hash: string | null) => void;
-  setError: (error: string | null) => void;
   setIsLoading: (loading: boolean) => void;
   resetSwap: () => void;
   swapTokens: () => void;
@@ -32,7 +30,6 @@ export function useSwapState(
   defaultTokenOut: Token | string
 ): SwapState & SwapStateActions {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [orderType, setOrderType] = useState<OrderType>("swap");
   const [amountIn, setAmountIn] = useState<string>("");
   const [amountOut, setAmountOut] = useState<string>("0.0");
@@ -41,7 +38,6 @@ export function useSwapState(
   const [txHash, setTxHash] = useState<string | null>(null);
 
   const resetSwap = useCallback(() => {
-    setError(null);
     setIsLoading(false);
   }, []);
 
@@ -56,7 +52,6 @@ export function useSwapState(
 
   return {
     isLoading,
-    error,
     orderType,
     amountIn,
     amountOut,
@@ -69,7 +64,6 @@ export function useSwapState(
     setTokenIn,
     setTokenOut,
     setTxHash,
-    setError,
     setIsLoading,
     resetSwap,
     swapTokens,

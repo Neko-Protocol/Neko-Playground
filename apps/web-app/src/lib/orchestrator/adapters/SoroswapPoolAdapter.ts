@@ -1,12 +1,3 @@
-/**
- * SoroswapPoolAdapter — wraps the SoroSwap SDK / API helpers
- * behind the `BasePoolAdapter` interface.
- *
- * SoroSwap pools are AMM liquidity pools with token pairs.
- * This adapter delegates to the existing helper functions in
- * `lib/helpers/soroswap.ts` for pool queries and liquidity ops.
- */
-
 import {
   getPool,
   addLiquidity,
@@ -28,10 +19,6 @@ import { AdapterError, UnsupportedActionError } from "../types/errors";
 
 const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw"];
 
-/**
- * Parse a SoroSwap pool id.
- * Expected format: `<tokenACode>-<tokenBCode>` (e.g. `XLM-USDC`).
- */
 function parsePairId(poolId: string): { codeA: string; codeB: string } {
   const [codeA, codeB] = poolId.split("-");
   if (!codeA || !codeB) {
@@ -42,7 +29,6 @@ function parsePairId(poolId: string): { codeA: string; codeB: string } {
   return { codeA, codeB };
 }
 
-/** Resolve a token code to its on-chain TokenInfo. */
 function resolveToken(code: string): TokenInfo {
   const tokens = getAvailableTokens();
   const t = tokens[code];
@@ -59,10 +45,6 @@ function resolveToken(code: string): TokenInfo {
 
 export class SoroswapPoolAdapter implements BasePoolAdapter {
   readonly type: PoolType = "soroswap";
-
-  // ------------------------------------------------------------------
-  // Reads
-  // ------------------------------------------------------------------
 
   async getPoolInfo(poolId: string): Promise<PoolInfo> {
     const { codeA, codeB } = parsePairId(poolId);
@@ -123,13 +105,6 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
     }
   }
 
-  /**
-   * List known SoroSwap pools for every pair combination
-   * of the protocol's configured tokens.
-   *
-   * Currently queries a curated set of likely pairs. Extend
-   * this list or switch to an "all-pools" API when available.
-   */
   async listPools(): Promise<PoolInfo[]> {
     const tokens = getAvailableTokens();
     const codes = Object.keys(tokens);
@@ -152,11 +127,6 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       .map((r) => r.value);
   }
 
-  /**
-   * SoroSwap does not expose per-user LP position via a simple
-   * query right now, so we return a zeroed position.
-   * Future: query LP token balance for the user.
-   */
   async getUserPosition(
     poolId: string,
     _userAddress: string
@@ -171,19 +141,6 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
     };
   }
 
-  // ------------------------------------------------------------------
-  // Writes
-  // ------------------------------------------------------------------
-
-  /**
-   * Deposit (add liquidity) to a SoroSwap pool.
-   *
-   * Because SoroSwap pools are dual-token, the caller must supply
-   * `amount` as the **tokenA** amount; the SDK computes the required
-   * tokenB amount internally through the `addLiquidity` helper.
-   *
-   * @param tokenIndex - Ignored for SoroSwap (both tokens required).
-   */
   async deposit(
     poolId: string,
     userAddress: string,
@@ -212,10 +169,6 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
     }
   }
 
-  /**
-   * Withdraw (remove liquidity) is not yet exposed by the SoroSwap
-   * REST API used in this codebase. Throws until implemented.
-   */
   async withdraw(): Promise<TransactionResult> {
     throw new UnsupportedActionError(
       "soroswap",

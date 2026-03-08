@@ -1,8 +1,3 @@
-/**
- * Shortens a contract ID string by keeping the first `prefixLength` characters,
- * an ellipsis, then the last `suffixLength` characters.
- * If the ID is shorter than or equal to `prefixLength + suffixLength`, returns it unchanged.
- */
 export function shortenContractId(
   id: string,
   prefixLength = 5,

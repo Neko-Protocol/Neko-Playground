@@ -104,7 +104,7 @@ const MyBalances: React.FC = () => {
 
   return (
     <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
         <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
           Your Pool Positions

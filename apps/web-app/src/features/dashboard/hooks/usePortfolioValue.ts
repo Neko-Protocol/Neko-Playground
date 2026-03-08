@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { stellarPriceService } from "@/lib/services/stellar-price.service";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap/tokens";
+import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { parseBalance } from "@/lib/helpers/formatUtils";
-import { RWA_TOKENS } from "@/lib/constants/wallet";
 
 export interface PortfolioHolding {
   code: string;
@@ -19,14 +18,9 @@ interface PortfolioValue {
   error: Error | null;
 }
 
-async function resolvePrice(code: string): Promise<number> {
-  if (RWA_TOKENS.includes(code)) {
-    const tokens = getAvailableTokens();
-    const tokenInfo = tokens[code];
-    if (!tokenInfo) return 0;
-    return stellarPriceService.getRWAOraclePrice(tokenInfo.contract);
-  }
-  return stellarPriceService.getTokenPrice(code);
+function getContractForToken(code: string): string | undefined {
+  const asset = getAssetsConfig()[code];
+  return asset?.priceSource === "oracle" ? asset.contract : undefined;
 }
 
 export function usePortfolioValue(): PortfolioValue {
@@ -44,8 +38,9 @@ export function usePortfolioValue(): PortfolioValue {
       }
       return { key, code, rawBalance: bal.balance };
     })
-    .filter((e): e is { key: string; code: string; rawBalance: string } =>
-      e.code !== null && parseBalance(e.rawBalance) > 0
+    .filter(
+      (e): e is { key: string; code: string; rawBalance: string } =>
+        e.code !== null && parseBalance(e.rawBalance) > 0
     );
 
   const balanceKey = balanceEntries
@@ -63,7 +58,10 @@ export function usePortfolioValue(): PortfolioValue {
       const results = await Promise.allSettled(
         balanceEntries.map(async (entry) => {
           const balance = parseBalance(entry.rawBalance);
-          const priceUsd = await resolvePrice(entry.code);
+          const priceUsd = await stellarPriceService.getPrice(
+            entry.code,
+            getContractForToken(entry.code)
+          );
           return {
             code: entry.code,
             balance,

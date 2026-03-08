@@ -20,14 +20,9 @@ interface LendingPool {
   isActive: boolean;
 }
 
-/**
- * Hook to get all active lending pools from the RWA lending contract
- */
 export const useLendingPools = () => {
-  // Memoize available tokens to prevent unnecessary re-renders
   const availableTokens = useMemo(() => getAvailableTokens(), []);
 
-  // All available tokens are potential debt assets — filter to those with a contract
   const debtAssets = useMemo(() => {
     return Object.keys(availableTokens).filter((code) => {
       const token = availableTokens[code];
@@ -35,7 +30,6 @@ export const useLendingPools = () => {
     });
   }, [availableTokens]);
 
-  // Memoize the query function to prevent recreating it on every render
   const queryFn = useMemo(
     () => async () => {
       const contractId = networks.testnet.contractId;
@@ -47,7 +41,6 @@ export const useLendingPools = () => {
         ...(allowHttpForSoroban && { allowHttp: true }),
       });
 
-      // Get pool state
       let poolState;
       try {
         const poolStateTx = await client.get_pool_state({ simulate: true });
@@ -94,7 +87,6 @@ export const useLendingPools = () => {
             decimals
           );
 
-          // Get interest rate (basis points → percentage)
           let interestRate = 0;
           try {
             const interestRateTx = await client.get_interest_rate(
@@ -104,11 +96,8 @@ export const useLendingPools = () => {
             interestRate = parseInterestRateFromContractResult(
               interestRateTx.result
             );
-          } catch {
-            // If interest rate fetch fails, use 0
-          }
+          } catch {}
 
-          // Get bToken rate
           let bTokenRate = "1.0";
           try {
             const bTokenRateTx = await client.get_b_token_rate(
@@ -118,12 +107,10 @@ export const useLendingPools = () => {
             const bTokenRateValue = bTokenRateTx.result;
             if (bTokenRateValue) {
               const rateBigInt = BigInt(bTokenRateValue.toString());
-              // b_rate uses 12 decimals (SCALAR_12 = 1_000_000_000_000), initial 1:1 rate
+
               bTokenRate = fromSmallestUnit(rateBigInt.toString(), 12);
             }
-          } catch {
-            // If bToken rate fetch fails, use 1.0
-          }
+          } catch {}
 
           pools.push({
             asset: token.contract,

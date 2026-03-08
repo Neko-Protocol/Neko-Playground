@@ -1,15 +1,3 @@
-/**
- * BlendPoolAdapter — wraps `@blend-capital/blend-sdk` to expose
- * Blend Protocol lending pools behind the `BasePoolAdapter` interface.
- *
- * A single Blend pool contract contains multiple **reserves** (assets).
- * Each reserve is surfaced as its own `PoolInfo` with the id format:
- *   `blend:<poolContractId>:<assetAddress>`
- *
- * Mutations use `PoolContractV2.submit()` with a `Request` array.
- * Reads use `PoolV2.load()` + `pool.loadUser()`.
- */
-
 import {
   PoolV2,
   PoolContractV2,
@@ -51,10 +39,6 @@ const REQUEST_TYPE_MAP: Record<string, RequestType> = {
   repay: RequestType.Repay,
 };
 
-/**
- * Parse a raw pool id (after the `blend:` prefix is stripped) into its
- * constituent parts: `<poolContractId>:<assetAddress>`.
- */
 function parseRawId(rawId: string): {
   poolContractId: string;
   assetAddress: string;
@@ -82,10 +66,6 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     this.poolContractId = poolContractId;
   }
 
-  // ------------------------------------------------------------------
-  // Reads
-  // ------------------------------------------------------------------
-
   async getPoolInfo(rawId: string): Promise<PoolInfo> {
     const { poolContractId, assetAddress } = parseRawId(rawId);
     const network = getBlendNetwork();
@@ -105,9 +85,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       let tokenMeta: TokenMetadata | undefined;
       try {
         tokenMeta = await TokenMetadata.load(network, assetAddress);
-      } catch {
-        /* token metadata is optional */
-      }
+      } catch {}
 
       const statusMap: Record<number, "active" | "frozen" | "on_ice"> = {
         0: "active",
@@ -160,9 +138,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         let tokenMeta: TokenMetadata | undefined;
         try {
           tokenMeta = await TokenMetadata.load(network, assetAddress);
-        } catch {
-          /* continue without metadata */
-        }
+        } catch {}
 
         const statusMap: Record<number, "active" | "frozen" | "on_ice"> = {
           0: "active",
@@ -232,8 +208,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       );
 
       const decimals = reserve.config.decimals;
-      // In Blend, deposited (supply + collateral) already includes accrued interest.
-      // There is no separate rewards field — the balance compounds in place.
+
       const deposited = supplied + collateral;
 
       return {
@@ -253,10 +228,6 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       return emptyPosition(fullId);
     }
   }
-
-  // ------------------------------------------------------------------
-  // Writes — all via PoolContractV2.submit()
-  // ------------------------------------------------------------------
 
   async deposit(
     rawId: string,
@@ -344,14 +315,6 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     return SUPPORTED_ACTIONS.includes(action);
   }
 
-  // ------------------------------------------------------------------
-  // Internal helpers
-  // ------------------------------------------------------------------
-
-  /**
-   * Build a `submit()` transaction for any request type
-   * (supply, withdraw, borrow, repay, supplyCollateral, withdrawCollateral).
-   */
   private async buildSubmitTx(
     rawId: string,
     userAddress: string,
@@ -386,10 +349,6 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     }
   }
 
-  /**
-   * Wrap a base-64 operation XDR string from the Blend SDK into
-   * a fully prepared (simulated) transaction envelope ready for signing.
-   */
   private async wrapOperation(
     opXdrBase64: string,
     userAddress: string
@@ -415,10 +374,6 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     };
   }
 }
-
-// ------------------------------------------------------------------
-// Utilities
-// ------------------------------------------------------------------
 
 function emptyPosition(poolId: string): PoolPosition {
   return {

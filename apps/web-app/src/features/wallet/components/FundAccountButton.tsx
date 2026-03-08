@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { useNotification } from "@/hooks/useNotification";
+import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { Button, Tooltip } from "@stellar/design-system";
 import { getFriendbotUrl } from "@/lib/helpers/stellar/friendbot";
 
 const FundAccountButton: React.FC = () => {
-  const { addNotification } = useNotification();
+  const { addNotification } = useToast();
   const [isPending, startTransition] = useTransition();
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const { address } = useWallet();

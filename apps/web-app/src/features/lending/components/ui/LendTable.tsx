@@ -23,7 +23,7 @@ export function LendTable({
 
   return (
     <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
-      {/* ── Desktop table (md+) ─────────────────────────────────────────── */}
+      {}
       <div className="hidden md:block">
         <table className="w-full">
           <thead>
@@ -104,7 +104,7 @@ export function LendTable({
         </table>
       </div>
 
-      {/* ── Mobile cards (< md) ─────────────────────────────────────────── */}
+      {}
       <div className="md:hidden">
         {isLoading ? (
           <MobileEmptyState message="Loading pools…" />
@@ -119,12 +119,12 @@ export function LendTable({
           <ul className="divide-y divide-white/5">
             {pools.map((pool) => (
               <li key={pool.id} className="px-4 py-4">
-                {/* Card header */}
+                {}
                 <div className="mb-3">
                   <ProtocolCell pool={pool} />
                 </div>
 
-                {/* Stats grid */}
+                {}
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <StatCell
                     label="Supply APY"
@@ -147,7 +147,7 @@ export function LendTable({
                   />
                 </div>
 
-                {/* Action buttons */}
+                {}
                 <div className="flex gap-2">
                   <button
                     onClick={() => onDeposit(pool)}
@@ -170,8 +170,6 @@ export function LendTable({
     </div>
   );
 }
-
-// ── Shared helpers ────────────────────────────────────────────────────────────
 
 function EmptyRow({
   colSpan,

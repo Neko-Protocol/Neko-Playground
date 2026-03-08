@@ -5,13 +5,6 @@ import { getCurrentNetwork, getAvailableTokens, getTokens } from "./tokens";
 const SOROSWAP_API_URL = "https://api.soroswap.finance";
 const DEFAULT_TIMEOUT = 50000;
 
-// ========================================
-// API KEY MANAGEMENT
-// ========================================
-
-/**
- * Get API key from environment or localStorage
- */
 export const getApiKey = (): string | null => {
   const envKey = process.env.NEXT_PUBLIC_SOROSWAP_API_KEY;
   const envKeyStr = typeof envKey === "string" ? envKey : "";
@@ -25,27 +18,14 @@ export const getApiKey = (): string | null => {
   return null;
 };
 
-/**
- * Set API key in localStorage
- */
 export const setApiKey = (apiKey: string): void => {
   localStorage.setItem("soroswap_api_key", apiKey);
 };
 
-/**
- * Check if API key is configured
- */
 export const hasApiKey = (): boolean => {
   return getApiKey() !== null;
 };
 
-// ========================================
-// SDK MANAGEMENT
-// ========================================
-
-/**
- * Get SDK network enum from current network string
- */
 export const getSDKNetwork = (): SupportedNetworks => {
   const network = getCurrentNetwork();
   const networkLower = network.toLowerCase();
@@ -59,17 +39,11 @@ export const getSDKNetwork = (): SupportedNetworks => {
 let sdkInstance: SoroswapSDK | null = null;
 let sdkNetwork: SupportedNetworks | null = null;
 
-/**
- * Invalidate SDK instance (call when network changes)
- */
 export const invalidateSoroswapSDK = (): void => {
   sdkInstance = null;
   sdkNetwork = null;
 };
 
-/**
- * Get or create Soroswap SDK instance (singleton pattern)
- */
 export const getSoroswapSDK = (): SoroswapSDK => {
   const currentNetwork = getSDKNetwork();
 
@@ -97,13 +71,6 @@ export const getSoroswapSDK = (): SoroswapSDK => {
   return sdkInstance;
 };
 
-// ========================================
-// API REQUEST HELPER
-// ========================================
-
-/**
- * Make API request to Soroswap REST API
- */
 export const makeAPIRequest = async <T>(
   endpoint: string,
   options: RequestInit = {}
@@ -144,13 +111,6 @@ export const makeAPIRequest = async <T>(
   }
 };
 
-// ========================================
-// AMOUNT CONVERSION
-// ========================================
-
-/**
- * Convert amount to smallest unit (stroops for XLM with 7 decimals)
- */
 export const toSmallestUnit = (
   amount: string,
   decimals: number = 7
@@ -163,20 +123,10 @@ export const toSmallestUnit = (
   return BigInt(Math.floor(amountFloat));
 };
 
-// ========================================
-// FORMAT / VALIDATION HELPERS
-// ========================================
-
-/**
- * Verify if a contract address is valid format
- */
 export const isValidContractAddress = (address: string): boolean => {
   return address.startsWith("C") && address.length === 56;
 };
 
-/**
- * Get explorer URL for a token contract
- */
 export const getTokenExplorerUrl = (
   contractAddress: string,
   network: string = "testnet"
@@ -185,10 +135,6 @@ export const getTokenExplorerUrl = (
   return `https://stellar.expert/explorer${networkParam}/contract/${contractAddress}`;
 };
 
-/**
- * Format token for API request
- * Assets must be contract addresses as strings
- */
 export const formatTokenForAPI = (token: Token | string): string => {
   if (typeof token === "string") {
     return token;
