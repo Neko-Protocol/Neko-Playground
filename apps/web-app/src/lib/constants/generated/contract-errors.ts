@@ -157,7 +157,8 @@ const _errorEntries: [number, ContractErrorInfo][] = [
     32,
     {
       code: "DebtAssetAlreadySet",
-      message: "Debt asset has already been set",
+      message:
+        "Debt asset has already been set. You can't borrow more than one asset type per position — repay your current debt first.",
       contract: "rwa-lending",
     },
   ],
