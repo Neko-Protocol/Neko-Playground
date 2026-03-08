@@ -89,13 +89,14 @@ export function BorrowTable({
                       token1={asset.pool.token1}
                       token2={asset.pool.token2}
                       fee={asset.pool.fee}
+                      isAggregated={asset.isAggregated}
                     />
                   </td>
                   <td className="px-4 py-4 align-middle text-center text-white text-sm">
                     {asset.borrowApr}
                   </td>
                   <td className="px-4 py-4 align-middle text-center text-white text-sm">
-                    {asset.collateralFactorDisplay}
+                    {asset.isAggregated ? "—" : asset.collateralFactorDisplay}
                   </td>
                   <td className="px-4 py-4 align-middle text-center text-white text-sm">
                     {asset.liquidity}
@@ -147,6 +148,7 @@ export function BorrowTable({
                       token1={asset.pool.token1}
                       token2={asset.pool.token2}
                       fee={asset.pool.fee}
+                      isAggregated={asset.isAggregated}
                     />
                     <IdBadge id={asset.id} isActive={asset.isActive} />
                   </div>
@@ -159,7 +161,9 @@ export function BorrowTable({
                     />
                     <StatCell
                       label="Collateral"
-                      value={asset.collateralFactorDisplay}
+                      value={
+                        asset.isAggregated ? "—" : asset.collateralFactorDisplay
+                      }
                       icon={Shield}
                     />
                     <StatCell

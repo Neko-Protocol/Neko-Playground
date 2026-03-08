@@ -9,13 +9,17 @@ import {
   TrendingDown,
   Layers,
   HeartPulse,
+  Lock,
 } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useUserBorrowPositions } from "../../hooks/useUserBorrowPositions";
 import { useHealthFactor } from "../../hooks/useHealthFactor";
+import { useUserPositions } from "@/features/dashboard/hooks/useUserPositions";
 import { HealthFactorBadge } from "./HealthFactorBadge";
 import { TokenAvatar } from "./TokenAvatar";
 import { ColHeader } from "./ColHeader";
+
+const STELLAR_DECIMALS = 7;
 
 const MyBorrowPositions: React.FC = () => {
   const { address } = useWallet();
@@ -23,12 +27,23 @@ const MyBorrowPositions: React.FC = () => {
   const { pools: hfPools, isLoading: isLoadingHF } = useHealthFactor(
     address ?? undefined
   );
+  const { positions: allPositions, isLoading: isLoadingAggregated } =
+    useUserPositions();
 
   function getHealthFactor(contractId: string): number | null {
     return (
       hfPools.find((p) => p.contractId === contractId)?.healthFactor ?? null
     );
   }
+
+  const aggregatedBorrowPositions = allPositions.filter((p) => {
+    if (p.pool.type === "neko") return false;
+    const liabilities = p.position.metadata?.liabilities;
+    if (typeof liabilities === "bigint") return liabilities > 0n;
+    if (typeof liabilities === "number") return liabilities > 0;
+    if (typeof liabilities === "string") return parseFloat(liabilities) > 0;
+    return false;
+  });
 
   if (!hasWallet) {
     return (
@@ -43,6 +58,7 @@ const MyBorrowPositions: React.FC = () => {
 
   return (
     <div className="w-full rounded-2xl border border-white/5 bg-[#1C1C1C]">
+      {/* ── Neko borrow positions ── */}
       <div className="flex items-center px-4 py-3 border-b border-white/5">
         <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
           Your Borrow Positions
@@ -54,16 +70,17 @@ const MyBorrowPositions: React.FC = () => {
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/5">
-              <ColHeader icon={Coins} label="Asset" />
+              <ColHeader icon={Coins} label="Asset" centered />
               <ColHeader
                 icon={Shield}
-                label="Collateral"
-                tooltip="The RWA token you posted as collateral to secure this borrow"
+                label="Collateral Token"
+                tooltip="The token you posted as collateral to secure this borrow"
+                centered
               />
               <ColHeader
-                icon={Hash}
-                label="dToken Balance"
-                tooltip="Raw debt tokens held — these represent your share of the total debt pool and grow over time as interest accrues"
+                icon={Lock}
+                label="Collateral Amount"
+                tooltip="Total collateral you have locked in this pool"
                 centered
               />
               <ColHeader
@@ -112,7 +129,7 @@ const MyBorrowPositions: React.FC = () => {
                   className="border-b border-white/5 hover:bg-white/2 transition-colors"
                 >
                   <td className="px-4 py-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center gap-3">
                       <TokenAvatar code={pos.assetCode} />
                       <span className="text-white font-medium text-sm">
                         {pos.assetCode}
@@ -120,15 +137,18 @@ const MyBorrowPositions: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-2">
                       <TokenAvatar code={pos.collateralTokenCode} />
                       <span className="text-white text-sm">
                         {pos.collateralTokenCode}
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-center text-white/60 text-sm tabular-nums font-mono">
-                    {pos.dTokensFormatted}
+                  <td className="px-4 py-4 text-center text-white font-semibold text-sm tabular-nums">
+                    {pos.collateralFormatted}{" "}
+                    <span className="text-white/40 font-normal">
+                      {pos.collateralTokenCode}
+                    </span>
                   </td>
                   <td className="px-4 py-4 text-center text-white font-bold text-sm tabular-nums">
                     {pos.debtFormatted}{" "}
@@ -186,19 +206,18 @@ const MyBorrowPositions: React.FC = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <MobileStat
-                    label="Current Debt"
-                    value={`${pos.debtFormatted} ${pos.assetCode}`}
+                    label={`Collateral (${pos.collateralTokenCode})`}
+                    value={pos.collateralFormatted}
+                  />
+                  <MobileStat
+                    label={`Debt (${pos.assetCode})`}
+                    value={pos.debtFormatted}
                   />
                   <MobileStat
                     label="APR"
                     value={`${pos.interestRate.toFixed(2)}%`}
-                  />
-                  <MobileStat
-                    label="dTokens"
-                    value={pos.dTokensFormatted}
-                    mono
                   />
                 </div>
               </li>
@@ -206,6 +225,115 @@ const MyBorrowPositions: React.FC = () => {
           </ul>
         )}
       </div>
+
+      {/* ── Aggregated (non-Neko) borrow positions ── */}
+      {(isLoadingAggregated || aggregatedBorrowPositions.length > 0) && (
+        <>
+          <div className="flex items-center px-4 py-3 border-t border-white/5">
+            <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
+              Aggregated Borrow Positions
+            </span>
+            <span className="ml-2 rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
+              Aggregated
+            </span>
+          </div>
+
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/5">
+                <ColHeader icon={Coins} label="Asset" />
+                <ColHeader
+                  icon={Layers}
+                  label="Liabilities"
+                  tooltip="Outstanding debt in this aggregated pool"
+                  centered
+                />
+                <ColHeader
+                  icon={TrendingDown}
+                  label="Borrow APR"
+                  tooltip="Annual interest rate on your debt"
+                  centered
+                />
+                <ColHeader icon={Hash} label="Protocol" centered />
+              </tr>
+            </thead>
+            <tbody>
+              {isLoadingAggregated ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-4 py-12 text-center text-white/40 text-sm"
+                  >
+                    Loading aggregated positions...
+                  </td>
+                </tr>
+              ) : aggregatedBorrowPositions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-4 py-12 text-center text-white/40 text-sm"
+                  >
+                    No aggregated borrow positions.
+                  </td>
+                </tr>
+              ) : (
+                aggregatedBorrowPositions.map((pos) => {
+                  const tokenCode = pos.pool.tokens[0]?.code ?? "?";
+                  const decimals =
+                    pos.pool.tokens[0]?.decimals ?? STELLAR_DECIMALS;
+                  const liabilities = pos.position.metadata?.liabilities;
+                  let liabilitiesFormatted = "0";
+                  if (typeof liabilities === "bigint") {
+                    liabilitiesFormatted = (
+                      Number(liabilities) /
+                      10 ** decimals
+                    ).toFixed(decimals);
+                  } else if (
+                    typeof liabilities === "number" ||
+                    typeof liabilities === "string"
+                  ) {
+                    liabilitiesFormatted = parseFloat(
+                      String(liabilities)
+                    ).toFixed(decimals);
+                  }
+                  const borrowApy =
+                    typeof pos.pool.metadata.borrowApy === "number"
+                      ? pos.pool.metadata.borrowApy
+                      : pos.pool.apy;
+
+                  return (
+                    <tr
+                      key={pos.pool.id}
+                      className="border-b border-white/5 hover:bg-white/2 transition-colors"
+                    >
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <TokenAvatar code={tokenCode} />
+                          <span className="text-white font-medium text-sm">
+                            {tokenCode}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-center text-white font-bold text-sm tabular-nums">
+                        {liabilitiesFormatted}{" "}
+                        <span className="text-white/40 font-normal">
+                          {tokenCode}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center text-white text-sm">
+                        {borrowApy.toFixed(2)}%
+                      </td>
+                      <td className="px-4 py-4 text-center text-white/60 text-sm">
+                        {pos.pool.name}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   );
 };

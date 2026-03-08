@@ -678,6 +678,65 @@ export class LendingService {
   }
 
   /**
+   * Get raw collateral bigint for a user and RWA token from a specific pool contract.
+   */
+  async getCollateralRaw(
+    rwaTokenContract: string,
+    walletAddress: string,
+    contractId: string
+  ): Promise<bigint> {
+    try {
+      const client = new RwaLendingClient({
+        contractId,
+        rpcUrl: rpcUrl,
+        networkPassphrase: networkPassphrase,
+        ...(allowHttpForSoroban && { allowHttp: true }),
+      });
+      const tx = await client.get_collateral(
+        { borrower: walletAddress, rwa_token: rwaTokenContract },
+        { simulate: true }
+      );
+      const value = tx.result;
+      if (!value) return 0n;
+      return typeof value === "bigint" ? value : BigInt(String(value));
+    } catch (error) {
+      console.error("Error getting collateral (raw):", error);
+      return 0n;
+    }
+  }
+
+  /**
+   * Get remaining borrow capacity in USD (7 decimals) for a specific pool.
+   * Returns null when no position exists or on error.
+   */
+  async getBorrowLimitForPool(
+    walletAddress: string,
+    contractId: string
+  ): Promise<number | null> {
+    try {
+      const client = new RwaLendingClient({
+        contractId,
+        rpcUrl: rpcUrl,
+        networkPassphrase: networkPassphrase,
+        ...(allowHttpForSoroban && { allowHttp: true }),
+      });
+      const tx = await client.calculate_borrow_limit(
+        { borrower: walletAddress },
+        { simulate: true }
+      );
+      const result = tx.result;
+      if (!result) return null;
+      if (result.isOk()) {
+        return Number(result.unwrap()) / 1e7;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting borrow limit for pool:", error);
+      return null;
+    }
+  }
+
+  /**
    * Get collateral balance for a user and RWA token
    */
   async getCollateral(

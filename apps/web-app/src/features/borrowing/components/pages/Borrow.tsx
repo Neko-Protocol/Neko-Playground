@@ -7,6 +7,7 @@ import { useBorrow } from "../../hooks/useBorrow";
 import { BorrowTable } from "../ui/BorrowTable";
 import { BorrowModal } from "../ui/BorrowModal";
 import MyBorrowPositions from "../ui/MyBorrowPositions";
+import { GetTestTokensBanner } from "@/features/wallet/components/GetTestTokensBanner";
 
 type PageTab = "pools" | "positions";
 
@@ -41,6 +42,9 @@ const Borrow: React.FC = () => {
         imageAlt="Borrow illustration"
         className="mb-8"
       />
+
+      <GetTestTokensBanner className="mb-6" />
+
       <div className="flex items-center gap-1 rounded-xl bg-[#1C1C1C] p-1 w-fit mb-6">
         <button
           onClick={() => setActiveTab("pools")}

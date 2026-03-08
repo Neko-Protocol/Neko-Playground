@@ -7,6 +7,7 @@ import { useLend } from "../../hooks/useLend";
 import { LendTable } from "../ui/LendTable";
 import { LendModal } from "../ui/LendModal";
 import MyLendingPositions from "../ui/MyLendingPositions";
+import { GetTestTokensBanner } from "@/features/wallet/components/GetTestTokensBanner";
 
 type PageTab = "pools" | "positions";
 
@@ -39,6 +40,8 @@ const Lend: React.FC = () => {
         imageAlt="Lend illustration"
         className="mb-8"
       />
+
+      <GetTestTokensBanner className="mb-6" />
 
       <div className="flex items-center gap-1 rounded-xl bg-[#1C1C1C] p-1 w-fit mb-6">
         <button

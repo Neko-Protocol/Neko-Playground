@@ -20,7 +20,7 @@ const YourPositions: React.FC = () => {
           <p className="text-white/40 text-sm">Active pool positions</p>
         </div>
         <Link
-          href="/pools"
+          href="/lending"
           className="flex items-center gap-1.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
         >
           Manage
