@@ -399,6 +399,63 @@ export const borrowFromPool = async (
 };
 
 /**
+ * Get dToken balance for a borrower (raw dTokens, not actual debt)
+ */
+export const getDTokenBalance = async (
+  assetCode: string,
+  walletAddress: string
+): Promise<bigint> => {
+  try {
+    const client = new RwaLendingClient({
+      contractId: networks.testnet.contractId,
+      rpcUrl: rpcUrl,
+      networkPassphrase: networkPassphrase,
+      ...(allowHttpForSoroban && { allowHttp: true }),
+    });
+
+    const tx = await client.get_d_token_balance(
+      { borrower: walletAddress, asset: assetCode },
+      { simulate: true }
+    );
+
+    const value = tx.result;
+    if (!value) return 0n;
+
+    return typeof value === "bigint" ? value : BigInt(String(value));
+  } catch (error) {
+    console.error("Error getting dToken balance:", error);
+    return 0n;
+  }
+};
+
+/**
+ * Get dToken → underlying conversion rate (12-decimal scalar)
+ */
+export const getDTokenRate = async (assetCode: string): Promise<bigint> => {
+  try {
+    const client = new RwaLendingClient({
+      contractId: networks.testnet.contractId,
+      rpcUrl: rpcUrl,
+      networkPassphrase: networkPassphrase,
+      ...(allowHttpForSoroban && { allowHttp: true }),
+    });
+
+    const tx = await client.get_d_token_rate(
+      { asset: assetCode },
+      { simulate: true }
+    );
+
+    const value = tx.result;
+    if (!value) return 0n;
+
+    return typeof value === "bigint" ? value : BigInt(String(value));
+  } catch (error) {
+    console.error("Error getting dToken rate:", error);
+    return 0n;
+  }
+};
+
+/**
  * Get bToken balance for a user
  */
 export const getBTokenBalance = async (

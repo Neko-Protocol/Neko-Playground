@@ -558,6 +558,49 @@ export class LendingService {
   }
 
   /**
+   * Get dToken balance for a borrower (raw dTokens)
+   */
+  async getDTokenBalance(
+    assetCode: string,
+    walletAddress: string
+  ): Promise<bigint> {
+    try {
+      const tx = await this.lendingClient.get_d_token_balance(
+        { borrower: walletAddress, asset: assetCode },
+        { simulate: true }
+      );
+
+      const value = tx.result;
+      if (!value) return 0n;
+
+      return typeof value === "bigint" ? value : BigInt(String(value));
+    } catch (error) {
+      console.error("Error getting dToken balance:", error);
+      return 0n;
+    }
+  }
+
+  /**
+   * Get dToken → underlying conversion rate (12-decimal scalar)
+   */
+  async getDTokenRate(assetCode: string): Promise<bigint> {
+    try {
+      const tx = await this.lendingClient.get_d_token_rate(
+        { asset: assetCode },
+        { simulate: true }
+      );
+
+      const value = tx.result;
+      if (!value) return 0n;
+
+      return typeof value === "bigint" ? value : BigInt(String(value));
+    } catch (error) {
+      console.error("Error getting dToken rate:", error);
+      return 0n;
+    }
+  }
+
+  /**
    * Get borrow limit for a user
    */
   async getBorrowLimit(walletAddress: string): Promise<string> {
