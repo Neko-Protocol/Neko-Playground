@@ -14,8 +14,6 @@ const Borrow: React.FC = () => {
     poolsError,
     selectedAsset,
     isProcessing,
-    executionError,
-    success,
     isWalletConnected,
     page,
     totalRows,
@@ -26,8 +24,6 @@ const Borrow: React.FC = () => {
     openModal,
     closeModal,
     handleSubmit,
-    clearSuccess,
-    clearError,
   } = useBorrow();
 
   return (
@@ -59,13 +55,9 @@ const Borrow: React.FC = () => {
         <BorrowModal
           asset={selectedAsset}
           isProcessing={isProcessing}
-          error={executionError}
-          success={success}
           isWalletConnected={isWalletConnected}
           onClose={closeModal}
           onSubmit={handleSubmit}
-          onClearError={clearError}
-          onClearSuccess={clearSuccess}
         />
       )}
     </PageContainer>

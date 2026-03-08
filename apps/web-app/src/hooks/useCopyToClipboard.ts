@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useNotification } from "@/hooks/useNotification";
+import { useToast } from "@/hooks/useToast";
 
 const DEFAULT_RESET_MS = 1500;
 
@@ -9,7 +9,7 @@ export function useCopyToClipboard(options?: {
 }) {
   const { resetMs = DEFAULT_RESET_MS, showNotification = false } =
     options ?? {};
-  const { addNotification } = useNotification();
+  const { addNotification } = useToast();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const copy = useCallback(

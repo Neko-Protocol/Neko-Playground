@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
-import { useNotification } from "@/hooks/useNotification";
+import { useToast } from "@/hooks/useToast";
 import { rpcUrl } from "@/lib/constants/network";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
 import { orchestrator } from "../core/Orchestrator";
@@ -19,7 +19,7 @@ interface PoolActionParams {
 
 export function usePoolAction() {
   const { address, signTransaction } = useWallet();
-  const { addNotification } = useNotification();
+  const { addNotification } = useToast();
   const queryClient = useQueryClient();
 
   return useMutation({
