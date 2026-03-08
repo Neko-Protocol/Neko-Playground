@@ -67,7 +67,6 @@ const AssetBreakdown: React.FC = () => {
         <table className="w-full min-w-[640px]">
           <thead>
             <tr className="border-b border-white/5">
-              <ColHeader icon={Hash} label="ID" />
               <ColHeader icon={Layers} label="Pool" />
               <ColHeader icon={TrendingUp} label="ROI" />
               <ColHeader icon={Percent} label="Fee APY" />
@@ -77,7 +76,7 @@ const AssetBreakdown: React.FC = () => {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center">
+                <td colSpan={4} className="px-4 py-10 text-center">
                   <div className="flex items-center justify-center gap-3">
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/20 border-t-white/60" />
                     <span className="text-white/40 text-sm">
@@ -88,7 +87,7 @@ const AssetBreakdown: React.FC = () => {
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center">
+                <td colSpan={4} className="px-4 py-10 text-center">
                   <p className="text-red-400 text-sm">
                     Error loading pools: {String(error)}
                   </p>
@@ -96,7 +95,7 @@ const AssetBreakdown: React.FC = () => {
               </tr>
             ) : assets.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center">
+                <td colSpan={4} className="px-4 py-10 text-center">
                   <p className="text-white/40 text-sm">No pools available</p>
                 </td>
               </tr>
@@ -106,33 +105,6 @@ const AssetBreakdown: React.FC = () => {
                   key={asset.id}
                   className="border-b border-white/5 last:border-b-0 hover:bg-white/2 transition-colors"
                 >
-                  {/* ID */}
-                  <td className="px-3 sm:px-4 py-3.5">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-                        asset.isActive
-                          ? "text-[#76C464]"
-                          : "bg-white/5 text-white/40"
-                      }`}
-                      style={
-                        asset.isActive
-                          ? {
-                              backgroundColor: "rgba(118,196,100,0.30)",
-                            }
-                          : undefined
-                      }
-                    >
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          asset.isActive ? "bg-[#76C464]" : "bg-white/20"
-                        }`}
-                      />
-                      {asset.id.length > 10
-                        ? asset.id.slice(0, 10) + "…"
-                        : asset.id}
-                    </span>
-                  </td>
-
                   {/* Pool */}
                   <td className="px-3 sm:px-4 py-3.5">
                     <div className="flex items-center gap-3">
