@@ -44,7 +44,7 @@ const Pools: React.FC = () => {
         className="mb-8"
       />
 
-      {/* Top-level tabs */}
+      {}
       <div className="flex items-center gap-1 rounded-xl bg-[#1C1C1C] p-1 w-fit mb-6">
         <button
           onClick={() => setActiveTab("pools")}
@@ -70,7 +70,7 @@ const Pools: React.FC = () => {
 
       {activeTab === "pools" && (
         <>
-          {/* Pool type filters + search */}
+          {}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
             <div className="flex items-center gap-2">
               {POOL_FILTERS.map((f) => (
@@ -100,7 +100,7 @@ const Pools: React.FC = () => {
             </div>
           </div>
 
-          {/* Pool Cards Grid */}
+          {}
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
               <div className="w-full max-w-md rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">

@@ -1,14 +1,3 @@
-/**
- * Soroswap helpers barrel
- * Re-exports all public API for backwards compatibility.
- *
- * Internal modules:
- *   tokens.ts  — token registry and lookup
- *   utils.ts   — SDK management, API key, formatting helpers
- *   quotes.ts  — quote, pool, build, send, and liquidity functions
- */
-
-// Types
 export type {
   Token,
   QuoteRequest,
@@ -23,7 +12,6 @@ export type {
   GetPoolRequest,
 } from "../../../types/soroswapTypes";
 
-// Token registry
 export {
   getAvailableTokens,
   getTokens,
@@ -31,7 +19,6 @@ export {
   TOKENS,
 } from "./tokens";
 
-// Utilities
 export {
   getApiKey,
   setApiKey,
@@ -41,7 +28,6 @@ export {
   getTokenExplorerUrl,
 } from "./utils";
 
-// Quotes, pools, transactions, and liquidity
 export {
   getPool,
   getQuote,

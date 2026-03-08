@@ -1,14 +1,3 @@
-/**
- * A typed wrapper around localStorage largely borrowed from (but less capable
- * than) https://www.npmjs.com/package/typed-local-store
- *
- * Provides a fully-typed interface to localStorage, and is easy to modify for other storage strategies (i.e. sessionStorage)
- */
-
-/**
- * Valid localStorage key names mapped to the type of their stored value.
- * Extend this union when adding new persisted keys.
- */
 type Schema = {
   walletId: string;
   walletAddress: string;
@@ -16,20 +5,13 @@ type Schema = {
   networkPassphrase: string;
 };
 
-/**
- * Typed interface that follows the Web Storage API: https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API
- *
- * Implementation has been borrowed and simplified from https://www.npmjs.com/package/typed-local-store
- */
 class TypedStorage<T> {
   private readonly storage: Storage;
 
   constructor() {
-    // Check if we're in the browser (client-side)
     if (typeof window !== "undefined" && window.localStorage) {
       this.storage = localStorage;
     } else {
-      // Fallback for SSR: create a mock storage object
       this.storage = {
         getItem: () => null,
         setItem: () => {},
@@ -86,8 +68,5 @@ class TypedStorage<T> {
   }
 }
 
-/**
- * Fully-typed wrapper around localStorage
- */
 const storage = new TypedStorage<Schema>();
 export default storage;

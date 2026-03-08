@@ -24,13 +24,6 @@ import type {
 
 const SOROSWAP_API_URL = "https://api.soroswap.finance";
 
-// ========================================
-// POOL FUNCTIONS
-// ========================================
-
-/**
- * Get pool information for two tokens using Soroswap API
- */
 export const getPool = async (request: GetPoolRequest): Promise<PoolInfo[]> => {
   const tokenA = formatTokenForAPI(request.tokenA);
   const tokenB = formatTokenForAPI(request.tokenB);
@@ -103,13 +96,6 @@ export const getPool = async (request: GetPoolRequest): Promise<PoolInfo[]> => {
   }
 };
 
-// ========================================
-// QUOTE / SWAP FUNCTIONS
-// ========================================
-
-/**
- * Get a quote for a swap using Soroswap SDK
- */
 export const getQuote = async (
   request: QuoteRequest
 ): Promise<QuoteResponse | undefined> => {
@@ -344,9 +330,7 @@ export const getQuote = async (
           });
         }
       }
-    } catch {
-      // Keep default message
-    }
+    } catch {}
 
     const errorStr = errorMessage.toLowerCase();
 
@@ -395,13 +379,6 @@ export const getQuote = async (
   }
 };
 
-// ========================================
-// TRANSACTION BUILD / SEND
-// ========================================
-
-/**
- * Build a swap transaction XDR from a quote
- */
 export const buildTransaction = async (
   request: BuildRequest
 ): Promise<BuildResponse> => {
@@ -417,7 +394,6 @@ export const buildTransaction = async (
 
     const buildResponse = await soroswapSDK.build(
       {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         quote: sdkQuote as any,
         from: request.from,
       },
@@ -440,9 +416,6 @@ export const buildTransaction = async (
   }
 };
 
-/**
- * Send a signed transaction using Soroswap SDK
- */
 export const sendTransaction = async (
   request: SendRequest
 ): Promise<SendResponse> => {
@@ -485,13 +458,6 @@ export const sendTransaction = async (
   }
 };
 
-// ========================================
-// LIQUIDITY
-// ========================================
-
-/**
- * Add liquidity to a pool using Soroswap API
- */
 export const addLiquidity = async (
   request: AddLiquidityRequest
 ): Promise<AddLiquidityResponse> => {

@@ -30,16 +30,24 @@ export interface AssetPriceCardProps {
   stockInfo?: StockInfo | null;
 }
 
-export function AssetPriceCard({ asset, decimals, stockInfo: stockInfoProp }: AssetPriceCardProps) {
+export function AssetPriceCard({
+  asset,
+  decimals,
+  stockInfo: stockInfoProp,
+}: AssetPriceCardProps) {
   const { lastPrice, priceHistory, isLoadingPrice, assetStr } =
     useOracleAssetPrice(asset, { decimals });
 
   const fromOracle = useStockInfo(assetStr);
-  const stockInfo = stockInfoProp ?? fromOracle ?? STOCK_INFO[assetStr.toUpperCase()];
+  const stockInfo =
+    stockInfoProp ?? fromOracle ?? STOCK_INFO[assetStr.toUpperCase()];
 
   const priceChange = React.useMemo(() => {
     if (!lastPrice || !priceHistory || priceHistory.length < 2) return null;
-    return calculatePriceChange(Number(lastPrice.price), Number(priceHistory[1].price));
+    return calculatePriceChange(
+      Number(lastPrice.price),
+      Number(priceHistory[1].price)
+    );
   }, [lastPrice, priceHistory]);
 
   const displayDecimals = decimals ?? 14;
@@ -47,14 +55,13 @@ export function AssetPriceCard({ asset, decimals, stockInfo: stockInfoProp }: As
   return (
     <Link href={ROUTES.stockDetail(assetStr)} className="block h-full group">
       <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 h-full flex flex-col transition-all duration-200 hover:border-white/10 hover:bg-[#222222] cursor-pointer">
-
-        {/* Header: logo + name + ticker + price change */}
+        {}
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">
             {stockInfo && (
               <div className="relative w-10 h-10 rounded-xl bg-[#2A2A2A] overflow-hidden shrink-0">
                 <Image
-                  src={stockInfo.logo || "/placeholder.svg"}
+                  src={stockInfo.logo || "/assets/xlm-logo.png"}
                   alt={stockInfo.name}
                   fill
                   unoptimized
@@ -68,7 +75,10 @@ export function AssetPriceCard({ asset, decimals, stockInfo: stockInfoProp }: As
               </h3>
               <span
                 className="inline-flex items-center mt-1 px-2 py-0.5 rounded-md text-[10px] font-semibold"
-                style={{ color: "#229EDF", backgroundColor: "rgba(34,158,223,0.10)" }}
+                style={{
+                  color: "#229EDF",
+                  backgroundColor: "rgba(34,158,223,0.10)",
+                }}
               >
                 {assetStr}
               </span>
@@ -83,15 +93,17 @@ export function AssetPriceCard({ asset, decimals, stockInfo: stockInfoProp }: As
                   : "bg-red-500/10 text-red-400"
               }`}
             >
-              {priceChange >= 0
-                ? <TrendingUp className="h-3 w-3" />
-                : <TrendingDown className="h-3 w-3" />}
+              {priceChange >= 0 ? (
+                <TrendingUp className="h-3 w-3" />
+              ) : (
+                <TrendingDown className="h-3 w-3" />
+              )}
               {formatPctChange(Math.abs(priceChange))}%
             </div>
           )}
         </div>
 
-        {/* Last price */}
+        {}
         <div className="flex-1 flex flex-col">
           {isLoadingPrice ? (
             <div className="flex items-center gap-2">
@@ -107,33 +119,39 @@ export function AssetPriceCard({ asset, decimals, stockInfo: stockInfoProp }: As
                 {formatPrice(lastPrice.price, displayDecimals)}
               </p>
               <p className="text-white/30 text-xs mt-1">
-                {new Date(Number(lastPrice.timestamp) * TIMESTAMP_MS_PER_SECOND).toLocaleDateString()}
+                {new Date(
+                  Number(lastPrice.timestamp) * TIMESTAMP_MS_PER_SECOND
+                ).toLocaleDateString()}
               </p>
             </div>
           ) : (
             <p className="text-white/30 text-sm">No price data</p>
           )}
 
-          {/* Recent prices */}
+          {}
           {priceHistory && priceHistory.length > 0 && (
             <div className="mt-5 pt-4 border-t border-white/5">
               <p className="text-white/40 text-[10px] font-semibold uppercase tracking-widest mb-3">
                 Recent Prices ({priceHistory.length})
               </p>
               <div className="space-y-2">
-                {priceHistory.slice(0, MAX_RECENT_PRICES_IN_CARD).map((price, idx) => (
-                  <div
-                    key={`${Number(price.timestamp)}-${idx}`}
-                    className="flex justify-between items-center"
-                  >
-                    <span className="text-white text-sm font-medium">
-                      {formatPrice(price.price, displayDecimals)}
-                    </span>
-                    <span className="text-white/30 text-xs">
-                      {new Date(Number(price.timestamp) * TIMESTAMP_MS_PER_SECOND).toLocaleTimeString()}
-                    </span>
-                  </div>
-                ))}
+                {priceHistory
+                  .slice(0, MAX_RECENT_PRICES_IN_CARD)
+                  .map((price, idx) => (
+                    <div
+                      key={`${Number(price.timestamp)}-${idx}`}
+                      className="flex justify-between items-center"
+                    >
+                      <span className="text-white text-sm font-medium">
+                        {formatPrice(price.price, displayDecimals)}
+                      </span>
+                      <span className="text-white/30 text-xs">
+                        {new Date(
+                          Number(price.timestamp) * TIMESTAMP_MS_PER_SECOND
+                        ).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  ))}
               </div>
             </div>
           )}

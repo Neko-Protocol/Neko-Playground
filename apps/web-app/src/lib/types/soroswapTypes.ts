@@ -1,11 +1,3 @@
-/**
- * Soroswap Types
- * Type definitions for Soroswap DEX integration
- */
-
-// ========================================
-// TOKEN INTERFACES
-// ========================================
 export interface Token {
   type: "native" | "contract";
   code?: string;

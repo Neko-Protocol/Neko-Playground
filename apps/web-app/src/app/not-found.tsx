@@ -4,12 +4,12 @@ import Image from "next/image";
 export default function NotFound() {
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#121212] px-6">
-      {/* Decorative blur orbs */}
+      {}
       <div className="pointer-events-none absolute right-[-80px] top-[-80px] h-[400px] w-[400px] rounded-full bg-[#294cab]/20 blur-3xl" />
       <div className="pointer-events-none absolute bottom-[-80px] left-[-80px] h-[360px] w-[360px] rounded-full bg-[#39bfb7]/10 blur-3xl" />
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#334eac]/10 blur-2xl" />
 
-      {/* Logo */}
+      {}
       <Link href="/dashboard" className="mb-12">
         <Image
           src="/Neko.svg"
@@ -21,7 +21,7 @@ export default function NotFound() {
         />
       </Link>
 
-      {/* 404 display */}
+      {}
       <div className="relative text-center">
         <p className="font-boldmb-2 select-none text-[160px] leading-none text-white/5 sm:text-[220px]">
           404
@@ -33,7 +33,7 @@ export default function NotFound() {
         </div>
       </div>
 
-      {/* Copy */}
+      {}
       <div className="relative z-10 mt-2 flex flex-col items-center gap-3 text-center">
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
           We lost this page.
@@ -44,7 +44,7 @@ export default function NotFound() {
         </p>
       </div>
 
-      {/* CTA */}
+      {}
       <div className="relative z-10 mt-10 flex items-center gap-3">
         <Link
           href="/dashboard"

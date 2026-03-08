@@ -68,7 +68,6 @@ export function useSwapQuote(
     }
   }, [address, amountIn, fetchStellarQuote]);
 
-  // Debounced quote trigger
   useEffect(() => {
     if (quoteTimeoutRef.current) {
       clearTimeout(quoteTimeoutRef.current);
@@ -125,7 +124,6 @@ export function useSwapQuote(
     cancelStellarQuote,
   ]);
 
-  // Auto-refresh quotes every interval while valid inputs exist
   useEffect(() => {
     if (
       address &&

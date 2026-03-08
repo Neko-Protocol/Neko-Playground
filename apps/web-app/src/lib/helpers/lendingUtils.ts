@@ -1,9 +1,3 @@
-/**
- * Shared lending/borrowing utilities
- * Used by useBorrowPools, useLendingPools, and other lending-related code
- */
-
-/** Contract result shape for get_interest_rate (Result<i128>) */
 type InterestRateResult =
   | { tag?: string; values?: unknown[]; unwrap?: () => bigint }
   | bigint
@@ -12,10 +6,6 @@ type InterestRateResult =
   | null
   | undefined;
 
-/**
- * Parse interest rate from RWA lending contract get_interest_rate result.
- * Rate is stored as basis points (e.g. 213 = 2.13%). Returns percentage.
- */
 export function parseInterestRateFromContractResult(
   interestRateResult: InterestRateResult
 ): number {
@@ -34,9 +24,7 @@ export function parseInterestRateFromContractResult(
     try {
       const unwrapped = result.unwrap();
       rateValue = Number(unwrapped);
-    } catch {
-      // unwrap() failed, try other methods
-    }
+    } catch {}
   } else if (
     result.tag === "Ok" &&
     Array.isArray(result.values) &&
@@ -52,7 +40,5 @@ export function parseInterestRateFromContractResult(
     rateValue = parseInt(interestRateResult, 10);
   }
 
-  // Contract stores rate with 7 decimals (SCALAR_7 = 10_000_000)
-  // e.g. 100_000 = 1%, so to get percentage: value / SCALAR_7 * 100 = value / 100_000
   return rateValue / 100_000;
 }

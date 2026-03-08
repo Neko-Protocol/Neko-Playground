@@ -9,10 +9,6 @@ import type { PoolDetailView } from "../types/pools";
 
 export type PoolDetailData = PoolInfo & PoolDetailView;
 
-/**
- * Fetches a single pool by contract id and adds formatted display fields
- * (tvlFormatted, apyFormatted, typeLabel, token1, token2).
- */
 export function usePoolDetail(contractId: string | undefined) {
   const query = usePoolInfo(contractId);
   const { data: pool } = query;

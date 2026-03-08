@@ -1,13 +1,3 @@
-/**
- * NekoLendingAdapter — wraps the Neko RWA-Lending contract behind
- * the `BasePoolAdapter` interface.
- *
- * Internally reuses:
- *  - `@neko/lending` generated client for read queries.
- *  - Existing transaction builders from `lib/helpers/lending.ts`
- *    for deposit / withdraw (they return XDR strings).
- */
-
 import { Client as RwaLendingClient, networks } from "@neko/lending";
 import {
   rpcUrl,
@@ -30,10 +20,6 @@ import { AdapterError, UnsupportedActionError } from "../types/errors";
 
 const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw"];
 
-/**
- * Unwrap a Stellar SDK `Result<T>` value that may come back as
- * `{ tag, values, unwrap }` or a raw primitive.
- */
 function unwrapResult(value: unknown): bigint {
   if (value === null || value === undefined) return 0n;
   if (typeof value === "bigint") return value;
@@ -49,9 +35,7 @@ function unwrapResult(value: unknown): bigint {
   if (typeof obj.unwrap === "function") {
     try {
       return BigInt(obj.unwrap());
-    } catch {
-      /* fall through */
-    }
+    } catch {}
   }
 
   if (obj.tag === "Ok" && Array.isArray(obj.values) && obj.values.length > 0) {
@@ -74,10 +58,6 @@ export class NekoLendingAdapter implements BasePoolAdapter {
       ...(allowHttpForSoroban && { allowHttp: true }),
     });
   }
-
-  // ------------------------------------------------------------------
-  // Reads
-  // ------------------------------------------------------------------
 
   async getPoolInfo(poolId: string): Promise<PoolInfo> {
     const assetCode = poolId;
@@ -199,10 +179,6 @@ export class NekoLendingAdapter implements BasePoolAdapter {
       };
     }
   }
-
-  // ------------------------------------------------------------------
-  // Writes — delegate to existing helpers that return XDR strings
-  // ------------------------------------------------------------------
 
   async deposit(
     poolId: string,

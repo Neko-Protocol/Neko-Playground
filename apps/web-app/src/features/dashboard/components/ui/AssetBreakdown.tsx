@@ -105,7 +105,6 @@ const AssetBreakdown: React.FC = () => {
                   key={asset.id}
                   className="border-b border-white/5 last:border-b-0 hover:bg-white/2 transition-colors"
                 >
-                  {/* Pool */}
                   <td className="px-3 sm:px-4 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className="relative w-9 h-6 shrink-0">
@@ -125,21 +124,21 @@ const AssetBreakdown: React.FC = () => {
                     </div>
                   </td>
 
-                  {/* ROI */}
+                  {}
                   <td className="px-3 sm:px-4 py-3.5">
                     <span className="text-white text-sm font-medium">
                       {asset.roi}
                     </span>
                   </td>
 
-                  {/* Fee APY */}
+                  {}
                   <td className="px-3 sm:px-4 py-3.5">
                     <span className="text-white text-sm font-medium">
                       {asset.feeApy}
                     </span>
                   </td>
 
-                  {/* Liquidity */}
+                  {}
                   <td className="px-3 sm:px-4 py-3.5">
                     <span className="text-white text-sm font-medium">
                       {asset.liquidity}
