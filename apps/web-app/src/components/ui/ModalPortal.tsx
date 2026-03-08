@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+
+const emptySubscribe = () => () => {};
 
 interface ModalPortalProps {
   children: React.ReactNode;
@@ -9,11 +11,11 @@ interface ModalPortalProps {
 }
 
 export function ModalPortal({ children, lockScroll = true }: ModalPortalProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
     if (!mounted || !lockScroll) return;
