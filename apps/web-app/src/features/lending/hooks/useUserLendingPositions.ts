@@ -8,6 +8,7 @@ const STELLAR_DECIMALS = 7;
 export interface LendingPosition {
   assetCode: string;
   bTokens: bigint;
+  bTokensFormatted: string;
   bTokenRate: string;
   depositedFormatted: string;
   interestRate: number;
@@ -46,8 +47,9 @@ export function useUserLendingPositions() {
     positions.push({
       assetCode: pool.assetCode,
       bTokens,
+      bTokensFormatted: bTokensHuman.toFixed(STELLAR_DECIMALS),
       bTokenRate,
-      depositedFormatted: deposited.toFixed(4),
+      depositedFormatted: deposited.toFixed(STELLAR_DECIMALS),
       interestRate: pool.interestRate,
     });
   });

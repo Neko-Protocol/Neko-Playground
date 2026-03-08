@@ -31,21 +31,17 @@ const MyLendingPositions: React.FC = () => {
       <table className="w-full">
         <thead>
           <tr className="border-b border-white/5">
-            <ColHeader
-              icon={Coins}
-              label="Asset"
-              tooltip="The asset you supplied to the lending pool"
-            />
+            <ColHeader icon={Coins} label="Asset" />
             <ColHeader
               icon={Hash}
               label="bToken Balance"
-              tooltip="Raw balance tokens held — these represent your share of the pool and grow in value as interest accrues"
+              tooltip="Raw balance tokens held - these represent your share of the pool and grow in value as interest accrues"
               centered
             />
             <ColHeader
               icon={Layers}
               label="Deposited"
-              tooltip="Actual amount you can withdraw: bToken balance × bToken rate"
+              tooltip="Actual amount you can withdraw: bToken balance x bToken rate"
               centered
             />
             <ColHeader
