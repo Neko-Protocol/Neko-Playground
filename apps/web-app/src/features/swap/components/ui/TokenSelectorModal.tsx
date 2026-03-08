@@ -176,11 +176,10 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
     onClose();
   };
 
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchQuery("");
-    }
-  }, [isOpen]);
+  const handleClose = useCallback(() => {
+    setSearchQuery("");
+    onClose();
+  }, [onClose]);
 
   useEffect(() => {
     if (isOpen) {
@@ -199,14 +198,14 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       <div className="relative w-full max-w-md bg-gray-100 border border-gray-300 rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-gray-300">
           <h2 className="text-xl font-bold text-gray-900">Select a token</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-600 hover:text-gray-900 transition-colors p-1.5 rounded-lg hover:bg-gray-200"
             aria-label="Close"
           >
