@@ -1,7 +1,3 @@
-/**
- * Reusable sign → send pattern for Stellar/Soroban transactions
- */
-
 import { TransactionBuilder, rpc } from "@stellar/stellar-sdk";
 import { stellarNetwork } from "@/lib/constants/network";
 
@@ -12,10 +8,6 @@ export type SignTransactionFn = (
   options?: { networkPassphrase?: string; address?: string }
 ) => Promise<{ signedTxXdr: string }>;
 
-/**
- * Build XDR → sign with wallet → send to network.
- * Returns the send result; if status is PENDING, optionally waits before resolving.
- */
 export async function signAndSendTransaction(
   xdr: string,
   signTransaction: SignTransactionFn,

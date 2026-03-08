@@ -25,7 +25,7 @@ export const PoolCard: React.FC<PoolCardProps> = ({
   onSwapClick,
 }) => (
   <div className="rounded-2xl bg-[#1C1C1C] p-4 sm:p-6 border border-white/5 hover:border-[#229EDF]/50 transition-all duration-300 hover:shadow-xl relative overflow-hidden group">
-    {/* Header with Pool Info */}
+    {}
     <div className="relative z-10 mb-4 sm:mb-6">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -85,7 +85,7 @@ export const PoolCard: React.FC<PoolCardProps> = ({
           </div>
         </div>
 
-        {/* Status Indicator */}
+        {}
         <div className="flex items-center gap-2">
           <div
             className={`w-2 h-2 rounded-full ${
@@ -96,7 +96,7 @@ export const PoolCard: React.FC<PoolCardProps> = ({
       </div>
     </div>
 
-    {/* Stats Grid */}
+    {}
     <div className="relative z-10 space-y-3 sm:space-y-4 mb-4 sm:mb-6">
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <div className="bg-[#2A2A2A] rounded-lg sm:rounded-xl p-2 sm:p-3 border border-white/10 min-w-0">
@@ -126,7 +126,7 @@ export const PoolCard: React.FC<PoolCardProps> = ({
       </div>
     </div>
 
-    {/* Pool Details CTA */}
+    {}
     <div
       className="relative z-10 bg-[#2A2A2A] rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4 border border-white/10 hover:bg-[#333] cursor-pointer transition-colors duration-200"
       onClick={onDetailsClick}
@@ -138,7 +138,7 @@ export const PoolCard: React.FC<PoolCardProps> = ({
       </div>
     </div>
 
-    {/* Action Buttons */}
+    {}
     {onLendClick != null && (
       <div className="relative z-10 flex">
         <button

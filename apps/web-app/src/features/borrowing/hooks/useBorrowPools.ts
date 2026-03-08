@@ -12,18 +12,9 @@ import { parseInterestRateFromContractResult } from "@/lib/helpers/lendingUtils"
 import { RWA_TOKENS } from "@/lib/constants/wallet";
 import type { BorrowPool } from "../types/borrowing";
 
-/**
- * Hook to get all active borrow pools from the RWA lending contract
- * Only shows pools where:
- * - There's an RWA token configured as collateral
- * - There's a debt asset configured
- * - Pool has balance available to borrow
- */
 export const useBorrowPools = () => {
-  // Get available tokens (memoized to prevent re-computation on every render)
   const availableTokens = useMemo(() => getAvailableTokens(), []);
 
-  // All RWA tokens configured as collateral (memoized)
   const rwaTokens = useMemo(
     () =>
       RWA_TOKENS.filter((code) => {
@@ -33,7 +24,6 @@ export const useBorrowPools = () => {
     [availableTokens]
   );
 
-  // Known debt assets that can be borrowed (memoized)
   const debtAssets = useMemo(
     () =>
       ["USDC", "XLM"].filter((code) => {
@@ -43,10 +33,8 @@ export const useBorrowPools = () => {
     [availableTokens]
   );
 
-  // Memoize the query function to prevent re-creation on every render
   const queryFn = useMemo(
     () => async (): Promise<BorrowPool[]> => {
-      // Create RWA lending client with new contract ID
       const contractId = networks.testnet.contractId;
 
       const client = new RwaLendingClient({
@@ -56,7 +44,6 @@ export const useBorrowPools = () => {
         ...(allowHttpForSoroban && { allowHttp: true }),
       });
 
-      // Get pool state
       let poolState;
       try {
         const poolStateTx = await client.get_pool_state({ simulate: true });
@@ -73,12 +60,10 @@ export const useBorrowPools = () => {
 
       const pools: BorrowPool[] = [];
 
-      // For each combination of RWA collateral token and debt asset
       for (const rwaCode of rwaTokens) {
         const rwaToken = availableTokens[rwaCode];
         if (!rwaToken?.contract) continue;
 
-        // Get collateral factor for this RWA token
         let collateralFactor = 0;
         try {
           const collateralFactorTx = await client.get_collateral_factor(
@@ -87,35 +72,29 @@ export const useBorrowPools = () => {
           );
           const factorValue = collateralFactorTx.result;
           if (factorValue) {
-            // Collateral factor is stored with 7 decimals (e.g., 7_500_000 = 75%)
             collateralFactor = Number(factorValue) / 100_000;
           }
         } catch {
-          // If collateral factor fetch fails, skip this RWA token
           continue;
         }
 
-        // Skip if collateral factor is 0 (not configured)
         if (collateralFactor === 0) continue;
 
-        // For each debt asset, create a borrow pool
         for (const debtCode of debtAssets) {
           const debtToken = availableTokens[debtCode];
           if (!debtToken?.contract) continue;
 
           try {
-            // Get pool balance for this debt asset
             const balanceTx = await client.get_pool_balance(
               { asset: debtCode },
               { simulate: true }
             );
             const balanceValue = balanceTx.result;
-            // Only skip if balanceValue is undefined/null, NOT if it's 0
+
             if (balanceValue === undefined || balanceValue === null) continue;
 
-            // Convert balance to human-readable format
             const decimals = debtToken.decimals || 7;
-            // Handle different types: bigint, string, or number
+
             const balanceStr =
               typeof balanceValue === "bigint"
                 ? balanceValue.toString()
@@ -128,7 +107,6 @@ export const useBorrowPools = () => {
               decimals
             );
 
-            // Get interest rate for borrowing (basis points → percentage)
             let interestRate = 0;
             try {
               const interestRateTx = await client.get_interest_rate(
@@ -138,9 +116,7 @@ export const useBorrowPools = () => {
               interestRate = parseInterestRateFromContractResult(
                 interestRateTx.result
               );
-            } catch {
-              // If interest rate fetch fails, use 0
-            }
+            } catch {}
 
             pools.push({
               asset: debtToken.contract,
@@ -154,7 +130,6 @@ export const useBorrowPools = () => {
               isActive: true,
             });
           } catch {
-            // Skip assets that fail to fetch (not configured or error)
             continue;
           }
         }

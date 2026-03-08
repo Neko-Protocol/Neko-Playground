@@ -1,0 +1,58 @@
+import { useQueries } from "@tanstack/react-query";
+import { useWallet } from "@/hooks/useWallet";
+import { getBTokenBalanceRaw } from "@/lib/helpers/stellar/lending";
+import { useLendingPools } from "./useLendingPools";
+
+const STELLAR_DECIMALS = 7;
+
+export interface LendingPosition {
+  assetCode: string;
+  bTokens: bigint;
+  bTokensFormatted: string;
+  bTokenRate: string;
+  depositedFormatted: string;
+  interestRate: number;
+}
+
+export function useUserLendingPositions() {
+  const { address } = useWallet();
+  const { data: pools = [], isLoading: poolsLoading } = useLendingPools();
+
+  const balanceQueries = useQueries({
+    queries: pools.map((pool) => ({
+      queryKey: ["userLendingBTokens", pool.assetCode, address],
+      queryFn: () => getBTokenBalanceRaw(pool.assetCode, address!),
+      enabled: Boolean(address) && pools.length > 0,
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      retry: 1,
+    })),
+  });
+
+  const isLoading =
+    poolsLoading ||
+    (Boolean(address) && balanceQueries.some((q) => q.isLoading));
+
+  const positions: LendingPosition[] = [];
+
+  balanceQueries.forEach((q, i) => {
+    const bTokens = q.data ?? 0n;
+    if (bTokens === 0n) return;
+
+    const pool = pools[i];
+    const bTokenRate = pool.bTokenRate ?? "1";
+    const bTokensHuman = Number(bTokens) / 10 ** STELLAR_DECIMALS;
+    const deposited = bTokensHuman * parseFloat(bTokenRate);
+
+    positions.push({
+      assetCode: pool.assetCode,
+      bTokens,
+      bTokensFormatted: bTokensHuman.toFixed(STELLAR_DECIMALS),
+      bTokenRate,
+      depositedFormatted: deposited.toFixed(STELLAR_DECIMALS),
+      interestRate: pool.interestRate,
+    });
+  });
+
+  return { positions, isLoading, hasWallet: Boolean(address) };
+}

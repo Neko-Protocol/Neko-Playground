@@ -15,7 +15,7 @@ import { CHART_ACCENT_COLOR } from "../../constants/oracle";
 
 export interface PriceChartProps {
   data: PriceChartDatum[];
-  /** Height of the chart in pixels. */
+
   height?: number;
   className?: string;
 }
@@ -33,10 +33,15 @@ export function PriceChart({ data, height = 400, className }: PriceChartProps) {
   }
 
   return (
-    <div className={`bg-[#1C1C1C] rounded-2xl border border-white/5 p-6 ${className ?? ""}`}>
+    <div
+      className={`bg-[#1C1C1C] rounded-2xl border border-white/5 p-6 ${className ?? ""}`}
+    >
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="rgba(255,255,255,0.05)"
+          />
           <XAxis
             dataKey="timestamp"
             stroke="rgba(255,255,255,0.15)"
@@ -66,7 +71,12 @@ export function PriceChart({ data, height = 400, className }: PriceChartProps) {
             stroke={CHART_ACCENT_COLOR}
             strokeWidth={2.5}
             dot={false}
-            activeDot={{ r: 5, fill: CHART_ACCENT_COLOR, stroke: "#1C1C1C", strokeWidth: 2 }}
+            activeDot={{
+              r: 5,
+              fill: CHART_ACCENT_COLOR,
+              stroke: "#1C1C1C",
+              strokeWidth: 2,
+            }}
           />
         </LineChart>
       </ResponsiveContainer>
