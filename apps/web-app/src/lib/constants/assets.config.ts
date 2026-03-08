@@ -37,7 +37,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
     USTRY: {
       code: "USTRY",
       name: "US Treasury Token",
-      contract: "CC6SODKGOTFEDWVNPR6ESJC3GL7NC5Y4DVFKYGATZJ74F2YXHTW4RJ6D",
+      contract: "CCAYGJWQI5NJN7XRVNSENF47PICNSNTG4FAQHHFOJWZIRTEAC5JPMLGN",
       decimals: 7,
       icon: "/assets/ustry-logo.png",
       priceSource: "oracle",
@@ -46,7 +46,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
     TESOURO: {
       code: "TESOURO",
       name: "Tesouro Token",
-      contract: "CA55OO3U556GXABJKDYP3QCGZ6AFNZPB27TROYP42AQPFFYPKU5EDOUH",
+      contract: "CAPFX3QEAHE7JVT6E7PYZQTFSVS5Z7AV4RE7GRJRVCPKXGQHCWSCOMTW",
       decimals: 7,
       icon: "/assets/tesouro-logo.png",
       priceSource: "oracle",
@@ -55,7 +55,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
     CETES: {
       code: "CETES",
       name: "CETES Token",
-      contract: "CCGWKS4GLAGPYIAOLBH6JM5RKUPMUCN47VRAEXAJWJFKXSXQ33VIRUAA",
+      contract: "CAJ4B2ZWU2GA7UYQZ7N7QQCTZAUSSXNKKQ326ADYVH3ALN4FFQ6LPO4U",
       decimals: 7,
       icon: "/assets/cetes-logo.png",
       priceSource: "oracle",
@@ -64,7 +64,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
     USDY: {
       code: "USDY",
       name: "US Dollar Yield",
-      contract: "CBVLFSVBZGHVAH6CV4JQYPBJSX75VFR2NJC7CQX7QKQ7KOLGQZOZAGQK",
+      contract: "CDRQV3D3GLWF73MWTEQWFZWMBQ47KZ3KECYPOBKBDRQBWQQ74KDH5ECT",
       decimals: 7,
       icon: "/assets/usdy-logo.png",
       priceSource: "oracle",
@@ -73,7 +73,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
     PYUSD: {
       code: "PYUSD",
       name: "PayPal USD",
-      contract: "CBCB5UDYZENTIUVVA7SHQOCVVCDXDMHEKJHHFM3OQKU2E5CAF2B62TIO",
+      contract: "CBNHH37BJ2G4ZT6PLWDXPOWHKLR75IGNLBRCXZNOS7YPAYS53JPEPSSS",
       decimals: 7,
       icon: "/assets/pyusd-logo.png",
       priceSource: "oracle",

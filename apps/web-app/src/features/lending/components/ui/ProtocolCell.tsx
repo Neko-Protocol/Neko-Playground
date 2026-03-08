@@ -29,7 +29,7 @@ export function ProtocolCell({ pool }: { pool: PoolData }) {
         </span>
       ) : (
         <span className="rounded bg-[#2A2A2A] px-1.5 py-0.5 text-[10px] font-semibold text-white/50">
-          V2
+          V1
         </span>
       )}
     </div>

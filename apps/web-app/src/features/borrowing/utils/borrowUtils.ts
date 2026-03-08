@@ -19,7 +19,7 @@ export function poolsToTableAssets(pools: BorrowPool[]): BorrowTableAsset[] {
       pool: {
         token1: pool.assetCode,
         token2: pool.collateralTokenCode,
-        fee: `${pool.collateralFactor}%`,
+        fee: "V1",
       },
       borrowApr: `${pool.interestRate.toFixed(2)}%`,
       collateralFactorDisplay: `${pool.collateralFactor}%`,
