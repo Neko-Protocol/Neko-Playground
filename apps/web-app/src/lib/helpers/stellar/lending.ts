@@ -72,14 +72,15 @@ export const depositToPool = async (
   assetCode: string,
   amount: string,
   decimals: number = 7,
-  walletAddress: string
+  walletAddress: string,
+  contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
       allowHttp: stellarNetwork === "LOCAL",
     });
     const horizonServer = new Horizon.Server(horizonUrl);
-    const lendingContract = new Contract(networks.testnet.contractId);
+    const lendingContract = new Contract(contractId);
 
     const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
 
@@ -140,14 +141,15 @@ export const withdrawFromPool = async (
   assetCode: string,
   bTokens: string,
   decimals: number = 7,
-  walletAddress: string
+  walletAddress: string,
+  contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
       allowHttp: stellarNetwork === "LOCAL",
     });
     const horizonServer = new Horizon.Server(horizonUrl);
-    const lendingContract = new Contract(networks.testnet.contractId);
+    const lendingContract = new Contract(contractId);
 
     const bTokensInSmallestUnit = BigInt(toSmallestUnit(bTokens, decimals));
 
@@ -206,14 +208,15 @@ export const addCollateral = async (
   rwaTokenAddress: string,
   amount: string,
   decimals: number = 7,
-  walletAddress: string
+  walletAddress: string,
+  contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
       allowHttp: stellarNetwork === "LOCAL",
     });
     const horizonServer = new Horizon.Server(horizonUrl);
-    const lendingContract = new Contract(networks.testnet.contractId);
+    const lendingContract = new Contract(contractId);
 
     const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
 
@@ -270,14 +273,15 @@ export const borrowFromPool = async (
   assetCode: string,
   amount: string,
   decimals: number = 7,
-  walletAddress: string
+  walletAddress: string,
+  contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
       allowHttp: stellarNetwork === "LOCAL",
     });
     const horizonServer = new Horizon.Server(horizonUrl);
-    const lendingContract = new Contract(networks.testnet.contractId);
+    const lendingContract = new Contract(contractId);
 
     const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
 
@@ -422,11 +426,12 @@ export const getDTokenRate = async (assetCode: string): Promise<bigint> => {
 export const getBTokenBalance = async (
   assetCode: string,
   walletAddress: string,
-  decimals: number = 7
+  decimals: number = 7,
+  contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
     const client = new RwaLendingClient({
-      contractId: networks.testnet.contractId,
+      contractId,
       rpcUrl: rpcUrl,
       networkPassphrase: networkPassphrase,
       ...(allowHttpForSoroban && { allowHttp: true }),

@@ -14,7 +14,6 @@ import {
   getBTokenBalance,
 } from "@/lib/helpers/stellar/lending";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { LENDING_CONTRACT_ID } from "@/lib/constants/contracts";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import type { PoolData } from "../types/lending";
@@ -85,6 +84,7 @@ export function useLend() {
         assetCode: pool.assetCode,
         asset: pool.asset,
         bTokenRate: pool.bTokenRate,
+        contractId: pool.contractId,
       };
     });
   }, [lendingPools]);
@@ -96,7 +96,12 @@ export function useLend() {
     }
     setIsLoadingBalance(true);
     try {
-      const balance = await getBTokenBalance(selectedPool.assetCode, address);
+      const balance = await getBTokenBalance(
+        selectedPool.assetCode,
+        address,
+        7,
+        selectedPool.contractId
+      );
       setBTokenBalance(balance);
     } catch {
       setBTokenBalance("0");
@@ -139,10 +144,12 @@ export function useLend() {
           allowHttp: stellarNetwork === "LOCAL",
         });
 
+        const lendingContractId = selectedPool.contractId;
+
         if (isDeposit) {
           const approveXdr = await approveToken(
             token.contract,
-            LENDING_CONTRACT_ID,
+            lendingContractId,
             amount,
             decimals,
             address
@@ -161,7 +168,8 @@ export function useLend() {
             selectedPool.assetCode,
             amount,
             decimals,
-            address
+            address,
+            lendingContractId
           );
 
           const signedDeposit = await signTransaction(depositXdr as any, {
@@ -179,7 +187,8 @@ export function useLend() {
             selectedPool.assetCode,
             bTokensAmount,
             decimals,
-            address
+            address,
+            lendingContractId
           );
 
           const signedWithdraw = await signTransaction(withdrawXdr as any, {

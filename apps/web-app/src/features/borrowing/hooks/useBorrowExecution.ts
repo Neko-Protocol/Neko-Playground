@@ -15,7 +15,6 @@ import {
 } from "@/lib/helpers/stellar/transaction";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { rpcUrl } from "@/lib/constants/network";
-import { networks } from "@neko/lending";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import type { BorrowExecutionParams } from "../types/borrowing";
@@ -72,7 +71,7 @@ export function useBorrowExecution() {
 
       const availableTokens = getAvailableTokens();
       const collateralToken = availableTokens[collateralTokenCode];
-      const lendingContractId = networks.testnet.contractId;
+      const lendingContractId = params.contractId;
 
       if (!collateralToken?.contract) {
         showError(`Collateral token ${collateralTokenCode} not found`);
@@ -103,7 +102,8 @@ export function useBorrowExecution() {
           collateralToken.contract,
           collateralAmount,
           collateralDecimals,
-          address
+          address,
+          lendingContractId
         );
         await signAndSend(addCollateralXdr);
 
@@ -111,7 +111,8 @@ export function useBorrowExecution() {
           assetCode,
           borrowAmount,
           borrowDecimals,
-          address
+          address,
+          lendingContractId
         );
         await signAndSend(borrowXdr);
 
