@@ -1,6 +1,3 @@
-/**
- * NaN-safe parse: returns 0 for NaN, null, undefined, or invalid input.
- */
 export function safeParseFloat(
   value: string | number | null | undefined
 ): number {
@@ -11,22 +8,36 @@ export function safeParseFloat(
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-/**
- * Safely parses a balance string (may contain commas) to a number.
- * Returns 0 if the string is empty, null, undefined, or not a valid number.
- */
 export function parseBalance(balance: string | null | undefined): number {
   return safeParseFloat(balance);
 }
 
-/**
- * Formats a numeric value into a human-readable liquidity string.
- * Accepts number or string; treats NaN/invalid as 0.
- * e.g. 1500000 → "$1.50M", 2500 → "$2.50k", 42 → "$42.00"
- */
 export function formatLiquidity(value: number | string): string {
   const num = safeParseFloat(value);
   if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(2)}M`;
   if (num >= 1_000) return `$${(num / 1_000).toFixed(2)}k`;
   return `$${num.toFixed(2)}`;
+}
+
+/**
+ * Format a token amount for display, trimming trailing zeros and adapting
+ * decimal places to the magnitude of the value.
+ *
+ * Examples:
+ *   1.0000000  → "1"
+ *   0.0100000  → "0.01"
+ *   100.12300  → "100.123"
+ *   0.0000015  → "0.0000015"
+ */
+export function formatAmount(value: number | string): string {
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (!Number.isFinite(num) || num === 0) return "0";
+
+  if (num >= 1_000_000) return `${parseFloat((num / 1_000_000).toFixed(2))}M`;
+  if (num >= 1_000)
+    return num.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  // For numbers >= 0.001 show up to 4 decimals, trim trailing zeros
+  if (num >= 0.001) return parseFloat(num.toFixed(4)).toString();
+  // Very small: show up to 7 significant decimals, trim trailing zeros
+  return parseFloat(num.toFixed(7)).toString();
 }

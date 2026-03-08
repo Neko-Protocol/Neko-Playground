@@ -33,7 +33,11 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CD2ZCQLGQZRUBHO77QVGJXNFP6Y6UIQBBYG5WG6EX5PTQQDNEQITNB5J",
+    /** Pool 1 — RWA collateral → borrow USDC/XLM */
+    contractId: "CCYYGFDBVHMTL3RWDH6L6IY777VLBXDGB4NYBBKTZEH4UR7URAFKWJMI",
+    pool1ContractId: "CCYYGFDBVHMTL3RWDH6L6IY777VLBXDGB4NYBBKTZEH4UR7URAFKWJMI",
+    /** Pool 2 — USDC/XLM collateral → borrow RWA tokens */
+    pool2ContractId: "CANU6NELPY5IHDZGEHYH2AKBHKVNMXENMBOVXPOFZ4F6TBHL2FN55N3T",
   },
 } as const;
 

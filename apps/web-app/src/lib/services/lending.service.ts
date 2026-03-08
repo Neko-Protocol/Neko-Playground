@@ -30,11 +30,19 @@ import {
   borrowFromPool,
 } from "../helpers/stellar/lending";
 import { extractContractError } from "../helpers/stellar/contractErrors";
-import type {
-  LendingOperationResult,
-  CollateralOperationResult,
-  BorrowWithCollateralResult,
-} from "../types/lendingTypes";
+
+type LendingOperationResult = { xdr: string; error?: string };
+type CollateralOperationResult = {
+  approveXdr: string;
+  addCollateralXdr: string;
+  error?: string;
+};
+type BorrowWithCollateralResult = {
+  approveXdr: string;
+  addCollateralXdr: string;
+  borrowXdr: string;
+  error?: string;
+};
 
 export class LendingService {
   private sorobanServer: rpc.Server;
@@ -558,6 +566,49 @@ export class LendingService {
   }
 
   /**
+   * Get dToken balance for a borrower (raw dTokens)
+   */
+  async getDTokenBalance(
+    assetCode: string,
+    walletAddress: string
+  ): Promise<bigint> {
+    try {
+      const tx = await this.lendingClient.get_d_token_balance(
+        { borrower: walletAddress, asset: assetCode },
+        { simulate: true }
+      );
+
+      const value = tx.result;
+      if (!value) return 0n;
+
+      return typeof value === "bigint" ? value : BigInt(String(value));
+    } catch (error) {
+      console.error("Error getting dToken balance:", error);
+      return 0n;
+    }
+  }
+
+  /**
+   * Get dToken → underlying conversion rate (12-decimal scalar)
+   */
+  async getDTokenRate(assetCode: string): Promise<bigint> {
+    try {
+      const tx = await this.lendingClient.get_d_token_rate(
+        { asset: assetCode },
+        { simulate: true }
+      );
+
+      const value = tx.result;
+      if (!value) return 0n;
+
+      return typeof value === "bigint" ? value : BigInt(String(value));
+    } catch (error) {
+      console.error("Error getting dToken rate:", error);
+      return 0n;
+    }
+  }
+
+  /**
    * Get borrow limit for a user
    */
   async getBorrowLimit(walletAddress: string): Promise<string> {
@@ -585,6 +636,103 @@ export class LendingService {
     } catch (error) {
       console.error("Error getting borrow limit:", error);
       return "0";
+    }
+  }
+
+  /**
+   * Get health factor for a borrower from a specific lending contract.
+   * Returns a float (7 decimals: 10_000_000 = 1.0) or null if no open position.
+   */
+  async getHealthFactor(
+    borrower: string,
+    contractId: string
+  ): Promise<number | null> {
+    try {
+      const client = new RwaLendingClient({
+        contractId,
+        rpcUrl: rpcUrl,
+        networkPassphrase: networkPassphrase,
+        ...(allowHttpForSoroban && { allowHttp: true }),
+      });
+
+      const tx = await client.calculate_health_factor(
+        { borrower },
+        { simulate: true }
+      );
+
+      const result = tx.result;
+      if (!result) return null;
+
+      if (result.isOk()) {
+        const raw = Number(result.unwrap());
+        // u32::MAX means no active borrow (infinite health factor)
+        if (raw === 4294967295) return null;
+        return raw / 10_000_000;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error getting health factor:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Get raw collateral bigint for a user and RWA token from a specific pool contract.
+   */
+  async getCollateralRaw(
+    rwaTokenContract: string,
+    walletAddress: string,
+    contractId: string
+  ): Promise<bigint> {
+    try {
+      const client = new RwaLendingClient({
+        contractId,
+        rpcUrl: rpcUrl,
+        networkPassphrase: networkPassphrase,
+        ...(allowHttpForSoroban && { allowHttp: true }),
+      });
+      const tx = await client.get_collateral(
+        { borrower: walletAddress, rwa_token: rwaTokenContract },
+        { simulate: true }
+      );
+      const value = tx.result;
+      if (!value) return 0n;
+      return typeof value === "bigint" ? value : BigInt(String(value));
+    } catch (error) {
+      console.error("Error getting collateral (raw):", error);
+      return 0n;
+    }
+  }
+
+  /**
+   * Get remaining borrow capacity in USD (7 decimals) for a specific pool.
+   * Returns null when no position exists or on error.
+   */
+  async getBorrowLimitForPool(
+    walletAddress: string,
+    contractId: string
+  ): Promise<number | null> {
+    try {
+      const client = new RwaLendingClient({
+        contractId,
+        rpcUrl: rpcUrl,
+        networkPassphrase: networkPassphrase,
+        ...(allowHttpForSoroban && { allowHttp: true }),
+      });
+      const tx = await client.calculate_borrow_limit(
+        { borrower: walletAddress },
+        { simulate: true }
+      );
+      const result = tx.result;
+      if (!result) return null;
+      if (result.isOk()) {
+        return Number(result.unwrap()) / 1e7;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting borrow limit for pool:", error);
+      return null;
     }
   }
 

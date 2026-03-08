@@ -4,6 +4,8 @@ import { useState, useMemo, useCallback } from "react";
 import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpc } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
+import { useToast } from "@/hooks/useToast";
+import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { useLendingPools } from "./useLendingPools";
 import {
   approveToken,
@@ -12,9 +14,12 @@ import {
   getBTokenBalance,
 } from "@/lib/helpers/stellar/lending";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { LENDING_CONTRACT_ID } from "@/lib/constants/contracts";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { usePools, usePoolAction } from "@/lib/orchestrator";
+import type { PoolInfo } from "@/lib/orchestrator";
+import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolData } from "../types/lending";
 
 function toBTokens(tokensAmount: string, bTokenRate: string): string {
@@ -32,22 +37,50 @@ export function useLend() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeposit, setIsDeposit] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [bTokenBalance, setBTokenBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [selectedPool, setSelectedPool] = useState<PoolData | null>(null);
 
   const { address, signTransaction, networkPassphrase } = useWallet();
+  const { addNotification } = useToast();
+
+  const showError = useCallback(
+    (msg: string) =>
+      addNotification("Something went wrong", "error", {
+        ...TOAST_CONFIG.defaultOpts,
+        description: msg,
+      }),
+    [addNotification]
+  );
+  const showSuccess = useCallback(
+    (msg: string) =>
+      addNotification("Success", "success", {
+        ...TOAST_CONFIG.defaultOpts,
+        description: msg,
+      }),
+    [addNotification]
+  );
 
   const {
     data: lendingPools = [],
-    isLoading: isLoadingPools,
-    error: poolsError,
+    isLoading: isLoadingNekoPools,
+    error: nekoPoolsError,
     refetch: refetchPools,
   } = useLendingPools();
 
+  const {
+    data: orchestratorPools = [],
+    isLoading: isLoadingOrchestratorPools,
+    error: orchestratorPoolsError,
+  } = usePools();
+
+  const { mutateAsync: executePoolAction } = usePoolAction();
+
+  const isLoadingPools = isLoadingNekoPools || isLoadingOrchestratorPools;
+  const poolsError = nekoPoolsError || orchestratorPoolsError;
+
   const pools: PoolData[] = useMemo(() => {
-    return lendingPools.map((pool, index) => {
+    const nekoPools: PoolData[] = lendingPools.map((pool, index) => {
       const balanceNum = parseFloat(pool.poolBalance);
       const liquidity =
         balanceNum >= 1000
@@ -66,9 +99,43 @@ export function useLend() {
         assetCode: pool.assetCode,
         asset: pool.asset,
         bTokenRate: pool.bTokenRate,
+        contractId: pool.contractId,
       };
     });
-  }, [lendingPools]);
+
+    const aggregated: PoolData[] = orchestratorPools
+      .filter(
+        (p: PoolInfo) =>
+          p.type !== "neko" && p.supportedActions.includes("deposit")
+      )
+      .map((p: PoolInfo) => {
+        const token = p.tokens[0];
+        const decimals = token?.decimals ?? 7;
+        const liquidity = formatLiquidity(
+          fromSmallestUnit(p.tvl.toString(), decimals)
+        );
+        const contractId = p.id.split(":")[1] ?? p.id;
+        return {
+          id: `agg-${p.id}`,
+          name: p.name,
+          token1: token?.code ?? "?",
+          token2: "Lending",
+          fee: "0%",
+          roi: p.apy > 0 ? `${p.apy.toFixed(2)}%` : "0.00%",
+          feeApy: p.apy > 0 ? `${p.apy.toFixed(2)}%` : "0.00%",
+          liquidity,
+          isActive: p.state === "active",
+          assetCode: token?.code ?? "?",
+          asset: token?.address ?? "",
+          bTokenRate: undefined,
+          contractId,
+          isAggregated: true,
+          orchestratorId: p.id,
+        };
+      });
+
+    return [...nekoPools, ...aggregated];
+  }, [lendingPools, orchestratorPools]);
 
   const loadBTokenBalance = useCallback(async () => {
     if (!selectedPool || !address) {
@@ -77,7 +144,12 @@ export function useLend() {
     }
     setIsLoadingBalance(true);
     try {
-      const balance = await getBTokenBalance(selectedPool.assetCode, address);
+      const balance = await getBTokenBalance(
+        selectedPool.assetCode,
+        address,
+        7,
+        selectedPool.contractId
+      );
       setBTokenBalance(balance);
     } catch {
       setBTokenBalance("0");
@@ -90,7 +162,6 @@ export function useLend() {
     (pool: PoolData, deposit: boolean) => {
       setSelectedPool(pool);
       setIsDeposit(deposit);
-      setError(null);
       setBTokenBalance(null);
       setIsModalOpen(true);
       if (address) void loadBTokenBalance();
@@ -100,7 +171,6 @@ export function useLend() {
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
-    setError(null);
   }, []);
 
   const handleConfirm = useCallback(
@@ -109,9 +179,30 @@ export function useLend() {
         return;
 
       setIsLoading(true);
-      setError(null);
 
       try {
+        if (selectedPool.isAggregated && selectedPool.orchestratorId) {
+          const decimals = 7;
+          const rawAmount = BigInt(
+            Math.floor(parseFloat(amount) * 10 ** decimals)
+          );
+
+          await executePoolAction({
+            poolId: selectedPool.orchestratorId,
+            action: isDeposit ? "deposit" : "withdraw",
+            amount: rawAmount,
+          });
+
+          await refetchPools();
+          showSuccess(
+            isDeposit
+              ? `Successfully deposited ${amount} ${selectedPool.assetCode}`
+              : `Successfully withdrew ${amount} ${selectedPool.assetCode}`
+          );
+          closeModal();
+          return;
+        }
+
         const availableTokens = getAvailableTokens();
         const token = availableTokens[selectedPool.assetCode];
         if (!token?.contract)
@@ -123,15 +214,17 @@ export function useLend() {
           allowHttp: stellarNetwork === "LOCAL",
         });
 
+        const lendingContractId = selectedPool.contractId;
+
         if (isDeposit) {
           const approveXdr = await approveToken(
             token.contract,
-            LENDING_CONTRACT_ID,
+            lendingContractId,
             amount,
             decimals,
             address
           );
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           const signedApprove = await signTransaction(approveXdr as any, {
             networkPassphrase: passphrase,
             address,
@@ -145,9 +238,10 @@ export function useLend() {
             selectedPool.assetCode,
             amount,
             decimals,
-            address
+            address,
+            lendingContractId
           );
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           const signedDeposit = await signTransaction(depositXdr as any, {
             networkPassphrase: passphrase,
             address,
@@ -163,9 +257,10 @@ export function useLend() {
             selectedPool.assetCode,
             bTokensAmount,
             decimals,
-            address
+            address,
+            lendingContractId
           );
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           const signedWithdraw = await signTransaction(withdrawXdr as any, {
             networkPassphrase: passphrase,
             address,
@@ -178,15 +273,16 @@ export function useLend() {
         await new Promise((r) => setTimeout(r, 3000));
         await loadBTokenBalance();
         await refetchPools();
+        showSuccess(
+          isDeposit
+            ? `Successfully deposited ${amount} ${selectedPool.assetCode}`
+            : `Successfully withdrew ${amount} ${selectedPool.assetCode}`
+        );
         closeModal();
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
-        setError(
-          msg
-            ? typeof msg === "string"
-              ? msg
-              : "An unexpected error occurred."
-            : "An unexpected error occurred."
+        showError(
+          typeof msg === "string" ? msg : "An unexpected error occurred."
         );
       } finally {
         setIsLoading(false);
@@ -198,9 +294,12 @@ export function useLend() {
       isDeposit,
       networkPassphrase,
       signTransaction,
+      executePoolAction,
       loadBTokenBalance,
       refetchPools,
       closeModal,
+      showError,
+      showSuccess,
     ]
   );
 
@@ -212,7 +311,6 @@ export function useLend() {
     isModalOpen,
     isDeposit,
     isLoading,
-    error,
     bTokenBalance,
     isLoadingBalance,
     hasWallet: !!address,

@@ -36,8 +36,8 @@ export function BorrowTable({
   const isEmpty = !isLoading && !poolsError && assets.length === 0;
 
   return (
-    <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
-      {/* ── Desktop table (md+) ─────────────────────────────────────────── */}
+    <div className="w-full rounded-2xl border border-white/5 bg-[#1C1C1C]">
+      {/* Desktop */}
       <div className="hidden md:block">
         <table className="w-full">
           <thead>
@@ -89,13 +89,14 @@ export function BorrowTable({
                       token1={asset.pool.token1}
                       token2={asset.pool.token2}
                       fee={asset.pool.fee}
+                      isAggregated={asset.isAggregated}
                     />
                   </td>
                   <td className="px-4 py-4 align-middle text-center text-white text-sm">
                     {asset.borrowApr}
                   </td>
                   <td className="px-4 py-4 align-middle text-center text-white text-sm">
-                    {asset.collateralFactorDisplay}
+                    {asset.isAggregated ? "—" : asset.collateralFactorDisplay}
                   </td>
                   <td className="px-4 py-4 align-middle text-center text-white text-sm">
                     {asset.liquidity}
@@ -126,7 +127,7 @@ export function BorrowTable({
         )}
       </div>
 
-      {/* ── Mobile cards (< md) ─────────────────────────────────────────── */}
+      {/* Mobile */}
       <div className="md:hidden">
         {isLoading ? (
           <MobileEmptyState message="Loading borrow pools…" />
@@ -142,17 +143,16 @@ export function BorrowTable({
             <ul className="divide-y divide-white/5">
               {paginatedAssets.map((asset) => (
                 <li key={asset.id} className="px-4 py-4">
-                  {/* Card header: pool pair + status badge */}
                   <div className="flex items-center justify-between mb-3">
                     <PoolCell
                       token1={asset.pool.token1}
                       token2={asset.pool.token2}
                       fee={asset.pool.fee}
+                      isAggregated={asset.isAggregated}
                     />
                     <IdBadge id={asset.id} isActive={asset.isActive} />
                   </div>
 
-                  {/* Stats grid */}
                   <div className="grid grid-cols-3 gap-2 mb-4">
                     <StatCell
                       label="APR"
@@ -161,7 +161,9 @@ export function BorrowTable({
                     />
                     <StatCell
                       label="Collateral"
-                      value={asset.collateralFactorDisplay}
+                      value={
+                        asset.isAggregated ? "—" : asset.collateralFactorDisplay
+                      }
                       icon={Shield}
                     />
                     <StatCell
@@ -171,7 +173,6 @@ export function BorrowTable({
                     />
                   </div>
 
-                  {/* Action */}
                   <button
                     onClick={() => onBorrow(asset)}
                     className="w-full rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-2 text-white text-sm font-semibold transition-colors"
@@ -195,8 +196,6 @@ export function BorrowTable({
     </div>
   );
 }
-
-// ── Shared helpers ────────────────────────────────────────────────────────────
 
 function EmptyRow({
   colSpan,

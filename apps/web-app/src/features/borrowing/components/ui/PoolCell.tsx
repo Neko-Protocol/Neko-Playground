@@ -4,9 +4,10 @@ interface PoolCellProps {
   token1: string;
   token2: string;
   fee: string;
+  isAggregated?: boolean;
 }
 
-export function PoolCell({ token1, token2, fee }: PoolCellProps) {
+export function PoolCell({ token1, token2, fee, isAggregated }: PoolCellProps) {
   return (
     <div className="flex justify-center">
       <div className="flex items-center gap-3 w-[200px] ml-6">
@@ -21,9 +22,15 @@ export function PoolCell({ token1, token2, fee }: PoolCellProps) {
         <span className="text-white font-medium text-sm">
           {token1}/{token2}
         </span>
-        <span className="rounded-full bg-[#2F2F2F] px-2 py-0.5 text-xs font-semibold text-white/50 shrink-0">
-          {fee}
-        </span>
+        {isAggregated ? (
+          <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400 shrink-0">
+            Aggregated
+          </span>
+        ) : (
+          <span className="rounded-full bg-[#2F2F2F] px-2 py-0.5 text-xs font-semibold text-white/50 shrink-0">
+            {fee}
+          </span>
+        )}
       </div>
     </div>
   );

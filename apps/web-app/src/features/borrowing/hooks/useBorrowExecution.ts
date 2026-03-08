@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { Networks } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
+import { useToast } from "@/hooks/useToast";
 import {
   approveToken,
   addCollateral,
@@ -14,19 +15,36 @@ import {
 } from "@/lib/helpers/stellar/transaction";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { rpcUrl } from "@/lib/constants/network";
-import { networks } from "@neko/lending";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import type { BorrowExecutionParams } from "../types/borrowing";
 
 export function useBorrowExecution() {
+  const { addNotification } = useToast();
   const { address, signTransaction, networkPassphrase } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const showError = useCallback(
+    (msg: string) =>
+      addNotification("Something went wrong", "error", {
+        ...TOAST_CONFIG.defaultOpts,
+        description: msg,
+      }),
+    [addNotification]
+  );
+  const showSuccess = useCallback(
+    (msg: string) =>
+      addNotification("Success", "success", {
+        ...TOAST_CONFIG.defaultOpts,
+        description: msg,
+      }),
+    [addNotification]
+  );
 
   const handleBorrow = useCallback(
     async (params: BorrowExecutionParams) => {
       if (!address) {
-        setError("Please connect your wallet first");
+        showError("Please connect your wallet first");
         return;
       }
 
@@ -47,21 +65,20 @@ export function useBorrowExecution() {
         !Number.isFinite(borrowNum) ||
         borrowNum <= 0
       ) {
-        setError("Please enter valid collateral and borrow amounts");
+        showError("Please enter valid collateral and borrow amounts");
         return;
       }
 
       const availableTokens = getAvailableTokens();
       const collateralToken = availableTokens[collateralTokenCode];
-      const lendingContractId = networks.testnet.contractId;
+      const lendingContractId = params.contractId;
 
       if (!collateralToken?.contract) {
-        setError(`Collateral token ${collateralTokenCode} not found`);
+        showError(`Collateral token ${collateralTokenCode} not found`);
         return;
       }
 
       setIsLoading(true);
-      setError(null);
 
       const signAndSend = (xdr: string) =>
         signAndSendTransaction(xdr, signTransaction as SignTransactionFn, {
@@ -85,7 +102,8 @@ export function useBorrowExecution() {
           collateralToken.contract,
           collateralAmount,
           collateralDecimals,
-          address
+          address,
+          lendingContractId
         );
         await signAndSend(addCollateralXdr);
 
@@ -93,38 +111,33 @@ export function useBorrowExecution() {
           assetCode,
           borrowAmount,
           borrowDecimals,
-          address
+          address,
+          lendingContractId
         );
         await signAndSend(borrowXdr);
 
-        return {
-          success: true as const,
-          message: `Successfully borrowed ${borrowNum} ${assetCode} using ${collateralNum} ${collateralTokenCode} as collateral`,
-        };
+        showSuccess(
+          `Successfully borrowed ${borrowNum} ${assetCode} using ${collateralNum} ${collateralTokenCode} as collateral`
+        );
+        return { success: true as const };
       } catch (err) {
         const friendlyError = extractContractErrorOrNull(err);
-        if (friendlyError) {
-          setError(
-            typeof friendlyError === "string"
-              ? friendlyError
-              : "An unexpected error occurred. Please try again."
-          );
-        }
+        showError(
+          typeof friendlyError === "string"
+            ? friendlyError
+            : "An unexpected error occurred. Please try again."
+        );
         return { success: false as const, error: err };
       } finally {
         setIsLoading(false);
       }
     },
-    [address, networkPassphrase, signTransaction]
+    [address, networkPassphrase, signTransaction, showError, showSuccess]
   );
-
-  const clearError = useCallback(() => setError(null), []);
 
   return {
     handleBorrow,
     isLoading,
-    error,
-    clearError,
     isWalletConnected: Boolean(address),
   };
 }

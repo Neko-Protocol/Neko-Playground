@@ -1,11 +1,3 @@
-/**
- * Contract Configuration
- * Centralized contract IDs and network configuration for Stellar/Soroban
- */
-
-// Re-export generated contract errors
-// These are auto-generated from Rust source files by scripts/generate-error-types.js
-// Run `npm run generate:errors` to regenerate
 export {
   CONTRACT_ERRORS,
   CONTRACT_ERRORS_BY_CONTRACT,
@@ -20,10 +12,10 @@ export {
 } from "./generated/contract-errors";
 
 export const LENDING_CONTRACT_ID =
-  "CD2ZCQLGQZRUBHO77QVGJXNFP6Y6UIQBBYG5WG6EX5PTQQDNEQITNB5J";
+  "CCYYGFDBVHMTL3RWDH6L6IY777VLBXDGB4NYBBKTZEH4UR7URAFKWJMI";
 
 export const LENDING_POOL2_CONTRACT_ID =
-  "CBSA75HUIMPR552MZLQFDZ4DH64IUHL3NR3NCJ2ZB4WY3QH3D7MH5HP4";
+  "CANU6NELPY5IHDZGEHYH2AKBHKVNMXENMBOVXPOFZ4F6TBHL2FN55N3T";
 
 export const ORACLE_CONTRACT_ID =
-  "CAYQIQ24IMRFYFXLTTCMSPA6HBQKUH2GLKRWU3B23VJF33X43WFOCC55";
+  "CCL7MHNSFAG7537O3OJ7Z42YVSNXTYZCGPAHN5FI5RQHLJW43O3L7LLS";

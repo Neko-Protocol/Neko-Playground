@@ -1,8 +1,3 @@
-/**
- * Shared types for the borrowing feature
- */
-
-/** Pool data from the RWA lending contract (useBorrowPools) */
 export interface BorrowPool {
   asset: string;
   assetCode: string;
@@ -13,9 +8,9 @@ export interface BorrowPool {
   poolBalance: string;
   poolBalanceUSD: string;
   isActive: boolean;
+  contractId: string;
 }
 
-/** Row shape for the borrow table (derived from BorrowPool) */
 export interface BorrowTableAsset {
   id: string;
   pool: {
@@ -30,9 +25,11 @@ export interface BorrowTableAsset {
   assetCode: string;
   collateralTokenCode: string;
   collateralFactor: number;
+  contractId: string;
+  isAggregated?: boolean;
+  orchestratorId?: string;
 }
 
-/** Params for executing the borrow flow (approve → addCollateral → borrow) */
 export interface BorrowExecutionParams {
   collateralTokenCode: string;
   assetCode: string;
@@ -40,9 +37,9 @@ export interface BorrowExecutionParams {
   borrowAmount: string;
   collateralDecimals?: number;
   borrowDecimals?: number;
+  contractId: string;
 }
 
-/** Form state for the borrow modal */
 export interface BorrowFormState {
   collateralAmount: string;
   borrowAmount: string;

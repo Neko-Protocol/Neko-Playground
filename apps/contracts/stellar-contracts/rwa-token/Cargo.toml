@@ -14,10 +14,10 @@ doctest = false
 
 [dependencies]
 soroban-sdk = { workspace = true }
-rwa-oracle = { path = "../rwa-oracle" }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
+rwa-oracle = { path = "../rwa-oracle" }
 
 [package.metadata.stellar]
 contract = true

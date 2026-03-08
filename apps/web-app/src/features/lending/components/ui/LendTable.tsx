@@ -10,6 +10,7 @@ interface LendTableProps {
   error: unknown;
   onDeposit: (pool: PoolData) => void;
   onWithdraw: (pool: PoolData) => void;
+  hideActions?: boolean;
 }
 
 export function LendTable({
@@ -18,12 +19,13 @@ export function LendTable({
   error,
   onDeposit,
   onWithdraw,
+  hideActions = false,
 }: LendTableProps) {
   const isEmpty = !isLoading && !error && pools.length === 0;
 
   return (
     <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
-      {/* ── Desktop table (md+) ─────────────────────────────────────────── */}
+      {}
       <div className="hidden md:block">
         <table className="w-full">
           <thead>
@@ -47,7 +49,9 @@ export function LendTable({
                 label="bToken Rate"
                 centered
               />
-              <ColHeader icon={Zap} label="Actions" centered />
+              {!hideActions && (
+                <ColHeader icon={Zap} label="Actions" centered />
+              )}
             </tr>
           </thead>
           <tbody>
@@ -81,22 +85,24 @@ export function LendTable({
                       ? parseFloat(pool.bTokenRate).toFixed(4)
                       : "1.0000"}
                   </td>
-                  <td className="px-4 py-4 align-middle text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => onDeposit(pool)}
-                        className="rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-1.5 text-white/70 hover:text-white text-xs font-semibold transition-colors"
-                      >
-                        Deposit
-                      </button>
-                      <button
-                        onClick={() => onWithdraw(pool)}
-                        className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors"
-                      >
-                        Withdraw
-                      </button>
-                    </div>
-                  </td>
+                  {!hideActions && (
+                    <td className="px-4 py-4 align-middle text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => onDeposit(pool)}
+                          className="rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-1.5 text-white/70 hover:text-white text-xs font-semibold transition-colors"
+                        >
+                          Deposit
+                        </button>
+                        <button
+                          onClick={() => onWithdraw(pool)}
+                          className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors"
+                        >
+                          Withdraw
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}
@@ -104,7 +110,7 @@ export function LendTable({
         </table>
       </div>
 
-      {/* ── Mobile cards (< md) ─────────────────────────────────────────── */}
+      {}
       <div className="md:hidden">
         {isLoading ? (
           <MobileEmptyState message="Loading pools…" />
@@ -119,12 +125,12 @@ export function LendTable({
           <ul className="divide-y divide-white/5">
             {pools.map((pool) => (
               <li key={pool.id} className="px-4 py-4">
-                {/* Card header */}
+                {}
                 <div className="mb-3">
                   <ProtocolCell pool={pool} />
                 </div>
 
-                {/* Stats grid */}
+                {}
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <StatCell
                     label="Supply APY"
@@ -147,21 +153,22 @@ export function LendTable({
                   />
                 </div>
 
-                {/* Action buttons */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => onDeposit(pool)}
-                    className="flex-1 rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-2 text-white/70 hover:text-white text-sm font-semibold transition-colors"
-                  >
-                    Deposit
-                  </button>
-                  <button
-                    onClick={() => onWithdraw(pool)}
-                    className="flex-1 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-2 text-white text-sm font-semibold transition-colors"
-                  >
-                    Withdraw
-                  </button>
-                </div>
+                {!hideActions && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onDeposit(pool)}
+                      className="flex-1 rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-2 text-white/70 hover:text-white text-sm font-semibold transition-colors"
+                    >
+                      Deposit
+                    </button>
+                    <button
+                      onClick={() => onWithdraw(pool)}
+                      className="flex-1 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-2 text-white text-sm font-semibold transition-colors"
+                    >
+                      Withdraw
+                    </button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -170,8 +177,6 @@ export function LendTable({
     </div>
   );
 }
-
-// ── Shared helpers ────────────────────────────────────────────────────────────
 
 function EmptyRow({
   colSpan,

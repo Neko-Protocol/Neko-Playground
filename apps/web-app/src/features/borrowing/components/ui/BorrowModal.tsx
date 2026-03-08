@@ -9,25 +9,17 @@ import type { BorrowTableAsset } from "../../types/borrowing";
 interface BorrowModalProps {
   asset: BorrowTableAsset;
   isProcessing: boolean;
-  error: string | null;
-  success: string | null;
   isWalletConnected: boolean;
   onClose: () => void;
   onSubmit: (collateral: string, borrow: string) => Promise<void>;
-  onClearError: () => void;
-  onClearSuccess: () => void;
 }
 
 export function BorrowModal({
   asset,
   isProcessing,
-  error,
-  success,
   isWalletConnected,
   onClose,
   onSubmit,
-  onClearError,
-  onClearSuccess,
 }: BorrowModalProps) {
   const [collateralAmount, setCollateralAmount] = useState("");
   const [borrowAmount, setBorrowAmount] = useState("");
@@ -72,29 +64,6 @@ export function BorrowModal({
               <X className="h-5 w-5" />
             </button>
           </div>
-
-          {error && (
-            <div className="mb-3 flex items-start gap-2 rounded-xl bg-red-500/10 border border-red-500/20 p-2.5">
-              <p className="text-red-400 text-sm flex-1">{error}</p>
-              <button
-                onClick={onClearError}
-                className="text-red-400/60 hover:text-red-400"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-          {success && (
-            <div className="mb-3 flex items-start gap-2 rounded-xl bg-green-500/10 border border-green-500/20 p-2.5">
-              <p className="text-green-400 text-sm flex-1">{success}</p>
-              <button
-                onClick={onClearSuccess}
-                className="text-green-400/60 hover:text-green-400"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          )}
 
           <div className="mb-3 rounded-xl bg-white/5 p-3">
             <p className="text-white/40 text-xs mb-0.5">Collateral Token</p>

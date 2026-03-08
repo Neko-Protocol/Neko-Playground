@@ -2,10 +2,12 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { X } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
+import { ModalPortal } from "@/components/ui/ModalPortal";
 
 interface TokenSelectorModalProps {
   isOpen: boolean;
@@ -51,8 +53,8 @@ const TokenItem: React.FC<TokenItemProps> = ({
       disabled={isSelected}
       className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
         isSelected
-          ? "bg-[#334EAC]/20 cursor-not-allowed border border-[#334EAC]/30"
-          : "bg-white hover:bg-gray-50 border border-transparent hover:border-gray-300"
+          ? "bg-[#229EDF]/20 cursor-not-allowed border border-[#229EDF]/30"
+          : "bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10"
       }`}
     >
       <div className="relative shrink-0">
@@ -66,7 +68,7 @@ const TokenItem: React.FC<TokenItemProps> = ({
             className="rounded-full shadow-md object-contain p-1"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#334EAC] to-[#081F5C] flex items-center justify-center text-white font-bold text-sm shadow-md">
+          <div className="w-10 h-10 rounded-full bg-[#229EDF]/30 flex items-center justify-center text-white font-bold text-sm shadow-md">
             {code[0]}
           </div>
         )}
@@ -74,17 +76,17 @@ const TokenItem: React.FC<TokenItemProps> = ({
 
       <div className={`flex-1 text-left ${showBalance ? "min-w-0" : ""}`}>
         <div
-          className={`font-semibold text-gray-900 ${showBalance ? "truncate" : ""} text-sm`}
+          className={`font-semibold text-white ${showBalance ? "truncate" : ""} text-sm`}
         >
           {name}
         </div>
-        <div className="text-xs text-gray-500 mt-0.5">{code}</div>
+        <div className="text-xs text-white/50 mt-0.5">{code}</div>
       </div>
 
       {showBalance && (
         <div className="text-right shrink-0">
-          <div className="font-semibold text-gray-900 text-sm">${usdValue}</div>
-          <div className="text-xs text-gray-500 mt-0.5">
+          <div className="font-semibold text-white text-sm">${usdValue}</div>
+          <div className="text-xs text-white/50 mt-0.5">
             {formatBalance(balance)}
           </div>
         </div>
@@ -176,166 +178,146 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
     onClose();
   };
 
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchQuery("");
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
+  const handleClose = useCallback(() => {
+    setSearchQuery("");
+    onClose();
+  }, [onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <ModalPortal>
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate__animated animate__fadeIn animate__faster"
         onClick={onClose}
-      />
-
-      <div className="relative w-full max-w-md bg-gray-100 border border-gray-300 rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-gray-300">
-          <h2 className="text-xl font-bold text-gray-900">Select a token</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-600 hover:text-gray-900 transition-colors p-1.5 rounded-lg hover:bg-gray-200"
-            aria-label="Close"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+      >
+        <div
+          className="relative w-full max-w-md bg-[#1C1C1C] border border-white/10 rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden animate__animated animate__fadeInUp animate__faster"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 shrink-0">
+            <h2 className="text-lg font-bold text-white">Select a token</h2>
+            <button
+              onClick={onClose}
+              className="text-white/40 hover:text-white transition-colors -mr-1"
+              aria-label="Close"
             >
-              <path d="M15 5L5 15M5 5l10 10" />
-            </svg>
-          </button>
-        </div>
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-        <div className="p-4 border-b border-gray-300">
-          <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="8" cy="8" r="5.5" />
-              <path d="M13.5 13.5l-3-3" />
-            </svg>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search tokens"
-              className="w-full pl-10 pr-4 py-3 bg-white border-2 border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#334EAC] transition-colors"
-              autoFocus
-            />
+          <div className="p-4 border-b border-white/10 shrink-0">
+            <div className="relative">
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40"
+                width="18"
+                height="18"
+                viewBox="0 0 18 18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="8" cy="8" r="5.5" />
+                <path d="M13.5 13.5l-3-3" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tokens"
+                className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-white/10 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-[#229EDF]/50 transition-colors"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 pb-6">
+            {userTokens.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-xs font-semibold text-white/50 mb-3 px-2 uppercase tracking-wider">
+                  Your tokens
+                </h3>
+                <div className="space-y-1">
+                  {userTokens.map((code) => {
+                    const isSelected = selectedToken
+                      ? getTokenId(selectedToken) === code
+                      : false;
+                    const { balance, usdValue } = getTokenBalance(code);
+                    const tokenInfo = availableTokens[code];
+                    const tokenName = tokenInfo?.name || code;
+                    const tokenIcon =
+                      code === "XLM"
+                        ? "/assets/xlm-negro-logo.png"
+                        : tokenInfo?.contract
+                          ? getTokenIcon(tokenInfo.contract)
+                          : null;
+
+                    return (
+                      <TokenItem
+                        key={code}
+                        code={code}
+                        name={tokenName}
+                        icon={tokenIcon}
+                        balance={balance}
+                        usdValue={usdValue}
+                        isSelected={isSelected}
+                        onClick={() => handleTokenClick(code)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {popularTokens.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold text-white/50 mb-3 px-2 uppercase tracking-wider">
+                  Popular tokens
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {popularTokens.map((code) => {
+                    const isSelected = selectedToken
+                      ? getTokenId(selectedToken) === code
+                      : false;
+                    const tokenInfo = availableTokens[code];
+                    const tokenName = tokenInfo?.name || code;
+                    const tokenIcon =
+                      code === "XLM"
+                        ? "/assets/xlm-negro-logo.png"
+                        : tokenInfo?.contract
+                          ? getTokenIcon(tokenInfo.contract)
+                          : null;
+
+                    return (
+                      <TokenItem
+                        key={code}
+                        code={code}
+                        name={tokenName}
+                        icon={tokenIcon}
+                        balance="0"
+                        usdValue="0"
+                        isSelected={isSelected}
+                        onClick={() => handleTokenClick(code)}
+                        showBalance={false}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {filteredTokens.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-white/60 text-sm">No tokens found</p>
+                <p className="text-white/40 text-xs mt-2">
+                  Try searching with a different term
+                </p>
+              </div>
+            )}
           </div>
         </div>
-
-        <div className="flex-1 overflow-y-auto p-4">
-          {userTokens.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-xs font-semibold text-gray-500 mb-3 px-2 uppercase tracking-wider">
-                Your tokens
-              </h3>
-              <div className="space-y-1">
-                {userTokens.map((code) => {
-                  const isSelected = selectedToken
-                    ? getTokenId(selectedToken) === code
-                    : false;
-                  const { balance, usdValue } = getTokenBalance(code);
-                  const tokenInfo = availableTokens[code];
-                  const tokenName = tokenInfo?.name || code;
-                  const tokenIcon =
-                    code === "XLM"
-                      ? "/assets/xlm-negro-logo.png"
-                      : tokenInfo?.contract
-                        ? getTokenIcon(tokenInfo.contract)
-                        : null;
-
-                  return (
-                    <TokenItem
-                      key={code}
-                      code={code}
-                      name={tokenName}
-                      icon={tokenIcon}
-                      balance={balance}
-                      usdValue={usdValue}
-                      isSelected={isSelected}
-                      onClick={() => handleTokenClick(code)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {popularTokens.length > 0 && (
-            <div>
-              <h3 className="text-xs font-semibold text-gray-500 mb-3 px-2 uppercase tracking-wider">
-                Popular tokens
-              </h3>
-              <div className="flex flex-col gap-3">
-                {popularTokens.map((code) => {
-                  const isSelected = selectedToken
-                    ? getTokenId(selectedToken) === code
-                    : false;
-                  const tokenInfo = availableTokens[code];
-                  const tokenName = tokenInfo?.name || code;
-                  const tokenIcon =
-                    code === "XLM"
-                      ? "/assets/xlm-negro-logo.png"
-                      : tokenInfo?.contract
-                        ? getTokenIcon(tokenInfo.contract)
-                        : null;
-
-                  return (
-                    <TokenItem
-                      key={code}
-                      code={code}
-                      name={tokenName}
-                      icon={tokenIcon}
-                      balance="0"
-                      usdValue="0"
-                      isSelected={isSelected}
-                      onClick={() => handleTokenClick(code)}
-                      showBalance={false}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {filteredTokens.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-sm">No tokens found</p>
-              <p className="text-gray-400 text-xs mt-2">
-                Try searching with a different term
-              </p>
-            </div>
-          )}
-        </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 };
 

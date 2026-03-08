@@ -9,7 +9,6 @@ interface LendModalProps {
   pool: PoolData;
   isDeposit: boolean;
   isLoading: boolean;
-  error: string | null;
   bTokenBalance: string | null;
   isLoadingBalance: boolean;
   hasWallet: boolean;
@@ -22,7 +21,6 @@ export function LendModal({
   pool,
   isDeposit,
   isLoading,
-  error,
   bTokenBalance,
   isLoadingBalance,
   hasWallet,
@@ -132,12 +130,6 @@ export function LendModal({
             </p>
           )}
         </div>
-
-        {error && (
-          <div className="mb-3 rounded-xl bg-red-500/10 border border-red-500/20 p-2.5">
-            <p className="text-red-400 text-sm">{error}</p>
-          </div>
-        )}
 
         <div className="flex gap-2">
           <button
