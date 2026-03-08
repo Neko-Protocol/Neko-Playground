@@ -30,11 +30,19 @@ import {
   borrowFromPool,
 } from "../helpers/stellar/lending";
 import { extractContractError } from "../helpers/stellar/contractErrors";
-import type {
-  LendingOperationResult,
-  CollateralOperationResult,
-  BorrowWithCollateralResult,
-} from "../types/lendingTypes";
+
+type LendingOperationResult = { xdr: string; error?: string };
+type CollateralOperationResult = {
+  approveXdr: string;
+  addCollateralXdr: string;
+  error?: string;
+};
+type BorrowWithCollateralResult = {
+  approveXdr: string;
+  addCollateralXdr: string;
+  borrowXdr: string;
+  error?: string;
+};
 
 export class LendingService {
   private sorobanServer: rpc.Server;
