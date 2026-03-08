@@ -3,11 +3,18 @@
 import React from "react";
 import { Wallet, Coins, Hash, TrendingUp, Layers } from "lucide-react";
 import { useUserLendingPositions } from "../../hooks/useUserLendingPositions";
+import { useUserPositions } from "@/features/dashboard/hooks/useUserPositions";
 import { ColHeader } from "./ColHeader";
 import { TokenAvatar } from "@/features/borrowing/components/ui/TokenAvatar";
 
 const MyLendingPositions: React.FC = () => {
   const { positions, isLoading, hasWallet } = useUserLendingPositions();
+  const { positions: allPositions, isLoading: isLoadingAggregated } =
+    useUserPositions();
+
+  const aggregatedPositions = allPositions.filter(
+    (p) => p.pool.type !== "neko" && p.position.deposited > 0n
+  );
 
   if (!hasWallet) {
     return (
@@ -102,6 +109,89 @@ const MyLendingPositions: React.FC = () => {
           )}
         </tbody>
       </table>
+
+      {(isLoadingAggregated || aggregatedPositions.length > 0) && (
+        <>
+          <div className="flex items-center px-4 py-3 border-t border-white/5">
+            <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
+              Aggregated Positions
+            </span>
+            <span className="ml-2 rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
+              Aggregated
+            </span>
+          </div>
+
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/5">
+                <ColHeader icon={Coins} label="Asset" />
+                <ColHeader
+                  icon={Layers}
+                  label="Deposited"
+                  tooltip="Amount deposited in this aggregated pool"
+                  centered
+                />
+                <ColHeader
+                  icon={TrendingUp}
+                  label="APY"
+                  tooltip="Annual yield from this pool"
+                  centered
+                />
+                <ColHeader icon={Hash} label="Protocol" centered />
+              </tr>
+            </thead>
+            <tbody>
+              {isLoadingAggregated ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-4 py-12 text-center text-white/40 text-sm"
+                  >
+                    Loading aggregated positions...
+                  </td>
+                </tr>
+              ) : aggregatedPositions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-4 py-12 text-center text-white/40 text-sm"
+                  >
+                    No aggregated lending positions.
+                  </td>
+                </tr>
+              ) : (
+                aggregatedPositions.map((pos) => (
+                  <tr
+                    key={pos.pool.id}
+                    className="border-b border-white/5 hover:bg-white/2 transition-colors"
+                  >
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <TokenAvatar code={pos.pool.tokens[0]?.code ?? "?"} />
+                        <span className="text-white font-medium text-sm">
+                          {pos.pool.tokens[0]?.code ?? "?"}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-center text-white font-bold text-sm tabular-nums">
+                      {pos.position.depositedFormatted}{" "}
+                      <span className="text-white/40 font-normal">
+                        {pos.pool.tokens[0]?.code ?? ""}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-center text-white text-sm">
+                      {pos.pool.apy.toFixed(2)}%
+                    </td>
+                    <td className="px-4 py-4 text-center text-white/60 text-sm">
+                      {pos.pool.name}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   );
 };

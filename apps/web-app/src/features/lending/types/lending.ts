@@ -12,4 +12,6 @@ export interface PoolData {
   asset: string;
   bTokenRate?: string;
   contractId: string;
+  isAggregated?: boolean;
+  orchestratorId?: string;
 }

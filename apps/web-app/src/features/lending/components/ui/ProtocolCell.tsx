@@ -23,9 +23,15 @@ export function ProtocolCell({ pool }: { pool: PoolData }) {
         )}
       </div>
       <span className="text-white font-medium text-sm">{pool.name}</span>
-      <span className="rounded bg-[#2A2A2A] px-1.5 py-0.5 text-[10px] font-semibold text-white/50">
-        V2
-      </span>
+      {pool.isAggregated ? (
+        <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
+          Aggregated
+        </span>
+      ) : (
+        <span className="rounded bg-[#2A2A2A] px-1.5 py-0.5 text-[10px] font-semibold text-white/50">
+          V2
+        </span>
+      )}
     </div>
   );
 }
