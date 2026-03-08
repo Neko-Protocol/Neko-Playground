@@ -12,166 +12,181 @@ import { parseInterestRateFromContractResult } from "@/lib/helpers/lendingUtils"
 import { RWA_TOKENS } from "@/lib/constants/wallet";
 import type { BorrowPool } from "../types/borrowing";
 
-/**
- * Hook to get all active borrow pools from the RWA lending contract
- * Only shows pools where:
- * - There's an RWA token configured as collateral
- * - There's a debt asset configured
- * - Pool has balance available to borrow
- */
-export const useBorrowPools = () => {
-  // Get available tokens (memoized to prevent re-computation on every render)
-  const availableTokens = useMemo(() => getAvailableTokens(), []);
+/** Debt assets borrowable from Pool 2 (collateral = USDC/XLM) */
+const POOL2_DEBT_ASSETS = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD"];
+/** Collateral assets accepted by Pool 2 */
+const POOL2_COLLATERAL_ASSETS = ["USDC", "XLM"];
 
-  // All RWA tokens configured as collateral (memoized)
-  const rwaTokens = useMemo(
-    () =>
-      RWA_TOKENS.filter((code) => {
-        const token = availableTokens[code];
-        return token && token.contract;
-      }),
-    [availableTokens]
-  );
+async function fetchPoolPools(
+  client: RwaLendingClient,
+  contractId: string,
+  collateralCodes: string[],
+  debtCodes: string[],
+  availableTokens: ReturnType<typeof getAvailableTokens>
+): Promise<BorrowPool[]> {
+  let poolState;
+  try {
+    const poolStateTx = await client.get_pool_state({ simulate: true });
+    poolState = poolStateTx.result;
+  } catch {
+    return [];
+  }
 
-  // Known debt assets that can be borrowed (memoized)
-  const debtAssets = useMemo(
-    () =>
-      ["USDC", "XLM"].filter((code) => {
-        const token = availableTokens[code];
-        return token && token.contract;
-      }),
-    [availableTokens]
-  );
+  if (poolState?.tag !== "Active") return [];
 
-  // Memoize the query function to prevent re-creation on every render
-  const queryFn = useMemo(
-    () => async (): Promise<BorrowPool[]> => {
-      // Create RWA lending client with new contract ID
-      const contractId = networks.testnet.contractId;
+  const pools: BorrowPool[] = [];
 
-      const client = new RwaLendingClient({
-        contractId: contractId,
-        rpcUrl: rpcUrl,
-        networkPassphrase: networkPassphrase,
-        ...(allowHttpForSoroban && { allowHttp: true }),
-      });
+  for (const collateralCode of collateralCodes) {
+    const collateralToken = availableTokens[collateralCode];
+    if (!collateralToken?.contract) continue;
 
-      // Get pool state
-      let poolState;
+    let collateralFactor = 0;
+    try {
+      const factorTx = await client.get_collateral_factor(
+        { rwa_token: collateralToken.contract },
+        { simulate: true }
+      );
+      const factorValue = factorTx.result;
+      if (factorValue) {
+        collateralFactor = Number(factorValue) / 100_000;
+      }
+    } catch {
+      continue;
+    }
+
+    if (collateralFactor === 0) continue;
+
+    for (const debtCode of debtCodes) {
+      const debtToken = availableTokens[debtCode];
+      if (!debtToken?.contract) continue;
+
       try {
-        const poolStateTx = await client.get_pool_state({ simulate: true });
-        poolState = poolStateTx.result;
-      } catch {
-        return [];
-      }
+        const balanceTx = await client.get_pool_balance(
+          { asset: debtCode },
+          { simulate: true }
+        );
+        const balanceValue = balanceTx.result;
+        if (balanceValue === undefined || balanceValue === null) continue;
 
-      const isPoolActive = poolState?.tag === "Active";
+        const decimals = debtToken.decimals || 7;
+        const balanceStr =
+          typeof balanceValue === "bigint"
+            ? balanceValue.toString()
+            : typeof balanceValue === "string"
+              ? balanceValue
+              : String(balanceValue);
+        const poolBalance = fromSmallestUnit(
+          BigInt(balanceStr).toString(),
+          decimals
+        );
 
-      if (!isPoolActive) {
-        return [];
-      }
-
-      const pools: BorrowPool[] = [];
-
-      // For each combination of RWA collateral token and debt asset
-      for (const rwaCode of rwaTokens) {
-        const rwaToken = availableTokens[rwaCode];
-        if (!rwaToken?.contract) continue;
-
-        // Get collateral factor for this RWA token
-        let collateralFactor = 0;
+        let interestRate = 0;
         try {
-          const collateralFactorTx = await client.get_collateral_factor(
-            { rwa_token: rwaToken.contract },
+          const rateTx = await client.get_interest_rate(
+            { asset: debtCode },
             { simulate: true }
           );
-          const factorValue = collateralFactorTx.result;
-          if (factorValue) {
-            // Collateral factor is stored with 7 decimals (e.g., 7_500_000 = 75%)
-            collateralFactor = Number(factorValue) / 100_000;
-          }
+          interestRate = parseInterestRateFromContractResult(rateTx.result);
         } catch {
-          // If collateral factor fetch fails, skip this RWA token
-          continue;
+          // use 0
         }
 
-        // Skip if collateral factor is 0 (not configured)
-        if (collateralFactor === 0) continue;
-
-        // For each debt asset, create a borrow pool
-        for (const debtCode of debtAssets) {
-          const debtToken = availableTokens[debtCode];
-          if (!debtToken?.contract) continue;
-
-          try {
-            // Get pool balance for this debt asset
-            const balanceTx = await client.get_pool_balance(
-              { asset: debtCode },
-              { simulate: true }
-            );
-            const balanceValue = balanceTx.result;
-            // Only skip if balanceValue is undefined/null, NOT if it's 0
-            if (balanceValue === undefined || balanceValue === null) continue;
-
-            // Convert balance to human-readable format
-            const decimals = debtToken.decimals || 7;
-            // Handle different types: bigint, string, or number
-            const balanceStr =
-              typeof balanceValue === "bigint"
-                ? balanceValue.toString()
-                : typeof balanceValue === "string"
-                  ? balanceValue
-                  : String(balanceValue);
-            const balanceBigInt = BigInt(balanceStr);
-            const poolBalance = fromSmallestUnit(
-              balanceBigInt.toString(),
-              decimals
-            );
-
-            // Get interest rate for borrowing (basis points → percentage)
-            let interestRate = 0;
-            try {
-              const interestRateTx = await client.get_interest_rate(
-                { asset: debtCode },
-                { simulate: true }
-              );
-              interestRate = parseInterestRateFromContractResult(
-                interestRateTx.result
-              );
-            } catch {
-              // If interest rate fetch fails, use 0
-            }
-
-            pools.push({
-              asset: debtToken.contract,
-              assetCode: debtCode,
-              collateralToken: rwaToken.contract,
-              collateralTokenCode: rwaCode,
-              collateralFactor,
-              interestRate,
-              poolBalance,
-              poolBalanceUSD: "Calculating...", // Will be calculated in component
-              isActive: true,
-            });
-          } catch {
-            // Skip assets that fail to fetch (not configured or error)
-            continue;
-          }
-        }
+        pools.push({
+          asset: debtToken.contract,
+          assetCode: debtCode,
+          collateralToken: collateralToken.contract,
+          collateralTokenCode: collateralCode,
+          collateralFactor,
+          interestRate,
+          poolBalance,
+          poolBalanceUSD: "Calculating...",
+          isActive: true,
+          contractId,
+        });
+      } catch {
+        continue;
       }
+    }
+  }
 
-      return pools;
+  return pools;
+}
+
+export const useBorrowPools = () => {
+  const availableTokens = useMemo(() => getAvailableTokens(), []);
+
+  const pool1CollateralCodes = useMemo(
+    () => RWA_TOKENS.filter((c) => availableTokens[c]?.contract),
+    [availableTokens]
+  );
+
+  const pool1DebtCodes = useMemo(
+    () => ["USDC", "XLM"].filter((c) => availableTokens[c]?.contract),
+    [availableTokens]
+  );
+
+  const pool2CollateralCodes = useMemo(
+    () => POOL2_COLLATERAL_ASSETS.filter((c) => availableTokens[c]?.contract),
+    [availableTokens]
+  );
+
+  const pool2DebtCodes = useMemo(
+    () => POOL2_DEBT_ASSETS.filter((c) => availableTokens[c]?.contract),
+    [availableTokens]
+  );
+
+  const queryFn = useMemo(
+    () => async (): Promise<BorrowPool[]> => {
+      const clientOptions = {
+        rpcUrl,
+        networkPassphrase,
+        ...(allowHttpForSoroban && { allowHttp: true }),
+      };
+
+      const pool1Client = new RwaLendingClient({
+        contractId: networks.testnet.pool1ContractId,
+        ...clientOptions,
+      });
+      const pool2Client = new RwaLendingClient({
+        contractId: networks.testnet.pool2ContractId,
+        ...clientOptions,
+      });
+
+      const [pool1Pools, pool2Pools] = await Promise.all([
+        fetchPoolPools(
+          pool1Client,
+          networks.testnet.pool1ContractId,
+          pool1CollateralCodes,
+          pool1DebtCodes,
+          availableTokens
+        ),
+        fetchPoolPools(
+          pool2Client,
+          networks.testnet.pool2ContractId,
+          pool2CollateralCodes,
+          pool2DebtCodes,
+          availableTokens
+        ),
+      ]);
+
+      return [...pool1Pools, ...pool2Pools];
     },
-    [rwaTokens, debtAssets, availableTokens]
+    [
+      pool1CollateralCodes,
+      pool1DebtCodes,
+      pool2CollateralCodes,
+      pool2DebtCodes,
+      availableTokens,
+    ]
   );
 
   return useQuery<BorrowPool[]>({
     queryKey: ["borrowPools"],
     queryFn,
-    staleTime: 2 * 60_000, // 2 min: avoid refetch when re-entering tab
+    staleTime: 2 * 60_000,
     gcTime: 10 * 60_000,
-    refetchInterval: 2 * 60_000, // 2 min background refresh
-    refetchOnWindowFocus: false, // don't refetch every time user switches to tab
+    refetchInterval: 2 * 60_000,
+    refetchOnWindowFocus: false,
     placeholderData: (prev) => prev,
     retry: 2,
     throwOnError: false,
