@@ -8,7 +8,7 @@ import { SettingsWalletSection } from "../ui/SettingsWalletSection";
 import { SettingsNetworkSection } from "../ui/SettingsNetworkSection";
 
 export default function Settings() {
-  const { copy, copiedKey } = useCopyToClipboard();
+  const { copy, copiedKey } = useCopyToClipboard({ showNotification: true });
 
   return (
     <PageContainer maxWidth="6xl">

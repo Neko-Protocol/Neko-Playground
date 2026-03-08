@@ -15,7 +15,6 @@ const Lend: React.FC = () => {
     isModalOpen,
     isDeposit,
     isLoading,
-    error,
     bTokenBalance,
     isLoadingBalance,
     hasWallet,
@@ -49,7 +48,6 @@ const Lend: React.FC = () => {
           pool={selectedPool}
           isDeposit={isDeposit}
           isLoading={isLoading}
-          error={error}
           bTokenBalance={bTokenBalance}
           isLoadingBalance={isLoadingBalance}
           hasWallet={hasWallet}

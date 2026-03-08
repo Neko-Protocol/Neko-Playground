@@ -2,30 +2,38 @@
 
 import { ReactNode } from "react";
 import { Toaster } from "sileo";
+import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import "sileo/styles.css";
 import "./toast-overrides.css";
 
-const TOAST_FILL = "#1C1C1C";
-const TOAST_TITLE_STYLE = "text-white";
-const TOAST_DESC_STYLE = "text-white/75";
-
-const TOASTER_CONFIG = {
-  position: "top-center" as const,
-  theme: "dark" as const,
-  options: {
-    fill: TOAST_FILL,
-    styles: {
-      title: TOAST_TITLE_STYLE,
-      description: TOAST_DESC_STYLE,
-    },
-  },
-};
-
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { provider, viewport } = TOAST_CONFIG;
   return (
     <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `:root {
+            --toast-viewport-top: ${viewport.top};
+            --toast-viewport-left: ${viewport.left};
+            --toast-viewport-transform: ${viewport.transform};
+            --toast-viewport-z-index: ${viewport.zIndex};
+            --toast-viewport-width: ${viewport.width};
+            --toast-description-color: ${viewport.descriptionColor};
+          }`,
+        }}
+      />
       {children}
-      <Toaster {...TOASTER_CONFIG} />
+      <Toaster
+        position={provider.position}
+        theme={provider.theme}
+        options={{
+          fill: provider.fill,
+          styles: {
+            title: provider.titleStyle,
+            description: provider.descriptionStyle,
+          },
+        }}
+      />
     </>
   );
 }

@@ -15,6 +15,8 @@ import {
   sanitizeAmountInput,
   formatSwapAmount,
 } from "@/lib/helpers/tokenUtils";
+import { useToast } from "@/hooks/useToast";
+import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import TokenSelectorModal from "../ui/TokenSelectorModal";
@@ -129,6 +131,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
 
 const Swap: React.FC = () => {
   const { address, network, networkPassphrase } = useWallet();
+  const { addNotification } = useToast();
 
   const availableTokens = getAvailableTokens();
   const tokenCodes = Object.keys(availableTokens);
@@ -147,12 +150,10 @@ const Swap: React.FC = () => {
     tokenIn,
     tokenOut,
     txHash,
-    error,
     isLoading,
     setOrderType,
     setAmountIn,
     setTxHash,
-    setError,
     setIsLoading,
     resetSwap,
     swapTokens,
@@ -208,7 +209,6 @@ const Swap: React.FC = () => {
     }
 
     setIsLoading(true);
-    setError(null);
 
     try {
       const result = await executeSwap({
@@ -221,20 +221,27 @@ const Swap: React.FC = () => {
 
       if (result.orderId) {
         setTxHash(result.orderId);
+        addNotification("Success", "success", {
+          ...TOAST_CONFIG.defaultOpts,
+          description: "Swap completed successfully",
+        });
         resetSwap();
         setAmountIn("");
         swapState.setAmountOut("0.0");
       }
-    } catch (error) {
-      if (error instanceof Error && error.message === "USER_REJECTED") {
+    } catch (err) {
+      if (err instanceof Error && err.message === "USER_REJECTED") {
         setIsLoading(false);
         return;
       }
 
       const errorMessage =
-        extractContractErrorOrNull(error, "rwa-perps") ||
-        (error instanceof Error ? error.message : "Failed to complete swap");
-      setError(errorMessage);
+        extractContractErrorOrNull(err, "rwa-perps") ||
+        (err instanceof Error ? err.message : "Failed to complete swap");
+      addNotification("Something went wrong", "error", {
+        ...TOAST_CONFIG.defaultOpts,
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -380,12 +387,6 @@ const Swap: React.FC = () => {
       </div>
 
       {}
-      {error && (
-        <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
-          <p className="text-red-400 text-sm">{error}</p>
-        </div>
-      )}
-
       {}
       <div className="mt-5">
         <SwapButton

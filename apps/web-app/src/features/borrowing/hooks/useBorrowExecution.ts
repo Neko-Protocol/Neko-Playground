@@ -17,9 +17,8 @@ import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { rpcUrl } from "@/lib/constants/network";
 import { networks } from "@neko/lending";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import type { BorrowExecutionParams } from "../types/borrowing";
-
-const TOAST_OPTS = { position: "top-center" as const };
 
 export function useBorrowExecution() {
   const { addNotification } = useToast();
@@ -29,7 +28,7 @@ export function useBorrowExecution() {
   const showError = useCallback(
     (msg: string) =>
       addNotification("Something went wrong", "error", {
-        ...TOAST_OPTS,
+        ...TOAST_CONFIG.defaultOpts,
         description: msg,
       }),
     [addNotification]
@@ -37,7 +36,7 @@ export function useBorrowExecution() {
   const showSuccess = useCallback(
     (msg: string) =>
       addNotification("Success", "success", {
-        ...TOAST_OPTS,
+        ...TOAST_CONFIG.defaultOpts,
         description: msg,
       }),
     [addNotification]
