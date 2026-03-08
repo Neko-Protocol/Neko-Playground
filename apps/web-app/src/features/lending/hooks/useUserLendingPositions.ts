@@ -1,6 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { getBTokenBalanceRaw } from "@/lib/helpers/stellar/lending";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { useLendingPools } from "./useLendingPools";
 
 const STELLAR_DECIMALS = 7;
@@ -20,8 +21,14 @@ export function useUserLendingPositions() {
 
   const balanceQueries = useQueries({
     queries: pools.map((pool) => ({
-      queryKey: ["userLendingBTokens", pool.assetCode, address],
-      queryFn: () => getBTokenBalanceRaw(pool.assetCode, address!),
+      queryKey: [
+        "userLendingBTokens",
+        pool.assetCode,
+        pool.contractId,
+        address,
+      ],
+      queryFn: () =>
+        getBTokenBalanceRaw(pool.assetCode, address!, pool.contractId),
       enabled: Boolean(address) && pools.length > 0,
       staleTime: 30_000,
       gcTime: 5 * 60_000,
@@ -47,9 +54,9 @@ export function useUserLendingPositions() {
     positions.push({
       assetCode: pool.assetCode,
       bTokens,
-      bTokensFormatted: bTokensHuman.toFixed(STELLAR_DECIMALS),
+      bTokensFormatted: formatAmount(bTokensHuman),
       bTokenRate,
-      depositedFormatted: deposited.toFixed(STELLAR_DECIMALS),
+      depositedFormatted: formatAmount(deposited),
       interestRate: pool.interestRate,
     });
   });

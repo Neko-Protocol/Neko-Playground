@@ -341,11 +341,12 @@ export const borrowFromPool = async (
  */
 export const getBTokenBalanceRaw = async (
   assetCode: string,
-  walletAddress: string
+  walletAddress: string,
+  contractId: string = networks.testnet.contractId
 ): Promise<bigint> => {
   try {
     const client = new RwaLendingClient({
-      contractId: networks.testnet.contractId,
+      contractId,
       rpcUrl: rpcUrl,
       networkPassphrase: networkPassphrase,
       ...(allowHttpForSoroban && { allowHttp: true }),
