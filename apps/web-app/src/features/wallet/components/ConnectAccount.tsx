@@ -3,6 +3,7 @@
 import React from "react";
 import { stellarNetwork } from "@/lib/constants/network";
 import FundAccountButton from "./FundAccountButton";
+import MintTestTokensButton from "./MintTestTokensButton";
 import NetworkPill from "./NetworkPill";
 
 const ConnectAccount: React.FC = () => {
@@ -16,7 +17,12 @@ const ConnectAccount: React.FC = () => {
         verticalAlign: "middle",
       }}
     >
-      {stellarNetwork !== "PUBLIC" && <FundAccountButton />}
+      {stellarNetwork !== "PUBLIC" && (
+        <>
+          <FundAccountButton />
+          <MintTestTokensButton />
+        </>
+      )}
       <NetworkPill />
     </div>
   );

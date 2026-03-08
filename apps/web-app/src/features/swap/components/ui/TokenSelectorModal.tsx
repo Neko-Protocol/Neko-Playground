@@ -178,11 +178,10 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
     onClose();
   };
 
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchQuery("");
-    }
-  }, [isOpen]);
+  const handleClose = useCallback(() => {
+    setSearchQuery("");
+    onClose();
+  }, [onClose]);
 
   if (!isOpen) return null;
 
