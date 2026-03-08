@@ -1,19 +1,21 @@
 "use client";
 
 import React, { useTransition } from "react";
-import { Unplug, Coins } from "lucide-react";
+import { Unplug, Coins, Wallet } from "lucide-react";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { ReadonlyRow } from "@/components/ui/ReadonlyRow";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useNotification } from "@/hooks/useNotification";
+import { useSorobanTokenBalances } from "@/hooks/useSorobanTokenBalances";
 import { truncateAddress } from "@/lib/utils";
 import { stellarNetwork } from "@/lib/constants/network";
 import {
   buildFaucetTransaction,
   getFaucetTokens,
-  addFaucetTokensToWallet,
 } from "@/lib/constants/faucet";
+import { addFaucetTokensToFreighter } from "@/lib/helpers/stellar/freighter";
+import { addToken as freighterAddToken } from "@stellar/freighter-api";
 import { signAndSendTransaction } from "@/lib/helpers/stellar/transaction";
 import {
   rpcUrl,
@@ -33,6 +35,11 @@ export function SettingsWalletSection({
   const { address, walletName, isConnected, disconnect } = useStellarWallet();
   const { signTransaction } = useWallet();
   const { addNotification } = useNotification();
+  const {
+    balances,
+    isFetching: isFetchingBalances,
+    invalidate,
+  } = useSorobanTokenBalances();
   const [isDisconnecting, setIsDisconnecting] = React.useState(false);
   const [isMinting, startMintTransition] = useTransition();
 
@@ -68,15 +75,37 @@ export function SettingsWalletSection({
           "success"
         );
 
-        const added = await addFaucetTokensToWallet(networkPassphrase);
-        if (added.length > 0) {
-          addNotification(`Added to wallet: ${added.join(", ")}`, "success");
+        await invalidate();
+
+        try {
+          addNotification("Adding tokens to Freighter…", "primary");
+          await addFaucetTokensToFreighter(networkPassphrase);
+          addNotification("Tokens added to Freighter", "success");
+        } catch {
+          addNotification(
+            "Mint succeeded but adding to Freighter failed. Use the wallet icon per token to add manually.",
+            "warning"
+          );
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Unknown error";
         addNotification(`Failed to mint test tokens: ${msg}`, "error");
       }
     });
+  };
+
+  const handleAddToFreighter = async (contractId: string, symbol: string) => {
+    try {
+      const result = await freighterAddToken({
+        contractId,
+        networkPassphrase,
+      });
+      if (result.contractId && !result.error) {
+        addNotification(`${symbol} added to Freighter`, "success");
+      }
+    } catch {
+      addNotification(`Failed to add ${symbol} to Freighter`, "error");
+    }
   };
 
   return (
@@ -103,6 +132,44 @@ export function SettingsWalletSection({
             copiedKey={copiedKey}
             mono
           />
+
+          {stellarNetwork !== "PUBLIC" && balances.length > 0 && (
+            <div className="rounded-xl bg-[#2A2A2A] px-4 py-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-medium text-white/40">
+                  RWA Token Balances
+                </span>
+                {isFetchingBalances && (
+                  <span className="text-[10px] text-white/20">updating…</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {balances.map((t) => (
+                  <div
+                    key={t.contractId}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="text-sm text-white/70">{t.symbol}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm text-white/90">
+                        {t.balance}
+                      </span>
+                      <button
+                        type="button"
+                        title={`Add ${t.symbol} to Freighter`}
+                        onClick={() =>
+                          void handleAddToFreighter(t.contractId, t.symbol)
+                        }
+                        className="rounded p-0.5 text-white/20 transition-colors hover:text-white/60"
+                      >
+                        <Wallet className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {stellarNetwork !== "PUBLIC" && (
             <button

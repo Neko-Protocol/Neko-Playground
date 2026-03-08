@@ -3,12 +3,13 @@
 import React, { useState, useTransition } from "react";
 import { useNotification } from "@/hooks/useNotification";
 import { useWallet } from "@/hooks/useWallet";
+import { useSorobanTokenBalances } from "@/hooks/useSorobanTokenBalances";
 import { Button, Tooltip } from "@stellar/design-system";
 import {
   buildFaucetTransaction,
   getFaucetTokens,
-  addFaucetTokensToWallet,
 } from "@/lib/constants/faucet";
+import { addFaucetTokensToFreighter } from "@/lib/helpers/stellar/freighter";
 import { signAndSendTransaction } from "@/lib/helpers/stellar/transaction";
 import {
   rpcUrl,
@@ -21,6 +22,7 @@ const MintTestTokensButton: React.FC = () => {
   const [isPending, startTransition] = useTransition();
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const { address, signTransaction } = useWallet();
+  const { invalidate } = useSorobanTokenBalances();
 
   if (!address) return null;
 
@@ -46,9 +48,17 @@ const MintTestTokensButton: React.FC = () => {
           "success"
         );
 
-        const added = await addFaucetTokensToWallet(networkPassphrase);
-        if (added.length > 0) {
-          addNotification(`Added to wallet: ${added.join(", ")}`, "success");
+        await invalidate();
+
+        try {
+          addNotification("Adding tokens to Freighter…", "primary");
+          await addFaucetTokensToFreighter(networkPassphrase);
+          addNotification("Tokens added to Freighter", "success");
+        } catch {
+          addNotification(
+            "Mint succeeded but adding to Freighter failed. Use Settings to add tokens manually.",
+            "warning"
+          );
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Unknown error";

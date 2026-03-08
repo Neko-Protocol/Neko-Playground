@@ -7,8 +7,6 @@ import {
   rpc,
   Horizon,
 } from "@stellar/stellar-sdk";
-import { addToken as freighterAddToken } from "@stellar/freighter-api";
-
 export interface FaucetToken {
   symbol: string;
   contractId: string;
@@ -138,32 +136,4 @@ export async function buildFaucetTransaction(
   const prepared = await sorobanServer.prepareTransaction(tx);
 
   return prepared.toXDR();
-}
-
-/**
- * Register all faucet tokens in Freighter so they appear in the wallet balance view.
- * Uses Freighter's addToken API. Silently skips tokens the user rejects or that fail.
- * Returns the list of successfully added token symbols.
- */
-export async function addFaucetTokensToWallet(
-  passphrase: string
-): Promise<string[]> {
-  const tokens = getFaucetTokens();
-  const added: string[] = [];
-
-  for (const token of tokens) {
-    try {
-      const result = await freighterAddToken({
-        contractId: token.contractId,
-        networkPassphrase: passphrase,
-      });
-      if (result.contractId && !result.error) {
-        added.push(token.symbol);
-      }
-    } catch {
-      // User rejected or wallet doesn't support addToken — skip silently
-    }
-  }
-
-  return added;
 }
