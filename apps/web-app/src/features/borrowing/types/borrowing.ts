@@ -8,6 +8,7 @@ export interface BorrowPool {
   poolBalance: string;
   poolBalanceUSD: string;
   isActive: boolean;
+  contractId: string;
 }
 
 export interface BorrowTableAsset {
@@ -24,6 +25,7 @@ export interface BorrowTableAsset {
   assetCode: string;
   collateralTokenCode: string;
   collateralFactor: number;
+  contractId: string;
 }
 
 export interface BorrowExecutionParams {
@@ -33,6 +35,7 @@ export interface BorrowExecutionParams {
   borrowAmount: string;
   collateralDecimals?: number;
   borrowDecimals?: number;
+  contractId: string;
 }
 
 export interface BorrowFormState {

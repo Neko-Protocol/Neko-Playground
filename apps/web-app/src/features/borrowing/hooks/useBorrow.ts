@@ -54,6 +54,7 @@ export function useBorrow() {
         borrowAmount,
         collateralDecimals: 7,
         borrowDecimals: 7,
+        contractId: selectedAsset.contractId,
       });
       if (result?.success) closeModal();
     },

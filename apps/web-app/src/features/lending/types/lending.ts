@@ -11,4 +11,5 @@ export interface PoolData {
   assetCode: string;
   asset: string;
   bTokenRate?: string;
+  contractId: string;
 }

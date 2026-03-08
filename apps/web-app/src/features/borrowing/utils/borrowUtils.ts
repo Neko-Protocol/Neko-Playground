@@ -28,6 +28,7 @@ export function poolsToTableAssets(pools: BorrowPool[]): BorrowTableAsset[] {
       assetCode: pool.assetCode,
       collateralTokenCode: pool.collateralTokenCode,
       collateralFactor: pool.collateralFactor,
+      contractId: pool.contractId,
     };
   });
 }

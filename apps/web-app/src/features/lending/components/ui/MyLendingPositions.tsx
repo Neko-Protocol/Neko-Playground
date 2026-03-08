@@ -86,7 +86,7 @@ const MyLendingPositions: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-4 py-4 text-center text-white/60 text-sm tabular-nums font-mono">
-                  {pos.bTokens.toLocaleString()}
+                  {pos.bTokensFormatted}
                 </td>
                 <td className="px-4 py-4 text-center text-white font-bold text-sm tabular-nums">
                   {pos.depositedFormatted}{" "}
