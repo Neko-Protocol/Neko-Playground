@@ -20,7 +20,7 @@ function EmptyRow({ message }: { message: string }) {
 
 function Skeleton() {
   return (
-    <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 animate-pulse space-y-4">
+    <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 space-y-4">
       <div className="h-3 w-32 bg-white/10 rounded" />
       <div className="grid grid-cols-3 gap-3">
         {[0, 1, 2].map((i) => (
