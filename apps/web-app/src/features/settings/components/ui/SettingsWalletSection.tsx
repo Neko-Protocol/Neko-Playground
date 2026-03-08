@@ -6,7 +6,7 @@ import { SectionCard } from "@/components/ui/SectionCard";
 import { ReadonlyRow } from "@/components/ui/ReadonlyRow";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { useWallet } from "@/hooks/useWallet";
-import { useNotification } from "@/hooks/useNotification";
+import { useToast } from "@/hooks/useToast";
 import { useSorobanTokenBalances } from "@/hooks/useSorobanTokenBalances";
 import { truncateAddress } from "@/lib/utils";
 import { stellarNetwork } from "@/lib/constants/network";
@@ -34,7 +34,7 @@ export function SettingsWalletSection({
 }: SettingsWalletSectionProps) {
   const { address, walletName, isConnected, disconnect } = useStellarWallet();
   const { signTransaction } = useWallet();
-  const { addNotification } = useNotification();
+  const { addNotification } = useToast();
   const {
     balances,
     isFetching: isFetchingBalances,
@@ -78,7 +78,7 @@ export function SettingsWalletSection({
         await invalidate();
 
         try {
-          addNotification("Adding tokens to Freighter…", "primary");
+          addNotification("Adding tokens to Freighter…", "info");
           await addFaucetTokensToFreighter(networkPassphrase);
           addNotification("Tokens added to Freighter", "success");
         } catch {

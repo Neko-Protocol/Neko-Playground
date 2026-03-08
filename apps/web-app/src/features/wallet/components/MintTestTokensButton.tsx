@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { useNotification } from "@/hooks/useNotification";
+import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { useSorobanTokenBalances } from "@/hooks/useSorobanTokenBalances";
 import { Button, Tooltip } from "@stellar/design-system";
@@ -18,7 +18,7 @@ import {
 } from "@/lib/config/stellar.config";
 
 const MintTestTokensButton: React.FC = () => {
-  const { addNotification } = useNotification();
+  const { addNotification } = useToast();
   const [isPending, startTransition] = useTransition();
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const { address, signTransaction } = useWallet();
@@ -51,7 +51,7 @@ const MintTestTokensButton: React.FC = () => {
         await invalidate();
 
         try {
-          addNotification("Adding tokens to Freighter…", "primary");
+          addNotification("Adding tokens to Freighter…", "info");
           await addFaucetTokensToFreighter(networkPassphrase);
           addNotification("Tokens added to Freighter", "success");
         } catch {
