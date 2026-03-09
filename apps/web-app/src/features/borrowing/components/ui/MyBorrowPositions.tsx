@@ -29,7 +29,6 @@ const MyBorrowPositions: React.FC = () => {
   );
   const { positions: allPositions, isLoading: isLoadingAggregated } =
     useUserPositions();
-
   function getHealthFactor(contractId: string): number | null {
     return (
       hfPools.find((p) => p.contractId === contractId)?.healthFactor ?? null
