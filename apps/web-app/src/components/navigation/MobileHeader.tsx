@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -15,6 +15,7 @@ const NETWORK = (
   process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET"
 ).toUpperCase();
 const IS_TESTNET = NETWORK === "TESTNET";
+const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_LENDING_ADMIN_ADDRESS ?? "";
 
 export function MobileHeader() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,6 +28,17 @@ export function MobileHeader() {
 
   const isConnected = isStellarConnected;
   const activeAddress = stellarAddress ?? "";
+
+  const navItems = useMemo(() => {
+    return NAV_ITEMS.filter((item) => {
+      const adminOnly = "adminOnly" in item && item.adminOnly;
+      // Admin link: ONLY show when admin is configured AND connected wallet is admin
+      if (adminOnly) {
+        return Boolean(ADMIN_ADDRESS && activeAddress === ADMIN_ADDRESS);
+      }
+      return true;
+    });
+  }, [activeAddress]);
 
   const isActive = (href: string) =>
     href === "/dashboard"
@@ -172,7 +184,7 @@ export function MobileHeader() {
         )}
       >
         <div className="flex flex-col gap-2 px-4 py-6 sm:px-6">
-          {NAV_ITEMS.map(({ label, href, icon }) => {
+          {navItems.map(({ label, href, icon }) => {
             const Icon = icon;
             const active = isActive(href);
             return (
