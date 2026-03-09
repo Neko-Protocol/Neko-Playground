@@ -27,6 +27,7 @@ import { toSmallestUnit } from "../helpers/tokenUtils";
 import {
   approveToken,
   addCollateral,
+  removeCollateral,
   borrowFromPool,
 } from "../helpers/stellar/lending";
 import { extractContractError } from "../helpers/stellar/contractErrors";
@@ -390,6 +391,33 @@ export class LendingService {
       return { xdr: preparedTx.toXDR() };
     } catch (error) {
       console.error("Error building add collateral transaction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return {
+        xdr: "",
+        error: friendlyError,
+      };
+    }
+  }
+
+  /**
+   * Remove RWA token collateral from the lending pool
+   */
+  async removeCollateral(
+    rwaTokenContract: string,
+    amount: string,
+    decimals: number = 7,
+    walletAddress: string
+  ): Promise<LendingOperationResult> {
+    try {
+      const xdr = await removeCollateral(
+        rwaTokenContract,
+        amount,
+        decimals,
+        walletAddress
+      );
+      return { xdr };
+    } catch (error) {
+      console.error("Error building remove collateral transaction:", error);
       const friendlyError = extractContractError(error, "rwa-lending");
       return {
         xdr: "",
