@@ -11,7 +11,6 @@ import {
   Layers,
   HeartPulse,
   Lock,
-  RotateCcw,
 } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useUserBorrowPositions } from "../../hooks/useUserBorrowPositions";
@@ -19,7 +18,10 @@ import type { BorrowPosition } from "../../hooks/useUserBorrowPositions";
 import { useHealthFactor } from "../../hooks/useHealthFactor";
 import { useUserPositions } from "@/features/dashboard/hooks/useUserPositions";
 import { useRepay } from "../../hooks/useRepay";
+import { useRemoveCollateral } from "../../hooks/useRemoveCollateral";
 import { HealthFactorBadge } from "./HealthFactorBadge";
+import { BorrowQuickActions } from "./BorrowQuickActions";
+import { RemoveCollateralModal } from "./RemoveCollateralModal";
 import { TokenAvatar } from "./TokenAvatar";
 import { ColHeader } from "./ColHeader";
 import { RepayModal } from "./RepayModal";
@@ -37,10 +39,20 @@ const MyBorrowPositions: React.FC = () => {
   const { positions: allPositions, isLoading: isLoadingAggregated } =
     useUserPositions();
   const { handleRepay, isLoading: isRepaying, isWalletConnected } = useRepay();
+  const {
+    handleRemoveCollateral,
+    isLoading: isRemoving,
+    isWalletConnected: isRemoveWalletConnected,
+  } = useRemoveCollateral();
 
   const [repayPosition, setRepayPosition] = useState<BorrowPosition | null>(
     null
   );
+  const [removePosition, setRemovePosition] = useState<BorrowPosition | null>(
+    null
+  );
+  const [selectedPosition, setSelectedPosition] =
+    useState<BorrowPosition | null>(null);
 
   // Resolve the underlying token contract address for the position being repaid
   const repayAssetContract = useMemo(() => {
@@ -76,6 +88,20 @@ const MyBorrowPositions: React.FC = () => {
     [repayPosition, handleRepay]
   );
 
+  const handleRemoveSubmit = useCallback(
+    async (amount: string) => {
+      if (!removePosition) return;
+      const result = await handleRemoveCollateral({
+        rwaTokenAddress: removePosition.collateralToken,
+        amount,
+        collateralTokenCode: removePosition.collateralTokenCode,
+        contractId: removePosition.contractId,
+      });
+      if (result?.success) setRemovePosition(null);
+    },
+    [removePosition, handleRemoveCollateral]
+  );
+
   const aggregatedBorrowPositions = allPositions.filter((p) => {
     if (p.pool.type === "neko") return false;
     const liabilities = p.position.metadata?.liabilities;
@@ -98,6 +124,18 @@ const MyBorrowPositions: React.FC = () => {
 
   return (
     <>
+      <BorrowQuickActions
+        positions={positions}
+        selectedPosition={selectedPosition}
+        onSelectPosition={setSelectedPosition}
+        onRemoveClick={() => {
+          if (selectedPosition) setRemovePosition(selectedPosition);
+        }}
+        onRepayClick={() => {
+          if (selectedPosition) setRepayPosition(selectedPosition);
+        }}
+      />
+
       <div className="w-full rounded-2xl border border-white/5 bg-[#1C1C1C]">
         {/* ── Neko borrow positions ── */}
         <div className="flex items-center px-4 py-3 border-b border-white/5">
@@ -142,14 +180,13 @@ const MyBorrowPositions: React.FC = () => {
                   tooltip="Your current health factor for this pool. Keep above 1.0 to avoid liquidation."
                   centered
                 />
-                <ColHeader icon={RotateCcw} label="Actions" centered />
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={6}
                     className="px-4 py-12 text-center text-white/40 text-sm"
                   >
                     Loading your positions...
@@ -158,7 +195,7 @@ const MyBorrowPositions: React.FC = () => {
               ) : positions.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={6}
                     className="px-4 py-12 text-center text-white/40 text-sm"
                   >
                     You don&apos;t have any active borrow positions yet.
@@ -208,14 +245,6 @@ const MyBorrowPositions: React.FC = () => {
                           isLoading={isLoadingHF}
                         />
                       </div>
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <button
-                        onClick={() => setRepayPosition(pos)}
-                        className="rounded-lg bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-amber-400 text-xs font-semibold hover:bg-amber-500/25 transition-colors"
-                      >
-                        Repay
-                      </button>
                     </td>
                   </tr>
                 ))
@@ -273,13 +302,6 @@ const MyBorrowPositions: React.FC = () => {
                       value={`${pos.interestRate.toFixed(2)}%`}
                     />
                   </div>
-
-                  <button
-                    onClick={() => setRepayPosition(pos)}
-                    className="w-full rounded-xl bg-amber-500/15 border border-amber-500/30 py-2.5 text-amber-400 text-sm font-semibold hover:bg-amber-500/25 transition-colors"
-                  >
-                    Repay
-                  </button>
                 </li>
               ))}
             </ul>
@@ -405,6 +427,16 @@ const MyBorrowPositions: React.FC = () => {
           isWalletConnected={isWalletConnected}
           onClose={() => setRepayPosition(null)}
           onSubmit={handleRepaySubmit}
+        />
+      )}
+
+      {removePosition && (
+        <RemoveCollateralModal
+          position={removePosition}
+          isProcessing={isRemoving}
+          isWalletConnected={isRemoveWalletConnected}
+          onClose={() => setRemovePosition(null)}
+          onSubmit={handleRemoveSubmit}
         />
       )}
     </>
