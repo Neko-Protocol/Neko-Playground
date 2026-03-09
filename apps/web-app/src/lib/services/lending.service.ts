@@ -29,6 +29,9 @@ import {
   addCollateral,
   removeCollateral,
   borrowFromPool,
+  hasBadDebt as hasBadDebtHelper,
+  createBadDebtAuction as createBadDebtAuctionHelper,
+  buildFillBadDebtAuctionXdr,
 } from "../helpers/stellar/lending";
 import { extractContractError } from "../helpers/stellar/contractErrors";
 
@@ -42,6 +45,11 @@ type BorrowWithCollateralResult = {
   approveXdr: string;
   addCollateralXdr: string;
   borrowXdr: string;
+  error?: string;
+};
+type FillBadDebtAuctionResult = {
+  approveXdr: string;
+  fillXdr: string;
   error?: string;
 };
 
@@ -811,6 +819,74 @@ export class LendingService {
     } catch (error) {
       console.error("Error getting collateral:", error);
       return "0";
+    }
+  }
+
+  /**
+   * Check if a borrower has bad debt (debt > 0 and collateral = 0)
+   */
+  async hasBadDebt(
+    borrower: string,
+    contractId: string = networks.testnet.contractId
+  ): Promise<boolean> {
+    return hasBadDebtHelper(borrower, contractId);
+  }
+
+  /**
+   * Build create_bad_debt_auction transaction
+   */
+  async createBadDebtAuction(
+    borrower: string,
+    debtAsset: string,
+    walletAddress: string,
+    contractId: string = networks.testnet.contractId
+  ): Promise<LendingOperationResult> {
+    try {
+      const xdr = await createBadDebtAuctionHelper(
+        borrower,
+        debtAsset,
+        walletAddress,
+        contractId
+      );
+      return { xdr };
+    } catch (error) {
+      console.error("Error building create bad debt auction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return { xdr: "", error: friendlyError };
+    }
+  }
+
+  /**
+   * Build approve + fill_bad_debt_auction transactions
+   */
+  async fillBadDebtAuction(
+    auctionId: number,
+    bidder: string,
+    amount: string,
+    debtAsset: string,
+    decimals: number = 7,
+    walletAddress: string,
+    contractId: string = networks.testnet.contractId
+  ): Promise<FillBadDebtAuctionResult> {
+    try {
+      const { approveXdr, fillXdr } = await buildFillBadDebtAuctionXdr(
+        auctionId,
+        bidder,
+        amount,
+        debtAsset,
+        decimals,
+        walletAddress,
+        contractId
+      );
+      return { approveXdr, fillXdr };
+    } catch (error) {
+      console.error("Error building fill bad debt auction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return {
+        approveXdr: "",
+        fillXdr: "",
+        error: friendlyError,
+      };
     }
   }
 }

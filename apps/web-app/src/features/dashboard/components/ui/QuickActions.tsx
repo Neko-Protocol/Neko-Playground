@@ -2,7 +2,13 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeftRight, Droplets, Compass, ArrowRight } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Droplets,
+  Compass,
+  ArrowRight,
+  Gavel,
+} from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
 
@@ -24,6 +30,12 @@ const actions = [
     description: "Browse RWA tokens & prices",
     href: "/discover",
     icon: Compass,
+  },
+  {
+    label: "Liquidations",
+    description: "Bad debt auctions",
+    href: "/dashboard/liquidations",
+    icon: Gavel,
   },
 ] as const;
 
@@ -69,7 +81,7 @@ const QuickActions: React.FC = () => {
         Quick Actions
       </h2>
       <p className="text-white/40 text-sm mb-5">Jump into the protocol</p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {actions.map((action) => (
           <Link
             key={action.href}
