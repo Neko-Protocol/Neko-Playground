@@ -333,6 +333,63 @@ export class LendingService {
   }
 
   /**
+   * Repay borrowed tokens by burning dTokens
+   */
+  async repay(
+    assetCode: string,
+    dTokens: bigint,
+    walletAddress: string,
+    contractId: string = networks.testnet.contractId
+  ): Promise<LendingOperationResult> {
+    try {
+      const lendingContract = new Contract(contractId);
+
+      const assetSymbol = xdr.ScVal.scvSymbol(assetCode);
+
+      const operation = lendingContract.call(
+        "repay",
+        new Address(walletAddress).toScVal(),
+        assetSymbol,
+        nativeToScVal(dTokens, { type: "i128" })
+      );
+
+      const account = await this.horizonServer.loadAccount(walletAddress);
+
+      const transaction = new TransactionBuilder(account, {
+        fee: "100",
+        networkPassphrase: networkPassphrase,
+      })
+        .addOperation(operation)
+        .setTimeout(300)
+        .build();
+
+      try {
+        await this.sorobanServer.simulateTransaction(transaction);
+      } catch (simError) {
+        const errorMessage =
+          simError instanceof Error ? simError.message : String(simError);
+        if (
+          !errorMessage.includes("Auth") &&
+          !errorMessage.includes("require_auth") &&
+          !errorMessage.includes("InvalidAction")
+        ) {
+          const friendlyError = extractContractError(simError, "rwa-lending");
+          throw new Error(friendlyError);
+        }
+      }
+
+      const preparedTx =
+        await this.sorobanServer.prepareTransaction(transaction);
+
+      return { xdr: preparedTx.toXDR() };
+    } catch (error) {
+      console.error("Error building repay transaction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return { xdr: "", error: friendlyError };
+    }
+  }
+
+  /**
    * Add RWA token collateral to the lending pool
    */
   async addCollateral(
