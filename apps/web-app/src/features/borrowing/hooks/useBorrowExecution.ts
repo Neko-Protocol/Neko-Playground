@@ -116,9 +116,7 @@ export function useBorrowExecution() {
         );
         await signAndSend(borrowXdr);
 
-        showSuccess(
-          `Successfully borrowed ${borrowNum} ${assetCode} using ${collateralNum} ${collateralTokenCode} as collateral`
-        );
+        showSuccess(`Successfully borrowed ${borrowNum} ${assetCode}`);
         return { success: true as const };
       } catch (err) {
         const friendlyError = extractContractErrorOrNull(err);
