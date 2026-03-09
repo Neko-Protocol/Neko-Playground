@@ -2,7 +2,13 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeftRight, Droplets, Compass, ArrowRight } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Droplets,
+  Compass,
+  Gavel,
+  ArrowRight,
+} from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
 
@@ -24,6 +30,12 @@ const actions = [
     description: "Browse RWA tokens & prices",
     href: "/discover",
     icon: Compass,
+  },
+  {
+    label: "Backstop",
+    description: "Interest auctions",
+    href: "/dashboard/backstop",
+    icon: Gavel,
   },
 ] as const;
 

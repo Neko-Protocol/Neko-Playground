@@ -475,3 +475,206 @@ export const getBTokenBalance = async (
     return "0";
   }
 };
+
+// ========== Interest Auction Helpers ==========
+
+/** SCALAR_7 = 10^7 for 7-decimal percentage (100% = 100_000000) */
+const SCALAR_7 = 100_000_000n;
+
+/**
+ * Check if an interest auction can be created for an asset
+ */
+export const canCreateInterestAuction = async (
+  asset: string,
+  contractId: string = networks.testnet.contractId
+): Promise<boolean> => {
+  try {
+    const client = new RwaLendingClient({
+      contractId,
+      rpcUrl: rpcUrl,
+      networkPassphrase: networkPassphrase,
+      ...(allowHttpForSoroban && { allowHttp: true }),
+    });
+
+    const tx = await client.can_create_interest_auction(
+      { asset },
+      { simulate: true }
+    );
+
+    return tx.result ?? false;
+  } catch (error) {
+    console.error("Error checking can_create_interest_auction:", error);
+    return false;
+  }
+};
+
+/**
+ * Get accumulated backstop_credit (interest) for an asset
+ */
+export const getAccumulatedInterest = async (
+  asset: string,
+  contractId: string = networks.testnet.contractId
+): Promise<bigint> => {
+  try {
+    const client = new RwaLendingClient({
+      contractId,
+      rpcUrl: rpcUrl,
+      networkPassphrase: networkPassphrase,
+      ...(allowHttpForSoroban && { allowHttp: true }),
+    });
+
+    const tx = await client.get_accumulated_interest(
+      { asset },
+      { simulate: true }
+    );
+
+    const value = tx.result;
+    if (!value) return 0n;
+
+    return typeof value === "bigint" ? value : BigInt(String(value));
+  } catch (error) {
+    console.error("Error getting accumulated interest:", error);
+    return 0n;
+  }
+};
+
+/**
+ * Build create_interest_auction transaction XDR for signing
+ */
+export const createInterestAuctionXdr = async (
+  asset: string,
+  walletAddress: string,
+  contractId: string = networks.testnet.contractId
+): Promise<string> => {
+  try {
+    const sorobanServer = new rpc.Server(rpcUrl, {
+      allowHttp: stellarNetwork === "LOCAL",
+    });
+    const horizonServer = new Horizon.Server(horizonUrl);
+    const lendingContract = new Contract(contractId);
+
+    const assetSymbol = xdr.ScVal.scvSymbol(asset);
+
+    const operation = lendingContract.call(
+      "create_interest_auction",
+      assetSymbol
+    );
+
+    const account = await horizonServer.loadAccount(walletAddress);
+
+    const transaction = new TransactionBuilder(account, {
+      fee: "100",
+      networkPassphrase: networkPassphrase,
+    })
+      .addOperation(operation)
+      .setTimeout(300)
+      .build();
+
+    try {
+      await sorobanServer.simulateTransaction(transaction);
+    } catch (simError) {
+      const errorMessage =
+        simError instanceof Error ? simError.message : String(simError);
+      if (
+        !errorMessage.includes("Auth") &&
+        !errorMessage.includes("require_auth") &&
+        !errorMessage.includes("InvalidAction")
+      ) {
+        const friendlyError = extractContractError(simError, "rwa-lending");
+        throw new Error(friendlyError);
+      }
+    }
+
+    const preparedTx = await sorobanServer.prepareTransaction(transaction);
+
+    return preparedTx.toXDR();
+  } catch (error) {
+    console.error("Error building create_interest_auction transaction:", error);
+    if (
+      error instanceof Error &&
+      error.message &&
+      !error.message.includes("Failed to build")
+    ) {
+      throw error;
+    }
+    const friendlyError = extractContractError(error, "rwa-lending");
+    throw new Error(friendlyError);
+  }
+};
+
+export interface FillInterestAuctionParams {
+  auctionId: number;
+  bidder: string;
+  asset: string;
+  /** Human-readable percentage 1-100 (e.g. 50 = 50%) */
+  fillPercent: number;
+}
+
+/**
+ * Build fill_interest_auction transaction XDR for signing
+ * fillPercent is converted to 7 decimals (e.g. 50 -> 50_000000)
+ */
+export const fillInterestAuctionXdr = async (
+  params: FillInterestAuctionParams,
+  contractId: string = networks.testnet.contractId
+): Promise<string> => {
+  try {
+    const sorobanServer = new rpc.Server(rpcUrl, {
+      allowHttp: stellarNetwork === "LOCAL",
+    });
+    const horizonServer = new Horizon.Server(horizonUrl);
+    const lendingContract = new Contract(contractId);
+
+    const fillPercentScaled = BigInt(
+      Math.floor(params.fillPercent * Number(SCALAR_7) / 100)
+    );
+
+    const operation = lendingContract.call(
+      "fill_interest_auction",
+      nativeToScVal(params.auctionId, { type: "u32" }),
+      new Address(params.bidder).toScVal(),
+      xdr.ScVal.scvSymbol(params.asset),
+      nativeToScVal(fillPercentScaled, { type: "i128" })
+    );
+
+    const account = await horizonServer.loadAccount(params.bidder);
+
+    const transaction = new TransactionBuilder(account, {
+      fee: "100",
+      networkPassphrase: networkPassphrase,
+    })
+      .addOperation(operation)
+      .setTimeout(300)
+      .build();
+
+    try {
+      await sorobanServer.simulateTransaction(transaction);
+    } catch (simError) {
+      const errorMessage =
+        simError instanceof Error ? simError.message : String(simError);
+      if (
+        !errorMessage.includes("Auth") &&
+        !errorMessage.includes("require_auth") &&
+        !errorMessage.includes("InvalidAction")
+      ) {
+        const friendlyError = extractContractError(simError, "rwa-lending");
+        throw new Error(friendlyError);
+      }
+    }
+
+    const preparedTx = await sorobanServer.prepareTransaction(transaction);
+
+    return preparedTx.toXDR();
+  } catch (error) {
+    console.error("Error building fill_interest_auction transaction:", error);
+    if (
+      error instanceof Error &&
+      error.message &&
+      !error.message.includes("Failed to build")
+    ) {
+      throw error;
+    }
+    const friendlyError = extractContractError(error, "rwa-lending");
+    throw new Error(friendlyError);
+  }
+};
