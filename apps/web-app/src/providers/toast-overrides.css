@@ -12,8 +12,17 @@
 [data-sileo-toast] {
   --sileo-width: var(--toast-viewport-width, 480px);
   min-width: var(--sileo-width);
+  max-width: var(--sileo-width);
+  overflow: hidden;
 }
 
 [data-sileo-viewport][data-theme="dark"] [data-sileo-description] {
   color: var(--toast-description-color, rgb(255, 255, 255)) !important;
+}
+
+[data-sileo-description] {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  word-break: break-word;
 }
