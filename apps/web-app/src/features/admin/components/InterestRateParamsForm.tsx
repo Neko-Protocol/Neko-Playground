@@ -1,0 +1,263 @@
+"use client";
+
+import React, { useState } from "react";
+import { useWallet } from "@/hooks/useWallet";
+import { useToast } from "@/hooks/useToast";
+import { lendingService } from "@/lib/services/lending.service";
+import { signAndSendTransaction } from "@/lib/helpers/stellar/transaction";
+import { rpcUrl } from "@/lib/constants/network";
+import { POOLS } from "../constants";
+import { TOAST_CONFIG } from "@/lib/constants/toast.config";
+import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { Networks } from "@stellar/stellar-sdk";
+import type { InterestRateParams } from "@neko/lending";
+
+const SCALAR_7 = 10_000_000;
+
+/** Convert percentage (e.g. 75) to 7 decimals (7_500_000) */
+function pctTo7(pct: number): number {
+  return Math.round((pct / 100) * SCALAR_7);
+}
+
+export default function InterestRateParamsForm() {
+  const { address, signTransaction, networkPassphrase } = useWallet();
+  const { addNotification } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [poolId, setPoolId] = useState<"pool1" | "pool2">("pool1");
+  const [asset, setAsset] = useState("USDC");
+  const [targetUtil, setTargetUtil] = useState("75");
+  const [maxUtil, setMaxUtil] = useState("95");
+  const [rBase, setRBase] = useState("1");
+  const [rOne, setROne] = useState("5");
+  const [rTwo, setRTwo] = useState("50");
+  const [rThree, setRThree] = useState("150");
+  const [reactivity, setReactivity] = useState("0.00002");
+
+  const pool = POOLS.find((p) => p.id === poolId) ?? POOLS[0];
+  const assets = pool.assets;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address) return;
+
+    const params: InterestRateParams = {
+      target_util: pctTo7(parseFloat(targetUtil) || 0),
+      max_util: pctTo7(parseFloat(maxUtil) || 0),
+      r_base: pctTo7(parseFloat(rBase) || 0),
+      r_one: pctTo7(parseFloat(rOne) || 0),
+      r_two: pctTo7(parseFloat(rTwo) || 0),
+      r_three: pctTo7(parseFloat(rThree) || 0),
+      reactivity: Math.round(parseFloat(reactivity) * SCALAR_7) || 0,
+    };
+
+    if (params.target_util > 9_500_000) {
+      addNotification("Error", "error", {
+        ...TOAST_CONFIG.defaultOpts,
+        description: "target_util must be <= 95%",
+      });
+      return;
+    }
+    if (params.max_util <= params.target_util || params.max_util > SCALAR_7) {
+      addNotification("Error", "error", {
+        ...TOAST_CONFIG.defaultOpts,
+        description: "max_util must be > target_util and <= 100%",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await lendingService.setInterestRateParams(
+        asset,
+        params,
+        address,
+        pool.contractId
+      );
+      if (result.error) {
+        addNotification("Error", "error", {
+          ...TOAST_CONFIG.defaultOpts,
+          description: result.error,
+        });
+        return;
+      }
+      await signAndSendTransaction(result.xdr, signTransaction, {
+        networkPassphrase: networkPassphrase || Networks.TESTNET,
+        rpcUrl,
+        address,
+        waitForPending: true,
+      });
+      addNotification("Success", "success", {
+        ...TOAST_CONFIG.defaultOpts,
+        description: `Interest rate params for ${asset} updated`,
+      });
+    } catch (err) {
+      const msg = extractContractErrorOrNull(err);
+      addNotification("Error", "error", {
+        ...TOAST_CONFIG.defaultOpts,
+        description:
+          typeof msg === "string" ? msg : "Failed to set interest rate params",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section>
+      <h2 className="text-lg font-semibold text-white mb-4">
+        Interest Rate Params
+      </h2>
+      <div className="rounded-2xl bg-[#1C1C1C] border border-white/10 p-6">
+        <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-white/70 mb-1">Pool</label>
+              <select
+                value={poolId}
+                onChange={(e) => {
+                  setPoolId(e.target.value as "pool1" | "pool2");
+                  const p = POOLS.find((x) => x.id === e.target.value);
+                  if (p && p.assets.length > 0 && !p.assets.includes(asset)) {
+                    setAsset(p.assets[0]);
+                  }
+                }}
+                className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
+              >
+                {POOLS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-white/70 mb-1">Asset</label>
+              <select
+                value={asset}
+                onChange={(e) => setAsset(e.target.value)}
+                className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
+              >
+                {assets.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-white/70 mb-1">
+                target_util (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="95"
+                step="0.1"
+                value={targetUtil}
+                onChange={(e) => setTargetUtil(e.target.value)}
+                className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-white/70 mb-1">
+                max_util (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={maxUtil}
+                onChange={(e) => setMaxUtil(e.target.value)}
+                className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-white/70 mb-1">
+                r_base (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={rBase}
+                onChange={(e) => setRBase(e.target.value)}
+                className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-white/70 mb-1">
+                r_one (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={rOne}
+                onChange={(e) => setROne(e.target.value)}
+                className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-white/70 mb-1">
+                r_two (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={rTwo}
+                onChange={(e) => setRTwo(e.target.value)}
+                className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-white/70 mb-1">
+                r_three (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={rThree}
+                onChange={(e) => setRThree(e.target.value)}
+                className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm text-white/70 mb-1">
+              reactivity
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.00001"
+              value={reactivity}
+              onChange={(e) => setReactivity(e.target.value)}
+              className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-6 py-2.5 rounded-xl bg-[#229EDF] hover:bg-[#1e8bc9] text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? "Updating..." : "Update"}
+          </button>
+        </form>
+      </div>
+    </section>
+  );
+}

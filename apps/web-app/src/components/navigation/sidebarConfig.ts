@@ -5,6 +5,7 @@ import {
   TrendingUp,
   BarChart2,
   Settings,
+  Shield,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -13,6 +14,7 @@ export const NAV_ITEMS = [
   { label: "Borrow", href: "/borrowing", icon: Landmark },
   { label: "Lend", href: "/lending", icon: TrendingUp },
   { label: "Discover", href: "/discover", icon: BarChart2 },
+  { label: "Admin", href: "/dashboard/admin", icon: Shield, adminOnly: true },
   { label: "Settings", href: "/settings", icon: Settings },
 ] as const;
 

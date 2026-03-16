@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { Networks } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
-import { removeCollateral } from "@/lib/helpers/stellar/lending";
+import { repayPool } from "@/lib/helpers/stellar/lending";
 import {
   signAndSendTransaction,
   type SignTransactionFn,
@@ -13,15 +13,14 @@ import { rpcUrl } from "@/lib/constants/network";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
-export interface RemoveCollateralParams {
-  rwaTokenAddress: string;
-  amount: string;
-  collateralTokenCode: string;
+export interface RepayParams {
+  assetCode: string;
+  /** Raw dToken amount from get_d_token_balance (7 decimals) */
+  dTokens: bigint;
   contractId: string;
-  decimals?: number;
 }
 
-export function useRemoveCollateral() {
+export function useRepay() {
   const { addNotification } = useToast();
   const { address, signTransaction, networkPassphrase } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
@@ -37,31 +36,24 @@ export function useRemoveCollateral() {
 
   const showSuccess = useCallback(
     (msg: string) =>
-      addNotification("Collateral Removed", "success", {
+      addNotification("Repayment Successful", "success", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
       }),
     [addNotification]
   );
 
-  const handleRemoveCollateral = useCallback(
-    async (params: RemoveCollateralParams) => {
+  const handleRepay = useCallback(
+    async (params: RepayParams) => {
       if (!address) {
         showError("Please connect your wallet first");
         return;
       }
 
-      const {
-        rwaTokenAddress,
-        amount,
-        collateralTokenCode,
-        contractId,
-        decimals = 7,
-      } = params;
+      const { assetCode, dTokens, contractId } = params;
 
-      const amountNum = parseFloat(amount);
-      if (!Number.isFinite(amountNum) || amountNum <= 0) {
-        showError("Please enter a valid amount");
+      if (dTokens <= 0n) {
+        showError("No debt to repay");
         return;
       }
 
@@ -76,18 +68,18 @@ export function useRemoveCollateral() {
         });
 
       try {
-        const removeXdr = await removeCollateral(
-          rwaTokenAddress,
-          amount,
-          decimals,
+        // The contract calls token.transfer(borrower, pool, amount) which uses
+        // Soroban auth propagation — the prepared tx carries all necessary auth.
+        // A separate approve tx is not needed and would cause PoolFrozen (#10).
+        const repayXdr = await repayPool(
+          assetCode,
+          dTokens,
           address,
           contractId
         );
-        await signAndSend(removeXdr);
+        await signAndSend(repayXdr);
 
-        showSuccess(
-          `Successfully removed ${amount} ${collateralTokenCode} collateral`
-        );
+        showSuccess(`Successfully repaid ${assetCode} debt`);
         return { success: true as const };
       } catch (err) {
         const friendlyError = extractContractErrorOrNull(err);
@@ -105,7 +97,7 @@ export function useRemoveCollateral() {
   );
 
   return {
-    handleRemoveCollateral,
+    handleRepay,
     isLoading,
     isWalletConnected: Boolean(address),
   };
