@@ -12,7 +12,13 @@ import {
   rpc,
   xdr,
 } from "@stellar/stellar-sdk";
-import { Client as RwaLendingClient, networks } from "@neko/lending";
+import {
+  Client as RwaLendingClient,
+  networks,
+  type PoolState,
+  type InterestRateParams,
+  type AssetType,
+} from "@neko/lending";
 import {
   rpcUrl,
   networkPassphrase,
@@ -868,6 +874,174 @@ export class LendingService {
     } catch (error) {
       console.error("Error getting collateral:", error);
       return "0";
+    }
+  }
+
+  // ========== Admin Methods ==========
+
+  private getClient(contractId: string, publicKey?: string): RwaLendingClient {
+    return new RwaLendingClient({
+      contractId,
+      rpcUrl: rpcUrl,
+      networkPassphrase: networkPassphrase,
+      publicKey: publicKey ?? undefined,
+      ...(allowHttpForSoroban && { allowHttp: true }),
+    });
+  }
+
+  /**
+   * Get pool state (read-only)
+   */
+  async getPoolState(
+    contractId: string = networks.testnet.pool1ContractId
+  ): Promise<PoolState | null> {
+    try {
+      const client = this.getClient(contractId);
+      const tx = await client.get_pool_state({ simulate: true });
+      return tx.result;
+    } catch (error) {
+      console.error("Error getting pool state:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Build set_pool_state transaction. Returns XDR for signing.
+   */
+  async setPoolState(
+    state: PoolState,
+    walletAddress: string,
+    contractId: string = networks.testnet.pool1ContractId
+  ): Promise<LendingOperationResult> {
+    try {
+      const client = this.getClient(contractId, walletAddress);
+      const assembled = await client.set_pool_state({ state });
+      const xdrStr = assembled.toXDR();
+      return { xdr: xdrStr };
+    } catch (error) {
+      console.error("Error building set_pool_state transaction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return { xdr: "", error: friendlyError };
+    }
+  }
+
+  /**
+   * Get treasury credit (pending fees) for an asset
+   */
+  async getTreasuryCredit(
+    asset: string,
+    contractId: string = networks.testnet.pool1ContractId
+  ): Promise<string> {
+    try {
+      const client = this.getClient(contractId);
+      const tx = await client.get_treasury_credit(
+        { asset },
+        { simulate: true }
+      );
+      const value = tx.result;
+      if (value === null || value === undefined) return "0";
+      return typeof value === "bigint" ? value.toString() : String(value);
+    } catch (error) {
+      console.error("Error getting treasury credit:", error);
+      return "0";
+    }
+  }
+
+  /**
+   * Build collect_treasury_fees transaction. Returns XDR for signing.
+   */
+  async collectTreasuryFees(
+    asset: string,
+    walletAddress: string,
+    contractId: string = networks.testnet.pool1ContractId
+  ): Promise<LendingOperationResult> {
+    try {
+      const client = this.getClient(contractId, walletAddress);
+      const assembled = await client.collect_treasury_fees({ asset });
+      const xdrStr = assembled.toXDR();
+      return { xdr: xdrStr };
+    } catch (error) {
+      console.error("Error building collect_treasury_fees transaction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return { xdr: "", error: friendlyError };
+    }
+  }
+
+  /**
+   * Get collateral factor for an RWA token
+   */
+  async getCollateralFactor(
+    rwaToken: string,
+    contractId: string = networks.testnet.pool1ContractId
+  ): Promise<number> {
+    try {
+      const client = this.getClient(contractId);
+      const tx = await client.get_collateral_factor(
+        { rwa_token: rwaToken },
+        { simulate: true }
+      );
+      const value = tx.result;
+      return value ? Number(value) : 0;
+    } catch (error) {
+      console.error("Error getting collateral factor:", error);
+      return 0;
+    }
+  }
+
+  /**
+   * Build set_collateral_factor transaction. Returns XDR for signing.
+   */
+  async setCollateralFactor(
+    params: {
+      token: string;
+      factor: number;
+      asset_type: AssetType;
+      symbol: string;
+    },
+    walletAddress: string,
+    contractId: string = networks.testnet.pool1ContractId
+  ): Promise<LendingOperationResult> {
+    try {
+      const client = this.getClient(contractId, walletAddress);
+      const assembled = await client.set_collateral_factor({
+        token: params.token,
+        factor: params.factor,
+        asset_type: params.asset_type,
+        symbol: params.symbol,
+      });
+      const xdrStr = assembled.toXDR();
+      return { xdr: xdrStr };
+    } catch (error) {
+      console.error("Error building set_collateral_factor transaction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return { xdr: "", error: friendlyError };
+    }
+  }
+
+  /**
+   * Build set_interest_rate_params transaction. Returns XDR for signing.
+   */
+  async setInterestRateParams(
+    asset: string,
+    params: InterestRateParams,
+    walletAddress: string,
+    contractId: string = networks.testnet.pool1ContractId
+  ): Promise<LendingOperationResult> {
+    try {
+      const client = this.getClient(contractId, walletAddress);
+      const assembled = await client.set_interest_rate_params({
+        asset,
+        params,
+      });
+      const xdrStr = assembled.toXDR();
+      return { xdr: xdrStr };
+    } catch (error) {
+      console.error(
+        "Error building set_interest_rate_params transaction:",
+        error
+      );
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return { xdr: "", error: friendlyError };
     }
   }
 }
