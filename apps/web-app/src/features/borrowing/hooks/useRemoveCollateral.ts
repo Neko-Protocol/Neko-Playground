@@ -4,22 +4,24 @@ import { useState, useCallback } from "react";
 import { Networks } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
-import {
-  approveToken,
-  addCollateral,
-  borrowFromPool,
-} from "@/lib/helpers/stellar/lending";
+import { removeCollateral } from "@/lib/helpers/stellar/lending";
 import {
   signAndSendTransaction,
   type SignTransactionFn,
 } from "@/lib/helpers/stellar/transaction";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { rpcUrl } from "@/lib/constants/network";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
-import type { BorrowExecutionParams } from "../types/borrowing";
 
-export function useBorrowExecution() {
+export interface RemoveCollateralParams {
+  rwaTokenAddress: string;
+  amount: string;
+  collateralTokenCode: string;
+  contractId: string;
+  decimals?: number;
+}
+
+export function useRemoveCollateral() {
   const { addNotification } = useToast();
   const { address, signTransaction, networkPassphrase } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
@@ -32,49 +34,34 @@ export function useBorrowExecution() {
       }),
     [addNotification]
   );
+
   const showSuccess = useCallback(
     (msg: string) =>
-      addNotification("Success", "success", {
+      addNotification("Collateral Removed", "success", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
       }),
     [addNotification]
   );
 
-  const handleBorrow = useCallback(
-    async (params: BorrowExecutionParams) => {
+  const handleRemoveCollateral = useCallback(
+    async (params: RemoveCollateralParams) => {
       if (!address) {
         showError("Please connect your wallet first");
         return;
       }
 
       const {
+        rwaTokenAddress,
+        amount,
         collateralTokenCode,
-        assetCode,
-        collateralAmount,
-        borrowAmount,
-        collateralDecimals = 7,
-        borrowDecimals = 7,
+        contractId,
+        decimals = 7,
       } = params;
 
-      const collateralNum = parseFloat(collateralAmount);
-      const borrowNum = parseFloat(borrowAmount);
-      if (
-        !Number.isFinite(collateralNum) ||
-        collateralNum <= 0 ||
-        !Number.isFinite(borrowNum) ||
-        borrowNum <= 0
-      ) {
-        showError("Please enter valid collateral and borrow amounts");
-        return;
-      }
-
-      const availableTokens = getAvailableTokens();
-      const collateralToken = availableTokens[collateralTokenCode];
-      const lendingContractId = params.contractId;
-
-      if (!collateralToken?.contract) {
-        showError(`Collateral token ${collateralTokenCode} not found`);
+      const amountNum = parseFloat(amount);
+      if (!Number.isFinite(amountNum) || amountNum <= 0) {
+        showError("Please enter a valid amount");
         return;
       }
 
@@ -89,34 +76,18 @@ export function useBorrowExecution() {
         });
 
       try {
-        const approveXdr = await approveToken(
-          collateralToken.contract,
-          lendingContractId,
-          collateralAmount,
-          collateralDecimals,
-          address
-        );
-        await signAndSend(approveXdr);
-
-        const addCollateralXdr = await addCollateral(
-          collateralToken.contract,
-          collateralAmount,
-          collateralDecimals,
+        const removeXdr = await removeCollateral(
+          rwaTokenAddress,
+          amount,
+          decimals,
           address,
-          lendingContractId
+          contractId
         );
-        await signAndSend(addCollateralXdr);
+        await signAndSend(removeXdr);
 
-        const borrowXdr = await borrowFromPool(
-          assetCode,
-          borrowAmount,
-          borrowDecimals,
-          address,
-          lendingContractId
+        showSuccess(
+          `Successfully removed ${amount} ${collateralTokenCode} collateral`
         );
-        await signAndSend(borrowXdr);
-
-        showSuccess(`Successfully borrowed ${borrowNum} ${assetCode}`);
         return { success: true as const };
       } catch (err) {
         const friendlyError = extractContractErrorOrNull(err);
@@ -134,7 +105,7 @@ export function useBorrowExecution() {
   );
 
   return {
-    handleBorrow,
+    handleRemoveCollateral,
     isLoading,
     isWalletConnected: Boolean(address),
   };

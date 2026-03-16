@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
@@ -12,6 +12,8 @@ import { SetupCard } from "./SetupCard";
 
 export const SIDEBAR_WIDTH = "270px";
 
+const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_LENDING_ADMIN_ADDRESS ?? "";
+
 export function Sidebar() {
   const pathname = usePathname();
   const { isStellarConnected, stellarAddress } = useWalletType();
@@ -19,6 +21,17 @@ export function Sidebar() {
 
   const isConnected = isStellarConnected;
   const activeAddress = stellarAddress ?? "";
+
+  const navItems = useMemo(() => {
+    return NAV_ITEMS.filter((item) => {
+      const adminOnly = "adminOnly" in item && item.adminOnly;
+      // Admin link: ONLY show when admin is configured AND connected wallet is admin
+      if (adminOnly) {
+        return Boolean(ADMIN_ADDRESS && activeAddress === ADMIN_ADDRESS);
+      }
+      return true;
+    });
+  }, [activeAddress]);
 
   const handleDisconnect = () => {
     void disconnectStellar();
@@ -34,7 +47,7 @@ export function Sidebar() {
       <SidebarLogo />
 
       <nav className="flex flex-1 flex-col gap-1 px-3">
-        {NAV_ITEMS.map(({ label, href, icon }) => (
+        {navItems.map(({ label, href, icon }) => (
           <NavItem
             key={href}
             label={label}

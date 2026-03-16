@@ -35,6 +35,10 @@ const actions = [
     label: "Backstop",
     description: "Interest auctions",
     href: "/dashboard/backstop",
+  },
+    label: "Liquidations",
+    description: "Bad debt auctions",
+    href: "/dashboard/liquidations",
     icon: Gavel,
   },
 ] as const;
@@ -81,7 +85,7 @@ const QuickActions: React.FC = () => {
         Quick Actions
       </h2>
       <p className="text-white/40 text-sm mb-5">Jump into the protocol</p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {actions.map((action) => (
           <Link
             key={action.href}

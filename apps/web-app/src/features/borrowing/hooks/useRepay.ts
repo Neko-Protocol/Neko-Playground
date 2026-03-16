@@ -4,22 +4,23 @@ import { useState, useCallback } from "react";
 import { Networks } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
-import {
-  approveToken,
-  addCollateral,
-  borrowFromPool,
-} from "@/lib/helpers/stellar/lending";
+import { repayPool } from "@/lib/helpers/stellar/lending";
 import {
   signAndSendTransaction,
   type SignTransactionFn,
 } from "@/lib/helpers/stellar/transaction";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { rpcUrl } from "@/lib/constants/network";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
-import type { BorrowExecutionParams } from "../types/borrowing";
 
-export function useBorrowExecution() {
+export interface RepayParams {
+  assetCode: string;
+  /** Raw dToken amount from get_d_token_balance (7 decimals) */
+  dTokens: bigint;
+  contractId: string;
+}
+
+export function useRepay() {
   const { addNotification } = useToast();
   const { address, signTransaction, networkPassphrase } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
@@ -32,49 +33,27 @@ export function useBorrowExecution() {
       }),
     [addNotification]
   );
+
   const showSuccess = useCallback(
     (msg: string) =>
-      addNotification("Success", "success", {
+      addNotification("Repayment Successful", "success", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
       }),
     [addNotification]
   );
 
-  const handleBorrow = useCallback(
-    async (params: BorrowExecutionParams) => {
+  const handleRepay = useCallback(
+    async (params: RepayParams) => {
       if (!address) {
         showError("Please connect your wallet first");
         return;
       }
 
-      const {
-        collateralTokenCode,
-        assetCode,
-        collateralAmount,
-        borrowAmount,
-        collateralDecimals = 7,
-        borrowDecimals = 7,
-      } = params;
+      const { assetCode, dTokens, contractId } = params;
 
-      const collateralNum = parseFloat(collateralAmount);
-      const borrowNum = parseFloat(borrowAmount);
-      if (
-        !Number.isFinite(collateralNum) ||
-        collateralNum <= 0 ||
-        !Number.isFinite(borrowNum) ||
-        borrowNum <= 0
-      ) {
-        showError("Please enter valid collateral and borrow amounts");
-        return;
-      }
-
-      const availableTokens = getAvailableTokens();
-      const collateralToken = availableTokens[collateralTokenCode];
-      const lendingContractId = params.contractId;
-
-      if (!collateralToken?.contract) {
-        showError(`Collateral token ${collateralTokenCode} not found`);
+      if (dTokens <= 0n) {
+        showError("No debt to repay");
         return;
       }
 
@@ -89,34 +68,18 @@ export function useBorrowExecution() {
         });
 
       try {
-        const approveXdr = await approveToken(
-          collateralToken.contract,
-          lendingContractId,
-          collateralAmount,
-          collateralDecimals,
-          address
-        );
-        await signAndSend(approveXdr);
-
-        const addCollateralXdr = await addCollateral(
-          collateralToken.contract,
-          collateralAmount,
-          collateralDecimals,
-          address,
-          lendingContractId
-        );
-        await signAndSend(addCollateralXdr);
-
-        const borrowXdr = await borrowFromPool(
+        // The contract calls token.transfer(borrower, pool, amount) which uses
+        // Soroban auth propagation — the prepared tx carries all necessary auth.
+        // A separate approve tx is not needed and would cause PoolFrozen (#10).
+        const repayXdr = await repayPool(
           assetCode,
-          borrowAmount,
-          borrowDecimals,
+          dTokens,
           address,
-          lendingContractId
+          contractId
         );
-        await signAndSend(borrowXdr);
+        await signAndSend(repayXdr);
 
-        showSuccess(`Successfully borrowed ${borrowNum} ${assetCode}`);
+        showSuccess(`Successfully repaid ${assetCode} debt`);
         return { success: true as const };
       } catch (err) {
         const friendlyError = extractContractErrorOrNull(err);
@@ -134,7 +97,7 @@ export function useBorrowExecution() {
   );
 
   return {
-    handleBorrow,
+    handleRepay,
     isLoading,
     isWalletConnected: Boolean(address),
   };
