@@ -31,12 +31,12 @@ This lending contract is a core component of the Neko Protocol ecosystem:
 │   │  └─────────┘  └─────────┘  └────────────┘  │               │
 │   └────────────────────────────────────────────┘               │
 │          │                             │                        │
-│          │ liquidations                │ mark prices            │
-│          ▼                             ▼                        │
-│   ┌──────────────┐              ┌──────────────┐               │
-│   │Auction Status│              │  RWA Perps   │               │
-│   │              │              │  (Futures)   │               │
-│   └──────────────┘              └──────────────┘               │
+│          │ liquidations                                         │
+│          ▼                                                      │
+│   ┌──────────────┐                                             │
+│   │Auction Status│                                             │
+│   │              │                                             │
+│   └──────────────┘                                             │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -539,11 +539,10 @@ cargo build --target wasm32v1-none --release -p rwa-lending
 
 ## Related Contracts
 
-| Contract                    | Description                      | Relationship                 |
-| --------------------------- | -------------------------------- | ---------------------------- |
-| [rwa-oracle](../rwa-oracle) | SEP-40 price feed + RWA metadata | Provides collateral prices   |
-| [rwa-token](../rwa-token)   | SEP-41 + SEP-57 regulated token  | Used as collateral           |
-| rwa-perps                   | Perpetual futures                | Shares oracle infrastructure |
+| Contract                    | Description                      | Relationship               |
+| --------------------------- | -------------------------------- | -------------------------- |
+| [rwa-oracle](../rwa-oracle) | SEP-40 price feed + RWA metadata | Provides collateral prices |
+| [rwa-token](../rwa-token)   | SEP-41 + SEP-57 regulated token  | Used as collateral         |
 
 ## License
 

@@ -92,35 +92,6 @@ const ERROR_MESSAGES = {
     NotInitialized: "The lending protocol has not been initialized yet",
     AlreadyInitialized: "The lending protocol is already initialized",
   },
-  "rwa-perps": {
-    PositionNotFound: "Position not found",
-    PositionAlreadyExists: "Position already exists",
-    PositionNotLiquidatable: "Position is not liquidatable",
-    MarginRatioHealthy: "Margin ratio is healthy",
-    InsufficientMargin: "Insufficient margin",
-    LiquidationPriceTooLow: "Liquidation price is too low",
-    LiquidationPriceTooHigh: "Liquidation price is too high",
-    MarketNotFound: "Market not found",
-    MarketInactive: "Market is inactive",
-    OraclePriceNotFound: "Oracle price not found",
-    OraclePriceStale: "Oracle price is stale",
-    ArithmeticError:
-      "A calculation error occurred. Please try a different amount",
-    Overflow: "Arithmetic overflow occurred",
-    DivisionByZero: "Division by zero",
-    Unauthorized: "Unauthorized access",
-    InvalidInput: "Invalid input provided",
-    NotInitialized: "The lending protocol has not been initialized yet",
-    AlreadyInitialized: "The lending protocol is already initialized",
-    ProtocolPaused: "Protocol is paused",
-    InvalidFundingRate: "Invalid funding rate",
-    FundingCalculationError: "Funding calculation error",
-    MarginRatioBelowMaintenance:
-      "Margin removal would violate maintenance requirement",
-    MarginTokenNotSet: "Margin token not configured",
-    ExceedsMaxLeverage: "Leverage exceeds market maximum",
-    InsufficientInitialMargin: "Margin below initial requirement",
-  },
 };
 
 function findErrorFiles() {
