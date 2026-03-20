@@ -17,6 +17,7 @@ import {
 } from "@/lib/constants/network";
 import { toSmallestUnit } from "../tokenUtils";
 import { extractContractError } from "./contractErrors";
+import { getAvailableTokens } from "./soroswap/tokens";
 
 export const approveToken = async (
   tokenContractAddress: string,
@@ -648,5 +649,188 @@ export const getBTokenBalance = async (
   } catch (error) {
     console.error("Error getting bToken balance:", error);
     return "0";
+  }
+};
+
+/**
+ * Check if a borrower has bad debt (debt > 0 and collateral = 0)
+ */
+export const hasBadDebt = async (
+  borrower: string,
+  contractId: string = networks.testnet.contractId
+): Promise<boolean> => {
+  try {
+    const client = new RwaLendingClient({
+      contractId,
+      rpcUrl: rpcUrl,
+      networkPassphrase: networkPassphrase,
+      ...(allowHttpForSoroban && { allowHttp: true }),
+    });
+
+    const tx = await client.has_bad_debt({ borrower }, { simulate: true });
+
+    return tx.result ?? false;
+  } catch (error) {
+    console.error("Error checking bad debt:", error);
+    return false;
+  }
+};
+
+/**
+ * Build create_bad_debt_auction transaction XDR
+ */
+export const createBadDebtAuction = async (
+  borrower: string,
+  debtAsset: string,
+  walletAddress: string,
+  contractId: string = networks.testnet.contractId
+): Promise<string> => {
+  try {
+    const sorobanServer = new rpc.Server(rpcUrl, {
+      allowHttp: stellarNetwork === "LOCAL",
+    });
+    const horizonServer = new Horizon.Server(horizonUrl);
+    const lendingContract = new Contract(contractId);
+
+    const assetSymbol = xdr.ScVal.scvSymbol(debtAsset);
+
+    const operation = lendingContract.call(
+      "create_bad_debt_auction",
+      new Address(borrower).toScVal(),
+      assetSymbol
+    );
+
+    const account = await horizonServer.loadAccount(walletAddress);
+
+    const transaction = new TransactionBuilder(account, {
+      fee: "100",
+      networkPassphrase: networkPassphrase,
+    })
+      .addOperation(operation)
+      .setTimeout(300)
+      .build();
+
+    try {
+      await sorobanServer.simulateTransaction(transaction);
+    } catch (simError) {
+      const errorMessage =
+        simError instanceof Error ? simError.message : String(simError);
+      if (
+        !errorMessage.includes("Auth") &&
+        !errorMessage.includes("require_auth") &&
+        !errorMessage.includes("InvalidAction")
+      ) {
+        const friendlyError = extractContractError(simError, "rwa-lending");
+        throw new Error(friendlyError);
+      }
+    }
+
+    const preparedTx = await sorobanServer.prepareTransaction(transaction);
+
+    return preparedTx.toXDR();
+  } catch (error) {
+    console.error("Error building create_bad_debt_auction transaction:", error);
+    if (
+      error instanceof Error &&
+      error.message &&
+      !error.message.includes("Failed to build")
+    ) {
+      throw error;
+    }
+    const friendlyError = extractContractError(error, "rwa-lending");
+    throw new Error(friendlyError);
+  }
+};
+
+export type FillBadDebtAuctionResult = {
+  approveXdr: string;
+  fillXdr: string;
+};
+
+/**
+ * Build approve + fill_bad_debt_auction transaction XDRs
+ * Bidder must approve lending contract to spend debt tokens, then call fill
+ */
+export const buildFillBadDebtAuctionXdr = async (
+  auctionId: number,
+  bidder: string,
+  amount: string,
+  debtAsset: string,
+  decimals: number = 7,
+  walletAddress: string,
+  contractId: string = networks.testnet.contractId
+): Promise<FillBadDebtAuctionResult> => {
+  const tokens = getAvailableTokens();
+  const debtToken = tokens[debtAsset];
+  if (!debtToken?.contract) {
+    throw new Error(`Debt token ${debtAsset} not found`);
+  }
+
+  const approveXdr = await approveToken(
+    debtToken.contract,
+    contractId,
+    amount,
+    decimals,
+    walletAddress
+  );
+
+  try {
+    const sorobanServer = new rpc.Server(rpcUrl, {
+      allowHttp: stellarNetwork === "LOCAL",
+    });
+    const horizonServer = new Horizon.Server(horizonUrl);
+    const lendingContract = new Contract(contractId);
+
+    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
+
+    const operation = lendingContract.call(
+      "fill_bad_debt_auction",
+      nativeToScVal(auctionId, { type: "u32" }),
+      new Address(bidder).toScVal(),
+      nativeToScVal(amountInSmallestUnit, { type: "i128" })
+    );
+
+    const account = await horizonServer.loadAccount(walletAddress);
+
+    const transaction = new TransactionBuilder(account, {
+      fee: "100",
+      networkPassphrase: networkPassphrase,
+    })
+      .addOperation(operation)
+      .setTimeout(300)
+      .build();
+
+    try {
+      await sorobanServer.simulateTransaction(transaction);
+    } catch (simError) {
+      const errorMessage =
+        simError instanceof Error ? simError.message : String(simError);
+      if (
+        !errorMessage.includes("Auth") &&
+        !errorMessage.includes("require_auth") &&
+        !errorMessage.includes("InvalidAction")
+      ) {
+        const friendlyError = extractContractError(simError, "rwa-lending");
+        throw new Error(friendlyError);
+      }
+    }
+
+    const preparedTx = await sorobanServer.prepareTransaction(transaction);
+
+    return {
+      approveXdr,
+      fillXdr: preparedTx.toXDR(),
+    };
+  } catch (error) {
+    console.error("Error building fill_bad_debt_auction transaction:", error);
+    if (
+      error instanceof Error &&
+      error.message &&
+      !error.message.includes("Failed to build")
+    ) {
+      throw error;
+    }
+    const friendlyError = extractContractError(error, "rwa-lending");
+    throw new Error(friendlyError);
   }
 };

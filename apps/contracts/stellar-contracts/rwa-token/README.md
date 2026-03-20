@@ -35,7 +35,6 @@ This token is a core component of the Neko Protocol ecosystem:
 
 - **Dashboard**: Users view their RWA token holdings and portfolio value
 - **Lending**: RWA tokens serve as collateral for borrowing
-- **Perps**: Trade perpetual futures on tokenized stocks (NVDA, TSLA, AAPL)
 - **Swap**: Exchange RWA tokens via SoroSwap integration
 
 ## Standards Compliance
@@ -363,7 +362,6 @@ Build the oracle before building the token.
 | ----------------------------- | -------------------------------- | ------------------------- |
 | [rwa-oracle](../rwa-oracle)   | SEP-40 price feed + RWA metadata | Token imports oracle WASM |
 | [rwa-lending](../rwa-lending) | Lending/borrowing protocol       | Uses token as collateral  |
-| rwa-perps                     | Perpetual futures                | Trades token derivatives  |
 
 ## License
 

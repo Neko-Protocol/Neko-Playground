@@ -14,7 +14,6 @@ cargo test --workspace
 cargo test --package rwa-oracle
 cargo test --package rwa-token
 cargo test --package rwa-lending
-cargo test --package rwa-perps
 ```
 
 ## Integration tests
@@ -64,17 +63,17 @@ This builds rwa-oracle WASM then runs `cargo test --workspace` (unit + integrati
 To run tests in CI:
 
 1. **Unit only (no WASM):** `cargo test --workspace --exclude integration_tests`
-2. **Full suite (with integration):**  
-   - `cargo build -p rwa-oracle --target wasm32-unknown-unknown --release`  
+2. **Full suite (with integration):**
+   - `cargo build -p rwa-oracle --target wasm32-unknown-unknown --release`
    - `cargo test --workspace`
 
 Or run `./scripts/run_integration_tests.sh` if the repo is checked out at `apps/contracts/stellar-contracts`.
 
 ## What the integration tests cover
 
-| Test | Contracts | Flow |
-|------|-----------|------|
-| `test_oracle_to_token_price_flow` | rwa-oracle (WASM), rwa-token | Set price on oracle → deploy token with oracle → `token.get_price()` returns that price |
+| Test                                          | Contracts                                 | Flow                                                                                                                                                    |
+| --------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test_oracle_to_token_price_flow`             | rwa-oracle (WASM), rwa-token              | Set price on oracle → deploy token with oracle → `token.get_price()` returns that price                                                                 |
 | `test_oracle_to_lending_collateral_valuation` | rwa-oracle (WASM), rwa-token, rwa-lending | Set price, deploy token, set RWA metadata (token→asset), deploy lending, set collateral factor, add collateral → `calculate_borrow_limit(borrower) > 0` |
 
 This documents the intended deployment order (oracle first, then token and lending) and validates that price flows from oracle to token and to lending collateral valuation.

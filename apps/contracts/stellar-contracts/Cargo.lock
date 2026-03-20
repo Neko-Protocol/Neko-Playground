@@ -1068,14 +1068,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rwa-perps"
-version = "0.0.1"
-dependencies = [
- "rwa-oracle",
- "soroban-sdk",
-]
-
-[[package]]
 name = "rwa-token"
 version = "0.0.1"
 dependencies = [
