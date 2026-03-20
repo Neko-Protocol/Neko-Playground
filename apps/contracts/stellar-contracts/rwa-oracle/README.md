@@ -4,7 +4,7 @@
   <strong>Part of the <a href="https://github.com/Neko-Protocol">Neko Protocol</a> DeFi ecosystem on Stellar</strong>
 </p>
 
-Oracle contract for Real-World Asset (RWA) metadata and price feeds on Stellar Soroban. This contract implements the **SEP-40 Oracle Consumer Interface** and extends it with comprehensive RWA metadata management, providing the price infrastructure for the Neko Protocol's lending, borrowing, and perpetual futures features.
+Oracle contract for Real-World Asset (RWA) metadata and price feeds on Stellar Soroban. This contract implements the **SEP-40 Oracle Consumer Interface** and extends it with comprehensive RWA metadata management, providing the price infrastructure for the Neko Protocol's lending and borrowing features.
 
 ## Neko Protocol Integration
 
@@ -23,17 +23,16 @@ This oracle is a core component of the Neko Protocol ecosystem:
 │          │ prices + metadata           │ collateral             │
 │          │                             │                        │
 │          ▼                             ▼                        │
-│   ┌──────────────┐              ┌──────────────┐               │
-│   │  RWA Perps   │              │ RWA Lending  │               │
-│   │  (Futures)   │              │  (Borrow)    │               │
-│   └──────────────┘              └──────────────┘               │
+│                                     ┌──────────────┐           │
+│                                     │ RWA Lending  │           │
+│                                     │  (Borrow)    │           │
+│                                     └──────────────┘           │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 - **RWA Token** queries the oracle for real-time prices via `get_price()`
 - **RWA Lending** uses oracle prices for collateralization calculations and liquidations
-- **RWA Perps** relies on oracle prices for perpetual futures mark prices and funding rates
 
 ## Standards Compliance
 
@@ -305,7 +304,6 @@ cargo build --target wasm32v1-none --release -p rwa-oracle
 | ----------------------------- | ----------------------------------- | ------------------------------------ |
 | [rwa-token](../rwa-token)     | SEP-41 token with SEP-57 compliance | Imports oracle WASM                  |
 | [rwa-lending](../rwa-lending) | Lending/borrowing protocol          | Uses oracle for collateral valuation |
-| rwa-perps                     | Perpetual futures                   | Uses oracle for mark prices          |
 
 ## License
 

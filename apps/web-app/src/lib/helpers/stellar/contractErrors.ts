@@ -10,11 +10,9 @@ function extractContractNameFromError(errorString: string): string | null {
     { pattern: /rwa-lending/i, name: "rwa-lending" },
     { pattern: /rwa-token/i, name: "rwa-token" },
     { pattern: /rwa-oracle/i, name: "rwa-oracle" },
-    { pattern: /rwa-perps/i, name: "rwa-perps" },
     { pattern: /lending/i, name: "rwa-lending" },
     { pattern: /token/i, name: "rwa-token" },
     { pattern: /oracle/i, name: "rwa-oracle" },
-    { pattern: /perps|perpetual/i, name: "rwa-perps" },
   ];
 
   for (const { pattern, name } of contractPatterns) {
