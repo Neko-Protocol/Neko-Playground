@@ -1179,3 +1179,111 @@ export const buildFillBadDebtAuctionXdr = async (
     throw new Error(friendlyError);
   }
 };
+
+// ---------------------------------------------------------------------------
+// Bad Debt Auction — event-based queries
+// ---------------------------------------------------------------------------
+
+const BAD_DEBT_AUCTION_DURATION = 400; // blocks, from contract constants
+
+export interface ActiveBadDebtAuction {
+  auctionId: number;
+  borrower: string;
+  debtAsset: string;
+  debtAmount: bigint;
+  blocksElapsed: number;
+  /** 0–100: percentage of backstop tokens received per unit paid */
+  backstopBonus: number;
+}
+
+/**
+ * Fetches active bad debt auctions by querying Soroban contract events.
+ * Cross-references BadDebtAuctionCreatedEvent vs BadDebtAuctionFilledEvent
+ * to return only auctions that haven't been filled yet.
+ */
+export async function getActiveBadDebtAuctions(
+  contractId: string
+): Promise<ActiveBadDebtAuction[]> {
+  const sorobanServer = new rpc.Server(rpcUrl, {
+    allowHttp: stellarNetwork === "LOCAL",
+  });
+
+  const { sequence: currentLedger } = await sorobanServer.getLatestLedger();
+  // Look back enough to cover the full auction duration plus some buffer
+  const startLedger = Math.max(1, currentLedger - 1500);
+
+  const createdTopic = xdr.ScVal.scvSymbol("BadDebtAuctionCreatedEvent").toXDR(
+    "base64"
+  );
+  const filledTopic = xdr.ScVal.scvSymbol("BadDebtAuctionFilledEvent").toXDR(
+    "base64"
+  );
+
+  const [createdRes, filledRes] = await Promise.all([
+    sorobanServer.getEvents({
+      startLedger,
+      filters: [
+        {
+          type: "contract",
+          contractIds: [contractId],
+          topics: [[createdTopic]],
+        },
+      ],
+    }),
+    sorobanServer.getEvents({
+      startLedger,
+      filters: [
+        {
+          type: "contract",
+          contractIds: [contractId],
+          topics: [[filledTopic]],
+        },
+      ],
+    }),
+  ]);
+
+  // Build set of already-filled auction IDs
+  const filledIds = new Set<number>();
+  for (const event of filledRes.events) {
+    try {
+      const data = event.value.value() as unknown as Record<string, unknown>;
+      const id = Number((data as { auction_id?: unknown }).auction_id ?? -1);
+      if (id >= 0) filledIds.add(id);
+    } catch {
+      // skip unparseable events
+    }
+  }
+
+  const active: ActiveBadDebtAuction[] = [];
+  for (const event of createdRes.events) {
+    try {
+      const data = event.value.value() as unknown as Record<string, unknown>;
+      const auctionId = Number(
+        (data as { auction_id?: unknown }).auction_id ?? -1
+      );
+      if (auctionId < 0 || filledIds.has(auctionId)) continue;
+
+      const blocksElapsed = currentLedger - Number(event.ledger);
+      if (blocksElapsed >= BAD_DEBT_AUCTION_DURATION) continue;
+
+      const backstopBonus = Math.floor(
+        (blocksElapsed / BAD_DEBT_AUCTION_DURATION) * 100
+      );
+
+      active.push({
+        auctionId,
+        borrower: String((data as { borrower?: unknown }).borrower ?? ""),
+        debtAsset: String((data as { debt_asset?: unknown }).debt_asset ?? ""),
+        debtAmount: BigInt(
+          String((data as { debt_amount?: unknown }).debt_amount ?? "0")
+        ),
+        blocksElapsed,
+        backstopBonus,
+      });
+    } catch {
+      // skip unparseable events
+    }
+  }
+
+  return active;
+}
