@@ -7,9 +7,10 @@ import { useLend } from "../../hooks/useLend";
 import { LendTable } from "../ui/LendTable";
 import { LendModal } from "../ui/LendModal";
 import MyLendingPositions from "../ui/MyLendingPositions";
+import { BackstopPanel } from "../ui/BackstopPanel";
 import { GetTestTokensBanner } from "@/features/wallet/components/GetTestTokensBanner";
 
-type PageTab = "pools" | "positions";
+type PageTab = "pools" | "positions" | "backstop";
 
 const Lend: React.FC = () => {
   const [activeTab, setActiveTab] = useState<PageTab>("pools");
@@ -64,6 +65,16 @@ const Lend: React.FC = () => {
         >
           My Positions
         </button>
+        <button
+          onClick={() => setActiveTab("backstop")}
+          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+            activeTab === "backstop"
+              ? "bg-[#229EDF] text-white"
+              : "text-white/40 hover:text-white/70"
+          }`}
+        >
+          Backstop
+        </button>
       </div>
 
       {activeTab === "pools" && (
@@ -93,6 +104,8 @@ const Lend: React.FC = () => {
       )}
 
       {activeTab === "positions" && <MyLendingPositions />}
+
+      {activeTab === "backstop" && <BackstopPanel />}
     </PageContainer>
   );
 };
