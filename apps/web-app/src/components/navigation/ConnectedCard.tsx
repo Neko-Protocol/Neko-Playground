@@ -27,7 +27,6 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
         connected with:
       </p>
 
-      {}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -39,7 +38,6 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
         />
       </button>
 
-      {}
       <div
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
           open ? "max-h-40 opacity-100 mt-2" : "max-h-0 opacity-0 mt-0"
@@ -64,6 +62,23 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
             Disconnect
           </button>
         </div>
+      </div>
+
+      <div className="pt-2">
+        <button
+          type="button"
+          onClick={() =>
+            window.open(
+              "https://form.typeform.com/to/bYEeE8xy",
+              "_blank",
+              "noopener,noreferrer"
+            )
+          }
+          className="flex w-full items-center justify-between rounded-full bg-[#229EDF] px-5 py-3 text-sm font-semibold text-white cursor-pointer transition-colors hover:bg-[#1e8bc9]"
+        >
+          <span>Feedback</span>
+          <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
+        </button>
       </div>
     </div>
   );
