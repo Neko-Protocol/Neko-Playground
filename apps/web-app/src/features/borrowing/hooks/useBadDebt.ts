@@ -6,9 +6,9 @@ import { Networks } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import {
-  hasBadDebt,
-  createBadDebtAuction,
   buildFillBadDebtAuctionXdr,
+  getActiveBadDebtAuctions,
+  type ActiveBadDebtAuction,
 } from "@/lib/helpers/stellar/lending";
 import {
   signAndSendTransaction,
@@ -19,14 +19,11 @@ import { networks } from "@neko/lending";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
+export type { ActiveBadDebtAuction };
+
 export function useBadDebt() {
   const { addNotification } = useToast();
   const { address, signTransaction, networkPassphrase } = useWallet();
-  const [checkTrigger, setCheckTrigger] = useState<{
-    borrower: string;
-    ts: number;
-  } | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
   const [isFilling, setIsFilling] = useState(false);
 
   const showError = useCallback(
@@ -47,68 +44,15 @@ export function useBadDebt() {
   );
 
   const {
-    data: hasBadDebtResult,
-    isLoading: isCheckingBadDebt,
-    error: checkError,
-    refetch: refetchBadDebt,
+    data: activeAuctions = [],
+    isLoading: isLoadingAuctions,
+    refetch: refetchAuctions,
   } = useQuery({
-    queryKey: ["bad-debt", checkTrigger?.borrower, checkTrigger?.ts],
-    queryFn: () =>
-      hasBadDebt(checkTrigger!.borrower, networks.testnet.contractId),
-    enabled: !!checkTrigger?.borrower,
+    queryKey: ["bad-debt-auctions", networks.testnet.contractId],
+    queryFn: () => getActiveBadDebtAuctions(networks.testnet.contractId),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   });
-
-  const checkBadDebt = useCallback((borrower: string) => {
-    setCheckTrigger({ borrower, ts: Date.now() });
-  }, []);
-
-  const createAuction = useCallback(
-    async (borrower: string, debtAsset: string) => {
-      if (!address) {
-        showError("Please connect your wallet first");
-        return {
-          success: false as const,
-          error: new Error("Wallet not connected"),
-        };
-      }
-
-      setIsCreating(true);
-
-      const signAndSend = (xdr: string) =>
-        signAndSendTransaction(xdr, signTransaction as SignTransactionFn, {
-          networkPassphrase: networkPassphrase || Networks.TESTNET,
-          rpcUrl,
-          address,
-          waitForPending: true,
-        });
-
-      try {
-        const xdr = await createBadDebtAuction(
-          borrower,
-          debtAsset,
-          address,
-          networks.testnet.contractId
-        );
-        const { hash } = await signAndSend(xdr);
-
-        showSuccess(
-          `Bad debt auction created. Transaction: ${hash}. Check the explorer for auction_id.`
-        );
-        return { success: true as const, txHash: hash };
-      } catch (err) {
-        const friendlyError = extractContractErrorOrNull(err);
-        showError(
-          typeof friendlyError === "string"
-            ? friendlyError
-            : "An unexpected error occurred. Please try again."
-        );
-        return { success: false as const, error: err };
-      } finally {
-        setIsCreating(false);
-      }
-    },
-    [address, networkPassphrase, signTransaction, showError, showSuccess]
-  );
 
   const fillAuction = useCallback(
     async (auctionId: number, amount: string, debtAsset: string) => {
@@ -151,8 +95,9 @@ export function useBadDebt() {
         await signAndSend(fillXdr);
 
         showSuccess(
-          `Successfully filled bad debt auction. You received backstop tokens at a discount.`
+          "Successfully filled bad debt auction. You received backstop tokens at a discount."
         );
+        await refetchAuctions();
         return { success: true as const };
       } catch (err) {
         const friendlyError = extractContractErrorOrNull(err);
@@ -166,18 +111,20 @@ export function useBadDebt() {
         setIsFilling(false);
       }
     },
-    [address, networkPassphrase, signTransaction, showError, showSuccess]
+    [
+      address,
+      networkPassphrase,
+      signTransaction,
+      showError,
+      showSuccess,
+      refetchAuctions,
+    ]
   );
 
   return {
-    checkBadDebt,
-    borrowerChecked: checkTrigger?.borrower ?? null,
-    hasBadDebtResult: hasBadDebtResult ?? null,
-    isCheckingBadDebt,
-    checkError,
-    refetchBadDebt,
-    createAuction,
-    isCreating,
+    activeAuctions,
+    isLoadingAuctions,
+    refetchAuctions,
     fillAuction,
     isFilling,
     isWalletConnected: Boolean(address),
