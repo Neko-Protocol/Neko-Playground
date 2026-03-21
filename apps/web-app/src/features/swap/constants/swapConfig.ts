@@ -4,7 +4,7 @@ export const QUOTE_REFRESH_INTERVAL_MS = 5000;
 
 export const DEFAULT_SLIPPAGE_BPS = 500;
 
-export const MAX_HOPS = 1;
+export const MAX_HOPS = 3;
 
 export const SUSPICIOUS_VALUE_THRESHOLD_PCT = 10;
 

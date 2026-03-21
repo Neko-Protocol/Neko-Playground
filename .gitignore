@@ -69,3 +69,4 @@ target/
 deploy-full.cjs
 deploy-pools.cjs
 push-prices.cjs
+add-soroswap-liquidity.cjs

@@ -47,12 +47,8 @@ export const useTokenPrice = (token: Token | string | undefined) => {
         return 0;
       }
 
-      if (stellarPriceService.isRWAToken(tokenCode)) {
-        const tokenAddress = getTokenAddress(token!);
-        return stellarPriceService.getRWAOraclePrice(tokenAddress);
-      }
-
-      return stellarPriceService.getTokenPrice(tokenCode);
+      const contractAddress = getTokenAddress(token!);
+      return stellarPriceService.getPrice(tokenCode, contractAddress);
     },
     enabled: Boolean(tokenCode && token),
     refetchInterval: 60000,

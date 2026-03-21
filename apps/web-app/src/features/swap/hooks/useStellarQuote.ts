@@ -42,7 +42,7 @@ export function useStellarQuote(
         assetOut: tokenOut as Token | string,
         amount: trimmedAmount,
         tradeType: "EXACT_IN",
-        protocols: ["soroswap"],
+        protocols: ["soroswap", "phoenix", "aqua"],
         slippageBps: DEFAULT_SLIPPAGE_BPS,
         maxHops: MAX_HOPS,
       };

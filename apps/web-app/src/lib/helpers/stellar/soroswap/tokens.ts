@@ -27,6 +27,15 @@ export const getTokens = (): Record<string, string> => {
 
 export const getTokenAddress = (token: Token | string): string => {
   if (typeof token === "string") {
+    // Already a valid Soroban contract address
+    if (token.startsWith("C") && token.length === 56) {
+      return token;
+    }
+    // Try to look up by token code (e.g. "XLM" → contract address)
+    const tokens = getTokens();
+    if (tokens[token]) {
+      return tokens[token];
+    }
     return token;
   }
 
