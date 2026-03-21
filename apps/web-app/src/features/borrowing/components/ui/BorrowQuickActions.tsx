@@ -79,7 +79,7 @@ export function BorrowQuickActions({
             className="flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm font-semibold text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/5 disabled:hover:text-white/80"
           >
             <Shield className="h-4 w-4" />
-            Remove Asset
+            Remove Collateral
           </button>
           <button
             onClick={onRepayClick}
@@ -87,7 +87,7 @@ export function BorrowQuickActions({
             className="flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl bg-amber-500/15 border border-amber-500/30 px-4 py-2.5 text-sm font-semibold text-amber-400 hover:bg-amber-500/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RotateCcw className="h-4 w-4" />
-            Repay Loans
+            Repay
           </button>
         </div>
       </div>
