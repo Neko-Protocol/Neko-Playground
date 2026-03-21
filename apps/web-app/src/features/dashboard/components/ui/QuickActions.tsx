@@ -34,7 +34,7 @@ const actions = [
   {
     label: "Liquidations",
     description: "Bad debt auctions",
-    href: "/dashboard/liquidations",
+    href: "/borrowing?tab=liquidations",
     icon: Gavel,
   },
 ] as const;
