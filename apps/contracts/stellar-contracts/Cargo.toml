@@ -5,7 +5,6 @@ members = [
   "rwa-lending",
   "rwa-oracle",
   "rwa-token",
-  "rwa-perps",
   "rwa-faucet"
 ]
 

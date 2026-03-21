@@ -1,13 +1,10 @@
-export type PriceSource = "oracle" | "coingecko";
-
 export interface AssetConfig {
   code: string;
   name: string;
   contract: string;
   decimals: number;
   icon: string;
-  priceSource: PriceSource;
-  coinGeckoId?: string;
+  priceSource: "oracle";
   isStablecoin?: boolean;
 }
 
@@ -21,8 +18,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
       decimals: 7,
       icon: "/assets/xlm-logo.png",
-      priceSource: "coingecko",
-      coinGeckoId: "stellar",
+      priceSource: "oracle",
     },
     USDC: {
       code: "USDC",
@@ -30,8 +26,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
       decimals: 7,
       icon: "/assets/usdc-logo.png",
-      priceSource: "coingecko",
-      coinGeckoId: "usd-coin",
+      priceSource: "oracle",
       isStablecoin: true,
     },
     USTRY: {
@@ -87,8 +82,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
       decimals: 7,
       icon: "/assets/xlm-logo.png",
-      priceSource: "coingecko",
-      coinGeckoId: "stellar",
+      priceSource: "oracle",
     },
     USDC: {
       code: "USDC",
@@ -96,8 +90,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
       decimals: 7,
       icon: "/assets/usdc-logo.png",
-      priceSource: "coingecko",
-      coinGeckoId: "usd-coin",
+      priceSource: "oracle",
       isStablecoin: true,
     },
   },
