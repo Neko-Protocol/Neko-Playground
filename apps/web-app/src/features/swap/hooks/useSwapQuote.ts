@@ -60,11 +60,13 @@ export function useSwapQuote(
 
     try {
       const result = await fetchStellarQuote();
-      setAmountOut(result ?? "0.0");
+      if (result !== null) {
+        setAmountOut(result);
+        setIsLoadingQuote(false);
+      }
+      // null → no quote yet, keep loading (interval will retry)
     } catch {
-      setAmountOut("0.0");
-    } finally {
-      setIsLoadingQuote(false);
+      // keep loading on error, interval will retry
     }
   }, [address, amountIn, fetchStellarQuote]);
 
@@ -75,7 +77,6 @@ export function useSwapQuote(
     }
 
     cancelStellarQuote();
-    setIsLoadingQuote(false);
 
     const trimmedAmount = amountIn?.trim() || "";
     const parsedAmount = parseFloat(trimmedAmount);
@@ -112,7 +113,6 @@ export function useSwapQuote(
         quoteTimeoutRef.current = null;
       }
       cancelStellarQuote();
-      setIsLoadingQuote(false);
     };
   }, [
     amountIn,
