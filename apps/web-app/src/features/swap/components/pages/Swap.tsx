@@ -236,8 +236,7 @@ const Swap: React.FC = () => {
       }
 
       const errorMessage =
-        extractContractErrorOrNull(err, "rwa-perps") ||
-        (err instanceof Error ? err.message : "Failed to complete swap");
+        err instanceof Error ? err.message : "Failed to complete swap";
       addNotification("Something went wrong", "error", {
         ...TOAST_CONFIG.defaultOpts,
         description: errorMessage,

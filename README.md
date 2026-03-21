@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  Liquidity pools • Lending & Borrowing • Perpetual Futures • RWA Tokenization • Portfolio Management
+  Liquidity pools • Lending & Borrowing • RWA Tokenization • Portfolio Management
 </p>
 
 ## Features
@@ -193,8 +193,7 @@ neko-dapp/
 │       ├── stellar-contracts/      # Stellar/Soroban contracts (Rust)
 │       │   ├── rwa-oracle/         # SEP-40 Oracle for RWA price feeds
 │       │   ├── rwa-token/          # RWA Token with oracle integration
-│       │   ├── rwa-lending/        # Lending protocol (Blend-based)
-│       │   └── rwa-perps/          # Perpetual futures (in development)
+│       │   └── rwa-lending/        # Lending protocol (Blend-based)
 │       └── evm-contracts/          # EVM/Solidity contracts (Foundry)
 │           └── rwa-lending/        # RWA Lending with Pyth oracle
 │
@@ -283,10 +282,10 @@ The Stellar contracts follow a layered dependency structure:
 │          │ prices + metadata           │ collateral             │
 │          │                             │                        │
 │          ▼                             ▼                        │
-│   ┌──────────────┐              ┌──────────────┐               │
-│   │  RWA Perps   │              │ RWA Lending  │               │
-│   │  (Futures)   │              │  (Borrow)    │               │
-│   └──────────────┘              └──────────────┘               │
+│                                     ┌──────────────┐           │
+│                                     │ RWA Lending  │           │
+│                                     │  (Borrow)    │           │
+│                                     └──────────────┘           │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -295,7 +294,6 @@ The Stellar contracts follow a layered dependency structure:
 
 - `rwa-token` → imports `rwa-oracle` WASM
 - `rwa-lending` → depends on both `rwa-oracle` and `rwa-token`
-- `rwa-perps` → uses `rwa-oracle` for mark prices
 
 ### Frontend Architecture
 
