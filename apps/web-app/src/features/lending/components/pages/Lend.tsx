@@ -56,16 +56,6 @@ const Lend: React.FC = () => {
           Pools
         </button>
         <button
-          onClick={() => setActiveTab("positions")}
-          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === "positions"
-              ? "bg-[#229EDF] text-white"
-              : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          My Positions
-        </button>
-        <button
           onClick={() => setActiveTab("backstop")}
           className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
             activeTab === "backstop"
@@ -74,6 +64,16 @@ const Lend: React.FC = () => {
           }`}
         >
           Backstop
+        </button>
+        <button
+          onClick={() => setActiveTab("positions")}
+          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+            activeTab === "positions"
+              ? "bg-[#229EDF] text-white"
+              : "text-white/40 hover:text-white/70"
+          }`}
+        >
+          My Positions
         </button>
       </div>
 
