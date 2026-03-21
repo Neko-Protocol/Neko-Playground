@@ -6,6 +6,10 @@ import {
   sendTransaction,
   type QuoteRequest,
 } from "@/lib/helpers/stellar/soroswap";
+import {
+  DEFAULT_SLIPPAGE_BPS,
+  MAX_HOPS,
+} from "@/features/swap/constants/swapConfig";
 import { useWallet } from "@/hooks/useWallet";
 
 export interface SwapExecutionParams {
@@ -41,6 +45,9 @@ export function useSwapExecution() {
         assetOut: tokenOut as Token | string,
         amount: amountIn,
         tradeType: "EXACT_IN",
+        protocols: ["soroswap", "phoenix", "aqua"],
+        slippageBps: DEFAULT_SLIPPAGE_BPS,
+        maxHops: MAX_HOPS,
       };
 
       const newQuote = await getQuote(quoteRequest);
