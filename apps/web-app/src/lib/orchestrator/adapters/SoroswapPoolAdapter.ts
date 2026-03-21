@@ -115,11 +115,21 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       }
     }
 
-    const results = await Promise.allSettled(
-      knownPairs.map((pair) => this.getPoolInfo(pair))
-    );
+    // Process in batches of 3 to avoid hitting Soroswap API rate limits (429)
+    const BATCH_SIZE = 3;
+    const settled: PromiseSettledResult<PoolInfo>[] = [];
+    for (let i = 0; i < knownPairs.length; i += BATCH_SIZE) {
+      const batch = knownPairs.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.allSettled(
+        batch.map((pair) => this.getPoolInfo(pair))
+      );
+      settled.push(...batchResults);
+      if (i + BATCH_SIZE < knownPairs.length) {
+        await new Promise((r) => setTimeout(r, 300));
+      }
+    }
 
-    return results
+    return settled
       .filter(
         (r): r is PromiseFulfilledResult<PoolInfo> =>
           r.status === "fulfilled" && r.value.state !== "unknown"
