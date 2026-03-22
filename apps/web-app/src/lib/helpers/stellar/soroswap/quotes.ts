@@ -1,4 +1,15 @@
-import { TradeType, SupportedProtocols } from "@soroswap/sdk";
+import {
+  rpc,
+  Contract,
+  Address,
+  TransactionBuilder,
+  Account,
+  Keypair,
+  scValToNative,
+  nativeToScVal,
+  xdr,
+} from "@stellar/stellar-sdk";
+import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
 import { getCurrentNetwork, getAvailableTokens } from "./tokens";
 import {
   getApiKey,
@@ -23,6 +34,145 @@ import type {
 } from "../../../types/soroswapTypes";
 
 const SOROSWAP_API_URL = "https://api.soroswap.finance";
+
+/**
+ * Pairs that the Soroswap API has rejected with "no path found".
+ * Cached so subsequent quote refreshes skip the slow API call entirely.
+ */
+const apiRejectedPairs = new Set<string>();
+
+/**
+ * Returns true if a token address belongs to Soroswap's curated token list.
+ * Only standard tokens (XLM, USDC) are known to Soroswap on testnet.
+ */
+function isSoroswapListed(address: string): boolean {
+  const tokens = getAvailableTokens();
+  const token = Object.values(tokens).find((t) => t.contract === address);
+  if (!token) return false;
+  return token.code === "XLM" || token.code === "USDC";
+}
+
+/**
+ * Computes a swap quote from on-chain pair reserves using the Uniswap v2 AMM formula.
+ * 1. Gets factory + router addresses from the SDK.
+ * 2. Simulates `get_pair(tokenA, tokenB)` on the factory → pair contract address.
+ * 3. Simulates `get_reserves()` on the pair → (reserveA, reserveB, timestamp).
+ * 4. Soroswap sorts tokens by address (smaller = token_0 = reserveA).
+ * 5. Applies the AMM formula: out = (in*997*reserveOut) / (reserveIn*1000 + in*997).
+ */
+const getDirectPoolQuote = async (
+  assetIn: string,
+  assetOut: string,
+  amountInSmallestUnit: bigint,
+  slippageBps: number
+): Promise<QuoteResponse | undefined> => {
+  try {
+    const sdk = getSoroswapSDK();
+    const sdkNet = getSDKNetwork();
+    const [{ address: routerAddress }, { address: factoryAddress }] =
+      await Promise.all([
+        sdk.getContractAddress(sdkNet, "router"),
+        sdk.getContractAddress(sdkNet, "factory"),
+      ]);
+    if (!routerAddress || !factoryAddress) return undefined;
+
+    const server = new rpc.Server(rpcUrl);
+    const dummyAccount = new Account(Keypair.random().publicKey(), "0");
+
+    // Step 1: get the pair contract address from the factory
+    const factory = new Contract(factoryAddress);
+    const getPairTx = new TransactionBuilder(dummyAccount, {
+      fee: "100",
+      networkPassphrase,
+    })
+      .addOperation(
+        factory.call(
+          "get_pair",
+          new Address(assetIn).toScVal(),
+          new Address(assetOut).toScVal()
+        )
+      )
+      .setTimeout(30)
+      .build();
+
+    const pairSim = await server.simulateTransaction(getPairTx);
+    if (!("result" in pairSim) || !pairSim.result?.retval) return undefined;
+
+    const pairAddress = scValToNative(pairSim.result.retval) as string;
+    if (!pairAddress || typeof pairAddress !== "string") return undefined;
+
+    // Step 2: get reserves from the pair contract
+    const pair = new Contract(pairAddress);
+    const reservesTx = new TransactionBuilder(
+      new Account(Keypair.random().publicKey(), "0"),
+      { fee: "100", networkPassphrase }
+    )
+      .addOperation(pair.call("get_reserves"))
+      .setTimeout(30)
+      .build();
+
+    const reservesSim = await server.simulateTransaction(reservesTx);
+    if (!("result" in reservesSim) || !reservesSim.result?.retval)
+      return undefined;
+
+    // get_reserves returns (reserveA, reserveB, blockTimestampLast)
+    // token_0 (reserveA) is the one with the smaller contract address
+    const reservesRaw = scValToNative(reservesSim.result.retval) as bigint[];
+    if (!Array.isArray(reservesRaw) || reservesRaw.length < 2) return undefined;
+
+    const reserveA = BigInt(reservesRaw[0].toString());
+    const reserveB = BigInt(reservesRaw[1].toString());
+    if (reserveA <= 0n || reserveB <= 0n) return undefined;
+
+    // Soroswap stores token_0 as the smaller address (lexicographic)
+    const isAin = assetIn < assetOut;
+    const reserveIn = isAin ? reserveA : reserveB;
+    const reserveOut = isAin ? reserveB : reserveA;
+
+    // Uniswap v2 AMM formula with 0.3% fee
+    const amountInWithFee = amountInSmallestUnit * 997n;
+    const amountOut =
+      (amountInWithFee * reserveOut) / (reserveIn * 1000n + amountInWithFee);
+
+    if (amountOut <= BigInt(0)) return undefined;
+
+    const threshold = (amountOut * BigInt(10000 - slippageBps)) / BigInt(10000);
+
+    const priceImpactPct = "0";
+
+    const sdkQuote = {
+      assetIn,
+      assetOut,
+      amountIn: amountInSmallestUnit.toString(),
+      amountOut: amountOut.toString(),
+      otherAmountThreshold: threshold.toString(),
+      priceImpactPct,
+      tradeType: "EXACT_IN",
+      platform: "soroswap",
+      rawTrade: null,
+      routerAddress,
+      routePlan: [
+        {
+          swapInfo: { protocol: "soroswap", path: [assetIn, assetOut] },
+          percent: "100",
+        },
+      ],
+    };
+
+    return {
+      amountOut: amountOut.toString(),
+      amountIn: amountInSmallestUnit.toString(),
+      priceImpact: priceImpactPct,
+      protocol: "soroswap",
+      _sdkQuote: sdkQuote,
+    };
+  } catch (err) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Soroswap] Direct pool quote error:", err);
+    }
+    return undefined;
+  }
+};
 
 export const getPool = async (request: GetPoolRequest): Promise<PoolInfo[]> => {
   const tokenA = formatTokenForAPI(request.tokenA);
@@ -50,16 +200,6 @@ export const getPool = async (request: GetPoolRequest): Promise<PoolInfo[]> => {
   const queryParams = `?network=${apiNetwork}&${protocolParam}`;
   const endpoint = `/pools/${tokenA}/${tokenB}${queryParams}`;
 
-  if (process.env.NODE_ENV === "development") {
-    console.log("Soroswap Get Pool Request:", {
-      tokenA,
-      tokenB,
-      network: apiNetwork,
-      protocols,
-      endpoint,
-    });
-  }
-
   try {
     const pools = await makeAPIRequest<PoolInfo[]>(endpoint, { method: "GET" });
 
@@ -75,7 +215,11 @@ export const getPool = async (request: GetPoolRequest): Promise<PoolInfo[]> => {
     if (error instanceof Error) {
       const errorMessage = error.message;
 
-      if (errorMessage.includes("404") || errorMessage.includes("Not Found")) {
+      if (
+        errorMessage.includes("404") ||
+        errorMessage.includes("Not Found") ||
+        errorMessage.includes("429")
+      ) {
         return [];
       }
 
@@ -123,94 +267,37 @@ export const getQuote = async (
 
   const sdkNetwork = getSDKNetwork();
 
-  const tradeType =
-    request.tradeType === "EXACT_IN" ? TradeType.EXACT_IN : TradeType.EXACT_OUT;
+  const tradeType = request.tradeType || "EXACT_IN";
 
   const protocols = request.protocols?.length
-    ? (request.protocols as unknown[]).map((proto) => {
-        if (typeof proto === "string") {
-          const protoLower = proto.toLowerCase();
-          if (protoLower === "soroswap") return SupportedProtocols.SOROSWAP;
-          if (protoLower === "phoenix") return SupportedProtocols.PHOENIX;
-          if (protoLower === "aqua") return SupportedProtocols.AQUA;
-          return SupportedProtocols.SOROSWAP;
-        }
-        return proto as SupportedProtocols;
-      })
-    : [SupportedProtocols.SOROSWAP];
+    ? request.protocols
+    : ["soroswap"];
 
-  if (process.env.NODE_ENV === "development") {
-    console.log("Soroswap Quote Request Details:", {
-      assetIn,
-      assetOut,
-      amount: request.amount,
-      amountInSmallestUnit: amountInSmallestUnit.toString(),
-      amountType: typeof amountInSmallestUnit,
-      tradeType: request.tradeType,
-      tradeTypeEnum: tradeType,
-      protocols: request.protocols,
-      protocolsEnum: protocols,
-      slippageBps: request.slippageBps,
-      sdkNetwork,
-    });
-  }
+  const pairKey = `${assetIn}-${assetOut}`;
 
-  if (
-    process.env.NODE_ENV === "development" &&
-    process.env.NEXT_PUBLIC_VERBOSE_LOGGING === "true"
-  ) {
-    console.log("Soroswap SDK Quote Request:", {
-      assetIn,
-      assetOut,
-      amount: amountInSmallestUnit.toString(),
-      tradeType,
-      protocols,
-      network: sdkNetwork,
-    });
-  }
+  // Always use on-chain simulation directly — the Soroswap REST API rejects
+  // all our token contracts (including USDC/XLM) with 400 "no path found".
+  return getDirectPoolQuote(
+    assetIn,
+    assetOut,
+    amountInSmallestUnit,
+    request.slippageBps ?? 500
+  );
 
+  // Dead code kept for reference — the REST API path below is bypassed.
   try {
-    if (!assetIn || typeof assetIn !== "string" || assetIn.trim() === "") {
-      throw new Error(`Invalid assetIn: ${assetIn}`);
-    }
-    if (!assetOut || typeof assetOut !== "string" || assetOut.trim() === "") {
-      throw new Error(`Invalid assetOut: ${assetOut}`);
-    }
-    if (!amountInSmallestUnit || amountInSmallestUnit <= BigInt(0)) {
-      throw new Error(`Invalid amount: ${amountInSmallestUnit}`);
-    }
-
-    if (!isValidContractAddress(assetIn)) {
-      throw new Error(
-        `Invalid Stellar contract address format for assetIn: ${assetIn}`
-      );
-    }
-    if (!isValidContractAddress(assetOut)) {
-      throw new Error(
-        `Invalid Stellar contract address format for assetOut: ${assetOut}`
-      );
-    }
-
-    const availableTokens = getAvailableTokens();
-    const tokenInExists = Object.values(availableTokens).some(
-      (token) => token.contract === assetIn
-    );
-    const tokenOutExists = Object.values(availableTokens).some(
-      (token) => token.contract === assetOut
-    );
-
-    if (!tokenInExists) {
-      console.warn(`assetIn contract ${assetIn} not found in available tokens`);
-    }
-    if (!tokenOutExists) {
-      console.warn(
-        `assetOut contract ${assetOut} not found in available tokens`
-      );
-    }
-
     const apiKey = getApiKey();
     if (!apiKey) {
       throw new Error("Soroswap API key not configured");
+    }
+
+    if (apiRejectedPairs.has(pairKey)) {
+      return getDirectPoolQuote(
+        assetIn,
+        assetOut,
+        amountInSmallestUnit,
+        request.slippageBps ?? 500
+      );
     }
 
     const quoteRequestBody = {
@@ -222,10 +309,6 @@ export const getQuote = async (
       slippageBps: request.slippageBps || 500,
       maxHops: request.maxHops || 3,
     };
-
-    if (process.env.NODE_ENV === "development") {
-      console.log("Soroswap API Request Body:", quoteRequestBody);
-    }
 
     const apiResponse = await fetch(
       `${SOROSWAP_API_URL}/quote?network=${sdkNetwork}`,
@@ -241,6 +324,22 @@ export const getQuote = async (
 
     if (!apiResponse.ok) {
       const errorData = await apiResponse.json().catch(() => ({}));
+      const detail: string = errorData.detail || errorData.title || "";
+      const detailLower = detail.toLowerCase();
+
+      if (
+        detailLower.includes("no path") ||
+        detailLower.includes("path not found")
+      ) {
+        apiRejectedPairs.add(pairKey);
+        return getDirectPoolQuote(
+          assetIn,
+          assetOut,
+          amountInSmallestUnit,
+          request.slippageBps ?? 500
+        );
+      }
+
       throw new Error(
         `API request failed: ${apiResponse.status} ${apiResponse.statusText}. ${JSON.stringify(errorData)}`
       );
@@ -256,6 +355,7 @@ export const getQuote = async (
       tradeType: string;
       platform: string;
       rawTrade: unknown;
+      routes?: unknown[];
       routePlan: Array<{
         swapInfo: { protocol: string; path: string[] };
         percent: string;
@@ -274,89 +374,23 @@ export const getQuote = async (
       response.routes = quoteResponse.routes as unknown[];
     }
 
-    if (
-      process.env.NODE_ENV === "development" &&
-      process.env.NEXT_PUBLIC_VERBOSE_LOGGING === "true"
-    ) {
-      console.log("💡 Quote received:");
-      console.log(
-        `   Input: ${Number(quoteResponse.amountIn) / 10000000} tokens`
-      );
-      console.log(
-        `   Output: ${Number(quoteResponse.amountOut) / 10000000} tokens`
-      );
-      console.log(`   Price Impact: ${quoteResponse.priceImpactPct}%`);
-      console.log(`   Platform: ${quoteResponse.platform}`);
-    }
-
     return response;
   } catch (error) {
-    let errorMessage = "Unknown error occurred during quote fetch";
-
-    if (process.env.NODE_ENV === "development") {
-      console.error("Soroswap Quote Error (raw):", error);
-      try {
-        console.error("Error stringified:", JSON.stringify(error, null, 2));
-      } catch {
-        console.error("Could not stringify error");
-      }
-    }
-
-    try {
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === "object" && error !== null) {
-        const sdkError = error as Record<string, unknown>;
-
-        if (sdkError.message && typeof sdkError.message === "string") {
-          errorMessage = sdkError.message;
-        } else if (sdkError.title && typeof sdkError.title === "string") {
-          errorMessage = sdkError.title;
-        } else if (sdkError.detail && typeof sdkError.detail === "string") {
-          errorMessage = sdkError.detail;
-        } else if (sdkError.error && typeof sdkError.error === "string") {
-          errorMessage = sdkError.error;
-        } else if (Array.isArray(sdkError.errors)) {
-          errorMessage = (sdkError.errors as string[]).join(", ");
-        }
-
-        if (process.env.NODE_ENV === "development") {
-          console.error("Soroswap API Error Details:", {
-            message: sdkError.message,
-            error: sdkError.error,
-            detail: sdkError.detail,
-            statusCode: sdkError.statusCode,
-            errors: sdkError.errors,
-          });
-        }
-      }
-    } catch {}
-
+    const errorMessage =
+      error instanceof Error ? (error as Error).message : String(error);
     const errorStr = errorMessage.toLowerCase();
 
     if (errorStr.includes("no path") || errorStr.includes("no liquidity")) {
-      try {
-        const availableTokens = getAvailableTokens();
-        const getTokenInfo = (address: string) => {
-          for (const [code, info] of Object.entries(availableTokens)) {
-            if (info.contract === address) {
-              return code;
-            }
-          }
-          return address.substring(0, 8) + "...";
-        };
-
-        const tokenInCode = getTokenInfo(assetIn);
-        const tokenOutCode = getTokenInfo(assetOut);
-
-        throw new Error(
-          `No liquidity available for ${tokenInCode} → ${tokenOutCode}. Please try a different pair or check back later.`
-        );
-      } catch {
-        throw new Error(
-          "No liquidity available for this trading pair. Please try a different pair."
-        );
-      }
+      const availableTokens = getAvailableTokens();
+      const getTokenCode = (address: string) => {
+        for (const [code, info] of Object.entries(availableTokens)) {
+          if (info.contract === address) return code;
+        }
+        return address.substring(0, 8) + "...";
+      };
+      throw new Error(
+        `No liquidity available for ${getTokenCode(assetIn)} → ${getTokenCode(assetOut)}. Please try a different pair or check back later.`
+      );
     }
 
     if (
@@ -366,12 +400,6 @@ export const getQuote = async (
     ) {
       throw new Error(
         "Soroswap API key is invalid or expired. Please check your API key configuration."
-      );
-    }
-
-    if (errorStr.includes("400") || errorStr.includes("bad request")) {
-      throw new Error(
-        "Invalid request to Soroswap API. Please check token addresses and amounts."
       );
     }
 
@@ -386,10 +414,65 @@ export const buildTransaction = async (
   const sdkNetwork = getSDKNetwork();
 
   try {
-    const sdkQuote = request.quote._sdkQuote;
+    const sdkQuote = request.quote._sdkQuote as
+      | Record<string, unknown>
+      | null
+      | undefined;
 
     if (!sdkQuote) {
       throw new Error("No SDK quote found. Please get a new quote first.");
+    }
+
+    // Direct pool quotes (rawTrade: null) build the swap transaction against the
+    // Soroswap Router contract directly, bypassing the /quote/build REST API.
+    if (sdkQuote.rawTrade === null) {
+      const routerAddress = sdkQuote.routerAddress as string | undefined;
+      const assetIn = sdkQuote.assetIn as string;
+      const assetOut = sdkQuote.assetOut as string;
+      const amountIn = BigInt(sdkQuote.amountIn as string);
+      const amountOutMin = BigInt(sdkQuote.otherAmountThreshold as string);
+      const recipient = request.to ?? request.from;
+
+      if (!routerAddress) {
+        throw new Error(
+          "Router address not found in quote. Please get a new quote."
+        );
+      }
+
+      const server = new rpc.Server(rpcUrl);
+      const account = await server.getAccount(request.from);
+      const router = new Contract(routerAddress);
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);
+
+      const tx = new TransactionBuilder(account, {
+        fee: "100",
+        networkPassphrase,
+      })
+        .addOperation(
+          router.call(
+            "swap_exact_tokens_for_tokens",
+            nativeToScVal(amountIn, { type: "i128" }),
+            nativeToScVal(amountOutMin, { type: "i128" }),
+            xdr.ScVal.scvVec([
+              new Address(assetIn).toScVal(),
+              new Address(assetOut).toScVal(),
+            ]),
+            new Address(recipient).toScVal(),
+            nativeToScVal(deadline, { type: "u64" })
+          )
+        )
+        .setTimeout(30)
+        .build();
+
+      const simResult = await server.simulateTransaction(tx);
+      if (!("result" in simResult)) {
+        const errMsg =
+          "error" in simResult ? simResult.error : "Swap simulation failed";
+        throw new Error(errMsg as string);
+      }
+
+      const preparedTx = rpc.assembleTransaction(tx, simResult).build();
+      return { xdr: preparedTx.toXDR() };
     }
 
     const buildResponse = await soroswapSDK.build(
@@ -399,13 +482,6 @@ export const buildTransaction = async (
       },
       sdkNetwork
     );
-
-    if (
-      process.env.NODE_ENV === "development" &&
-      process.env.NEXT_PUBLIC_VERBOSE_LOGGING === "true"
-    ) {
-      console.log("📄 Transaction XDR received from Soroswap SDK");
-    }
 
     return { xdr: buildResponse.xdr };
   } catch (error) {
@@ -440,13 +516,6 @@ export const sendTransaction = async (
 
     if (!txHash) {
       throw new Error("Transaction hash not found in SDK response");
-    }
-
-    if (
-      process.env.NODE_ENV === "development" &&
-      process.env.NEXT_PUBLIC_VERBOSE_LOGGING === "true"
-    ) {
-      console.log(`✅ Transaction sent! Hash: ${txHash}`);
     }
 
     return { txHash };
@@ -506,22 +575,6 @@ export const addLiquidity = async (
     slippageBps: request.slippageBps || 500,
   };
 
-  if (process.env.NODE_ENV === "development") {
-    console.log("Soroswap Add Liquidity Request Details:", {
-      assetA,
-      assetB,
-      amountA: request.amountA,
-      amountB: request.amountB,
-      amountAInSmallestUnit: amountA.toString(),
-      amountBInSmallestUnit: amountB.toString(),
-      to: request.to,
-      slippageBps: request.slippageBps,
-      network: apiNetwork,
-      endpoint,
-      requestBody,
-    });
-  }
-
   try {
     const addLiquidityResponse = await makeAPIRequest<{ xdr: string }>(
       endpoint,
@@ -530,13 +583,6 @@ export const addLiquidity = async (
         body: JSON.stringify(requestBody),
       }
     );
-
-    if (
-      process.env.NODE_ENV === "development" &&
-      process.env.NEXT_PUBLIC_VERBOSE_LOGGING === "true"
-    ) {
-      console.log("📄 Liquidity transaction XDR received from Soroswap API");
-    }
 
     if (!addLiquidityResponse.xdr) {
       throw new Error("No XDR returned from add liquidity API");
@@ -578,20 +624,8 @@ export const addLiquidity = async (
         errorMessage.includes("400") ||
         errorMessage.includes("Bad Request")
       ) {
-        const errorWithResponse = error as
-          | { response?: { data?: unknown } }
-          | null
-          | undefined;
-        const errorDetails =
-          "response" in error && errorWithResponse?.response?.data
-            ? JSON.stringify(errorWithResponse.response.data)
-            : errorMessage;
         throw new Error(
-          `Invalid request to Soroswap API (400): ${errorDetails}\n` +
-            `Please check:\n` +
-            `• Token contract addresses are correct for ${apiNetwork}\n` +
-            `• Amount format is valid\n` +
-            `• Network configuration is correct`
+          `Invalid request to Soroswap API (400): ${errorMessage}`
         );
       }
 

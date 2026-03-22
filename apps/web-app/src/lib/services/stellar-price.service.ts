@@ -4,7 +4,6 @@ import {
   STABLECOIN_FALLBACK_USD,
 } from "@/lib/constants/wallet";
 import {
-  getAssetsConfig,
   getRwaTokenCodes,
   getStablecoinCodes,
 } from "@/lib/constants/assets.config";
@@ -13,10 +12,23 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class StellarPriceService {
   isRWAToken(tokenCode: string): boolean {
+    // XLM is the native network token, not an RWA
+    // Stablecoins are handled separately via fallback
+    const stablecoinCodes = getStablecoinCodes();
+    if (tokenCode === "XLM" || stablecoinCodes.includes(tokenCode)) {
+      return false;
+    }
     return getRwaTokenCodes().includes(tokenCode);
   }
 
   async getRWAOraclePrice(contractAddress: string): Promise<number> {
+    if (
+      !contractAddress ||
+      !contractAddress.startsWith("C") ||
+      contractAddress.length !== 56
+    ) {
+      return 0;
+    }
     try {
       const asset: { tag: "Stellar"; values: readonly [string] } = {
         tag: "Stellar",
@@ -73,18 +85,13 @@ export class StellarPriceService {
   async getPrice(tokenCode: string, contractAddress?: string): Promise<number> {
     if (!tokenCode || typeof tokenCode !== "string") return 0;
 
-    const assets = getAssetsConfig();
-    const asset = assets[tokenCode];
     const isStablecoin = getStablecoinCodes().includes(tokenCode);
+    if (isStablecoin) return STABLECOIN_FALLBACK_USD;
 
-    if (asset?.priceSource === "oracle" && contractAddress) {
-      const price = await this.getRWAOraclePrice(contractAddress);
-      if (price > 0) return price;
-      if (isStablecoin) return STABLECOIN_FALLBACK_USD;
-      return 0;
+    if (this.isRWAToken(tokenCode) && contractAddress) {
+      return this.getRWAOraclePrice(contractAddress);
     }
 
-    if (isStablecoin) return STABLECOIN_FALLBACK_USD;
     return 0;
   }
 }

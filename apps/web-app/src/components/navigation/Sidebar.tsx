@@ -46,7 +46,7 @@ export function Sidebar() {
     <aside className="hidden lg:flex fixed left-0 top-0 z-40 h-screen w-[270px] flex-col border-r border-white/5 bg-[#121212]">
       <SidebarLogo />
 
-      <nav className="flex flex-1 flex-col gap-1 px-3">
+      <nav className="flex flex-1 flex-col gap-1 px-3 min-h-0 overflow-y-auto">
         {navItems.map(({ label, href, icon }) => (
           <NavItem
             key={href}
@@ -58,7 +58,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-4">
+      <div className="p-4 pt-6 overflow-y-auto">
         {isConnected && activeAddress ? (
           <ConnectedCard
             address={activeAddress}

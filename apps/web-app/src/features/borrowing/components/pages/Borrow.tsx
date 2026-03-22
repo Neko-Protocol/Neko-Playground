@@ -7,9 +7,10 @@ import { useBorrow } from "../../hooks/useBorrow";
 import { BorrowTable } from "../ui/BorrowTable";
 import { BorrowModal } from "../ui/BorrowModal";
 import MyBorrowPositions from "../ui/MyBorrowPositions";
+import LiquidationsSection from "../ui/LiquidationsSection";
 import { GetTestTokensBanner } from "@/features/wallet/components/GetTestTokensBanner";
 
-type PageTab = "pools" | "positions";
+type PageTab = "pools" | "liquidations" | "positions";
 
 const Borrow: React.FC = () => {
   const [activeTab, setActiveTab] = useState<PageTab>("pools");
@@ -57,6 +58,16 @@ const Borrow: React.FC = () => {
           Pools
         </button>
         <button
+          onClick={() => setActiveTab("liquidations")}
+          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+            activeTab === "liquidations"
+              ? "bg-[#229EDF] text-white"
+              : "text-white/40 hover:text-white/70"
+          }`}
+        >
+          Liquidations
+        </button>
+        <button
           onClick={() => setActiveTab("positions")}
           className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
             activeTab === "positions"
@@ -95,6 +106,8 @@ const Borrow: React.FC = () => {
           )}
         </>
       )}
+
+      {activeTab === "liquidations" && <LiquidationsSection />}
 
       {activeTab === "positions" && <MyBorrowPositions />}
     </PageContainer>
