@@ -30,6 +30,9 @@ import { FiatAccountSelector } from "../ui/FiatAccountSelector";
 import { TransactionStatusDisplay } from "../ui/TransactionStatus";
 
 const isSandbox = process.env.NEXT_PUBLIC_STELLAR_NETWORK !== "PUBLIC";
+const etherfusePortalUrl = isSandbox
+  ? "https://devnet.etherfuse.com"
+  : "https://app.etherfuse.com";
 
 const OnOffRamps: React.FC = () => {
   const { address, signTransaction } = useWallet();
@@ -104,12 +107,10 @@ const OnOffRamps: React.FC = () => {
   } = useOffRamp(state.provider, signTransaction);
 
   // Fiat Accounts (for off-ramp)
-  const {
-    accounts,
-    isLoading: isLoadingAccounts,
-    addFiatAccount,
-    isRegistering,
-  } = useFiatAccounts(state.provider, customerId);
+  const { accounts, isLoading: isLoadingAccounts } = useFiatAccounts(
+    state.provider,
+    customerId
+  );
 
   // Derived
   const isOnRamp = state.direction === "on";
@@ -376,11 +377,10 @@ const OnOffRamps: React.FC = () => {
             onSelect={(account) =>
               dispatch({ type: "SET_FIAT_ACCOUNT", account })
             }
-            onAddNew={async (data) => {
-              await addFiatAccount(data);
-            }}
             isLoading={isLoadingAccounts}
-            isRegistering={isRegistering}
+            addAccountUrl={
+              state.provider === "etherfuse" ? etherfusePortalUrl : undefined
+            }
           />
         )}
 

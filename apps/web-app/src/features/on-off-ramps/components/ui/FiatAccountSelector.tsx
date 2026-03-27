@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Plus } from "lucide-react";
+import React from "react";
+import { ExternalLink } from "lucide-react";
 import type { SavedFiatAccount } from "@/lib/anchors/types";
 import { maskClabe } from "../../utils/formatters";
 
@@ -9,57 +9,18 @@ interface FiatAccountSelectorProps {
   accounts: SavedFiatAccount[];
   selected: SavedFiatAccount | null;
   onSelect: (account: SavedFiatAccount) => void;
-  onAddNew: (data: {
-    clabe: string;
-    beneficiary: string;
-    bankName?: string;
-  }) => Promise<void>;
   isLoading?: boolean;
-  isRegistering?: boolean;
+  /** If provided, shows a "need another account?" hint linking to this URL */
+  addAccountUrl?: string;
 }
 
 export const FiatAccountSelector: React.FC<FiatAccountSelectorProps> = ({
   accounts,
   selected,
   onSelect,
-  onAddNew,
   isLoading,
-  isRegistering,
+  addAccountUrl,
 }) => {
-  const [showForm, setShowForm] = useState(accounts.length === 0);
-  const [clabe, setClabe] = useState("");
-  const [beneficiary, setBeneficiary] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-    if (clabe.length !== 18) {
-      setFormError("CLABE must be 18 digits");
-      return;
-    }
-    if (!beneficiary.trim()) {
-      setFormError("Beneficiary name is required");
-      return;
-    }
-    try {
-      await onAddNew({
-        clabe,
-        beneficiary: beneficiary.trim(),
-        bankName: bankName.trim() || undefined,
-      });
-      setShowForm(false);
-      setClabe("");
-      setBeneficiary("");
-      setBankName("");
-    } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message : "Failed to register account"
-      );
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="bg-[#1C1C1C] rounded-[20px] p-5">
@@ -74,7 +35,11 @@ export const FiatAccountSelector: React.FC<FiatAccountSelectorProps> = ({
         Receive payment to
       </span>
 
-      {accounts.length > 0 && !showForm && (
+      {accounts.length === 0 ? (
+        <p className="text-white/40 text-sm text-center py-2">
+          No bank accounts found. Complete KYC verification to register one.
+        </p>
+      ) : (
         <div className="flex flex-col gap-2">
           {accounts.map((account) => (
             <button
@@ -101,72 +66,27 @@ export const FiatAccountSelector: React.FC<FiatAccountSelectorProps> = ({
               )}
             </button>
           ))}
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 p-3 rounded-xl border border-dashed border-white/20 text-white/40 hover:text-white/60 hover:border-white/40 transition-all text-sm"
-          >
-            <Plus className="h-4 w-4" />
-            Add new bank account
-          </button>
         </div>
       )}
 
-      {(showForm || accounts.length === 0) && (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-white/40 text-xs">CLABE (18 digits)</label>
-            <input
-              type="text"
-              value={clabe}
-              onChange={(e) =>
-                setClabe(e.target.value.replace(/\D/g, "").slice(0, 18))
-              }
-              placeholder="000000000000000000"
-              className="bg-[#2A2A2A] text-white rounded-xl px-4 py-3 text-sm font-mono outline-none border border-white/10 focus:border-[#229EDF] transition-colors"
-            />
+      {addAccountUrl && (
+        <div className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+          <div className="flex-1">
+            <p className="text-white/60 text-xs">
+              Need to add or change a bank account? Bank accounts are managed
+              through the Etherfuse portal during KYC verification.
+            </p>
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-white/40 text-xs">Beneficiary Name</label>
-            <input
-              type="text"
-              value={beneficiary}
-              onChange={(e) => setBeneficiary(e.target.value)}
-              placeholder="Full name on account"
-              className="bg-[#2A2A2A] text-white rounded-xl px-4 py-3 text-sm outline-none border border-white/10 focus:border-[#229EDF] transition-colors"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-white/40 text-xs">
-              Bank Name (optional)
-            </label>
-            <input
-              type="text"
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              placeholder="e.g. BBVA, Santander"
-              className="bg-[#2A2A2A] text-white rounded-xl px-4 py-3 text-sm outline-none border border-white/10 focus:border-[#229EDF] transition-colors"
-            />
-          </div>
-          {formError && <p className="text-red-400 text-xs">{formError}</p>}
-          <div className="flex gap-2">
-            {accounts.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="flex-1 py-3 rounded-xl bg-[#2A2A2A] text-white/60 text-sm font-medium"
-              >
-                Cancel
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={isRegistering}
-              className="flex-1 py-3 rounded-xl bg-[#229EDF] hover:bg-[#1a8bc7] text-white font-semibold text-sm transition-colors disabled:opacity-50"
-            >
-              {isRegistering ? "Registering..." : "Save Account"}
-            </button>
-          </div>
-        </form>
+          <a
+            href={addAccountUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 flex items-center gap-1 text-[#229EDF] hover:text-[#1a8bc7] text-xs font-medium transition-colors"
+          >
+            Open portal
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
       )}
     </div>
   );
