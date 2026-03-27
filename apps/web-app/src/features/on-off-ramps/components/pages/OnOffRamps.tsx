@@ -18,6 +18,7 @@ import { useAnchorKyc } from "../../hooks/useAnchorKyc";
 import { useOnRamp } from "../../hooks/useOnRamp";
 import { useOffRamp } from "../../hooks/useOffRamp";
 import { useFiatAccounts } from "../../hooks/useFiatAccounts";
+import { useEtherfuseTrustline } from "../../hooks/useEtherfuseTrustline";
 
 import { ProviderSelector } from "../ui/ProviderSelector";
 import { RampDirectionTabs } from "../ui/RampDirectionTabs";
@@ -80,6 +81,15 @@ const OnOffRamps: React.FC = () => {
     isPolling: isPollingOnRamp,
     startOnRamp,
   } = useOnRamp(state.provider);
+
+  // Trustline check (Etherfuse on-ramp only — after order is created)
+  const { hasTrustline, isAddingTrustline, trustlineError, addTrustline } =
+    useEtherfuseTrustline(
+      state.provider,
+      address,
+      state.direction === "on" && !!quote,
+      signTransaction
+    );
 
   // Off-Ramp
   const {
@@ -282,6 +292,27 @@ const OnOffRamps: React.FC = () => {
             onStartKyc={() => void openKycFlow()}
             isLoading={isCheckingKyc}
           />
+        )}
+
+        {/* Trustline warning — shown after quote, before confirming on-ramp */}
+        {isOnRamp && quote && !currentTx && !hasTrustline && (
+          <div className="flex items-center justify-between gap-3 bg-orange-400/10 border border-orange-400/20 rounded-xl px-4 py-3">
+            <div>
+              <p className="text-orange-400 text-sm font-medium">
+                CETES trustline not enabled
+              </p>
+              <p className="text-white/40 text-xs">
+                You need a trustline to receive CETES in your wallet.
+              </p>
+            </div>
+            <button
+              onClick={() => addTrustline()}
+              disabled={isAddingTrustline}
+              className="shrink-0 px-4 py-2 rounded-lg bg-orange-400 hover:bg-orange-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {isAddingTrustline ? "Enabling..." : "Enable Trustline"}
+            </button>
+          </div>
         )}
 
         {/* Polling KYC banner - let user know to refresh */}

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import type { TransactionStatus } from "@/lib/anchors/types";
 
@@ -27,6 +28,7 @@ export const TransactionStatusDisplay: React.FC<TransactionStatusProps> = ({
   transactionId,
   onDone,
 }) => {
+  const router = useRouter();
   const isComplete = status === "completed";
   const isError = ["failed", "expired", "cancelled"].includes(status);
   const isPending = !isComplete && !isError;
@@ -63,10 +65,13 @@ export const TransactionStatusDisplay: React.FC<TransactionStatusProps> = ({
 
       {(isComplete || isError) && (
         <button
-          onClick={onDone}
+          onClick={() => {
+            onDone();
+            if (isComplete) router.push("/dashboard");
+          }}
           className="w-full py-3 rounded-xl bg-[#229EDF] hover:bg-[#1a8bc7] text-white font-semibold transition-colors"
         >
-          {isComplete ? "Done" : "Try Again"}
+          {isComplete ? "Go to Dashboard" : "Try Again"}
         </button>
       )}
     </div>

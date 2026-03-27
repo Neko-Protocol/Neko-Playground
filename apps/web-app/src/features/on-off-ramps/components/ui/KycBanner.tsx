@@ -35,11 +35,8 @@ export const KycBanner: React.FC<KycBannerProps> = ({
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 animate-pulse h-12" />
-    );
-  }
+  // While loading and no cached status, render nothing to avoid flash.
+  if (isLoading && !status) return null;
 
   if (
     !status ||

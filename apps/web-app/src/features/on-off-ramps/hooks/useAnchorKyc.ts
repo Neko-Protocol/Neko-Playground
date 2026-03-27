@@ -21,6 +21,12 @@ export function useAnchorKyc(
     queryFn: () => getKycStatus(provider, customerId!, publicKey),
     enabled: !!customerId,
     staleTime: 30_000,
+    // Poll every 30 s while the user hasn't finished KYC so the banner
+    // updates automatically when they complete the Hosted UI.
+    refetchInterval: (query) => {
+      const status = query.state.data;
+      return status === "approved" || status === "pending" ? false : 15_000;
+    },
   });
 
   const isKycRequired =

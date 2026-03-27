@@ -260,6 +260,18 @@ export async function registerFiatAccount(
   });
 }
 
+// Assets (Etherfuse — trustline check)
+export async function getEtherfuseAssets(
+  provider: AnchorProvider,
+  wallet: string
+): Promise<{
+  assets: { symbol: string; identifier: string; balance: string | null }[];
+}> {
+  return apiFetch(
+    `${BASE}/${provider}/assets?wallet=${encodeURIComponent(wallet)}`
+  );
+}
+
 // Sandbox
 export async function simulateFiatReceived(
   provider: AnchorProvider,
