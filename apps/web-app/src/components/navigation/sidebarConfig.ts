@@ -11,11 +11,11 @@ import {
 
 export const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Discover", href: "/discover", icon: BarChart2 },
   { label: "Lend", href: "/lending", icon: TrendingUp },
   { label: "Borrow", href: "/borrowing", icon: Landmark },
   { label: "Swap", href: "/swap", icon: ArrowLeftRight },
   { label: "Ramps", href: "/ramps", icon: Banknote },
-  { label: "Discover", href: "/discover", icon: BarChart2 },
   { label: "Settings", href: "/settings", icon: Settings },
   { label: "Admin", href: "/dashboard/admin", icon: Shield, adminOnly: true },
 ] as const;
