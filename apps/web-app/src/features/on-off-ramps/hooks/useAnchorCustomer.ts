@@ -1,0 +1,154 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { createCustomer, getCustomer } from "../utils/rampApi";
+import type { AnchorProvider } from "@/lib/anchors/types";
+import {
+  CUSTOMER_ID_STORAGE_KEY,
+  BANK_ACCOUNT_ID_STORAGE_KEY,
+  ONBOARDING_URL_STORAGE_KEY,
+} from "../constants/ramp.config";
+
+function getStoredId(key: string, provider: AnchorProvider): string | null {
+  try {
+    const stored = localStorage.getItem(key);
+    if (!stored) return null;
+    const map = JSON.parse(stored) as Record<string, string>;
+    return map[provider] || null;
+  } catch {
+    return null;
+  }
+}
+
+function storeId(key: string, provider: AnchorProvider, id: string) {
+  try {
+    const stored = localStorage.getItem(key);
+    const map = stored ? (JSON.parse(stored) as Record<string, string>) : {};
+    map[provider] = id;
+    localStorage.setItem(key, JSON.stringify(map));
+  } catch {
+    // ignore
+  }
+}
+
+export function useAnchorCustomer(provider: AnchorProvider) {
+  const [customerId, setCustomerId] = useState<string | null>(() =>
+    getStoredId(CUSTOMER_ID_STORAGE_KEY, provider)
+  );
+  const [bankAccountId, setBankAccountId] = useState<string | null>(() =>
+    getStoredId(BANK_ACCOUNT_ID_STORAGE_KEY, provider)
+  );
+  const [onboardingUrl, setOnboardingUrl] = useState<string | null>(() =>
+    getStoredId(ONBOARDING_URL_STORAGE_KEY, provider)
+  );
+
+  const { mutateAsync: ensureCustomer, isPending } = useMutation({
+    mutationFn: async ({
+      email,
+      publicKey,
+    }: {
+      email?: string;
+      publicKey?: string;
+    }) => {
+      // Return stored IDs if already present
+      const storedCustomerId = getStoredId(CUSTOMER_ID_STORAGE_KEY, provider);
+      const storedBankAccountId = getStoredId(
+        BANK_ACCOUNT_ID_STORAGE_KEY,
+        provider
+      );
+      const storedOnboardingUrl = getStoredId(
+        ONBOARDING_URL_STORAGE_KEY,
+        provider
+      );
+      if (storedCustomerId && storedBankAccountId) {
+        return {
+          customerId: storedCustomerId,
+          bankAccountId: storedBankAccountId,
+          onboardingUrl: storedOnboardingUrl,
+        };
+      }
+
+      // Try to find existing customer
+      if (email) {
+        const existing = await getCustomer(provider, { email });
+        if (existing) {
+          storeId(CUSTOMER_ID_STORAGE_KEY, provider, existing.id);
+          if (existing.bankAccountId) {
+            storeId(
+              BANK_ACCOUNT_ID_STORAGE_KEY,
+              provider,
+              existing.bankAccountId
+            );
+          }
+          return {
+            customerId: existing.id,
+            bankAccountId: existing.bankAccountId,
+            onboardingUrl: null,
+          };
+        }
+      }
+
+      // Create new customer
+      const customer = await createCustomer(provider, {
+        email,
+        publicKey,
+        country: "MX",
+      });
+      storeId(CUSTOMER_ID_STORAGE_KEY, provider, customer.id);
+      if (customer.bankAccountId) {
+        storeId(BANK_ACCOUNT_ID_STORAGE_KEY, provider, customer.bankAccountId);
+      }
+      // Store the onboarding URL from initial registration — it cannot
+      // be re-fetched later (Etherfuse returns 409 for existing users).
+      if (customer.onboardingUrl) {
+        storeId(ONBOARDING_URL_STORAGE_KEY, provider, customer.onboardingUrl);
+      }
+      return {
+        customerId: customer.id,
+        bankAccountId: customer.bankAccountId,
+        onboardingUrl: customer.onboardingUrl ?? null,
+      };
+    },
+    onSuccess: ({
+      customerId: cid,
+      bankAccountId: bid,
+      onboardingUrl: url,
+    }) => {
+      setCustomerId(cid);
+      if (bid) setBankAccountId(bid);
+      if (url) setOnboardingUrl(url);
+    },
+  });
+
+  const resetCustomer = useCallback(() => {
+    try {
+      for (const key of [
+        CUSTOMER_ID_STORAGE_KEY,
+        BANK_ACCOUNT_ID_STORAGE_KEY,
+        ONBOARDING_URL_STORAGE_KEY,
+      ]) {
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          const map = JSON.parse(stored) as Record<string, string>;
+          delete map[provider];
+          localStorage.setItem(key, JSON.stringify(map));
+        }
+      }
+    } catch {
+      // ignore
+    }
+    setCustomerId(null);
+    setBankAccountId(null);
+    setOnboardingUrl(null);
+  }, [provider]);
+
+  return {
+    customerId,
+    bankAccountId,
+    onboardingUrl,
+    ensureCustomer,
+    isPending,
+    resetCustomer,
+  };
+}
