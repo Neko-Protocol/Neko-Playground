@@ -43,7 +43,7 @@ export const RAMP_PROVIDERS: Record<AnchorProvider, ProviderConfig> = {
   },
 };
 
-export const DEFAULT_PROVIDER: AnchorProvider = "alfredpay";
+export const DEFAULT_PROVIDER: AnchorProvider = "etherfuse";
 export const POLL_INTERVAL_MS = 5_000;
 export const MAX_POLL_DURATION_MS = 5 * 60 * 1_000; // 5 minutes
 export const CUSTOMER_ID_STORAGE_KEY = "neko_anchor_customer_ids";
