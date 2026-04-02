@@ -4,10 +4,10 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { X, Copy, Check, Droplets, Zap, FileText } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
-import type { VaultData } from "../../types/vault";
+import type { VaultView } from "../../types/vault";
 
 interface VaultDetailModalProps {
-  vault: VaultData;
+  vault: VaultView;
   onClose: () => void;
 }
 

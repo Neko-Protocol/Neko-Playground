@@ -1,4 +1,4 @@
-import type { VaultData, VaultAsset } from "../types/vault";
+import type { VaultAsset, VaultConfig, VaultStats } from "../types/vault";
 
 const USDC: VaultAsset = {
   symbol: "USDC",
@@ -11,33 +11,27 @@ const USDC: VaultAsset = {
 
 const CETES: VaultAsset = {
   symbol: "CETES",
-  name: "Certificados de la Tesorería",
+  name: "CETES",
   iconSrc: "/assets/vault-assets/cetes.svg",
   iconWhiteSrc: "/assets/vault-assets/cetes-white.svg",
   logoSrc: "/assets/cetes-logo.png",
   network: "Stellar",
 };
 
-export const MOCK_VAULTS: VaultData[] = [
-  {
-    id: "neko-usdc-cetes-vault",
+export const VAULT_REGISTRY: Record<string, VaultConfig> = {
+  "neko-usdc-cetes": {
+    id: "neko-usdc-cetes",
     name: "Neko USDC-CETES Vault",
     description:
       "High-yield USDC lending vault backed by real-world CETES collateral on Stellar.",
     category: "lending",
     status: "active",
     supplyAsset: USDC,
+    collateralAssets: [USDC, CETES],
     createdBy: "Neko Protocol",
     creatorIconSrc: "/Neko.svg",
-    tvl: "$14.94M",
-    apy7d: "14.94%",
-    totalSupply: "14,940,000 USDC",
-    utilization: "82%",
-    collateralAssets: [USDC, CETES],
-    riskLevel: "low",
-    minDeposit: "100 USDC",
-    featured: true,
     variant: "light",
+    featured: true,
     detail: {
       description:
         "Deposit USDC to gain exposure to tokenized CETES and earn yield through automated strategies across AMMs and lending protocols on Stellar.",
@@ -73,12 +67,21 @@ export const MOCK_VAULTS: VaultData[] = [
       },
       liquidity:
         "Withdrawals are available at any time, subject to liquidity conditions across underlying protocols.",
-      risks: [
-        "Smart contract risk",
-        "DeFi protocol risk",
-        "Tokenized asset (CETES) risk",
-        "Stablecoin (USDC) risk",
-      ],
     },
   },
-];
+};
+
+export const MOCK_STATS: Record<string, VaultStats> = {
+  "neko-usdc-cetes": {
+    tvl: "$14.94M",
+    apy7d: "14.94%",
+    utilization: "82%",
+    totalSupply: "14,940,000 USDC",
+  },
+  "neko-cetes-yield": {
+    tvl: "$8.21M",
+    apy7d: "11.50%",
+    utilization: "71%",
+    totalSupply: "8,210,000 CETES",
+  },
+};

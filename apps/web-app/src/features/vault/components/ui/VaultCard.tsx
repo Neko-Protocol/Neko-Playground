@@ -2,12 +2,12 @@
 
 import React from "react";
 import Image from "next/image";
-import type { VaultData, VaultCategory } from "../../types/vault";
+import type { VaultView, VaultCategory } from "../../types/vault";
 import { VaultAssetIllustrations } from "./VaultAssetIllustrations";
 
 interface VaultCardProps {
-  vault: VaultData;
-  onDetailsClick?: (vault: VaultData) => void;
+  vault: VaultView;
+  onDetailsClick?: (vault: VaultView) => void;
 }
 
 const CATEGORY_LABEL: Record<VaultCategory, string> = {

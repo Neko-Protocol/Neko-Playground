@@ -1,15 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { VaultGrid } from "../ui/VaultGrid";
 import { VaultDetailModal } from "../ui/VaultDetailModal";
-import { MOCK_VAULTS } from "../../const/vaults";
-import type { VaultData } from "../../types/vault";
+import { VAULT_REGISTRY, MOCK_STATS } from "../../const/vaults";
+import type { VaultView } from "../../types/vault";
 
 const Vault: React.FC = () => {
-  const [selectedVault, setSelectedVault] = useState<VaultData | null>(null);
+  const [selectedVault, setSelectedVault] = useState<VaultView | null>(null);
+
+  // Merges static config with live stats. Swap MOCK_STATS for useVaultStats() when ready.
+  const vaults = useMemo<VaultView[]>(
+    () =>
+      Object.values(VAULT_REGISTRY).map((config) => ({
+        ...config,
+        ...MOCK_STATS[config.id],
+      })),
+    []
+  );
 
   return (
     <PageContainer maxWidth="6xl">
@@ -22,7 +32,7 @@ const Vault: React.FC = () => {
         className="mb-8"
       />
 
-      <VaultGrid vaults={MOCK_VAULTS} onDetailsClick={setSelectedVault} />
+      <VaultGrid vaults={vaults} onDetailsClick={setSelectedVault} />
 
       {selectedVault && (
         <VaultDetailModal

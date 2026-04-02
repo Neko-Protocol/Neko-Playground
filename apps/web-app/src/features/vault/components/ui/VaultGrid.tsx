@@ -2,12 +2,12 @@
 
 import React from "react";
 import { Vault } from "lucide-react";
-import type { VaultData } from "../../types/vault";
+import type { VaultView } from "../../types/vault";
 import { VaultCard } from "./VaultCard";
 
 interface VaultGridProps {
-  vaults: VaultData[];
-  onDetailsClick?: (vault: VaultData) => void;
+  vaults: VaultView[];
+  onDetailsClick?: (vault: VaultView) => void;
 }
 
 export const VaultGrid: React.FC<VaultGridProps> = ({

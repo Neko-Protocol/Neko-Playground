@@ -29,26 +29,31 @@ export interface VaultDetail {
   strategies: VaultStrategy[];
   contracts: VaultContracts;
   liquidity: string;
-  risks: string[];
 }
 
-export interface VaultData {
+/** Static metadata — defined by the protocol, never changes at runtime. */
+export interface VaultConfig {
   id: string;
   name: string;
   description: string;
   category: VaultCategory;
   status: VaultStatus;
   supplyAsset: VaultAsset;
+  collateralAssets: VaultAsset[];
   createdBy: string;
   creatorIconSrc?: string;
-  tvl: string;
-  apy7d: string;
-  totalSupply: string;
-  utilization: string;
-  collateralAssets: VaultAsset[];
-  riskLevel: "low" | "medium" | "high";
-  minDeposit: string;
-  featured?: boolean;
   variant?: VaultCardVariant;
+  featured?: boolean;
   detail?: VaultDetail;
 }
+
+/** Dynamic data — fetched from contracts at runtime. */
+export interface VaultStats {
+  tvl: string;
+  apy7d: string;
+  utilization: string;
+  totalSupply: string;
+}
+
+/** View model consumed by UI components: static config merged with live stats. */
+export type VaultView = VaultConfig & VaultStats;
