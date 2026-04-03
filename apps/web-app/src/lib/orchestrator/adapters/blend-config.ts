@@ -11,7 +11,7 @@ export function getBlendNetwork(): Network {
 
 export const BLEND_POOLS: Record<string, string[]> = {
   TESTNET: ["CCEBVDYM32YNYCVNRXQKDFFPISJJCV557CDZEIRBEE4NCV4KHPQ44HGF"],
-  PUBLIC: [],
+  PUBLIC: ["CDMAVJPFXPADND3YRL4BSM3AKZWCTFMX27GLLXCML3PD62HEQS5FPVAI"],
 };
 
 export function getBlendPoolIds(): string[] {
