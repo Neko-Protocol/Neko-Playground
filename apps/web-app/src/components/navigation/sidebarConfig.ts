@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   Landmark,
-  TrendingUp,
   BarChart2,
   Settings,
   Shield,
@@ -12,8 +11,7 @@ import {
 export const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Discover", href: "/discover", icon: BarChart2 },
-  { label: "Lend", href: "/lending", icon: TrendingUp },
-  { label: "Borrow", href: "/borrowing", icon: Landmark },
+  { label: "Pools", href: "/pools", icon: Landmark },
   { label: "Swap", href: "/swap", icon: ArrowLeftRight },
   { label: "Ramps", href: "/ramps", icon: Banknote },
   { label: "Settings", href: "/settings", icon: Settings },
