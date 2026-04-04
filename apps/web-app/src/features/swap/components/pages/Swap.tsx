@@ -180,12 +180,11 @@ const Swap: React.FC = () => {
   const { balance: tokenInBalance, isLoading: isLoadingBalance } =
     useTokenBalance(tokenIn as Token | string | undefined);
 
-  const { amountOut: quoteAmountOut, isLoadingQuote } = useSwapQuote(
-    address,
-    amountIn,
-    tokenIn,
-    tokenOut
-  );
+  const {
+    amountOut: quoteAmountOut,
+    isLoadingQuote,
+    quoteError,
+  } = useSwapQuote(address, amountIn, tokenIn, tokenOut);
 
   useEffect(() => {
     if (quoteAmountOut) {
@@ -235,9 +234,13 @@ const Swap: React.FC = () => {
         return;
       }
 
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to complete swap";
-      addNotification("Something went wrong", "error", {
+      const contractError = extractContractErrorOrNull(err);
+      const errorMessage = contractError
+        ? `Contract error: ${contractError}`
+        : err instanceof Error
+          ? err.message
+          : "Failed to complete swap";
+      addNotification("Swap failed", "error", {
         ...TOAST_CONFIG.defaultOpts,
         description: errorMessage,
       });
@@ -362,6 +365,9 @@ const Swap: React.FC = () => {
                   />
                 )}
               </div>
+              {quoteError && !isLoadingQuote && (
+                <p className="text-red-400 text-xs mt-1.5">{quoteError}</p>
+              )}
             </div>
 
             <BalanceCard

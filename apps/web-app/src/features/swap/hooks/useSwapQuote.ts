@@ -7,10 +7,13 @@ import {
   QUOTE_REFRESH_INTERVAL_MS,
 } from "@/features/swap/constants/swapConfig";
 
+const MAX_CONSECUTIVE_FAILURES = 3;
+
 export interface SwapQuoteState {
   amountOut: string;
   isLoadingQuote: boolean;
   apiKeyConfigured: boolean;
+  quoteError: string | null;
 }
 
 export interface SwapQuoteActions {
@@ -26,9 +29,11 @@ export function useSwapQuote(
   const [amountOut, setAmountOut] = useState<string>("0.0");
   const [isLoadingQuote, setIsLoadingQuote] = useState<boolean>(false);
   const [apiKeyConfigured, setApiKeyConfigured] = useState<boolean>(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
 
   const quoteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const quoteIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const failureCountRef = useRef<number>(0);
 
   const { fetchStellarQuote, cancelStellarQuote } = useStellarQuote(
     amountIn,
@@ -55,18 +60,42 @@ export function useSwapQuote(
     ) {
       setAmountOut("0.0");
       setIsLoadingQuote(false);
+      setQuoteError(null);
       return;
     }
 
     try {
       const result = await fetchStellarQuote();
-      if (result !== null) {
-        setAmountOut(result);
+
+      if (result.amount !== null) {
+        setAmountOut(result.amount);
         setIsLoadingQuote(false);
+        setQuoteError(null);
+        failureCountRef.current = 0;
+        return;
       }
-      // null → no quote yet, keep loading (interval will retry)
+
+      if (result.error) {
+        failureCountRef.current += 1;
+        if (failureCountRef.current >= MAX_CONSECUTIVE_FAILURES) {
+          setIsLoadingQuote(false);
+          setQuoteError(result.error);
+          if (quoteIntervalRef.current) {
+            clearInterval(quoteIntervalRef.current);
+            quoteIntervalRef.current = null;
+          }
+        }
+      }
     } catch {
-      // keep loading on error, interval will retry
+      failureCountRef.current += 1;
+      if (failureCountRef.current >= MAX_CONSECUTIVE_FAILURES) {
+        setIsLoadingQuote(false);
+        setQuoteError("Failed to get quote — try again");
+        if (quoteIntervalRef.current) {
+          clearInterval(quoteIntervalRef.current);
+          quoteIntervalRef.current = null;
+        }
+      }
     }
   }, [address, amountIn, fetchStellarQuote]);
 
@@ -92,16 +121,20 @@ export function useSwapQuote(
 
     if (!isValid || !address) {
       setAmountOut("0.0");
+      setQuoteError(null);
       return;
     }
 
     if (!apiKeyConfigured) {
       setAmountOut("0.0");
+      setQuoteError(null);
       return;
     }
 
     setAmountOut("0.0");
     setIsLoadingQuote(true);
+    setQuoteError(null);
+    failureCountRef.current = 0;
 
     quoteTimeoutRef.current = setTimeout(() => {
       void fetchLiveQuote();
@@ -156,6 +189,7 @@ export function useSwapQuote(
     amountOut,
     isLoadingQuote,
     apiKeyConfigured,
+    quoteError,
     fetchLiveQuote,
   };
 }

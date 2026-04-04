@@ -53,7 +53,9 @@ export function useSwapExecution() {
       const newQuote = await getQuote(quoteRequest);
 
       if (!newQuote) {
-        throw new Error("Failed to get quote for swap");
+        throw new Error(
+          "No liquidity found for this pair — try a different token combination"
+        );
       }
 
       const buildResult = await buildTransaction({
