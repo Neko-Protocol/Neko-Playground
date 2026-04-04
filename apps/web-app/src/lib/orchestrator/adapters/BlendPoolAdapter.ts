@@ -261,6 +261,22 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     return this.buildSubmitTx(rawId, userAddress, amount, "repay");
   }
 
+  async supplyCollateral(
+    rawId: string,
+    userAddress: string,
+    amount: bigint
+  ): Promise<TransactionResult> {
+    return this.buildSubmitTx(rawId, userAddress, amount, "supplyCollateral");
+  }
+
+  async withdrawCollateral(
+    rawId: string,
+    userAddress: string,
+    amount: bigint
+  ): Promise<TransactionResult> {
+    return this.buildSubmitTx(rawId, userAddress, amount, "withdrawCollateral");
+  }
+
   async claimRewards(
     rawId: string,
     userAddress: string

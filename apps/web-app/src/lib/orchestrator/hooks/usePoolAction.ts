@@ -32,7 +32,6 @@ export function usePoolAction() {
 
       switch (action) {
         case "deposit":
-        case "supplyCollateral":
           result = await orchestrator.deposit(
             poolId,
             address,
@@ -40,13 +39,22 @@ export function usePoolAction() {
             tokenIndex
           );
           break;
+        case "supplyCollateral":
+          result = await orchestrator.supplyCollateral(poolId, address, amount);
+          break;
         case "withdraw":
-        case "withdrawCollateral":
           result = await orchestrator.withdraw(
             poolId,
             address,
             amount,
             tokenIndex
+          );
+          break;
+        case "withdrawCollateral":
+          result = await orchestrator.withdrawCollateral(
+            poolId,
+            address,
+            amount
           );
           break;
         case "borrow":

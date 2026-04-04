@@ -77,6 +77,32 @@ export class Orchestrator {
     return adapter.repay(rawId, userAddress, amount);
   }
 
+  async supplyCollateral(
+    poolId: string,
+    userAddress: string,
+    amount: bigint
+  ): Promise<TransactionResult> {
+    const adapter = this.registry.resolve(poolId);
+    if (!adapter.supplyCollateral) {
+      throw new UnsupportedActionError(adapter.type, "supplyCollateral");
+    }
+    const rawId = PoolRegistry.stripPrefix(poolId);
+    return adapter.supplyCollateral(rawId, userAddress, amount);
+  }
+
+  async withdrawCollateral(
+    poolId: string,
+    userAddress: string,
+    amount: bigint
+  ): Promise<TransactionResult> {
+    const adapter = this.registry.resolve(poolId);
+    if (!adapter.withdrawCollateral) {
+      throw new UnsupportedActionError(adapter.type, "withdrawCollateral");
+    }
+    const rawId = PoolRegistry.stripPrefix(poolId);
+    return adapter.withdrawCollateral(rawId, userAddress, amount);
+  }
+
   async claimRewards(
     poolId: string,
     userAddress: string
