@@ -30,7 +30,10 @@ export function LendModal({
 }: LendModalProps) {
   const [amount, setAmount] = useState("");
 
+  const isAggregated = !!pool.isAggregated;
+
   const bTokensToBurn = useMemo(() => {
+    if (isAggregated) return null;
     if (
       !amount ||
       parseFloat(amount) <= 0 ||
@@ -39,28 +42,34 @@ export function LendModal({
     )
       return null;
     return (parseFloat(amount) / parseFloat(pool.bTokenRate)).toFixed(7);
-  }, [amount, pool.bTokenRate]);
+  }, [amount, pool.bTokenRate, isAggregated]);
 
   const canSubmit =
     hasWallet &&
     !!amount &&
     parseFloat(amount) > 0 &&
     (isDeposit ||
+      isAggregated ||
       (!!bTokensToBurn &&
         parseFloat(bTokensToBurn) > 0 &&
         (bTokenBalance === null ||
           parseFloat(bTokensToBurn) <= parseFloat(bTokenBalance))));
 
-  const stats = [
-    { label: "Supply APY", value: pool.roi },
-    { label: "Liquidity", value: pool.liquidity },
-    {
-      label: "bToken Rate",
-      value: pool.bTokenRate
-        ? parseFloat(pool.bTokenRate).toFixed(4)
-        : "1.0000",
-    },
-  ];
+  const stats = isAggregated
+    ? [
+        { label: "Supply APY", value: pool.roi },
+        { label: "Liquidity", value: pool.liquidity },
+      ]
+    : [
+        { label: "Supply APY", value: pool.roi },
+        { label: "Liquidity", value: pool.liquidity },
+        {
+          label: "bToken Rate",
+          value: pool.bTokenRate
+            ? parseFloat(pool.bTokenRate).toFixed(4)
+            : "1.0000",
+        },
+      ];
 
   const modalContent = (
     <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate__animated animate__fadeIn animate__faster">
@@ -90,7 +99,7 @@ export function LendModal({
           ))}
         </div>
 
-        {!isDeposit && (
+        {!isDeposit && !isAggregated && (
           <div className="mb-3 rounded-xl bg-[#229EDF]/10 border border-[#229EDF]/20 p-3 flex items-center justify-between">
             <div className="min-w-0">
               <p className="text-[#229EDF]/70 text-xs">Your bToken Balance</p>
@@ -124,7 +133,7 @@ export function LendModal({
             disabled={isLoading}
             className="w-full bg-[#2A2A2A] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-[#229EDF]/50 transition-colors disabled:opacity-50"
           />
-          {!isDeposit && amount && bTokensToBurn && (
+          {!isDeposit && !isAggregated && amount && bTokensToBurn && (
             <p className="text-white/30 text-xs mt-1 italic">
               You will burn ~{parseFloat(bTokensToBurn).toFixed(4)} bTokens
             </p>
