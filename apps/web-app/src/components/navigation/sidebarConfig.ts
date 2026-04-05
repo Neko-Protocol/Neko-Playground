@@ -7,14 +7,16 @@ import {
   Settings,
   Shield,
   Banknote,
+  Vault,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Discover", href: "/discover", icon: BarChart2 },
-  { label: "Lend", href: "/lending", icon: TrendingUp },
-  { label: "Borrow", href: "/borrowing", icon: Landmark },
   { label: "Swap", href: "/swap", icon: ArrowLeftRight },
+  { label: "Borrow", href: "/borrowing", icon: Landmark },
+  { label: "Lend", href: "/lending", icon: TrendingUp },
+  { label: "Vault", href: "/vaults", icon: Vault },
   { label: "Ramps", href: "/ramps", icon: Banknote },
   { label: "Settings", href: "/settings", icon: Settings },
   { label: "Admin", href: "/dashboard/admin", icon: Shield, adminOnly: true },

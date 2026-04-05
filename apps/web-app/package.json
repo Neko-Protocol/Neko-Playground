@@ -17,6 +17,7 @@
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
     "@neko/config": "0.0.0",
+    "@neko/defindex-vault": "0.0.0",
     "@neko/lending": "0.0.0",
     "@neko/oracle": "0.0.0",
     "@soroswap/sdk": "^0.3.8",
