@@ -9,6 +9,7 @@ import type { VaultView } from "../../types/vault";
 interface VaultDetailModalProps {
   vault: VaultView;
   onClose: () => void;
+  onDeposit?: () => void;
 }
 
 function CopyableAddress({
@@ -53,7 +54,11 @@ function CopyableAddress({
   );
 }
 
-export function VaultDetailModal({ vault, onClose }: VaultDetailModalProps) {
+export function VaultDetailModal({
+  vault,
+  onClose,
+  onDeposit,
+}: VaultDetailModalProps) {
   const detail = vault.detail;
   const [visible, setVisible] = useState(false);
 
@@ -222,6 +227,7 @@ export function VaultDetailModal({ vault, onClose }: VaultDetailModalProps) {
           <div className="px-5 py-4 border-t border-white/5 shrink-0">
             <button
               aria-label={`Deposit into ${vault.name}`}
+              onClick={onDeposit}
               className="w-full py-3 rounded-xl text-sm font-bold text-white transition-colors duration-200 bg-[#229EDF] hover:bg-[#1a8bc7]"
             >
               Deposit

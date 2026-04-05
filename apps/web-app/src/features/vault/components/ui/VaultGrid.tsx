@@ -7,12 +7,16 @@ import { VaultCard } from "./VaultCard";
 
 interface VaultGridProps {
   vaults: VaultView[];
+  isLoading?: boolean;
   onDetailsClick?: (vault: VaultView) => void;
+  onDepositClick?: () => void;
 }
 
 export const VaultGrid: React.FC<VaultGridProps> = ({
   vaults,
+  isLoading,
   onDetailsClick,
+  onDepositClick,
 }) => {
   if (vaults.length === 0) {
     return (
@@ -34,7 +38,9 @@ export const VaultGrid: React.FC<VaultGridProps> = ({
         <VaultCard
           key={vault.id}
           vault={vault}
+          isLoading={isLoading}
           onDetailsClick={onDetailsClick}
+          onDepositClick={onDepositClick}
         />
       ))}
     </div>

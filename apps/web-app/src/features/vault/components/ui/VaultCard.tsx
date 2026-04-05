@@ -7,7 +7,9 @@ import { VaultAssetIllustrations } from "./VaultAssetIllustrations";
 
 interface VaultCardProps {
   vault: VaultView;
+  isLoading?: boolean;
   onDetailsClick?: (vault: VaultView) => void;
+  onDepositClick?: () => void;
 }
 
 const CATEGORY_LABEL: Record<VaultCategory, string> = {
@@ -19,7 +21,9 @@ const CATEGORY_LABEL: Record<VaultCategory, string> = {
 
 export const VaultCard: React.FC<VaultCardProps> = ({
   vault,
+  isLoading,
   onDetailsClick,
+  onDepositClick,
 }) => {
   const isLight = (vault.variant ?? "light") === "light";
   const categoryLabel = CATEGORY_LABEL[vault.category];
@@ -161,7 +165,11 @@ export const VaultCard: React.FC<VaultCardProps> = ({
           <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
             TVL
           </span>
-          <span className="text-white text-base font-bold">{vault.tvl}</span>
+          {isLoading ? (
+            <div className="h-5 w-16 rounded bg-white/10 animate-pulse" />
+          ) : (
+            <span className="text-white text-base font-bold">{vault.tvl}</span>
+          )}
         </div>
 
         <div className="w-px bg-white/8 mx-4 shrink-0" />
@@ -171,9 +179,13 @@ export const VaultCard: React.FC<VaultCardProps> = ({
           <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
             APY (7d)
           </span>
-          <span className="text-[#4ADE80] text-base font-bold">
-            {vault.apy7d}
-          </span>
+          {isLoading ? (
+            <div className="h-5 w-14 rounded bg-white/10 animate-pulse" />
+          ) : (
+            <span className="text-[#4ADE80] text-base font-bold">
+              {vault.apy7d}
+            </span>
+          )}
         </div>
       </div>
 
@@ -191,6 +203,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
         </button>
         <button
           aria-label={`Deposit into ${vault.name}`}
+          onClick={onDepositClick}
           className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-[#229EDF]/50 hover:border-[#229EDF] text-[#229EDF] hover:text-white hover:bg-[#229EDF]/10 bg-transparent"
         >
           Deposit
