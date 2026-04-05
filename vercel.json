@@ -1,5 +1,11 @@
 {
   "installCommand": "npm install --legacy-peer-deps",
   "buildCommand": "turbo run build",
-  "outputDirectory": "apps/web-app/.next"
+  "outputDirectory": "apps/web-app/.next",
+  "crons": [
+    {
+      "path": "/api/vault/invest",
+      "schedule": "0 */6 * * *"
+    }
+  ]
 }
