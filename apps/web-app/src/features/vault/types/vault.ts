@@ -55,5 +55,13 @@ export interface VaultStats {
   totalSupply: string;
 }
 
+/** Raw data fetched from the DeFindex vault contract. */
+export interface VaultLiveStats {
+  tvl: bigint;
+  totalShares: bigint;
+  pricePerShare: bigint;
+  userShares?: bigint;
+}
+
 /** View model consumed by UI components: static config merged with live stats. */
 export type VaultView = VaultConfig & VaultStats;

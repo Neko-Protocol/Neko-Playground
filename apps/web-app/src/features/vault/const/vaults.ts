@@ -1,4 +1,4 @@
-import type { VaultAsset, VaultConfig, VaultStats } from "../types/vault";
+import type { VaultAsset, VaultConfig } from "../types/vault";
 
 const USDC: VaultAsset = {
   symbol: "USDC",
@@ -29,59 +29,43 @@ export const VAULT_REGISTRY: Record<string, VaultConfig> = {
     supplyAsset: USDC,
     collateralAssets: [USDC, CETES],
     createdBy: "Neko Protocol",
-    creatorIconSrc: "/Neko.svg",
+    creatorIconSrc: "/neko-logo.png",
     variant: "light",
     featured: true,
     detail: {
       description:
-        "Deposit USDC to gain exposure to tokenized CETES and earn yield through automated strategies across AMMs and lending protocols on Stellar.",
+        "Deposit CETES to earn yield through automated strategies across AMMs and lending protocols on Stellar.",
       strategies: [
         {
-          protocol: "Soroswap & Aquarius",
-          description: "AMM liquidity provision in the CETES/USDC pool.",
-        },
-        {
-          protocol: "Blend",
-          description: "Lending using CETES as collateral to borrow USDC.",
-        },
-        {
           protocol: "Neko",
+          description: "RWA lending pool using CETES as collateral.",
+        },
+        {
+          protocol: "Aquarius",
           description:
-            "Automated allocation and rebalancing across all strategies.",
+            "AMM liquidity provision in the CETES/USDC pool with AQUA rewards.",
+        },
+        {
+          protocol: "Soroswap",
+          description:
+            "Automated liquidity provision in the CETES/USDC trading pair.",
         },
       ],
       contracts: {
-        vault: "CBT6RCAKXKRNPNM5Z5CS7XX4VH2SQHHZZVHB2X7VRS77Q25HLDUGVEVZ",
+        vault: "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S",
         pools: {
           neko: "CB4HAFD6ECCOQZXOD6FXUVDM3E773LKR5JHVGA3DBJXIWHZUWX2THEDJ",
           aquarius: "CBJPT2SCZSUJQGBZHHCHLZJX3GVYLOPVUKF53ESH4NFQZMC2UFPDWHRI",
-          blend: "CBAIXNER3POGK3HSVY5FPNUNYFGMVZBN4IV7E6324573SXPUKHTISFZP",
           soroswap: "CD2TAYCQZEY7U5CTUOV5QSGWHJNN4ZRPRUSMN2KRM2ZE6ZGX5TNU76H2",
         },
         strategies: {
-          neko: "CA53D5GXDYN53YFZHBS6YMY54IC33NRTWUPATMGAL73QFNVDXRTONP3P",
-          aquarius: "CBZFU63CGG6Q5DRFYOG3VLAJEUHW55Y7XXD2O3RM2VCVMXDDALUHJZY7",
-          soroswap: "CBLCO3YBMXGQAWHPM3P7I5X52T535QPSUZN2VJHJLA7WKAZWEA3PB6EH",
-          blend: "CBP5FUVUB4XWQ4ZUUDYR26CGHGLPN4FSHGCTRMTF4Z7V4H3DZFICOES3",
+          neko: "CCCEWBCYSIHTGBJ2TUOAFQY63UJ4SWDYTYNAEGXWPB7FP6PRHHGVZJIR",
+          aquarius: "CCGV5QSAFRT6OGBZNCE72I6BAODXLDMWEUYAOBI5ZBLHOURSEGVGFTTZ",
+          soroswap: "CCY5WW3VXVJDBBXNYXCCH33XTQICHPU6RPFWYJJCT4PTYPN3SXJN2XBJ",
         },
       },
       liquidity:
         "Withdrawals are available at any time, subject to liquidity conditions across underlying protocols.",
     },
-  },
-};
-
-export const MOCK_STATS: Record<string, VaultStats> = {
-  "neko-usdc-cetes": {
-    tvl: "$14.94M",
-    apy7d: "14.94%",
-    utilization: "82%",
-    totalSupply: "14,940,000 USDC",
-  },
-  "neko-cetes-yield": {
-    tvl: "$8.21M",
-    apy7d: "11.50%",
-    utilization: "71%",
-    totalSupply: "8,210,000 CETES",
   },
 };
