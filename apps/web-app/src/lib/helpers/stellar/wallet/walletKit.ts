@@ -26,6 +26,17 @@ export function getStellarWalletKit(): StellarWalletsKit {
     stellarWalletKitInstance = new StellarWalletsKit({
       network,
       selectedWalletId: FREIGHTER_ID,
+      modalTheme: {
+        bgColor: "#1C1C1C",
+        textColor: "rgba(255,255,255,0.85)",
+        solidTextColor: "#FFFFFF",
+        headerButtonColor: "#229EDF",
+        dividerColor: "rgba(255,255,255,0.08)",
+        helpBgColor: "rgba(255,255,255,0.04)",
+        notAvailableTextColor: "rgba(255,255,255,0.35)",
+        notAvailableBgColor: "rgba(255,255,255,0.04)",
+        notAvailableBorderColor: "rgba(255,255,255,0.08)",
+      },
       modules: [
         new FreighterModule(),
         new AlbedoModule(),
@@ -34,12 +45,10 @@ export function getStellarWalletKit(): StellarWalletsKit {
         new LobstrModule(),
         new WalletConnectModule({
           url: "https://nekoprotocol.xyz",
-          projectId:
-            process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
-            "fa57d523d12455e4fc2c8c83c94ec7b1",
+          projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "",
           method: WalletConnectAllowedMethods.SIGN,
           name: "Neko Protocol",
-          description: "Neko — The Marketplace for Real-World Assets On-Chain",
+          description: "Neko - All in one platform for RWA tokens",
           icons: ["/Neko.svg"],
           network,
         }),
@@ -47,6 +56,10 @@ export function getStellarWalletKit(): StellarWalletsKit {
     });
   }
   return stellarWalletKitInstance;
+}
+
+export function resetStellarWalletKit(): void {
+  stellarWalletKitInstance = null;
 }
 
 export const getWallet = () => getStellarWalletKit();

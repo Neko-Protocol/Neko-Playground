@@ -1,10 +1,12 @@
 import { ReactNode } from "react";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { MobileHeader } from "@/components/navigation/MobileHeader";
+import { WalletAutoConnect } from "@/components/WalletAutoConnect";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen">
+      <WalletAutoConnect />
       <Sidebar />
       <MobileHeader />
 
