@@ -11,7 +11,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <MobileHeader />
 
       {}
-      <main className="pt-20 lg:pt-0 lg:ml-[270px] flex min-h-screen min-w-0 flex-1 flex-col items-center overflow-x-hidden text-white w-full">
+      <main
+        className="pt-16 lg:pt-0 lg:ml-[270px] flex min-h-screen min-w-0 flex-1 flex-col items-center overflow-x-hidden text-white w-full"
+        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      >
         {children}
       </main>
     </div>
