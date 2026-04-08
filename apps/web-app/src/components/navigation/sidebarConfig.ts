@@ -7,6 +7,7 @@ import {
   Shield,
   Banknote,
   Vault,
+  TrendingUp,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
