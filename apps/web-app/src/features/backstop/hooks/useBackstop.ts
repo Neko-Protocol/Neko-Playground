@@ -21,7 +21,6 @@ import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 
 const WITHDRAWAL_QUEUE_DAYS = 17;
-const WITHDRAWAL_QUEUE_SECONDS = BigInt(WITHDRAWAL_QUEUE_DAYS * 24 * 60 * 60);
 
 export function useBackstop(contractId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -108,7 +107,7 @@ export function useBackstop(contractId: string) {
           allowHttp: stellarNetwork === "LOCAL",
         });
 
-        // Approve backstop token to the lending contract first (if token is configured)
+        // Approve backstop token to the backstop contract first (if token is configured)
         if (backstopTokenAddress) {
           const approveXdr = await approveToken(
             backstopTokenAddress,
@@ -259,21 +258,32 @@ export function useBackstop(contractId: string) {
     ]
   );
 
-  // Derive queue expiry info
+  // Derive queue expiry info — queuedAt now holds the expiration timestamp
+  // directly from the backstop contract's Q4W.exp field.
   const queueExpiresAt: Date | null =
     depositInfo?.inWithdrawalQueue && depositInfo.queuedAt
-      ? new Date(Number(depositInfo.queuedAt + WITHDRAWAL_QUEUE_SECONDS) * 1000)
+      ? new Date(Number(depositInfo.queuedAt) * 1000)
       : null;
 
   const queueExpired = queueExpiresAt !== null && new Date() >= queueExpiresAt;
+
+  const depositedAmount = depositInfo
+    ? fromSmallestUnit(depositInfo.amount.toString(), 7)
+    : "0";
+  const activeDepositAmount = depositInfo
+    ? fromSmallestUnit(depositInfo.activeAmount.toString(), 7)
+    : "0";
+  const queuedDepositAmount = depositInfo
+    ? fromSmallestUnit(depositInfo.queuedAmount.toString(), 7)
+    : "0";
 
   return {
     isLoading,
     walletBalance: walletBalance ?? "0",
     isLoadingWalletBalance,
-    depositedAmount: depositInfo
-      ? fromSmallestUnit(depositInfo.amount.toString(), 7)
-      : "0",
+    depositedAmount,
+    activeDepositAmount,
+    queuedDepositAmount,
     isLoadingDeposit,
     inWithdrawalQueue: depositInfo?.inWithdrawalQueue ?? false,
     queueExpiresAt,

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Shield, RefreshCw } from "lucide-react";
 import { useBackstop } from "@/features/backstop/hooks/useBackstop";
-import { networks } from "@neko/lending";
+import { networks as backstopNetworks } from "@neko/backstop";
 import { BackstopQueueStatus } from "@/features/backstop/components/ui/BackstopQueueStatus";
 import { BackstopActionPanel } from "@/features/backstop/components/ui/BackstopActionPanel";
 import { BackstopInfoAlert } from "@/features/backstop/components/ui/BackstopInfoAlert";
@@ -11,12 +11,12 @@ import { BackstopInfoAlert } from "@/features/backstop/components/ui/BackstopInf
 const POOLS = [
   {
     label: "Crypto Pool",
-    contractId: networks.testnet.pool1ContractId,
+    contractId: backstopNetworks.testnet.pool1ContractId,
     assets: "USDC · XLM",
   },
   {
     label: "RWA Pool",
-    contractId: networks.testnet.pool2ContractId,
+    contractId: backstopNetworks.testnet.pool2ContractId,
     assets: "USTRY · CETES · USDY · PYUSD · KTB",
   },
 ];
@@ -30,6 +30,8 @@ export function BackstopPanel() {
     walletBalance,
     isLoadingWalletBalance,
     depositedAmount,
+    activeDepositAmount,
+    queuedDepositAmount,
     isLoadingDeposit,
     inWithdrawalQueue,
     queueExpiresAt,
@@ -133,6 +135,8 @@ export function BackstopPanel() {
           isLoading={isLoading}
           walletBalance={walletBalance}
           depositedAmount={depositedAmount}
+          activeDepositAmount={activeDepositAmount}
+          queuedDepositAmount={queuedDepositAmount}
           hasWallet={hasWallet}
           backstopTokenConfigured={backstopTokenConfigured}
           inWithdrawalQueue={inWithdrawalQueue}
