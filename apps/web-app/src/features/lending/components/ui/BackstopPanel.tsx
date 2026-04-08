@@ -17,7 +17,7 @@ const POOLS = [
   {
     label: "RWA Pool",
     contractId: networks.testnet.pool2ContractId,
-    assets: "USTRY · CETES · USDY · PYUSD",
+    assets: "USTRY · CETES · USDY · PYUSD · KTB",
   },
 ];
 
