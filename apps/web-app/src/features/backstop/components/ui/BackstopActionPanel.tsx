@@ -9,6 +9,8 @@ interface BackstopActionPanelProps {
   isLoading: boolean;
   walletBalance: string;
   depositedAmount: string;
+  activeDepositAmount: string;
+  queuedDepositAmount: string;
   hasWallet: boolean;
   backstopTokenConfigured: boolean;
   inWithdrawalQueue: boolean;
@@ -22,6 +24,8 @@ export function BackstopActionPanel({
   isLoading,
   walletBalance,
   depositedAmount,
+  activeDepositAmount,
+  queuedDepositAmount,
   hasWallet,
   backstopTokenConfigured,
   inWithdrawalQueue,
@@ -35,6 +39,7 @@ export function BackstopActionPanel({
   const [withdrawAmount, setWithdrawAmount] = useState("");
 
   const hasDeposit = parseFloat(depositedAmount) > 0;
+  const hasActiveDeposit = parseFloat(activeDepositAmount) > 0;
 
   const canDeposit =
     hasWallet &&
@@ -45,8 +50,7 @@ export function BackstopActionPanel({
 
   const canQueue =
     hasWallet &&
-    hasDeposit &&
-    !inWithdrawalQueue &&
+    hasActiveDeposit &&
     !!withdrawAmount &&
     parseFloat(withdrawAmount) > 0 &&
     !isLoading;
@@ -145,7 +149,7 @@ export function BackstopActionPanel({
       {/* Withdraw */}
       {activeTab === "withdraw" && (
         <div className="flex flex-col gap-4">
-          {!inWithdrawalQueue ? (
+          {hasActiveDeposit && (
             <>
               <BackstopInfoAlert variant="warning">
                 To withdraw, you must first queue your withdrawal and wait{" "}
@@ -157,13 +161,13 @@ export function BackstopActionPanel({
                   <span className="text-white/50 text-sm font-medium">
                     Amount to queue
                   </span>
-                  {parseFloat(depositedAmount) > 0 && (
+                  {parseFloat(activeDepositAmount) > 0 && (
                     <button
-                      onClick={() => setWithdrawAmount(depositedAmount)}
+                      onClick={() => setWithdrawAmount(activeDepositAmount)}
                       disabled={isLoading}
                       className="text-[#229EDF] text-xs font-semibold hover:text-[#229EDF]/70 transition-colors disabled:opacity-40"
                     >
-                      Max: {parseFloat(depositedAmount).toFixed(4)}
+                      Max: {parseFloat(activeDepositAmount).toFixed(4)}
                     </button>
                   )}
                 </div>
@@ -180,9 +184,9 @@ export function BackstopActionPanel({
               </div>
 
               <div className="bg-[#252525] rounded-xl p-3.5">
-                <p className="text-white/40 text-xs">Deposited balance</p>
+                <p className="text-white/40 text-xs">Available to queue</p>
                 <p className="text-white font-bold text-sm mt-0.5">
-                  {depositedAmount}
+                  {activeDepositAmount}
                 </p>
               </div>
 
@@ -198,18 +202,24 @@ export function BackstopActionPanel({
                 {isLoading ? "Processing…" : "Queue Withdrawal (17-day wait)"}
               </button>
             </>
-          ) : (
+          )}
+
+          {inWithdrawalQueue && (
             <>
+              {hasActiveDeposit && (
+                <div className="border-t border-white/5 my-1" />
+              )}
+
               <div className="bg-[#252525] rounded-xl p-3.5">
                 <p className="text-white/40 text-xs">Amount queued</p>
                 <p className="text-white font-bold text-sm mt-0.5">
-                  {depositedAmount}
+                  {queuedDepositAmount}
                 </p>
               </div>
 
               <button
                 onClick={() =>
-                  void onWithdraw(depositedAmount).then(() =>
+                  void onWithdraw(queuedDepositAmount).then(() =>
                     setWithdrawAmount("")
                   )
                 }
@@ -223,6 +233,12 @@ export function BackstopActionPanel({
                     : "Waiting for queue to expire…"}
               </button>
             </>
+          )}
+
+          {!hasActiveDeposit && !inWithdrawalQueue && (
+            <BackstopInfoAlert variant="info">
+              No active deposit to withdraw.
+            </BackstopInfoAlert>
           )}
         </div>
       )}
