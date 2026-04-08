@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePoolAction, useUserPosition } from "@/lib/orchestrator";
 import { useWallet } from "@/hooks/useWallet";
@@ -156,16 +155,6 @@ export function PoolActionModal({
               </p>
             ) : needsAmount ? (
               <div className="space-y-4">
-                {pool.type === "neko" && action === "deposit" && (
-                  <p className="text-xs text-[#7096D1] bg-[#eaf4ff] rounded-lg px-3 py-2">
-                    First-time deposit? You may need to approve the token first
-                    from{" "}
-                    <Link href="/lending" className="underline font-medium">
-                      Lending
-                    </Link>
-                    .
-                  </p>
-                )}
                 <label className="block text-sm font-medium text-[#081F5C]">
                   Amount ({tokenCode})
                 </label>

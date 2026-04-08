@@ -1,5 +1,4 @@
 import {
-  Account,
   Contract,
   Address,
   TransactionBuilder,
@@ -22,57 +21,6 @@ import {
 } from "@/lib/constants/network";
 import { toSmallestUnit } from "../tokenUtils";
 import { extractContractError } from "./contractErrors";
-import { getAvailableTokens } from "./soroswap/tokens";
-
-export const approveToken = async (
-  tokenContractAddress: string,
-  spenderAddress: string,
-  amount: string,
-  decimals: number = 7,
-  walletAddress: string
-): Promise<string> => {
-  try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
-    const horizonServer = new Horizon.Server(horizonUrl);
-    const tokenContract = new Contract(tokenContractAddress);
-
-    const latestLedger = await sorobanServer.getLatestLedger();
-    const currentLedger = latestLedger.sequence;
-
-    const expirationLedger = Math.min(
-      currentLedger + 500000,
-      2147483647 // Max safe u32 value (but contract may have lower limit)
-    );
-
-    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
-
-    const operation = tokenContract.call(
-      "approve",
-      new Address(walletAddress).toScVal(),
-      new Address(spenderAddress).toScVal(),
-      nativeToScVal(amountInSmallestUnit, { type: "i128" }),
-      nativeToScVal(expirationLedger, { type: "u32" })
-    );
-
-    const account = await horizonServer.loadAccount(walletAddress);
-
-    const transaction = new TransactionBuilder(account, {
-      fee: "100",
-      networkPassphrase: networkPassphrase,
-    })
-      .addOperation(operation)
-      .setTimeout(300)
-      .build();
-
-    return transaction.toXDR();
-  } catch (error) {
-    console.error("Error building approve transaction:", error);
-    const friendlyError = extractContractError(error, "rwa-token");
-    throw new Error(friendlyError);
-  }
-};
 
 export const depositToPool = async (
   assetCode: string,
@@ -1035,13 +983,11 @@ export const createBadDebtAuction = async (
 };
 
 export type FillBadDebtAuctionResult = {
-  approveXdr: string;
   fillXdr: string;
 };
 
 /**
- * Build approve + fill_bad_debt_auction transaction XDRs
- * Bidder must approve lending contract to spend debt tokens, then call fill
+ * Build fill_bad_debt_auction transaction XDR.
  */
 export const buildFillBadDebtAuctionXdr = async (
   auctionId: number,
@@ -1052,20 +998,6 @@ export const buildFillBadDebtAuctionXdr = async (
   walletAddress: string,
   contractId: string = networks.testnet.contractId
 ): Promise<FillBadDebtAuctionResult> => {
-  const tokens = getAvailableTokens();
-  const debtToken = tokens[debtAsset];
-  if (!debtToken?.contract) {
-    throw new Error(`Debt token ${debtAsset} not found`);
-  }
-
-  const approveXdr = await approveToken(
-    debtToken.contract,
-    contractId,
-    amount,
-    decimals,
-    walletAddress
-  );
-
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
       allowHttp: stellarNetwork === "LOCAL",
@@ -1110,7 +1042,6 @@ export const buildFillBadDebtAuctionXdr = async (
     const preparedTx = await sorobanServer.prepareTransaction(transaction);
 
     return {
-      approveXdr,
       fillXdr: preparedTx.toXDR(),
     };
   } catch (error) {

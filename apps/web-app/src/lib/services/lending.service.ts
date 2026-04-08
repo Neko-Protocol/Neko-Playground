@@ -31,10 +31,8 @@ const allowHttpForHorizon =
   typeof horizonUrl === "string" && horizonUrl.startsWith("http:");
 import { toSmallestUnit } from "../helpers/tokenUtils";
 import {
-  approveToken,
   addCollateral as addCollateralHelper,
   removeCollateral,
-  borrowFromPool,
   depositToBackstop,
   withdrawFromBackstop,
   borrowFromPool as borrowFromPoolHelper,
@@ -46,18 +44,15 @@ import { extractContractError } from "../helpers/stellar/contractErrors";
 
 type LendingOperationResult = { xdr: string; error?: string };
 type CollateralOperationResult = {
-  approveXdr: string;
   addCollateralXdr: string;
   error?: string;
 };
 type BorrowWithCollateralResult = {
-  approveXdr: string;
   addCollateralXdr: string;
   borrowXdr: string;
   error?: string;
 };
 type FillBadDebtAuctionResult = {
-  approveXdr: string;
   fillXdr: string;
   error?: string;
 };
@@ -78,65 +73,6 @@ export class LendingService {
       networkPassphrase: networkPassphrase,
       ...(allowHttpForSoroban && { allowHttp: true }),
     });
-  }
-
-  /**
-   * Approve token contract to spend tokens on behalf of the user
-   */
-  async approveToken(
-    tokenContractAddress: string,
-    spenderAddress: string,
-    amount: string,
-    decimals: number = 7,
-    walletAddress: string
-  ): Promise<LendingOperationResult> {
-    try {
-      const tokenContract = new Contract(tokenContractAddress);
-
-      // Get current ledger to calculate expiration
-      const latestLedger = await this.sorobanServer.getLatestLedger();
-      const currentLedger = latestLedger.sequence;
-
-      // Calculate expiration ledger: current + ~30 days
-      const expirationLedger = Math.min(
-        currentLedger + 500000,
-        2147483647 // Max safe u32 value
-      );
-
-      // Convert amount to smallest unit
-      const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
-
-      // Call approve(from: Address, spender: Address, amount: i128, expiration_ledger: u32)
-      const operation = tokenContract.call(
-        "approve",
-        new Address(walletAddress).toScVal(),
-        new Address(spenderAddress).toScVal(),
-        nativeToScVal(amountInSmallestUnit, { type: "i128" }),
-        nativeToScVal(expirationLedger, { type: "u32" })
-      );
-
-      // Get account for transaction
-      const account = await this.horizonServer.loadAccount(walletAddress);
-
-      // Build transaction
-      const transaction = new TransactionBuilder(account, {
-        fee: "100",
-        networkPassphrase: networkPassphrase,
-      })
-        .addOperation(operation)
-        .setTimeout(300)
-        .build();
-
-      // Return XDR for signing
-      return { xdr: transaction.toXDR() };
-    } catch (error) {
-      console.error("Error building approve transaction:", error);
-      const friendlyError = extractContractError(error, "rwa-token");
-      return {
-        xdr: "",
-        error: friendlyError,
-      };
-    }
   }
 
   /**
@@ -501,33 +437,15 @@ export class LendingService {
   }
 
   /**
-   * Add collateral with approve - returns two separate transactions
+   * Add collateral
    */
-  async addCollateralWithApprove(
+  async addCollateralPrepared(
     rwaTokenContract: string,
     amount: string,
     decimals: number = 7,
     walletAddress: string
   ): Promise<CollateralOperationResult> {
     try {
-      // First transaction: approve
-      const approveResult = await this.approveToken(
-        rwaTokenContract,
-        networks.testnet.contractId,
-        amount,
-        decimals,
-        walletAddress
-      );
-
-      if (approveResult.error) {
-        return {
-          approveXdr: "",
-          addCollateralXdr: "",
-          error: approveResult.error,
-        };
-      }
-
-      // Second transaction: add_collateral
       const addCollateralResult = await this.addCollateral(
         rwaTokenContract,
         amount,
@@ -537,24 +455,18 @@ export class LendingService {
 
       if (addCollateralResult.error) {
         return {
-          approveXdr: approveResult.xdr,
           addCollateralXdr: "",
           error: addCollateralResult.error,
         };
       }
 
       return {
-        approveXdr: approveResult.xdr,
         addCollateralXdr: addCollateralResult.xdr,
       };
     } catch (error) {
-      console.error(
-        "Error building add collateral with approve transactions:",
-        error
-      );
+      console.error("Error building add collateral transaction:", error);
       const friendlyError = extractContractError(error, "rwa-lending");
       return {
-        approveXdr: "",
         addCollateralXdr: "",
         error: friendlyError,
       };
@@ -562,7 +474,7 @@ export class LendingService {
   }
 
   /**
-   * Borrow tokens with collateral and approve
+   * Borrow tokens with collateral
    */
   async borrowWithCollateral(
     rwaTokenContract: string,
@@ -574,17 +486,6 @@ export class LendingService {
     walletAddress: string
   ): Promise<BorrowWithCollateralResult> {
     try {
-      console.log("Building borrow with collateral using helper functions...");
-
-      // Use the existing helper functions
-      const approveXdr = await approveToken(
-        rwaTokenContract,
-        this.lendingClient.options.contractId,
-        collateralAmount,
-        collateralDecimals,
-        walletAddress
-      );
-
       const addCollateralXdr = await addCollateralHelper(
         rwaTokenContract,
         collateralAmount,
@@ -600,7 +501,6 @@ export class LendingService {
       );
 
       return {
-        approveXdr,
         addCollateralXdr,
         borrowXdr,
       };
@@ -611,7 +511,6 @@ export class LendingService {
       );
       const friendlyError = extractContractError(error, "rwa-lending");
       return {
-        approveXdr: "",
         addCollateralXdr: "",
         borrowXdr: "",
         error: friendlyError,
@@ -969,7 +868,7 @@ export class LendingService {
   }
 
   /**
-   * Build approve + fill_bad_debt_auction transactions
+   * Build fill_bad_debt_auction transaction
    */
   async fillBadDebtAuction(
     auctionId: number,
@@ -981,7 +880,7 @@ export class LendingService {
     contractId: string = networks.testnet.contractId
   ): Promise<FillBadDebtAuctionResult> {
     try {
-      const { approveXdr, fillXdr } = await buildFillBadDebtAuctionXdr(
+      const { fillXdr } = await buildFillBadDebtAuctionXdr(
         auctionId,
         bidder,
         amount,
@@ -990,12 +889,11 @@ export class LendingService {
         walletAddress,
         contractId
       );
-      return { approveXdr, fillXdr };
+      return { fillXdr };
     } catch (error) {
       console.error("Error building fill bad debt auction:", error);
       const friendlyError = extractContractError(error, "rwa-lending");
       return {
-        approveXdr: "",
         fillXdr: "",
         error: friendlyError,
       };

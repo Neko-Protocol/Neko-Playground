@@ -11,7 +11,6 @@ import {
   depositToBackstop,
   initiateBackstopWithdrawal,
   withdrawFromBackstop,
-  approveToken,
   getBackstopToken,
   getBackstopDeposit,
   getTokenBalance,
@@ -96,7 +95,8 @@ export function useBackstop(contractId: string) {
     await Promise.all([refetchWalletBalance(), refetchDepositInfo()]);
   }, [refetchWalletBalance, refetchDepositInfo]);
 
-  // Deposit to backstop
+  // Deposit to backstop — Soroban auth propagation bundles token transfer
+  // authorization into the prepared tx, so no separate approve is needed.
   const handleDeposit = useCallback(
     async (amount: string) => {
       if (!address || !amount || parseFloat(amount) <= 0) return;
@@ -106,25 +106,6 @@ export function useBackstop(contractId: string) {
         const sorobanServer = new rpc.Server(rpcUrl, {
           allowHttp: stellarNetwork === "LOCAL",
         });
-
-        // Approve backstop token to the backstop contract first (if token is configured)
-        if (backstopTokenAddress) {
-          const approveXdr = await approveToken(
-            backstopTokenAddress,
-            contractId,
-            amount,
-            7,
-            address
-          );
-          const signedApprove = await signTransaction(approveXdr as any, {
-            networkPassphrase: passphrase,
-            address,
-          });
-          await sorobanServer.sendTransaction(
-            TransactionBuilder.fromXDR(signedApprove.signedTxXdr, passphrase)
-          );
-          await new Promise((r) => setTimeout(r, 2000));
-        }
 
         const depositXdr = await depositToBackstop(amount, address, contractId);
         const signedDeposit = await signTransaction(depositXdr as any, {
@@ -149,7 +130,6 @@ export function useBackstop(contractId: string) {
     },
     [
       address,
-      backstopTokenAddress,
       networkPassphrase,
       signTransaction,
       refetchAll,

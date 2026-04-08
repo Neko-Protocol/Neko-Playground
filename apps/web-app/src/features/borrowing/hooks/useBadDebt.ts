@@ -81,7 +81,7 @@ export function useBadDebt() {
         });
 
       try {
-        const { approveXdr, fillXdr } = await buildFillBadDebtAuctionXdr(
+        const { fillXdr } = await buildFillBadDebtAuctionXdr(
           auctionId,
           address,
           amount,
@@ -91,7 +91,6 @@ export function useBadDebt() {
           networks.testnet.contractId
         );
 
-        await signAndSend(approveXdr);
         await signAndSend(fillXdr);
 
         showSuccess(
