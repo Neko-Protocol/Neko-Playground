@@ -50,7 +50,7 @@ async function fetchPoolPools(
     let collateralFactor = 0;
     try {
       const factorTx = await client.get_collateral_factor(
-        { rwa_token: collateralToken.contract },
+        { neko_token: collateralToken.contract },
         { simulate: true }
       );
       const factorValue = factorTx.result;

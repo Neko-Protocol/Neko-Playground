@@ -832,7 +832,7 @@ export class LendingService {
         ...(allowHttpForSoroban && { allowHttp: true }),
       });
       const tx = await client.get_collateral(
-        { borrower: walletAddress, rwa_token: rwaTokenContract },
+        { borrower: walletAddress, neko_token: rwaTokenContract },
         { simulate: true }
       );
       const value = tx.result;
@@ -887,7 +887,7 @@ export class LendingService {
       const collateralTx = await this.lendingClient.get_collateral(
         {
           borrower: walletAddress,
-          rwa_token: rwaTokenContract,
+          neko_token: rwaTokenContract,
         },
         { simulate: true }
       );
@@ -1095,7 +1095,7 @@ export class LendingService {
     try {
       const client = this.getClient(contractId);
       const tx = await client.get_collateral_factor(
-        { rwa_token: rwaToken },
+        { neko_token: rwaToken },
         { simulate: true }
       );
       const value = tx.result;
@@ -1137,7 +1137,7 @@ export class LendingService {
   }
 
   /**
-   * Build set_interest_rate_params transaction. Returns XDR for signing.
+   * Build queue_set_reserve_params transaction (7-day timelock). Returns XDR for signing.
    */
   async setInterestRateParams(
     asset: string,
@@ -1147,7 +1147,7 @@ export class LendingService {
   ): Promise<LendingOperationResult> {
     try {
       const client = this.getClient(contractId, walletAddress);
-      const assembled = await client.set_interest_rate_params({
+      const assembled = await client.queue_set_reserve_params({
         asset,
         params,
       });
@@ -1155,7 +1155,7 @@ export class LendingService {
       return { xdr: xdrStr };
     } catch (error) {
       console.error(
-        "Error building set_interest_rate_params transaction:",
+        "Error building queue_set_reserve_params transaction:",
         error
       );
       const friendlyError = extractContractError(error, "rwa-lending");
