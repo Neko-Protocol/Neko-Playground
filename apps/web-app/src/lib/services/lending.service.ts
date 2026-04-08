@@ -624,13 +624,18 @@ export class LendingService {
    */
   async backstopDeposit(
     amount: string,
-    walletAddress: string
+    walletAddress: string,
+    backstopContractId?: string
   ): Promise<LendingOperationResult> {
     try {
-      const xdrResult = await depositToBackstop(amount, walletAddress);
+      const xdrResult = await depositToBackstop(
+        amount,
+        walletAddress,
+        backstopContractId
+      );
       return { xdr: xdrResult };
     } catch (error) {
-      console.error("Error building deposit_to_backstop transaction:", error);
+      console.error("Error building backstop deposit transaction:", error);
       const friendlyError = extractContractError(error, "rwa-lending");
       return { xdr: "", error: friendlyError };
     }
@@ -641,16 +646,18 @@ export class LendingService {
    */
   async backstopWithdraw(
     amount: string,
-    walletAddress: string
+    walletAddress: string,
+    backstopContractId?: string
   ): Promise<LendingOperationResult> {
     try {
-      const xdrResult = await withdrawFromBackstop(amount, walletAddress);
+      const xdrResult = await withdrawFromBackstop(
+        amount,
+        walletAddress,
+        backstopContractId
+      );
       return { xdr: xdrResult };
     } catch (error) {
-      console.error(
-        "Error building withdraw_from_backstop transaction:",
-        error
-      );
+      console.error("Error building backstop withdraw transaction:", error);
       const friendlyError = extractContractError(error, "rwa-lending");
       return { xdr: "", error: friendlyError };
     }
