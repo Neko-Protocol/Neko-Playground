@@ -32,7 +32,8 @@ export const useBalances = (
       if (!address) {
         return {};
       }
-      return await fetchBalances(address);
+      const { balances } = await fetchBalances(address);
+      return balances;
     },
     enabled: enabled && Boolean(address),
     refetchInterval: refetchInterval > 0 ? refetchInterval : false,

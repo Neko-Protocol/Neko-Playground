@@ -36,21 +36,30 @@ export type MappedBalances = Record<
   HorizonBalance | SorobanBalanceEntry
 >;
 
-export const fetchBalances = async (address: string) => {
+export type FetchBalancesResult = {
+  balances: MappedBalances;
+  subentryCount: number;
+};
+
+export const fetchBalances = async (
+  address: string
+): Promise<FetchBalancesResult> => {
   if (typeof window === "undefined") {
-    return {};
+    return { balances: {}, subentryCount: 0 };
   }
   const horizonInstance = getHorizon();
   if (!horizonInstance) {
-    return {};
+    return { balances: {}, subentryCount: 0 };
   }
   const mapped: MappedBalances = {};
+  let subentryCount = 0;
 
   try {
-    const { balances } = await horizonInstance
+    const { balances, subentry_count } = await horizonInstance
       .accounts()
       .accountId(address)
       .call();
+    subentryCount = subentry_count ?? 0;
     for (const b of balances) {
       const formattedBalance = formatter.format(Number(b.balance));
       const balanceEntry = { ...b, balance: formattedBalance };
@@ -102,5 +111,5 @@ export const fetchBalances = async (address: string) => {
     console.warn("Soroban balance fetch failed:", err);
   }
 
-  return mapped;
+  return { balances: mapped, subentryCount };
 };

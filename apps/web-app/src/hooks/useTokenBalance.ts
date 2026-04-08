@@ -5,13 +5,18 @@ import { getTokens, getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { getTokenAddress } from "@/lib/helpers/stellar/soroswap";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 
+const BASE_RESERVE = 0.5;
+
 const getXlmBalance = (
-  balances: Record<string, { balance?: string } | undefined>
+  balances: Record<string, { balance?: string } | undefined>,
+  subentryCount: number
 ): string => {
   const xlmBalance = balances.xlm?.balance;
   if (xlmBalance) {
     const balance = parseFloat(xlmBalance.replace(/,/g, "") || "0");
-    return balance.toString();
+    const minReserve = (2 + subentryCount) * BASE_RESERVE;
+    const spendable = Math.max(0, balance - minReserve);
+    return spendable.toString();
   }
   return "0";
 };
@@ -39,7 +44,7 @@ export const useTokenBalance = (
     | { type: "native" | "contract"; code?: string; contract?: string }
     | undefined
 ) => {
-  const { address, balances } = useWallet();
+  const { address, balances, subentryCount } = useWallet();
 
   const tokenAddress = token ? getTokenAddress(token) : null;
 
@@ -72,7 +77,7 @@ export const useTokenBalance = (
   });
 
   if (isXlm) {
-    const balance = getXlmBalance(balances);
+    const balance = getXlmBalance(balances, subentryCount);
     return {
       balance,
       isLoading: false,

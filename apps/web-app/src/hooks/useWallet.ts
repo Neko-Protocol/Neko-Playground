@@ -14,7 +14,7 @@ export function useWallet() {
   const address = stellarAddress ?? undefined;
 
   const {
-    data: balances = {} as MappedBalances,
+    data: { balances = {} as MappedBalances, subentryCount = 0 } = {},
     isFetching: isFetchingBalances,
     refetch: refetchBalances,
   } = useQuery({
@@ -43,6 +43,7 @@ export function useWallet() {
     network: stellarNetwork,
     networkPassphrase,
     balances,
+    subentryCount,
     isFetchingBalances,
     isPending: false,
     refetchBalances: async () => {

@@ -6,4 +6,8 @@ export {
   signStellarTransactionWithWallet,
   type SignStellarTransactionParams,
 } from "./signTransaction";
-export { fetchBalances, type MappedBalances } from "./balances";
+export {
+  fetchBalances,
+  type MappedBalances,
+  type FetchBalancesResult,
+} from "./balances";
