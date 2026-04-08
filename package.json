@@ -12,8 +12,6 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md,yml,yaml}\"",
-    "generate:errors": "node scripts/generate-error-types.js",
-    "check:errors": "node scripts/generate-error-types.js && git diff --exit-code apps/web-app/src/lib/constants/generated/contract-errors.ts",
     "prepare": "npx husky"
   },
   "workspaces": [
