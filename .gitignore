@@ -70,4 +70,7 @@ deploy-full.cjs
 deploy-pools.cjs
 push-prices.cjs
 add-soroswap-liquidity.cjs
+add-ktb-liquidity.cjs
+add-ktb-xlm-pool.cjs
+upgrade-ktb-token.cjs
 scripts/
