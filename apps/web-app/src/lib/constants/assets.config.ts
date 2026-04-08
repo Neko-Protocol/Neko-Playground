@@ -50,7 +50,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
     CETES: {
       code: "CETES",
       name: "CETES Token",
-      contract: "CAJ4B2ZWU2GA7UYQZ7N7QQCTZAUSSXNKKQ326ADYVH3ALN4FFQ6LPO4U",
+      contract: "CC72F57YTPX76HAA64JQOEGHQAPSADQWSY5DWVBR66JINPFDLNCQYHIC",
       decimals: 7,
       icon: "/assets/cetes-logo.png",
       priceSource: "oracle",
@@ -68,7 +68,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
     PYUSD: {
       code: "PYUSD",
       name: "PayPal USD",
-      contract: "CBNHH37BJ2G4ZT6PLWDXPOWHKLR75IGNLBRCXZNOS7YPAYS53JPEPSSS",
+      contract: "CACZL3MGXXP3O6ROMB4Q36ROFULRWD6QARPE3AKWPSWMYZVF2474CBXP",
       decimals: 7,
       icon: "/assets/pyusd-logo.png",
       priceSource: "oracle",
