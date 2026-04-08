@@ -47,7 +47,7 @@ async function fetchPositionData(
     ),
     client.get_d_token_rate({ asset: assetCode }, { simulate: true }),
     client.get_collateral(
-      { borrower: walletAddress, rwa_token: collateralToken },
+      { borrower: walletAddress, neko_token: collateralToken },
       { simulate: true }
     ),
   ]);

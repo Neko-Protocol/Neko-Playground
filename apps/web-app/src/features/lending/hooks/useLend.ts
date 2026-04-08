@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { useLendingPools } from "./useLendingPools";
 import {
-  approveToken,
   depositToPool,
   withdrawFromPool,
   getBTokenBalance,
@@ -221,23 +220,6 @@ export function useLend() {
         const lendingContractId = selectedPool.contractId;
 
         if (isDeposit) {
-          const approveXdr = await approveToken(
-            token.contract,
-            lendingContractId,
-            amount,
-            decimals,
-            address
-          );
-
-          const signedApprove = await signTransaction(approveXdr as any, {
-            networkPassphrase: passphrase,
-            address,
-          });
-          await sorobanServer.sendTransaction(
-            TransactionBuilder.fromXDR(signedApprove.signedTxXdr, passphrase)
-          );
-          await new Promise((r) => setTimeout(r, 2000));
-
           const depositXdr = await depositToPool(
             selectedPool.assetCode,
             amount,

@@ -28,8 +28,8 @@ export function GetTestTokensBanner({ className }: { className?: string }) {
               Get your RWA test tokens
             </p>
             <p className="text-xs text-white/80 sm:text-sm">
-              Mint USTRY, TESOURO, CETES, USDY and PYUSD to use Borrow, Lend and
-              Pools
+              Mint USTRY, TESOURO, CETES, USDY, PYUSD and KTB to use Borrow,
+              Lend and Pools
             </p>
           </div>
         </div>
