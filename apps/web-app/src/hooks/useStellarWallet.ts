@@ -2,17 +2,6 @@
 
 import { getStellarWalletKit } from "@/lib/helpers/stellar/wallet";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
-import { notify } from "@/lib/toast";
-
-const FREIGHTER_MOBILE_TOAST_KEY = "neko_freighter_mobile_toast_shown";
-
-function isFreighterMobileBrowser(): boolean {
-  if (typeof window === "undefined") return false;
-  const s = (
-    window as Window & { stellar?: { provider?: string; platform?: string } }
-  ).stellar;
-  return s?.provider === "freighter" && s?.platform === "mobile";
-}
 
 export function useStellarWallet() {
   const { address, walletName, setWallet, clearWallet } =
@@ -24,22 +13,6 @@ export function useStellarWallet() {
     // v2 authModal returns { address } directly — no callback needed.
     const { address: walletAddress } = await Kit.authModal();
     setWallet({ address: walletAddress, walletName: "Stellar Wallet" });
-
-    // When in Freighter's mobile in-app browser the only available option
-    // is WalletConnect. Freighter will show an "Untrusted Transaction Domain"
-    // warning the first time a transaction comes through — remind the user to
-    // tap Trust so transactions don't get silently rejected.
-    if (
-      isFreighterMobileBrowser() &&
-      !sessionStorage.getItem(FREIGHTER_MOBILE_TOAST_KEY)
-    ) {
-      sessionStorage.setItem(FREIGHTER_MOBILE_TOAST_KEY, "1");
-      notify("Trust this domain in Freighter", "info", {
-        description:
-          "When Freighter asks to trust this domain, tap Trust — otherwise transaction signing will be blocked.",
-        duration: 8000,
-      });
-    }
   };
 
   const disconnect = async () => {
