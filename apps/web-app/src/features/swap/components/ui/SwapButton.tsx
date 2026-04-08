@@ -9,6 +9,7 @@ interface SwapButtonProps {
   txHash: string | null;
   isLoadingQuote: boolean;
   orderType: OrderType;
+  isInsufficientBalance?: boolean;
   onClick: () => void;
 }
 
@@ -22,6 +23,7 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
   txHash,
   isLoadingQuote,
   orderType,
+  isInsufficientBalance,
   onClick,
 }) => {
   if (!address) {
@@ -44,6 +46,14 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
     return (
       <button disabled className={`${baseClass} bg-[#229EDF]/40 text-white/60`}>
         Enter Amount
+      </button>
+    );
+  }
+
+  if (isInsufficientBalance) {
+    return (
+      <button disabled className={`${baseClass} bg-red-500/20 text-red-400`}>
+        Insufficient Balance
       </button>
     );
   }

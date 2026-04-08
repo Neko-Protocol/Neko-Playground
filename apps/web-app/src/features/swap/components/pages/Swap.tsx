@@ -3,8 +3,10 @@
 import React, { useEffect } from "react";
 import Image from "next/image";
 import { ChevronDown, ArrowLeftRight } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
+import { getTokenAddress } from "@/lib/helpers/stellar/soroswap";
 import {
   getTokens,
   getAvailableTokens,
@@ -130,8 +132,9 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
 );
 
 const Swap: React.FC = () => {
-  const { address, network, networkPassphrase } = useWallet();
+  const { address, network, networkPassphrase, refetchBalances } = useWallet();
   const { addNotification } = useToast();
+  const queryClient = useQueryClient();
 
   const availableTokens = getAvailableTokens();
   const tokenCodes = Object.keys(availableTokens);
@@ -208,6 +211,10 @@ const Swap: React.FC = () => {
       return;
     }
 
+    if (isInsufficientBalance) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -225,6 +232,30 @@ const Swap: React.FC = () => {
           ...TOAST_CONFIG.defaultOpts,
           description: "Swap completed successfully",
         });
+
+        const tokenOutAddress = getTokenAddress(
+          tokenOut as Parameters<typeof getTokenAddress>[0]
+        );
+        const tokenInAddress = getTokenAddress(
+          tokenIn as Parameters<typeof getTokenAddress>[0]
+        );
+
+        // Refresh Horizon balances (covers XLM + classic Stellar assets)
+        void refetchBalances();
+
+        // Force-refresh the Soroban contract balance for both tokens so
+        // RWA balances update immediately instead of waiting for the poll.
+        void queryClient.invalidateQueries({
+          queryKey: ["tokenBalance", tokenOutAddress, address],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ["tokenBalance", tokenInAddress, address],
+        });
+        // Also invalidate Horizon-sourced balances used by useWallet
+        void queryClient.invalidateQueries({
+          queryKey: ["stellar-balances", address],
+        });
+
         resetSwap();
         setAmountIn("");
         swapState.setAmountOut("0.0");
@@ -259,6 +290,11 @@ const Swap: React.FC = () => {
   };
 
   const canGetQuote = address && amountIn && parseFloat(amountIn) > 0;
+
+  const isInsufficientBalance =
+    !!amountIn &&
+    !!tokenInBalance &&
+    parseFloat(amountIn) > parseFloat(tokenInBalance);
 
   return (
     <PageContainer maxWidth="4xl">
@@ -395,6 +431,7 @@ const Swap: React.FC = () => {
           txHash={txHash}
           isLoadingQuote={isLoadingQuote}
           orderType={orderType}
+          isInsufficientBalance={isInsufficientBalance}
           onClick={handleSwap}
         />
       </div>
