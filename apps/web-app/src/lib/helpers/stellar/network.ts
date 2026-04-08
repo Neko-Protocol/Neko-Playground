@@ -1,4 +1,4 @@
-import { WalletNetwork } from "@creit.tech/stellar-wallets-kit";
+import { Networks as WalletNetwork } from "@creit.tech/stellar-wallets-kit/types";
 import { networkPassphrase } from "@/lib/constants/network";
 
 export type StellarNetworkName = "testnet" | "mainnet";

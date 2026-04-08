@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ModuleType } from "@creit.tech/stellar-wallets-kit";
+import { ModuleType } from "@creit.tech/stellar-wallets-kit/types";
 import { getStellarWalletKit } from "@/lib/helpers/stellar/wallet";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 
@@ -28,8 +28,8 @@ export function WalletAutoConnect() {
 
     void (async () => {
       try {
-        const kit = getStellarWalletKit();
-        const wallets = await kit.getSupportedWallets();
+        const Kit = await getStellarWalletKit();
+        const wallets = await Kit.refreshSupportedWallets();
         const platformWallet = wallets.find(
           (w) =>
             w.isPlatformWrapper &&
@@ -37,8 +37,8 @@ export function WalletAutoConnect() {
             w.type !== ModuleType.BRIDGE_WALLET
         );
         if (!platformWallet) return;
-        kit.setWallet(platformWallet.id);
-        const { address: walletAddress } = await kit.getAddress();
+        Kit.setWallet(platformWallet.id);
+        const { address: walletAddress } = await Kit.fetchAddress();
         if (walletAddress) {
           setWallet({
             address: walletAddress,

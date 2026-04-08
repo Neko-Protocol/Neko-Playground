@@ -15,21 +15,24 @@ interface StellarSignOptions {
   submitUrl?: string;
   [key: string]: unknown;
 }
-import { getWallet, type MappedBalances } from "@/lib/helpers/stellar/wallet";
+import {
+  getStellarWalletKit,
+  type MappedBalances,
+} from "@/lib/helpers/stellar/wallet";
 import storage from "@/lib/helpers/storage";
 import { useBalances } from "@/hooks/useBalances";
 import { POLL_INTERVAL, STORAGE_KEYS } from "@/lib/constants/wallet";
 
-const getWalletInstance = () => {
+const getWalletInstance = async () => {
   if (typeof window === "undefined") {
     throw new Error("Wallet can only be accessed in the browser");
   }
-  return getWallet();
+  return getStellarWalletKit();
 };
 
-const signTransaction = (xdr: string, options: StellarSignOptions) => {
-  const wallet = getWalletInstance();
-  return wallet.signTransaction(xdr, options);
+const signTransaction = async (xdr: string, options: StellarSignOptions) => {
+  const Kit = await getWalletInstance();
+  return Kit.signTransaction(xdr, options);
 };
 
 export interface WalletContextType {
@@ -108,13 +111,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
       try {
         popupLock.current = true;
-        const wallet = getWalletInstance();
-        wallet.setWallet(walletId);
+        const Kit = await getWalletInstance();
+        Kit.setWallet(walletId);
         if (walletId !== "freighter" && walletAddr !== null) return;
-        const [a, n] = await Promise.all([
-          wallet.getAddress(),
-          wallet.getNetwork(),
-        ]);
+        const [a, n] = await Promise.all([Kit.getAddress(), Kit.getNetwork()]);
 
         if (!a.address) storage.setItem(STORAGE_KEYS.walletId, "");
         if (
