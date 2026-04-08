@@ -50,6 +50,12 @@ const TESTNET_FAUCET_TOKENS: {
     decimals: 7,
     amount: 100,
   },
+  {
+    symbol: "KTB",
+    contract: "CANIRPAKV2SUEH7O6LIOIQE5GCCIIS7EWFRRXBONIF2F2H6GEBDARAEM",
+    decimals: 7,
+    amount: 100,
+  },
 ];
 
 export const FAUCET_CONTRACT_ID =

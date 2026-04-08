@@ -60,4 +60,11 @@ export const STOCK_INFO: Record<string, StockInfo> = {
         "PYUSD on Stellar: Lobstr, Bitcoin.com, Chipper Cash, Decaf, Arculus, Meru, CiNKO, COCA. Also via PayPal and Venmo.",
     },
   },
+  KTB: {
+    logo: "/assets/ktb.png",
+    name: "KTB Token",
+    description: "Real-world asset token available on Neko testnet",
+    summary:
+      "KTB is an RWA (real-world asset) token deployed on Stellar testnet for Neko Protocol liquidity and borrowing flows.",
+  },
 };

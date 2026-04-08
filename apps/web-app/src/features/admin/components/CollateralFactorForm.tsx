@@ -17,7 +17,14 @@ import type { AssetType } from "@neko/lending";
 const SCALAR_7 = 10_000_000;
 
 /** Pool 1 collateral is RWA (USTRY, etc.), Pool 2 collateral is USDC/XLM */
-const POOL1_COLLATERAL_CODES = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD"];
+const POOL1_COLLATERAL_CODES = [
+  "USTRY",
+  "TESOURO",
+  "CETES",
+  "USDY",
+  "PYUSD",
+  "KTB",
+];
 
 const ALL_COLLATERAL = [
   ...POOL1_COLLATERAL_CODES.map((code) => ({

@@ -89,7 +89,7 @@ const MintTestTokensButton: React.FC = () => {
         }
       >
         <div style={{ width: "16em" }}>
-          Mint USTRY, TESOURO, CETES, USDY & PYUSD to your wallet
+          Mint USTRY, TESOURO, CETES, USDY, PYUSD & KTB to your wallet
         </div>
       </Tooltip>
     </div>
