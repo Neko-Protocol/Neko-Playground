@@ -30,30 +30,28 @@ if (typeof window !== "undefined") {
   window.Buffer = window.Buffer || Buffer;
 }
 
-
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CDTFRINWJOMLGYS64N7JICGNBCFKKSPJBNMI7FHTDOHZQ2RAKTJEXCRO",
-    pool1ContractId: "CDTFRINWJOMLGYS64N7JICGNBCFKKSPJBNMI7FHTDOHZQ2RAKTJEXCRO",
-    pool2ContractId: "CARYWBLZCXSSZSSGL2VRVDS57P7KIV7NOBESGBR3SKQXDIFDDZRRFHQ6",
+    contractId: "CCSNXCONDIFZADRJZZRHMRXDGTC6EMI7ZAYAJPJMXSDHBMOPBLBX5XQX",
+    pool1ContractId: "CCSNXCONDIFZADRJZZRHMRXDGTC6EMI7ZAYAJPJMXSDHBMOPBLBX5XQX",
+    pool2ContractId: "CADKADCLXIZTU7Q3WS5M37HUF5BX3WCSTCM2ESN2JCJK5FBBH57FKSAV",
   },
-} as const
+} as const;
 
 export const Errors = {
-  1: {message:"NotAuthorized"},
-  2: {message:"NotInitialized"},
-  3: {message:"AlreadyInitialized"},
-  4: {message:"NotPositive"},
-  5: {message:"ArithmeticError"},
-  10: {message:"TokenContractNotSet"},
-  20: {message:"InsufficientBackstopDeposit"},
-  21: {message:"WithdrawalQueueFull"},
-  22: {message:"WithdrawalQueueNotExpired"},
-  23: {message:"BadDebtNotCovered"},
-  24: {message:"BackstopThresholdNotMet"}
-}
-
+  1: { message: "NotAuthorized" },
+  2: { message: "NotInitialized" },
+  3: { message: "AlreadyInitialized" },
+  4: { message: "NotPositive" },
+  5: { message: "ArithmeticError" },
+  10: { message: "TokenContractNotSet" },
+  20: { message: "InsufficientBackstopDeposit" },
+  21: { message: "WithdrawalQueueFull" },
+  22: { message: "WithdrawalQueueNotExpired" },
+  23: { message: "BadDebtNotCovered" },
+  24: { message: "BackstopThresholdNotMet" },
+};
 
 /**
  * A single withdrawal queue entry.
@@ -61,138 +59,188 @@ export const Errors = {
  */
 export interface Q4W {
   /**
- * Token amount queued for withdrawal.
- */
-amount: i128;
+   * Token amount queued for withdrawal.
+   */
+  amount: i128;
   /**
- * Expiration timestamp: creation_time + Q4W_LOCK_SECONDS.
- */
-exp: u64;
+   * Expiration timestamp: creation_time + Q4W_LOCK_SECONDS.
+   */
+  exp: u64;
 }
 
-export type DataKey = {tag: "Admin", values: void} | {tag: "PoolContract", values: void} | {tag: "BackstopToken", values: void} | {tag: "BackstopThreshold", values: void} | {tag: "ProposedAdmin", values: void} | {tag: "UserBalance", values: readonly [string]} | {tag: "BackstopTotal", values: void} | {tag: "BackstopQueuedTotal", values: void};
+export type DataKey =
+  | { tag: "Admin"; values: void }
+  | { tag: "PoolContract"; values: void }
+  | { tag: "BackstopToken"; values: void }
+  | { tag: "BackstopThreshold"; values: void }
+  | { tag: "ProposedAdmin"; values: void }
+  | { tag: "UserBalance"; values: readonly [string] }
+  | { tag: "BackstopTotal"; values: void }
+  | { tag: "BackstopQueuedTotal"; values: void };
 
 /**
  * Mirror of the pool's PoolState — variant order must stay identical so the
  * u32 ordinal pushed via pool.update_pool_state_from_backstop stays consistent.
  */
-export type PoolState = {tag: "Active", values: void} | {tag: "OnIce", values: void} | {tag: "Frozen", values: void};
-
+export type PoolState =
+  | { tag: "Active"; values: void }
+  | { tag: "OnIce"; values: void }
+  | { tag: "Frozen"; values: void };
 
 /**
  * Per-depositor balance record.
- * 
+ *
  * `q4w` holds up to MAX_Q4W_SIZE simultaneous withdrawal queue entries.
  * Entries are ordered oldest-first; dequeue_withdrawal() removes the newest
  * (tail), withdraw() consumes from the oldest (head) once expired.
  */
 export interface UserBalance {
   /**
- * Tokens actively deposited (not queued).
- */
-amount: i128;
+   * Tokens actively deposited (not queued).
+   */
+  amount: i128;
   /**
- * Pending withdrawal queue entries (oldest → newest).
- */
-q4w: Array<Q4W>;
+   * Pending withdrawal queue entries (oldest → newest).
+   */
+  q4w: Array<Q4W>;
 }
-
-
-
-
-
-
-
 
 export interface Client {
   /**
    * Construct and simulate a deposit transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Deposit backstop tokens.
    */
-  deposit: ({depositor, amount}: {depositor: string, amount: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<void>>>
+  deposit: (
+    { depositor, amount }: { depositor: string; amount: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<void>>>;
 
   /**
    * Construct and simulate a withdraw transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Withdraw from the oldest expired Q4W entry.
    */
-  withdraw: ({depositor, amount}: {depositor: string, amount: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<void>>>
+  withdraw: (
+    { depositor, amount }: { depositor: string; amount: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<void>>>;
 
   /**
    * Construct and simulate a get_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  get_admin: (options?: MethodOptions) => Promise<AssembledTransaction<string>>
+  get_admin: (options?: MethodOptions) => Promise<AssembledTransaction<string>>;
 
   /**
    * Construct and simulate a get_total transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  get_total: (options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+  get_total: (options?: MethodOptions) => Promise<AssembledTransaction<i128>>;
 
   /**
    * Construct and simulate a initialize transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  initialize: ({admin, pool, backstop_token, backstop_threshold}: {admin: string, pool: string, backstop_token: string, backstop_threshold: i128}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  initialize: (
+    {
+      admin,
+      pool,
+      backstop_token,
+      backstop_threshold,
+    }: {
+      admin: string;
+      pool: string;
+      backstop_token: string;
+      backstop_threshold: i128;
+    },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a accept_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Step 2: pending admin accepts (must match `propose_admin`).
    */
-  accept_admin: (options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  accept_admin: (
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a propose_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Step 1 of two-step admin transfer. Current admin only.
    */
-  propose_admin: ({proposed}: {proposed: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  propose_admin: (
+    { proposed }: { proposed: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a set_threshold transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_threshold: ({threshold}: {threshold: i128}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  set_threshold: (
+    { threshold }: { threshold: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a cover_bad_debt transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Cover bad debt by reducing backstop balance.
    * Only callable by the registered pool contract.
    */
-  cover_bad_debt: ({caller, amount}: {caller: string, amount: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<void>>>
+  cover_bad_debt: (
+    { caller, amount }: { caller: string; amount: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<void>>>;
 
   /**
    * Construct and simulate a get_pool_state transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  get_pool_state: (options?: MethodOptions) => Promise<AssembledTransaction<PoolState>>
+  get_pool_state: (
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<PoolState>>;
 
   /**
    * Construct and simulate a get_user_balance transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  get_user_balance: ({depositor}: {depositor: string}, options?: MethodOptions) => Promise<AssembledTransaction<UserBalance>>
+  get_user_balance: (
+    { depositor }: { depositor: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<UserBalance>>;
 
   /**
    * Construct and simulate a queue_withdrawal transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Add `amount` to the withdrawal queue (up to MAX_Q4W_SIZE entries per user).
    */
-  queue_withdrawal: ({depositor, amount}: {depositor: string, amount: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<void>>>
+  queue_withdrawal: (
+    { depositor, amount }: { depositor: string; amount: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<void>>>;
 
   /**
    * Construct and simulate a get_pool_contract transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  get_pool_contract: (options?: MethodOptions) => Promise<AssembledTransaction<string>>
+  get_pool_contract: (
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<string>>;
 
   /**
    * Construct and simulate a dequeue_withdrawal transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Cancel the most recently queued withdrawal entry.
    */
-  dequeue_withdrawal: ({depositor}: {depositor: string}, options?: MethodOptions) => Promise<AssembledTransaction<Result<void>>>
+  dequeue_withdrawal: (
+    { depositor }: { depositor: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<void>>>;
 
   /**
    * Construct and simulate a get_backstop_token transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  get_backstop_token: (options?: MethodOptions) => Promise<AssembledTransaction<Option<string>>>
+  get_backstop_token: (
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Option<string>>>;
 
   /**
    * Construct and simulate a set_backstop_token transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  set_backstop_token: ({token}: {token: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
-
+  set_backstop_token: (
+    { token }: { token: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 }
 export class Client extends ContractClient {
   static async deploy<T = Client>(
@@ -207,11 +255,12 @@ export class Client extends ContractClient {
         format?: "hex" | "base64";
       }
   ): Promise<AssembledTransaction<T>> {
-    return ContractClient.deploy(null, options)
+    return ContractClient.deploy(null, options);
   }
   constructor(public readonly options: ContractClientOptions) {
     super(
-      new ContractSpec([ "AAAABAAAAAAAAAAAAAAABUVycm9yAAAAAAAACwAAAAAAAAANTm90QXV0aG9yaXplZAAAAAAAAAEAAAAAAAAADk5vdEluaXRpYWxpemVkAAAAAAACAAAAAAAAABJBbHJlYWR5SW5pdGlhbGl6ZWQAAAAAAAMAAAAAAAAAC05vdFBvc2l0aXZlAAAAAAQAAAAAAAAAD0FyaXRobWV0aWNFcnJvcgAAAAAFAAAAAAAAABNUb2tlbkNvbnRyYWN0Tm90U2V0AAAAAAoAAAAAAAAAG0luc3VmZmljaWVudEJhY2tzdG9wRGVwb3NpdAAAAAAUAAAAAAAAABNXaXRoZHJhd2FsUXVldWVGdWxsAAAAABUAAAAAAAAAGVdpdGhkcmF3YWxRdWV1ZU5vdEV4cGlyZWQAAAAAAAAWAAAAAAAAABFCYWREZWJ0Tm90Q292ZXJlZAAAAAAAABcAAAAAAAAAF0JhY2tzdG9wVGhyZXNob2xkTm90TWV0AAAAABg=",
+      new ContractSpec([
+        "AAAABAAAAAAAAAAAAAAABUVycm9yAAAAAAAACwAAAAAAAAANTm90QXV0aG9yaXplZAAAAAAAAAEAAAAAAAAADk5vdEluaXRpYWxpemVkAAAAAAACAAAAAAAAABJBbHJlYWR5SW5pdGlhbGl6ZWQAAAAAAAMAAAAAAAAAC05vdFBvc2l0aXZlAAAAAAQAAAAAAAAAD0FyaXRobWV0aWNFcnJvcgAAAAAFAAAAAAAAABNUb2tlbkNvbnRyYWN0Tm90U2V0AAAAAAoAAAAAAAAAG0luc3VmZmljaWVudEJhY2tzdG9wRGVwb3NpdAAAAAAUAAAAAAAAABNXaXRoZHJhd2FsUXVldWVGdWxsAAAAABUAAAAAAAAAGVdpdGhkcmF3YWxRdWV1ZU5vdEV4cGlyZWQAAAAAAAAWAAAAAAAAABFCYWREZWJ0Tm90Q292ZXJlZAAAAAAAABcAAAAAAAAAF0JhY2tzdG9wVGhyZXNob2xkTm90TWV0AAAAABg=",
         "AAAAAQAAAHNBIHNpbmdsZSB3aXRoZHJhd2FsIHF1ZXVlIGVudHJ5LgpgZXhwYCBpcyB0aGUgZWFybGllc3QgdGltZXN0YW1wIGF0IHdoaWNoIHRoZSBkZXBvc2l0b3IgbWF5IGV4ZWN1dGUgdGhlIHdpdGhkcmF3YWwuAAAAAAAAAAADUTRXAAAAAAIAAAAjVG9rZW4gYW1vdW50IHF1ZXVlZCBmb3Igd2l0aGRyYXdhbC4AAAAABmFtb3VudAAAAAAACwAAADdFeHBpcmF0aW9uIHRpbWVzdGFtcDogY3JlYXRpb25fdGltZSArIFE0V19MT0NLX1NFQ09ORFMuAAAAAANleHAAAAAABg==",
         "AAAAAgAAAAAAAAAAAAAAB0RhdGFLZXkAAAAACAAAAAAAAAAAAAAABUFkbWluAAAAAAAAAAAAAAAAAAAMUG9vbENvbnRyYWN0AAAAAAAAAAAAAAANQmFja3N0b3BUb2tlbgAAAAAAAAAAAAAAAAAAEUJhY2tzdG9wVGhyZXNob2xkAAAAAAAAAAAAAAAAAAANUHJvcG9zZWRBZG1pbgAAAAAAAAEAAAAAAAAAC1VzZXJCYWxhbmNlAAAAAAEAAAATAAAAAAAAAAAAAAANQmFja3N0b3BUb3RhbAAAAAAAAAAAAAAAAAAAE0JhY2tzdG9wUXVldWVkVG90YWwA",
         "AAAAAgAAAJlNaXJyb3Igb2YgdGhlIHBvb2wncyBQb29sU3RhdGUg4oCUIHZhcmlhbnQgb3JkZXIgbXVzdCBzdGF5IGlkZW50aWNhbCBzbyB0aGUKdTMyIG9yZGluYWwgcHVzaGVkIHZpYSBwb29sLnVwZGF0ZV9wb29sX3N0YXRlX2Zyb21fYmFja3N0b3Agc3RheXMgY29uc2lzdGVudC4AAAAAAAAAAAAACVBvb2xTdGF0ZQAAAAAAAAMAAAAAAAAAAAAAAAZBY3RpdmUAAAAAAAAAAAAAAAAABU9uSWNlAAAAAAAAAAAAAAAAAAAGRnJvemVuAAA=",
@@ -238,26 +287,27 @@ export class Client extends ContractClient {
         "AAAAAAAAAAAAAAARZ2V0X3Bvb2xfY29udHJhY3QAAAAAAAAAAAAAAQAAABM=",
         "AAAAAAAAADFDYW5jZWwgdGhlIG1vc3QgcmVjZW50bHkgcXVldWVkIHdpdGhkcmF3YWwgZW50cnkuAAAAAAAAEmRlcXVldWVfd2l0aGRyYXdhbAAAAAAAAQAAAAAAAAAJZGVwb3NpdG9yAAAAAAAAEwAAAAEAAAPpAAAAAgAAAAM=",
         "AAAAAAAAAAAAAAASZ2V0X2JhY2tzdG9wX3Rva2VuAAAAAAAAAAAAAQAAA+gAAAAT",
-        "AAAAAAAAAAAAAAASc2V0X2JhY2tzdG9wX3Rva2VuAAAAAAABAAAAAAAAAAV0b2tlbgAAAAAAABMAAAAA" ]),
+        "AAAAAAAAAAAAAAASc2V0X2JhY2tzdG9wX3Rva2VuAAAAAAABAAAAAAAAAAV0b2tlbgAAAAAAABMAAAAA",
+      ]),
       options
-    )
+    );
   }
   public readonly fromJSON = {
     deposit: this.txFromJSON<Result<void>>,
-        withdraw: this.txFromJSON<Result<void>>,
-        get_admin: this.txFromJSON<string>,
-        get_total: this.txFromJSON<i128>,
-        initialize: this.txFromJSON<null>,
-        accept_admin: this.txFromJSON<null>,
-        propose_admin: this.txFromJSON<null>,
-        set_threshold: this.txFromJSON<null>,
-        cover_bad_debt: this.txFromJSON<Result<void>>,
-        get_pool_state: this.txFromJSON<PoolState>,
-        get_user_balance: this.txFromJSON<UserBalance>,
-        queue_withdrawal: this.txFromJSON<Result<void>>,
-        get_pool_contract: this.txFromJSON<string>,
-        dequeue_withdrawal: this.txFromJSON<Result<void>>,
-        get_backstop_token: this.txFromJSON<Option<string>>,
-        set_backstop_token: this.txFromJSON<null>
-  }
+    withdraw: this.txFromJSON<Result<void>>,
+    get_admin: this.txFromJSON<string>,
+    get_total: this.txFromJSON<i128>,
+    initialize: this.txFromJSON<null>,
+    accept_admin: this.txFromJSON<null>,
+    propose_admin: this.txFromJSON<null>,
+    set_threshold: this.txFromJSON<null>,
+    cover_bad_debt: this.txFromJSON<Result<void>>,
+    get_pool_state: this.txFromJSON<PoolState>,
+    get_user_balance: this.txFromJSON<UserBalance>,
+    queue_withdrawal: this.txFromJSON<Result<void>>,
+    get_pool_contract: this.txFromJSON<string>,
+    dequeue_withdrawal: this.txFromJSON<Result<void>>,
+    get_backstop_token: this.txFromJSON<Option<string>>,
+    set_backstop_token: this.txFromJSON<null>,
+  };
 }

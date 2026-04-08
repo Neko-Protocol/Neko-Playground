@@ -30,111 +30,138 @@ if (typeof window !== "undefined") {
   window.Buffer = window.Buffer || Buffer;
 }
 
-
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CDTWMEFOCTZOYCOJMTFCDLKKZIDDH5ZUGVYWSIB3R3QCFFQO3VPO6O6Z",
-    pool1ContractId: "CDTWMEFOCTZOYCOJMTFCDLKKZIDDH5ZUGVYWSIB3R3QCFFQO3VPO6O6Z",
-    pool2ContractId: "CDZWW5XCWA6J3AHZJLN7VU5I5QMMZFUPYKIF3M6IOOWU23C25PXVRI37",
+    contractId: "CAPTJPAXEURYXEWGDSCCU3SZDYIP3U7KTS7VQM2EYLLK2JKIR4JIVWIH",
+    pool1ContractId: "CAPTJPAXEURYXEWGDSCCU3SZDYIP3U7KTS7VQM2EYLLK2JKIR4JIVWIH",
+    pool2ContractId: "CD3HUT3N6LLUS4XZUWRIIJZUKN2B3UDDMEH2IMK6S3UKAHTZ6VKKBTYQ",
   },
 } as const;
 
 export const Errors = {
-  1: {message:"NotAuthorized"},
-  2: {message:"NotInitialized"},
-  3: {message:"AlreadyInitialized"},
-  4: {message:"NotPositive"},
-  5: {message:"ArithmeticError"},
-  6: {message:"InvalidLedgerSequence"},
-  10: {message:"PoolFrozen"},
-  11: {message:"PoolOnIce"},
-  12: {message:"InsufficientPoolBalance"},
-  14: {message:"ReserveDisabled"},
-  15: {message:"SupplyCapExceeded"},
-  20: {message:"InsufficientBTokenBalance"},
-  30: {message:"InsufficientCollateral"},
-  31: {message:"InsufficientBorrowLimit"},
-  32: {message:"DebtAssetAlreadySet"},
-  33: {message:"DebtAssetNotSet"},
-  35: {message:"InsufficientDTokenBalance"},
-  40: {message:"CollateralNotFound"},
-  41: {message:"CollateralAmountTooLarge"},
-  42: {message:"InvalidCollateralFactor"},
-  50: {message:"InvalidInterestRateParams"},
-  51: {message:"InvalidUtilizationRatio"},
-  52: {message:"RateAccrualError"},
-  53: {message:"InvalidUtilRate"},
-  60: {message:"CDPNotInsolvent"},
-  61: {message:"AuctionNotFound"},
-  62: {message:"AuctionNotActive"},
-  63: {message:"AuctionAlreadyFilled"},
-  64: {message:"InvalidLiquidationAmount"},
-  65: {message:"HealthFactorTooHigh"},
-  66: {message:"HealthFactorTooLow"},
-  67: {message:"InvalidFillPercent"},
-  70: {message:"InsufficientBackstopDeposit"},
-  71: {message:"WithdrawalQueueActive"},
-  72: {message:"WithdrawalQueueNotExpired"},
-  73: {message:"BadDebtNotCovered"},
-  74: {message:"BackstopThresholdNotMet"},
-  75: {message:"WithdrawalQueueFull"},
-  80: {message:"OraclePriceFetchFailed"},
-  81: {message:"OracleDecimalsFetchFailed"},
-  82: {message:"InvalidOraclePrice"},
-  83: {message:"AssetNotFoundInOracle"},
-  84: {message:"TokenContractNotSet"},
-  85: {message:"TreasuryNotSet"},
-  86: {message:"NoTreasuryFeesToCollect"},
-  87: {message:"ConfigNotUnlocked"},
-  88: {message:"ConfigQueueNotFound"},
-  89: {message:"ConfigAlreadyQueued"}
-}
-
+  1: { message: "NotAuthorized" },
+  2: { message: "NotInitialized" },
+  3: { message: "AlreadyInitialized" },
+  4: { message: "NotPositive" },
+  5: { message: "ArithmeticError" },
+  6: { message: "InvalidLedgerSequence" },
+  10: { message: "PoolFrozen" },
+  11: { message: "PoolOnIce" },
+  12: { message: "InsufficientPoolBalance" },
+  14: { message: "ReserveDisabled" },
+  15: { message: "SupplyCapExceeded" },
+  20: { message: "InsufficientBTokenBalance" },
+  30: { message: "InsufficientCollateral" },
+  31: { message: "InsufficientBorrowLimit" },
+  32: { message: "DebtAssetAlreadySet" },
+  33: { message: "DebtAssetNotSet" },
+  35: { message: "InsufficientDTokenBalance" },
+  40: { message: "CollateralNotFound" },
+  41: { message: "CollateralAmountTooLarge" },
+  42: { message: "InvalidCollateralFactor" },
+  50: { message: "InvalidInterestRateParams" },
+  51: { message: "InvalidUtilizationRatio" },
+  52: { message: "RateAccrualError" },
+  53: { message: "InvalidUtilRate" },
+  60: { message: "CDPNotInsolvent" },
+  61: { message: "AuctionNotFound" },
+  62: { message: "AuctionNotActive" },
+  63: { message: "AuctionAlreadyFilled" },
+  64: { message: "InvalidLiquidationAmount" },
+  65: { message: "HealthFactorTooHigh" },
+  66: { message: "HealthFactorTooLow" },
+  67: { message: "InvalidFillPercent" },
+  70: { message: "InsufficientBackstopDeposit" },
+  71: { message: "WithdrawalQueueActive" },
+  72: { message: "WithdrawalQueueNotExpired" },
+  73: { message: "BadDebtNotCovered" },
+  74: { message: "BackstopThresholdNotMet" },
+  75: { message: "WithdrawalQueueFull" },
+  80: { message: "OraclePriceFetchFailed" },
+  81: { message: "OracleDecimalsFetchFailed" },
+  82: { message: "InvalidOraclePrice" },
+  83: { message: "AssetNotFoundInOracle" },
+  84: { message: "TokenContractNotSet" },
+  85: { message: "TreasuryNotSet" },
+  86: { message: "NoTreasuryFeesToCollect" },
+  87: { message: "ConfigNotUnlocked" },
+  88: { message: "ConfigQueueNotFound" },
+  89: { message: "ConfigAlreadyQueued" },
+};
 
 export interface CDP {
   /**
- * Collateral (RWA tokens): token address -> amount
- */
-collateral: Map<string, i128>;
+   * Collateral (RWA tokens): token address -> amount
+   */
+  collateral: Map<string, i128>;
   /**
- * Creation timestamp
- */
-created_at: u64;
+   * Creation timestamp
+   */
+  created_at: u64;
   /**
- * dTokens of the borrowed asset
- */
-d_tokens: i128;
+   * dTokens of the borrowed asset
+   */
+  d_tokens: i128;
   /**
- * Debt asset symbol (only one: USDC, XLM, etc.)
- */
-debt_asset: Option<string>;
+   * Debt asset symbol (only one: USDC, XLM, etc.)
+   */
+  debt_asset: Option<string>;
   /**
- * Last update timestamp
- */
-last_update: u64;
+   * Last update timestamp
+   */
+  last_update: u64;
 }
 
 /**
  * Typed storage keys for the lending pool.
- * 
+ *
  * Layout:
  * - Instance storage          : fixed-size scalar config (Admin, PoolState, fee rates, oracles)
  * - Persistent SHARED per-entry: per-asset config set by admin (CollateralFactor, TokenContract…)
  * and per-asset state (PoolBalance, ReserveData, InterestRateParams, Auction)
  * - Persistent USER per-entry : per-user positions (BTokenBalance, DTokenBalance, Cdp)
  */
-export type DataKey = {tag: "Admin", values: void} | {tag: "PoolState", values: void} | {tag: "NekoOracle", values: void} | {tag: "ReflectorOracle", values: void} | {tag: "BackstopContract", values: void} | {tag: "BackstopToken", values: void} | {tag: "BackstopTakeRate", values: void} | {tag: "Treasury", values: void} | {tag: "ReserveFactor", values: void} | {tag: "OriginationFeeRate", values: void} | {tag: "LiquidationFeeRate", values: void} | {tag: "TokenContract", values: readonly [string]} | {tag: "AssetType", values: readonly [string]} | {tag: "CollateralAssetType", values: readonly [string]} | {tag: "CollateralSymbol", values: readonly [string]} | {tag: "CollateralFactor", values: readonly [string]} | {tag: "PoolBalance", values: readonly [string]} | {tag: "ReserveData", values: readonly [string]} | {tag: "InterestRateParams", values: readonly [string]} | {tag: "BTokenBalance", values: readonly [UserAssetKey]} | {tag: "DTokenBalance", values: readonly [UserAssetKey]} | {tag: "Cdp", values: readonly [string]} | {tag: "Auction", values: readonly [u32]} | {tag: "ProposedAdmin", values: void} | {tag: "QueuedReserveConfig", values: readonly [string]};
+export type DataKey =
+  | { tag: "Admin"; values: void }
+  | { tag: "PoolState"; values: void }
+  | { tag: "NekoOracle"; values: void }
+  | { tag: "ReflectorOracle"; values: void }
+  | { tag: "BackstopContract"; values: void }
+  | { tag: "BackstopToken"; values: void }
+  | { tag: "BackstopTakeRate"; values: void }
+  | { tag: "Treasury"; values: void }
+  | { tag: "ReserveFactor"; values: void }
+  | { tag: "OriginationFeeRate"; values: void }
+  | { tag: "LiquidationFeeRate"; values: void }
+  | { tag: "TokenContract"; values: readonly [string] }
+  | { tag: "AssetType"; values: readonly [string] }
+  | { tag: "CollateralAssetType"; values: readonly [string] }
+  | { tag: "CollateralSymbol"; values: readonly [string] }
+  | { tag: "CollateralFactor"; values: readonly [string] }
+  | { tag: "PoolBalance"; values: readonly [string] }
+  | { tag: "ReserveData"; values: readonly [string] }
+  | { tag: "InterestRateParams"; values: readonly [string] }
+  | { tag: "BTokenBalance"; values: readonly [UserAssetKey] }
+  | { tag: "DTokenBalance"; values: readonly [UserAssetKey] }
+  | { tag: "Cdp"; values: readonly [string] }
+  | { tag: "Auction"; values: readonly [u32] }
+  | { tag: "ProposedAdmin"; values: void }
+  | { tag: "QueuedReserveConfig"; values: readonly [string] };
 
 /**
  * Determines which oracle to use for price queries.
  * - Crypto: uses the Reflector oracle (USDC, XLM, etc.)
  * - Rwa: uses the RWA oracle (USDY, CETES, etc.)
  */
-export type AssetType = {tag: "Crypto", values: void} | {tag: "Rwa", values: void};
+export type AssetType =
+  | { tag: "Crypto"; values: void }
+  | { tag: "Rwa"; values: void };
 
-export type PoolState = {tag: "Active", values: void} | {tag: "OnIce", values: void} | {tag: "Frozen", values: void};
-
+export type PoolState =
+  | { tag: "Active"; values: void }
+  | { tag: "OnIce"; values: void }
+  | { tag: "Frozen"; values: void };
 
 /**
  * Price data from oracle (SEP-40 compatible)
@@ -144,40 +171,39 @@ export interface PriceData {
   timestamp: u64;
 }
 
-
 /**
  * Dutch Auction data structure (unified for all auction types)
  */
 export interface AuctionData {
   /**
- * Type of auction
- */
-auction_type: AuctionType;
+   * Type of auction
+   */
+  auction_type: AuctionType;
   /**
- * Assets/tokens being bid (what filler pays)
- * For UserLiquidation: debt tokens
- * For BadDebt: underlying debt asset
- * For Interest: backstop tokens
- */
-bid: Map<string, i128>;
+   * Assets/tokens being bid (what filler pays)
+   * For UserLiquidation: debt tokens
+   * For BadDebt: underlying debt asset
+   * For Interest: backstop tokens
+   */
+  bid: Map<string, i128>;
   /**
- * Auction start block
- */
-block: u32;
+   * Auction start block
+   */
+  block: u32;
   /**
- * Assets/tokens being auctioned (what filler receives)
- * For UserLiquidation: collateral tokens
- * For BadDebt: backstop tokens
- * For Interest: interest tokens
- */
-lot: Map<string, i128>;
+   * Assets/tokens being auctioned (what filler receives)
+   * For UserLiquidation: collateral tokens
+   * For BadDebt: backstop tokens
+   * For Interest: interest tokens
+   */
+  lot: Map<string, i128>;
   /**
- * The user associated with this auction
- * For UserLiquidation: the borrower being liquidated
- * For BadDebt: the borrower with bad debt
- * For Interest: the contract itself (protocol)
- */
-user: string;
+   * The user associated with this auction
+   * For UserLiquidation: the borrower being liquidated
+   * For BadDebt: the borrower with bad debt
+   * For Interest: the contract itself (protocol)
+   */
+  user: string;
 }
 
 /**
@@ -189,50 +215,48 @@ export enum AuctionType {
   Interest = 2,
 }
 
-
 /**
  * Reserve state data for an asset
  * Token rates use 12 decimals (SCALAR_12)
  */
 export interface ReserveData {
   /**
- * bToken to underlying conversion rate (12 decimals)
- * underlying = b_tokens * b_rate / SCALAR_12
- */
-b_rate: i128;
+   * bToken to underlying conversion rate (12 decimals)
+   * underlying = b_tokens * b_rate / SCALAR_12
+   */
+  b_rate: i128;
   /**
- * Total bToken supply
- */
-b_supply: i128;
+   * Total bToken supply
+   */
+  b_supply: i128;
   /**
- * Interest owed to backstop (accumulated)
- */
-backstop_credit: i128;
+   * Interest owed to backstop (accumulated)
+   */
+  backstop_credit: i128;
   /**
- * dToken to underlying conversion rate (12 decimals)
- * underlying = d_tokens * d_rate / SCALAR_12
- */
-d_rate: i128;
+   * dToken to underlying conversion rate (12 decimals)
+   * underlying = d_tokens * d_rate / SCALAR_12
+   */
+  d_rate: i128;
   /**
- * Total dToken supply
- */
-d_supply: i128;
+   * Total dToken supply
+   */
+  d_supply: i128;
   /**
- * Interest rate modifier (7 decimals)
- * Adjusts dynamically based on utilization vs target
- * Range: SCALAR_7 / 10 to SCALAR_7 * 10 (0.1x to 10x)
- */
-ir_mod: i128;
+   * Interest rate modifier (7 decimals)
+   * Adjusts dynamically based on utilization vs target
+   * Range: SCALAR_7 / 10 to SCALAR_7 * 10 (0.1x to 10x)
+   */
+  ir_mod: i128;
   /**
- * Last interest accrual timestamp
- */
-last_time: u64;
+   * Last interest accrual timestamp
+   */
+  last_time: u64;
   /**
- * Fees owed to treasury (accumulated: reserve factor + origination fees)
- */
-treasury_credit: i128;
+   * Fees owed to treasury (accumulated: reserve factor + origination fees)
+   */
+  treasury_credit: i128;
 }
-
 
 /**
  * Key for per-user per-asset data (bTokens, dTokens)
@@ -241,7 +265,6 @@ export interface UserAssetKey {
   asset: string;
   user: string;
 }
-
 
 /**
  * Arguments for [`crate::contract::LendingContract::__constructor`] (factory `deploy_v2` + tests).
@@ -257,11 +280,10 @@ export interface PoolInitConfig {
   treasury: string;
 }
 
-
 /**
  * Interest rate parameters for a reserve
  * All values in 7 decimals (SCALAR_7)
- * 
+ *
  * Example configuration for USDC:
  * ```
  * InterestRateParams {
@@ -277,50 +299,49 @@ export interface PoolInitConfig {
  */
 export interface InterestRateParams {
   /**
- * Whether this reserve accepts new deposits and borrows
- */
-enabled: boolean;
+   * Whether this reserve accepts new deposits and borrows
+   */
+  enabled: boolean;
   /**
- * Liability factor (7 decimals, e.g. 8_000_000 = 80%)
- * Applied to debt when computing health factor and borrow limits:
- * effective_debt = debt_usd * SCALAR_7 / l_factor
- * Lower l_factor → stricter (debt counts as larger). Default: SCALAR_7 (1.0 = no change).
- */
-l_factor: u32;
+   * Liability factor (7 decimals, e.g. 8_000_000 = 80%)
+   * Applied to debt when computing health factor and borrow limits:
+   * effective_debt = debt_usd * SCALAR_7 / l_factor
+   * Lower l_factor → stricter (debt counts as larger). Default: SCALAR_7 (1.0 = no change).
+   */
+  l_factor: u32;
   /**
- * Maximum utilization rate before extreme rates kick in (7 decimals, e.g., 9_500_000 = 95%)
- */
-max_util: u32;
+   * Maximum utilization rate before extreme rates kick in (7 decimals, e.g., 9_500_000 = 95%)
+   */
+  max_util: u32;
   /**
- * Base interest rate R0 (7 decimals, always applied)
- */
-r_base: u32;
+   * Base interest rate R0 (7 decimals, always applied)
+   */
+  r_base: u32;
   /**
- * Interest rate slope R1 (7 decimals, applied up to target_util)
- */
-r_one: u32;
+   * Interest rate slope R1 (7 decimals, applied up to target_util)
+   */
+  r_one: u32;
   /**
- * Interest rate slope R3 (7 decimals, applied above max_util)
- */
-r_three: u32;
+   * Interest rate slope R3 (7 decimals, applied above max_util)
+   */
+  r_three: u32;
   /**
- * Interest rate slope R2 (7 decimals, applied from target_util to max_util)
- */
-r_two: u32;
+   * Interest rate slope R2 (7 decimals, applied from target_util to max_util)
+   */
+  r_two: u32;
   /**
- * Reactivity constant for rate modifier adjustment (7 decimals)
- */
-reactivity: u32;
+   * Reactivity constant for rate modifier adjustment (7 decimals)
+   */
+  reactivity: u32;
   /**
- * Maximum underlying tokens the reserve can hold (0 = unlimited)
- */
-supply_cap: i128;
+   * Maximum underlying tokens the reserve can hold (0 = unlimited)
+   */
+  supply_cap: i128;
   /**
- * Target utilization rate (7 decimals, e.g., 7_500_000 = 75%)
- */
-target_util: u32;
+   * Target utilization rate (7 decimals, e.g., 7_500_000 = 75%)
+   */
+  target_util: u32;
 }
-
 
 /**
  * A queued change to a reserve's interest rate parameters.
@@ -329,245 +350,370 @@ target_util: u32;
 export interface QueuedReserveConfig {
   new_params: InterestRateParams;
   /**
- * Unix timestamp after which the change can be applied
- */
-unlock_time: u64;
+   * Unix timestamp after which the change can be applied
+   */
+  unlock_time: u64;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 export interface Client {
   /**
    * Construct and simulate a repay transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Repay debt
    */
-  repay: ({borrower, asset, d_tokens}: {borrower: string, asset: string, d_tokens: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<i128>>>
+  repay: (
+    {
+      borrower,
+      asset,
+      d_tokens,
+    }: { borrower: string; asset: string; d_tokens: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<i128>>>;
 
   /**
    * Construct and simulate a borrow transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Borrow crypto asset from the pool
    */
-  borrow: ({borrower, asset, amount}: {borrower: string, asset: string, amount: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<i128>>>
+  borrow: (
+    {
+      borrower,
+      asset,
+      amount,
+    }: { borrower: string; asset: string; amount: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<i128>>>;
 
   /**
    * Construct and simulate a deposit transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Deposit crypto asset to the pool
    */
-  deposit: ({lender, asset, amount}: {lender: string, asset: string, amount: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<i128>>>
+  deposit: (
+    { lender, asset, amount }: { lender: string; asset: string; amount: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<i128>>>;
 
   /**
    * Construct and simulate a upgrade transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Upgrade the contract to a new WASM hash
    * Only the admin can call this function
    */
-  upgrade: ({new_wasm_hash}: {new_wasm_hash: Buffer}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  upgrade: (
+    { new_wasm_hash }: { new_wasm_hash: Buffer },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a withdraw transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Withdraw crypto asset from the pool
    */
-  withdraw: ({lender, asset, b_tokens}: {lender: string, asset: string, b_tokens: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<i128>>>
+  withdraw: (
+    {
+      lender,
+      asset,
+      b_tokens,
+    }: { lender: string; asset: string; b_tokens: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<i128>>>;
 
   /**
    * Construct and simulate a accept_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Step 2 of admin transfer: proposed address accepts and becomes the new admin.
    */
-  accept_admin: (options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  accept_admin: (
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a fill_auction transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Fill a liquidation auction
    */
-  fill_auction: ({auction_id, liquidator}: {auction_id: u32, liquidator: string}, options?: MethodOptions) => Promise<AssembledTransaction<Result<void>>>
+  fill_auction: (
+    { auction_id, liquidator }: { auction_id: u32; liquidator: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<void>>>;
 
   /**
    * Construct and simulate a get_treasury transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get treasury address
    */
-  get_treasury: (options?: MethodOptions) => Promise<AssembledTransaction<string>>
+  get_treasury: (
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<string>>;
 
   /**
    * Construct and simulate a has_bad_debt transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Check if a borrower has bad debt
    */
-  has_bad_debt: ({borrower}: {borrower: string}, options?: MethodOptions) => Promise<AssembledTransaction<boolean>>
+  has_bad_debt: (
+    { borrower }: { borrower: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<boolean>>;
 
   /**
    * Construct and simulate a set_treasury transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Set treasury address. Admin-only.
    */
-  set_treasury: ({treasury}: {treasury: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  set_treasury: (
+    { treasury }: { treasury: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a propose_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Step 1 of admin transfer: current admin proposes a new admin address.
    * The proposal is stored in temporary storage and expires after 7 days.
    */
-  propose_admin: ({proposed}: {proposed: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  propose_admin: (
+    { proposed }: { proposed: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a add_collateral transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Add RWA token collateral
    */
-  add_collateral: ({borrower, neko_token, amount}: {borrower: string, neko_token: string, amount: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<void>>>
+  add_collateral: (
+    {
+      borrower,
+      neko_token,
+      amount,
+    }: { borrower: string; neko_token: string; amount: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<void>>>;
 
   /**
    * Construct and simulate a get_collateral transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get collateral amount for a borrower and RWA token
    */
-  get_collateral: ({borrower, neko_token}: {borrower: string, neko_token: string}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+  get_collateral: (
+    { borrower, neko_token }: { borrower: string; neko_token: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<i128>>;
 
   /**
    * Construct and simulate a get_pool_state transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get pool state
    */
-  get_pool_state: (options?: MethodOptions) => Promise<AssembledTransaction<PoolState>>
+  get_pool_state: (
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<PoolState>>;
 
   /**
    * Construct and simulate a set_pool_state transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Set pool state
    */
-  set_pool_state: ({state}: {state: PoolState}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  set_pool_state: (
+    { state }: { state: PoolState },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a accrue_interest transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Accrue interest for an asset
    */
-  accrue_interest: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<Result<void>>>
+  accrue_interest: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<void>>>;
 
   /**
    * Construct and simulate a get_b_token_rate transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get bTokenRate for an asset
    */
-  get_b_token_rate: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+  get_b_token_rate: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<i128>>;
 
   /**
    * Construct and simulate a get_d_token_rate transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get dTokenRate for an asset
    */
-  get_d_token_rate: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+  get_d_token_rate: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<i128>>;
 
   /**
    * Construct and simulate a get_pool_balance transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get pool balance for an asset
    */
-  get_pool_balance: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+  get_pool_balance: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<i128>>;
 
   /**
    * Construct and simulate a get_interest_rate transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get current interest rate for an asset
    */
-  get_interest_rate: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<Result<i128>>>
+  get_interest_rate: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<i128>>>;
 
   /**
    * Construct and simulate a remove_collateral transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Remove RWA token collateral
    */
-  remove_collateral: ({borrower, neko_token, amount}: {borrower: string, neko_token: string, amount: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<void>>>
+  remove_collateral: (
+    {
+      borrower,
+      neko_token,
+      amount,
+    }: { borrower: string; neko_token: string; amount: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<void>>>;
 
   /**
    * Construct and simulate a get_b_token_supply transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get total bToken supply for an asset
    */
-  get_b_token_supply: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+  get_b_token_supply: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<i128>>;
 
   /**
    * Construct and simulate a get_d_token_supply transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get total dToken supply for an asset
    */
-  get_d_token_supply: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+  get_d_token_supply: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<i128>>;
 
   /**
    * Construct and simulate a set_backstop_token transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Set backstop token address (used by interest auctions). Admin-only.
    */
-  set_backstop_token: ({token_address}: {token_address: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  set_backstop_token: (
+    { token_address }: { token_address: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a set_reserve_factor transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Set reserve factor (7 decimals, e.g. 1_000_000 = 10%). Admin-only.
    */
-  set_reserve_factor: ({reserve_factor}: {reserve_factor: u32}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  set_reserve_factor: (
+    { reserve_factor }: { reserve_factor: u32 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a set_token_contract transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Set token contract address for an asset symbol
    * asset_type: Rwa for RWA tokens (uses RWA oracle), Crypto for stable/crypto tokens (uses Reflector oracle)
    */
-  set_token_contract: ({asset, token_address, asset_type}: {asset: string, token_address: string, asset_type: AssetType}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  set_token_contract: (
+    {
+      asset,
+      token_address,
+      asset_type,
+    }: { asset: string; token_address: string; asset_type: AssetType },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a get_b_token_balance transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get bToken balance for a lender
    */
-  get_b_token_balance: ({lender, asset}: {lender: string, asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+  get_b_token_balance: (
+    { lender, asset }: { lender: string; asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<i128>>;
 
   /**
    * Construct and simulate a get_d_token_balance transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get dToken balance for a borrower
    */
-  get_d_token_balance: ({borrower, asset}: {borrower: string, asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+  get_d_token_balance: (
+    { borrower, asset }: { borrower: string; asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<i128>>;
 
   /**
    * Construct and simulate a get_treasury_credit transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get accumulated treasury fees (not yet collected) for an asset.
    */
-  get_treasury_credit: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+  get_treasury_credit: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<i128>>;
 
   /**
    * Construct and simulate a initiate_liquidation transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Initiate liquidation for a borrower
    */
-  initiate_liquidation: ({borrower, neko_token, debt_asset, liquidation_percent}: {borrower: string, neko_token: string, debt_asset: string, liquidation_percent: u32}, options?: MethodOptions) => Promise<AssembledTransaction<Result<u32>>>
+  initiate_liquidation: (
+    {
+      borrower,
+      neko_token,
+      debt_asset,
+      liquidation_percent,
+    }: {
+      borrower: string;
+      neko_token: string;
+      debt_asset: string;
+      liquidation_percent: u32;
+    },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<u32>>>;
 
   /**
    * Construct and simulate a collect_treasury_fees transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Collect accumulated treasury fees for an asset and transfer to treasury address. Admin-only.
    */
-  collect_treasury_fees: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<Result<i128>>>
+  collect_treasury_fees: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<i128>>>;
 
   /**
    * Construct and simulate a fill_bad_debt_auction transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Fill a bad debt auction
    */
-  fill_bad_debt_auction: ({auction_id, bidder, amount}: {auction_id: u32, bidder: string, amount: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<i128>>>
+  fill_bad_debt_auction: (
+    {
+      auction_id,
+      bidder,
+      amount,
+    }: { auction_id: u32; bidder: string; amount: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<i128>>>;
 
   /**
    * Construct and simulate a fill_interest_auction transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Fill an interest auction
    */
-  fill_interest_auction: ({auction_id, bidder, asset, fill_percent}: {auction_id: u32, bidder: string, asset: string, fill_percent: i128}, options?: MethodOptions) => Promise<AssembledTransaction<Result<readonly [i128, i128]>>>
+  fill_interest_auction: (
+    {
+      auction_id,
+      bidder,
+      asset,
+      fill_percent,
+    }: { auction_id: u32; bidder: string; asset: string; fill_percent: i128 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<readonly [i128, i128]>>>;
 
   /**
    * Construct and simulate a get_collateral_factor transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get collateral factor for an RWA token
    */
-  get_collateral_factor: ({neko_token}: {neko_token: string}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
+  get_collateral_factor: (
+    { neko_token }: { neko_token: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<u32>>;
 
   /**
    * Construct and simulate a set_backstop_contract transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Register the neko-backstop contract address. Admin-only.
    * After registration, the backstop can call update_pool_state_from_backstop.
    */
-  set_backstop_contract: ({backstop}: {backstop: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  set_backstop_contract: (
+    { backstop }: { backstop: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a set_collateral_factor transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -575,93 +721,139 @@ export interface Client {
    * asset_type: Rwa for RWA tokens (uses RWA oracle), Crypto for stable/crypto tokens (uses Reflector oracle)
    * symbol: the asset symbol used for oracle queries (e.g. symbol_short!("USDC"))
    */
-  set_collateral_factor: ({token, factor, asset_type, symbol}: {token: string, factor: u32, asset_type: AssetType, symbol: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  set_collateral_factor: (
+    {
+      token,
+      factor,
+      asset_type,
+      symbol,
+    }: { token: string; factor: u32; asset_type: AssetType; symbol: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a calculate_borrow_limit transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Calculate borrow limit for a borrower
    */
-  calculate_borrow_limit: ({borrower}: {borrower: string}, options?: MethodOptions) => Promise<AssembledTransaction<Result<i128>>>
+  calculate_borrow_limit: (
+    { borrower }: { borrower: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<i128>>>;
 
   /**
    * Construct and simulate a set_backstop_take_rate transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Set backstop take rate
    */
-  set_backstop_take_rate: ({take_rate}: {take_rate: u32}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  set_backstop_take_rate: (
+    { take_rate }: { take_rate: u32 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a calculate_health_factor transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Calculate health factor for a borrower (7 decimals)
    */
-  calculate_health_factor: ({borrower}: {borrower: string}, options?: MethodOptions) => Promise<AssembledTransaction<Result<u32>>>
+  calculate_health_factor: (
+    { borrower }: { borrower: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<u32>>>;
 
   /**
    * Construct and simulate a create_bad_debt_auction transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Create a bad debt auction for uncovered debt
    */
-  create_bad_debt_auction: ({borrower, debt_asset}: {borrower: string, debt_asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<Result<u32>>>
+  create_bad_debt_auction: (
+    { borrower, debt_asset }: { borrower: string; debt_asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<u32>>>;
 
   /**
    * Construct and simulate a create_interest_auction transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Create an interest auction for accumulated protocol interest
    */
-  create_interest_auction: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<Result<u32>>>
+  create_interest_auction: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<Result<u32>>>;
 
   /**
    * Construct and simulate a get_accumulated_interest transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Get accumulated interest for an asset
    */
-  get_accumulated_interest: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+  get_accumulated_interest: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<i128>>;
 
   /**
    * Construct and simulate a queue_set_reserve_params transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Queue a change to reserve interest rate parameters (step 1).
    * 7-day timelock unless pool is OnIce.
    */
-  queue_set_reserve_params: ({asset, params}: {asset: string, params: InterestRateParams}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  queue_set_reserve_params: (
+    { asset, params }: { asset: string; params: InterestRateParams },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a set_liquidation_fee_rate transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Set liquidation fee rate (7 decimals, e.g. 100_000 = 1%). Admin-only.
    */
-  set_liquidation_fee_rate: ({liquidation_fee_rate}: {liquidation_fee_rate: u32}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  set_liquidation_fee_rate: (
+    { liquidation_fee_rate }: { liquidation_fee_rate: u32 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a set_origination_fee_rate transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Set origination fee rate (7 decimals, e.g. 40_000 = 0.4%). Admin-only.
    */
-  set_origination_fee_rate: ({origination_fee_rate}: {origination_fee_rate: u32}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  set_origination_fee_rate: (
+    { origination_fee_rate }: { origination_fee_rate: u32 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a apply_queued_reserve_params transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Apply a queued reserve param change after the timelock expires (step 2).
    */
-  apply_queued_reserve_params: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  apply_queued_reserve_params: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a can_create_interest_auction transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Check if an interest auction can be created
    */
-  can_create_interest_auction: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<boolean>>
+  can_create_interest_auction: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<boolean>>;
 
   /**
    * Construct and simulate a cancel_queued_reserve_params transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Cancel a queued reserve param change before it is applied.
    */
-  cancel_queued_reserve_params: ({asset}: {asset: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  cancel_queued_reserve_params: (
+    { asset }: { asset: string },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 
   /**
    * Construct and simulate a update_pool_state_from_backstop transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Accept a pool state update pushed by the registered backstop contract.
    * State ordinal: 0 = Active, 1 = OnIce, 2+ = Frozen.
    */
-  update_pool_state_from_backstop: ({caller, state}: {caller: string, state: u32}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
-
+  update_pool_state_from_backstop: (
+    { caller, state }: { caller: string; state: u32 },
+    options?: MethodOptions
+  ) => Promise<AssembledTransaction<null>>;
 }
 export class Client extends ContractClient {
   static async deploy<T = Client>(
-        /** Constructor/Initialization Args for the contract's `__constructor` method */
-        {config}: {config: PoolInitConfig},
+    /** Constructor/Initialization Args for the contract's `__constructor` method */
+    { config }: { config: PoolInitConfig },
     /** Options for initializing a Client as well as for calling a method, with extras specific to deploying. */
     options: MethodOptions &
       Omit<ContractClientOptions, "contractId"> & {
@@ -673,11 +865,12 @@ export class Client extends ContractClient {
         format?: "hex" | "base64";
       }
   ): Promise<AssembledTransaction<T>> {
-    return ContractClient.deploy({config}, options)
+    return ContractClient.deploy({ config }, options);
   }
   constructor(public readonly options: ContractClientOptions) {
     super(
-      new ContractSpec([ "AAAABAAAAAAAAAAAAAAABUVycm9yAAAAAAAAMAAAAAAAAAANTm90QXV0aG9yaXplZAAAAAAAAAEAAAAAAAAADk5vdEluaXRpYWxpemVkAAAAAAACAAAAAAAAABJBbHJlYWR5SW5pdGlhbGl6ZWQAAAAAAAMAAAAAAAAAC05vdFBvc2l0aXZlAAAAAAQAAAAAAAAAD0FyaXRobWV0aWNFcnJvcgAAAAAFAAAAAAAAABVJbnZhbGlkTGVkZ2VyU2VxdWVuY2UAAAAAAAAGAAAAAAAAAApQb29sRnJvemVuAAAAAAAKAAAAAAAAAAlQb29sT25JY2UAAAAAAAALAAAAAAAAABdJbnN1ZmZpY2llbnRQb29sQmFsYW5jZQAAAAAMAAAAAAAAAA9SZXNlcnZlRGlzYWJsZWQAAAAADgAAAAAAAAARU3VwcGx5Q2FwRXhjZWVkZWQAAAAAAAAPAAAAAAAAABlJbnN1ZmZpY2llbnRCVG9rZW5CYWxhbmNlAAAAAAAAFAAAAAAAAAAWSW5zdWZmaWNpZW50Q29sbGF0ZXJhbAAAAAAAHgAAAAAAAAAXSW5zdWZmaWNpZW50Qm9ycm93TGltaXQAAAAAHwAAAAAAAAATRGVidEFzc2V0QWxyZWFkeVNldAAAAAAgAAAAAAAAAA9EZWJ0QXNzZXROb3RTZXQAAAAAIQAAAAAAAAAZSW5zdWZmaWNpZW50RFRva2VuQmFsYW5jZQAAAAAAACMAAAAAAAAAEkNvbGxhdGVyYWxOb3RGb3VuZAAAAAAAKAAAAAAAAAAYQ29sbGF0ZXJhbEFtb3VudFRvb0xhcmdlAAAAKQAAAAAAAAAXSW52YWxpZENvbGxhdGVyYWxGYWN0b3IAAAAAKgAAAAAAAAAZSW52YWxpZEludGVyZXN0UmF0ZVBhcmFtcwAAAAAAADIAAAAAAAAAF0ludmFsaWRVdGlsaXphdGlvblJhdGlvAAAAADMAAAAAAAAAEFJhdGVBY2NydWFsRXJyb3IAAAA0AAAAAAAAAA9JbnZhbGlkVXRpbFJhdGUAAAAANQAAAAAAAAAPQ0RQTm90SW5zb2x2ZW50AAAAADwAAAAAAAAAD0F1Y3Rpb25Ob3RGb3VuZAAAAAA9AAAAAAAAABBBdWN0aW9uTm90QWN0aXZlAAAAPgAAAAAAAAAUQXVjdGlvbkFscmVhZHlGaWxsZWQAAAA/AAAAAAAAABhJbnZhbGlkTGlxdWlkYXRpb25BbW91bnQAAABAAAAAAAAAABNIZWFsdGhGYWN0b3JUb29IaWdoAAAAAEEAAAAAAAAAEkhlYWx0aEZhY3RvclRvb0xvdwAAAAAAQgAAAAAAAAASSW52YWxpZEZpbGxQZXJjZW50AAAAAABDAAAAAAAAABtJbnN1ZmZpY2llbnRCYWNrc3RvcERlcG9zaXQAAAAARgAAAAAAAAAVV2l0aGRyYXdhbFF1ZXVlQWN0aXZlAAAAAAAARwAAAAAAAAAZV2l0aGRyYXdhbFF1ZXVlTm90RXhwaXJlZAAAAAAAAEgAAAAAAAAAEUJhZERlYnROb3RDb3ZlcmVkAAAAAAAASQAAAAAAAAAXQmFja3N0b3BUaHJlc2hvbGROb3RNZXQAAAAASgAAAAAAAAATV2l0aGRyYXdhbFF1ZXVlRnVsbAAAAABLAAAAAAAAABZPcmFjbGVQcmljZUZldGNoRmFpbGVkAAAAAABQAAAAAAAAABlPcmFjbGVEZWNpbWFsc0ZldGNoRmFpbGVkAAAAAAAAUQAAAAAAAAASSW52YWxpZE9yYWNsZVByaWNlAAAAAABSAAAAAAAAABVBc3NldE5vdEZvdW5kSW5PcmFjbGUAAAAAAABTAAAAAAAAABNUb2tlbkNvbnRyYWN0Tm90U2V0AAAAAFQAAAAAAAAADlRyZWFzdXJ5Tm90U2V0AAAAAABVAAAAAAAAABdOb1RyZWFzdXJ5RmVlc1RvQ29sbGVjdAAAAABWAAAAAAAAABFDb25maWdOb3RVbmxvY2tlZAAAAAAAAFcAAAAAAAAAE0NvbmZpZ1F1ZXVlTm90Rm91bmQAAAAAWAAAAAAAAAATQ29uZmlnQWxyZWFkeVF1ZXVlZAAAAABZ",
+      new ContractSpec([
+        "AAAABAAAAAAAAAAAAAAABUVycm9yAAAAAAAAMAAAAAAAAAANTm90QXV0aG9yaXplZAAAAAAAAAEAAAAAAAAADk5vdEluaXRpYWxpemVkAAAAAAACAAAAAAAAABJBbHJlYWR5SW5pdGlhbGl6ZWQAAAAAAAMAAAAAAAAAC05vdFBvc2l0aXZlAAAAAAQAAAAAAAAAD0FyaXRobWV0aWNFcnJvcgAAAAAFAAAAAAAAABVJbnZhbGlkTGVkZ2VyU2VxdWVuY2UAAAAAAAAGAAAAAAAAAApQb29sRnJvemVuAAAAAAAKAAAAAAAAAAlQb29sT25JY2UAAAAAAAALAAAAAAAAABdJbnN1ZmZpY2llbnRQb29sQmFsYW5jZQAAAAAMAAAAAAAAAA9SZXNlcnZlRGlzYWJsZWQAAAAADgAAAAAAAAARU3VwcGx5Q2FwRXhjZWVkZWQAAAAAAAAPAAAAAAAAABlJbnN1ZmZpY2llbnRCVG9rZW5CYWxhbmNlAAAAAAAAFAAAAAAAAAAWSW5zdWZmaWNpZW50Q29sbGF0ZXJhbAAAAAAAHgAAAAAAAAAXSW5zdWZmaWNpZW50Qm9ycm93TGltaXQAAAAAHwAAAAAAAAATRGVidEFzc2V0QWxyZWFkeVNldAAAAAAgAAAAAAAAAA9EZWJ0QXNzZXROb3RTZXQAAAAAIQAAAAAAAAAZSW5zdWZmaWNpZW50RFRva2VuQmFsYW5jZQAAAAAAACMAAAAAAAAAEkNvbGxhdGVyYWxOb3RGb3VuZAAAAAAAKAAAAAAAAAAYQ29sbGF0ZXJhbEFtb3VudFRvb0xhcmdlAAAAKQAAAAAAAAAXSW52YWxpZENvbGxhdGVyYWxGYWN0b3IAAAAAKgAAAAAAAAAZSW52YWxpZEludGVyZXN0UmF0ZVBhcmFtcwAAAAAAADIAAAAAAAAAF0ludmFsaWRVdGlsaXphdGlvblJhdGlvAAAAADMAAAAAAAAAEFJhdGVBY2NydWFsRXJyb3IAAAA0AAAAAAAAAA9JbnZhbGlkVXRpbFJhdGUAAAAANQAAAAAAAAAPQ0RQTm90SW5zb2x2ZW50AAAAADwAAAAAAAAAD0F1Y3Rpb25Ob3RGb3VuZAAAAAA9AAAAAAAAABBBdWN0aW9uTm90QWN0aXZlAAAAPgAAAAAAAAAUQXVjdGlvbkFscmVhZHlGaWxsZWQAAAA/AAAAAAAAABhJbnZhbGlkTGlxdWlkYXRpb25BbW91bnQAAABAAAAAAAAAABNIZWFsdGhGYWN0b3JUb29IaWdoAAAAAEEAAAAAAAAAEkhlYWx0aEZhY3RvclRvb0xvdwAAAAAAQgAAAAAAAAASSW52YWxpZEZpbGxQZXJjZW50AAAAAABDAAAAAAAAABtJbnN1ZmZpY2llbnRCYWNrc3RvcERlcG9zaXQAAAAARgAAAAAAAAAVV2l0aGRyYXdhbFF1ZXVlQWN0aXZlAAAAAAAARwAAAAAAAAAZV2l0aGRyYXdhbFF1ZXVlTm90RXhwaXJlZAAAAAAAAEgAAAAAAAAAEUJhZERlYnROb3RDb3ZlcmVkAAAAAAAASQAAAAAAAAAXQmFja3N0b3BUaHJlc2hvbGROb3RNZXQAAAAASgAAAAAAAAATV2l0aGRyYXdhbFF1ZXVlRnVsbAAAAABLAAAAAAAAABZPcmFjbGVQcmljZUZldGNoRmFpbGVkAAAAAABQAAAAAAAAABlPcmFjbGVEZWNpbWFsc0ZldGNoRmFpbGVkAAAAAAAAUQAAAAAAAAASSW52YWxpZE9yYWNsZVByaWNlAAAAAABSAAAAAAAAABVBc3NldE5vdEZvdW5kSW5PcmFjbGUAAAAAAABTAAAAAAAAABNUb2tlbkNvbnRyYWN0Tm90U2V0AAAAAFQAAAAAAAAADlRyZWFzdXJ5Tm90U2V0AAAAAABVAAAAAAAAABdOb1RyZWFzdXJ5RmVlc1RvQ29sbGVjdAAAAABWAAAAAAAAABFDb25maWdOb3RVbmxvY2tlZAAAAAAAAFcAAAAAAAAAE0NvbmZpZ1F1ZXVlTm90Rm91bmQAAAAAWAAAAAAAAAATQ29uZmlnQWxyZWFkeVF1ZXVlZAAAAABZ",
         "AAAAAQAAAAAAAAAAAAAAA0NEUAAAAAAFAAAAMENvbGxhdGVyYWwgKFJXQSB0b2tlbnMpOiB0b2tlbiBhZGRyZXNzIC0+IGFtb3VudAAAAApjb2xsYXRlcmFsAAAAAAPsAAAAEwAAAAsAAAASQ3JlYXRpb24gdGltZXN0YW1wAAAAAAAKY3JlYXRlZF9hdAAAAAAABgAAAB1kVG9rZW5zIG9mIHRoZSBib3Jyb3dlZCBhc3NldAAAAAAAAAhkX3Rva2VucwAAAAsAAAAtRGVidCBhc3NldCBzeW1ib2wgKG9ubHkgb25lOiBVU0RDLCBYTE0sIGV0Yy4pAAAAAAAACmRlYnRfYXNzZXQAAAAAA+gAAAARAAAAFUxhc3QgdXBkYXRlIHRpbWVzdGFtcAAAAAAAAAtsYXN0X3VwZGF0ZQAAAAAG",
         "AAAAAgAAAZJUeXBlZCBzdG9yYWdlIGtleXMgZm9yIHRoZSBsZW5kaW5nIHBvb2wuCgpMYXlvdXQ6Ci0gSW5zdGFuY2Ugc3RvcmFnZSAgICAgICAgICA6IGZpeGVkLXNpemUgc2NhbGFyIGNvbmZpZyAoQWRtaW4sIFBvb2xTdGF0ZSwgZmVlIHJhdGVzLCBvcmFjbGVzKQotIFBlcnNpc3RlbnQgU0hBUkVEIHBlci1lbnRyeTogcGVyLWFzc2V0IGNvbmZpZyBzZXQgYnkgYWRtaW4gKENvbGxhdGVyYWxGYWN0b3IsIFRva2VuQ29udHJhY3TigKYpCmFuZCBwZXItYXNzZXQgc3RhdGUgKFBvb2xCYWxhbmNlLCBSZXNlcnZlRGF0YSwgSW50ZXJlc3RSYXRlUGFyYW1zLCBBdWN0aW9uKQotIFBlcnNpc3RlbnQgVVNFUiBwZXItZW50cnkgOiBwZXItdXNlciBwb3NpdGlvbnMgKEJUb2tlbkJhbGFuY2UsIERUb2tlbkJhbGFuY2UsIENkcCkAAAAAAAAAAAAHRGF0YUtleQAAAAAZAAAAAAAAAAAAAAAFQWRtaW4AAAAAAAAAAAAAAAAAAAlQb29sU3RhdGUAAAAAAAAAAAAAAAAAAApOZWtvT3JhY2xlAAAAAAAAAAAAAAAAAA9SZWZsZWN0b3JPcmFjbGUAAAAAAAAAAAAAAAAQQmFja3N0b3BDb250cmFjdAAAAAAAAAAAAAAADUJhY2tzdG9wVG9rZW4AAAAAAAAAAAAAAAAAABBCYWNrc3RvcFRha2VSYXRlAAAAAAAAAAAAAAAIVHJlYXN1cnkAAAAAAAAAAAAAAA1SZXNlcnZlRmFjdG9yAAAAAAAAAAAAAAAAAAAST3JpZ2luYXRpb25GZWVSYXRlAAAAAAAAAAAAAAAAABJMaXF1aWRhdGlvbkZlZVJhdGUAAAAAAAEAAAAAAAAADVRva2VuQ29udHJhY3QAAAAAAAABAAAAEQAAAAEAAAAAAAAACUFzc2V0VHlwZQAAAAAAAAEAAAARAAAAAQAAAAAAAAATQ29sbGF0ZXJhbEFzc2V0VHlwZQAAAAABAAAAEwAAAAEAAAAAAAAAEENvbGxhdGVyYWxTeW1ib2wAAAABAAAAEwAAAAEAAAAAAAAAEENvbGxhdGVyYWxGYWN0b3IAAAABAAAAEwAAAAEAAAAAAAAAC1Bvb2xCYWxhbmNlAAAAAAEAAAARAAAAAQAAAAAAAAALUmVzZXJ2ZURhdGEAAAAAAQAAABEAAAABAAAAAAAAABJJbnRlcmVzdFJhdGVQYXJhbXMAAAAAAAEAAAARAAAAAQAAAAAAAAANQlRva2VuQmFsYW5jZQAAAAAAAAEAAAfQAAAADFVzZXJBc3NldEtleQAAAAEAAAAAAAAADURUb2tlbkJhbGFuY2UAAAAAAAABAAAH0AAAAAxVc2VyQXNzZXRLZXkAAAABAAAAAAAAAANDZHAAAAAAAQAAABMAAAABAAAAAAAAAAdBdWN0aW9uAAAAAAEAAAAEAAAAAAAAAAAAAAANUHJvcG9zZWRBZG1pbgAAAAAAAAEAAAAAAAAAE1F1ZXVlZFJlc2VydmVDb25maWcAAAAAAQAAABE=",
         "AAAAAgAAAJZEZXRlcm1pbmVzIHdoaWNoIG9yYWNsZSB0byB1c2UgZm9yIHByaWNlIHF1ZXJpZXMuCi0gQ3J5cHRvOiB1c2VzIHRoZSBSZWZsZWN0b3Igb3JhY2xlIChVU0RDLCBYTE0sIGV0Yy4pCi0gUndhOiB1c2VzIHRoZSBSV0Egb3JhY2xlIChVU0RZLCBDRVRFUywgZXRjLikAAAAAAAAAAAAJQXNzZXRUeXBlAAAAAAAAAgAAAAAAAAAAAAAABkNyeXB0bwAAAAAAAAAAAAAAAAADUndhAA==",
@@ -759,59 +952,60 @@ export class Client extends ContractClient {
         "AAAAAAAAAEhBcHBseSBhIHF1ZXVlZCByZXNlcnZlIHBhcmFtIGNoYW5nZSBhZnRlciB0aGUgdGltZWxvY2sgZXhwaXJlcyAoc3RlcCAyKS4AAAAbYXBwbHlfcXVldWVkX3Jlc2VydmVfcGFyYW1zAAAAAAEAAAAAAAAABWFzc2V0AAAAAAAAEQAAAAA=",
         "AAAAAAAAACtDaGVjayBpZiBhbiBpbnRlcmVzdCBhdWN0aW9uIGNhbiBiZSBjcmVhdGVkAAAAABtjYW5fY3JlYXRlX2ludGVyZXN0X2F1Y3Rpb24AAAAAAQAAAAAAAAAFYXNzZXQAAAAAAAARAAAAAQAAAAE=",
         "AAAAAAAAADpDYW5jZWwgYSBxdWV1ZWQgcmVzZXJ2ZSBwYXJhbSBjaGFuZ2UgYmVmb3JlIGl0IGlzIGFwcGxpZWQuAAAAAAAcY2FuY2VsX3F1ZXVlZF9yZXNlcnZlX3BhcmFtcwAAAAEAAAAAAAAABWFzc2V0AAAAAAAAEQAAAAA=",
-        "AAAAAAAAAHlBY2NlcHQgYSBwb29sIHN0YXRlIHVwZGF0ZSBwdXNoZWQgYnkgdGhlIHJlZ2lzdGVyZWQgYmFja3N0b3AgY29udHJhY3QuClN0YXRlIG9yZGluYWw6IDAgPSBBY3RpdmUsIDEgPSBPbkljZSwgMisgPSBGcm96ZW4uAAAAAAAAH3VwZGF0ZV9wb29sX3N0YXRlX2Zyb21fYmFja3N0b3AAAAAAAgAAAAAAAAAGY2FsbGVyAAAAAAATAAAAAAAAAAVzdGF0ZQAAAAAAAAQAAAAA" ]),
+        "AAAAAAAAAHlBY2NlcHQgYSBwb29sIHN0YXRlIHVwZGF0ZSBwdXNoZWQgYnkgdGhlIHJlZ2lzdGVyZWQgYmFja3N0b3AgY29udHJhY3QuClN0YXRlIG9yZGluYWw6IDAgPSBBY3RpdmUsIDEgPSBPbkljZSwgMisgPSBGcm96ZW4uAAAAAAAAH3VwZGF0ZV9wb29sX3N0YXRlX2Zyb21fYmFja3N0b3AAAAAAAgAAAAAAAAAGY2FsbGVyAAAAAAATAAAAAAAAAAVzdGF0ZQAAAAAAAAQAAAAA",
+      ]),
       options
-    )
+    );
   }
   public readonly fromJSON = {
     repay: this.txFromJSON<Result<i128>>,
-        borrow: this.txFromJSON<Result<i128>>,
-        deposit: this.txFromJSON<Result<i128>>,
-        upgrade: this.txFromJSON<null>,
-        withdraw: this.txFromJSON<Result<i128>>,
-        accept_admin: this.txFromJSON<null>,
-        fill_auction: this.txFromJSON<Result<void>>,
-        get_treasury: this.txFromJSON<string>,
-        has_bad_debt: this.txFromJSON<boolean>,
-        set_treasury: this.txFromJSON<null>,
-        propose_admin: this.txFromJSON<null>,
-        add_collateral: this.txFromJSON<Result<void>>,
-        get_collateral: this.txFromJSON<i128>,
-        get_pool_state: this.txFromJSON<PoolState>,
-        set_pool_state: this.txFromJSON<null>,
-        accrue_interest: this.txFromJSON<Result<void>>,
-        get_b_token_rate: this.txFromJSON<i128>,
-        get_d_token_rate: this.txFromJSON<i128>,
-        get_pool_balance: this.txFromJSON<i128>,
-        get_interest_rate: this.txFromJSON<Result<i128>>,
-        remove_collateral: this.txFromJSON<Result<void>>,
-        get_b_token_supply: this.txFromJSON<i128>,
-        get_d_token_supply: this.txFromJSON<i128>,
-        set_backstop_token: this.txFromJSON<null>,
-        set_reserve_factor: this.txFromJSON<null>,
-        set_token_contract: this.txFromJSON<null>,
-        get_b_token_balance: this.txFromJSON<i128>,
-        get_d_token_balance: this.txFromJSON<i128>,
-        get_treasury_credit: this.txFromJSON<i128>,
-        initiate_liquidation: this.txFromJSON<Result<u32>>,
-        collect_treasury_fees: this.txFromJSON<Result<i128>>,
-        fill_bad_debt_auction: this.txFromJSON<Result<i128>>,
-        fill_interest_auction: this.txFromJSON<Result<readonly [i128, i128]>>,
-        get_collateral_factor: this.txFromJSON<u32>,
-        set_backstop_contract: this.txFromJSON<null>,
-        set_collateral_factor: this.txFromJSON<null>,
-        calculate_borrow_limit: this.txFromJSON<Result<i128>>,
-        set_backstop_take_rate: this.txFromJSON<null>,
-        calculate_health_factor: this.txFromJSON<Result<u32>>,
-        create_bad_debt_auction: this.txFromJSON<Result<u32>>,
-        create_interest_auction: this.txFromJSON<Result<u32>>,
-        get_accumulated_interest: this.txFromJSON<i128>,
-        queue_set_reserve_params: this.txFromJSON<null>,
-        set_liquidation_fee_rate: this.txFromJSON<null>,
-        set_origination_fee_rate: this.txFromJSON<null>,
-        apply_queued_reserve_params: this.txFromJSON<null>,
-        can_create_interest_auction: this.txFromJSON<boolean>,
-        cancel_queued_reserve_params: this.txFromJSON<null>,
-        update_pool_state_from_backstop: this.txFromJSON<null>
-  }
+    borrow: this.txFromJSON<Result<i128>>,
+    deposit: this.txFromJSON<Result<i128>>,
+    upgrade: this.txFromJSON<null>,
+    withdraw: this.txFromJSON<Result<i128>>,
+    accept_admin: this.txFromJSON<null>,
+    fill_auction: this.txFromJSON<Result<void>>,
+    get_treasury: this.txFromJSON<string>,
+    has_bad_debt: this.txFromJSON<boolean>,
+    set_treasury: this.txFromJSON<null>,
+    propose_admin: this.txFromJSON<null>,
+    add_collateral: this.txFromJSON<Result<void>>,
+    get_collateral: this.txFromJSON<i128>,
+    get_pool_state: this.txFromJSON<PoolState>,
+    set_pool_state: this.txFromJSON<null>,
+    accrue_interest: this.txFromJSON<Result<void>>,
+    get_b_token_rate: this.txFromJSON<i128>,
+    get_d_token_rate: this.txFromJSON<i128>,
+    get_pool_balance: this.txFromJSON<i128>,
+    get_interest_rate: this.txFromJSON<Result<i128>>,
+    remove_collateral: this.txFromJSON<Result<void>>,
+    get_b_token_supply: this.txFromJSON<i128>,
+    get_d_token_supply: this.txFromJSON<i128>,
+    set_backstop_token: this.txFromJSON<null>,
+    set_reserve_factor: this.txFromJSON<null>,
+    set_token_contract: this.txFromJSON<null>,
+    get_b_token_balance: this.txFromJSON<i128>,
+    get_d_token_balance: this.txFromJSON<i128>,
+    get_treasury_credit: this.txFromJSON<i128>,
+    initiate_liquidation: this.txFromJSON<Result<u32>>,
+    collect_treasury_fees: this.txFromJSON<Result<i128>>,
+    fill_bad_debt_auction: this.txFromJSON<Result<i128>>,
+    fill_interest_auction: this.txFromJSON<Result<readonly [i128, i128]>>,
+    get_collateral_factor: this.txFromJSON<u32>,
+    set_backstop_contract: this.txFromJSON<null>,
+    set_collateral_factor: this.txFromJSON<null>,
+    calculate_borrow_limit: this.txFromJSON<Result<i128>>,
+    set_backstop_take_rate: this.txFromJSON<null>,
+    calculate_health_factor: this.txFromJSON<Result<u32>>,
+    create_bad_debt_auction: this.txFromJSON<Result<u32>>,
+    create_interest_auction: this.txFromJSON<Result<u32>>,
+    get_accumulated_interest: this.txFromJSON<i128>,
+    queue_set_reserve_params: this.txFromJSON<null>,
+    set_liquidation_fee_rate: this.txFromJSON<null>,
+    set_origination_fee_rate: this.txFromJSON<null>,
+    apply_queued_reserve_params: this.txFromJSON<null>,
+    can_create_interest_auction: this.txFromJSON<boolean>,
+    cancel_queued_reserve_params: this.txFromJSON<null>,
+    update_pool_state_from_backstop: this.txFromJSON<null>,
+  };
 }
