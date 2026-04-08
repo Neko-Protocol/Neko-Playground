@@ -32,6 +32,9 @@ export default function InterestRateParamsForm() {
   const [rTwo, setRTwo] = useState("50");
   const [rThree, setRThree] = useState("150");
   const [reactivity, setReactivity] = useState("0.00002");
+  const [enabled, setEnabled] = useState(true);
+  const [lFactor, setLFactor] = useState("80");
+  const [supplyCap, setSupplyCap] = useState("0");
 
   const pool = POOLS.find((p) => p.id === poolId) ?? POOLS[0];
   const assets = pool.assets;
@@ -48,6 +51,11 @@ export default function InterestRateParamsForm() {
       r_two: pctTo7(parseFloat(rTwo) || 0),
       r_three: pctTo7(parseFloat(rThree) || 0),
       reactivity: Math.round(parseFloat(reactivity) * SCALAR_7) || 0,
+      enabled,
+      l_factor: pctTo7(parseFloat(lFactor) || 0),
+      supply_cap: BigInt(
+        Math.round((parseFloat(supplyCap) || 0) * 10 ** 7)
+      ),
     };
 
     if (params.target_util > 9_500_000) {
@@ -247,6 +255,49 @@ export default function InterestRateParamsForm() {
               onChange={(e) => setReactivity(e.target.value)}
               className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-white/70 mb-1">
+                l_factor (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={lFactor}
+                onChange={(e) => setLFactor(e.target.value)}
+                className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-white/70 mb-1">
+                supply_cap (0 = unlimited)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={supplyCap}
+                onChange={(e) => setSupplyCap(e.target.value)}
+                className="w-full rounded-xl bg-[#2A2A2A] border border-white/10 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#229EDF]"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="enabled"
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
+              className="h-4 w-4 rounded border-white/10 bg-[#2A2A2A] text-[#229EDF] focus:ring-[#229EDF]"
+            />
+            <label htmlFor="enabled" className="text-sm text-white/70">
+              Enabled (accept deposits & borrows)
+            </label>
           </div>
 
           <button

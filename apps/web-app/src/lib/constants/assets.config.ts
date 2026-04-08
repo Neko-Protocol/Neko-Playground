@@ -76,7 +76,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
     },
     KTB: {
       code: "KTB",
-      name: "KTB Token",
+      name: "Korean Treasury Bond",
       contract: "CANIRPAKV2SUEH7O6LIOIQE5GCCIIS7EWFRRXBONIF2F2H6GEBDARAEM",
       decimals: 7,
       icon: "/assets/ktb.png",

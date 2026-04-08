@@ -470,7 +470,7 @@ export const getCollateral = async (
     const collateralTx = await client.get_collateral(
       {
         borrower: walletAddress,
-        rwa_token: rwaTokenContract,
+        neko_token: rwaTokenContract,
       },
       { simulate: true }
     );
