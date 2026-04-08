@@ -13,7 +13,14 @@ import { RWA_TOKENS } from "@/lib/constants/wallet";
 import type { BorrowPool } from "../types/borrowing";
 
 /** Debt assets borrowable from Pool 2 (collateral = USDC/XLM) */
-const POOL2_DEBT_ASSETS = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD"];
+const POOL2_DEBT_ASSETS = [
+  "USTRY",
+  "TESOURO",
+  "CETES",
+  "USDY",
+  "PYUSD",
+  "KTB",
+];
 /** Collateral assets accepted by Pool 2 */
 const POOL2_COLLATERAL_ASSETS = ["USDC", "XLM"];
 
@@ -43,7 +50,7 @@ async function fetchPoolPools(
     let collateralFactor = 0;
     try {
       const factorTx = await client.get_collateral_factor(
-        { rwa_token: collateralToken.contract },
+        { neko_token: collateralToken.contract },
         { simulate: true }
       );
       const factorValue = factorTx.result;

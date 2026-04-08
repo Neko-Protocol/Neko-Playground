@@ -5,7 +5,6 @@ import { Networks } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import {
-  approveToken,
   addCollateral,
   borrowFromPool,
 } from "@/lib/helpers/stellar/lending";
@@ -89,15 +88,6 @@ export function useBorrowExecution() {
         });
 
       try {
-        const approveXdr = await approveToken(
-          collateralToken.contract,
-          lendingContractId,
-          collateralAmount,
-          collateralDecimals,
-          address
-        );
-        await signAndSend(approveXdr);
-
         const addCollateralXdr = await addCollateral(
           collateralToken.contract,
           collateralAmount,

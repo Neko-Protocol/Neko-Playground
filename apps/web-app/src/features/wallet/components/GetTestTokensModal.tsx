@@ -116,8 +116,8 @@ export function GetTestTokensModal({
                   {missingTokens.length > 1 ? "s" : ""}
                 </p>
                 <p className="text-amber-200/70 text-xs mt-0.5">
-                  Mint USTRY, TESOURO, CETES, USDY & PYUSD to use Borrow, Lend
-                  and Pools.
+                  Mint USTRY, TESOURO, CETES, USDY, PYUSD & KTB to use Borrow,
+                  Lend and Pools.
                 </p>
               </div>
             </div>

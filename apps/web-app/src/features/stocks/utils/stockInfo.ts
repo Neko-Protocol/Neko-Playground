@@ -60,4 +60,16 @@ export const STOCK_INFO: Record<string, StockInfo> = {
         "PYUSD on Stellar: Lobstr, Bitcoin.com, Chipper Cash, Decaf, Arculus, Meru, CiNKO, COCA. Also via PayPal and Venmo.",
     },
   },
+  KTB: {
+    logo: "/assets/ktb.png",
+    name: "Korean Treasury Bond",
+    description:
+      "Tokenized Korean government bonds (KTBs) via Etherfuse and Shinhan Securities",
+    summary:
+      "KTB is an Etherfuse Stablebond backed by short-term Korean Treasury Bonds — South Korean sovereign debt that earns yield on-chain. Issued in partnership with Shinhan Securities, it provides transparent exposure to one of Asia's most stable government bond markets. Available on Stellar, Solana, Base, Polygon, and Monad. Buy on Etherfuse at app.etherfuse.com or test at devnet.etherfuse.com.",
+    buyInfo: {
+      platform: "Etherfuse",
+      url: "https://app.etherfuse.com",
+    },
+  },
 };

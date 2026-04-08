@@ -4,7 +4,14 @@ export const POOL1_CONTRACT_ID = networks.testnet.pool1ContractId;
 export const POOL2_CONTRACT_ID = networks.testnet.pool2ContractId;
 
 export const POOL1_ASSETS = ["USDC", "XLM"];
-export const POOL2_ASSETS = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD"];
+export const POOL2_ASSETS = [
+  "USTRY",
+  "TESOURO",
+  "CETES",
+  "USDY",
+  "PYUSD",
+  "KTB",
+];
 
 /** Pool 2 collateral (USDC, XLM) - used for set_collateral_factor */
 export const POOL2_COLLATERAL_ASSETS = ["USDC", "XLM"];

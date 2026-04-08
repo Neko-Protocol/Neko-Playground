@@ -16,55 +16,6 @@ import {
 } from "@/lib/constants/network";
 import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 
-export const approveToken = async (
-  tokenContractAddress: string,
-  spenderAddress: string,
-  amount: string,
-  decimals: number = 7,
-  walletAddress: string
-): Promise<string> => {
-  try {
-    const sorobanServer = new rpc.Server(rpcUrl, { allowHttp: true });
-    const horizonServer = new Horizon.Server(horizonUrl);
-    const tokenContract = new Contract(tokenContractAddress);
-
-    const latestLedger = await sorobanServer.getLatestLedger();
-    const currentLedger = latestLedger.sequence;
-
-    const expirationLedger = Math.min(
-      currentLedger + 500000,
-      2147483647 // Max safe u32 value (but contract may have lower limit)
-    );
-
-    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
-
-    const operation = tokenContract.call(
-      "approve",
-      new Address(walletAddress).toScVal(),
-      new Address(spenderAddress).toScVal(),
-      nativeToScVal(amountInSmallestUnit, { type: "i128" }),
-      nativeToScVal(expirationLedger, { type: "u32" })
-    );
-
-    const account = await horizonServer.loadAccount(walletAddress);
-
-    const transaction = new TransactionBuilder(account, {
-      fee: "100",
-      networkPassphrase: networkPassphrase,
-    })
-      .addOperation(operation)
-      .setTimeout(300)
-      .build();
-
-    return transaction.toXDR();
-  } catch (error) {
-    console.error("Error building approve transaction:", error);
-    throw new Error(
-      `Failed to build approve transaction: ${error instanceof Error ? error.message : String(error)}`
-    );
-  }
-};
-
 export const depositToPool = async (
   assetCode: string,
   amount: string,
@@ -230,6 +181,9 @@ export const getBTokenBalance = async (
   }
 };
 
+/**
+ * Build addCollateral + borrow XDRs.
+ */
 export const borrowWithCollateral = async (
   rwaTokenContract: string,
   collateralAmount: string,
@@ -239,12 +193,11 @@ export const borrowWithCollateral = async (
   borrowDecimals: number = 7,
   walletAddress: string
 ): Promise<{
-  approveXdr: string;
   addCollateralXdr: string;
   borrowXdr: string;
 }> => {
   try {
-    const { approveXdr, addCollateralXdr } = await addCollateralWithApprove(
+    const addCollateralXdr = await buildAddCollateralTransaction(
       rwaTokenContract,
       collateralAmount,
       collateralDecimals,
@@ -259,7 +212,6 @@ export const borrowWithCollateral = async (
     );
 
     return {
-      approveXdr,
       addCollateralXdr,
       borrowXdr,
     };
@@ -362,43 +314,6 @@ export const getBorrowLimit = async (
   }
 };
 
-export const addCollateralWithApprove = async (
-  rwaTokenContract: string,
-  amount: string,
-  decimals: number = 7,
-  walletAddress: string
-): Promise<{ approveXdr: string; addCollateralXdr: string }> => {
-  try {
-    const approveXdr = await approveToken(
-      rwaTokenContract,
-      networks.testnet.contractId,
-      amount,
-      decimals,
-      walletAddress
-    );
-
-    const addCollateralXdr = await buildAddCollateralTransaction(
-      rwaTokenContract,
-      amount,
-      decimals,
-      walletAddress
-    );
-
-    return {
-      approveXdr,
-      addCollateralXdr,
-    };
-  } catch (error) {
-    console.error(
-      "Error building add collateral with approve transactions:",
-      error
-    );
-    throw new Error(
-      `Failed to build add collateral transactions: ${error instanceof Error ? error.message : String(error)}`
-    );
-  }
-};
-
 export const buildAddCollateralTransaction = async (
   rwaTokenContract: string,
   amount: string,
@@ -470,7 +385,7 @@ export const getCollateral = async (
     const collateralTx = await client.get_collateral(
       {
         borrower: walletAddress,
-        rwa_token: rwaTokenContract,
+        neko_token: rwaTokenContract,
       },
       { simulate: true }
     );

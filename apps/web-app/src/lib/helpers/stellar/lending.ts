@@ -1,5 +1,4 @@
 import {
-  Account,
   Contract,
   Address,
   TransactionBuilder,
@@ -10,6 +9,10 @@ import {
 } from "@stellar/stellar-sdk";
 import { Client as RwaLendingClient, networks } from "@neko/lending";
 import {
+  Client as BackstopClient,
+  networks as backstopNetworks,
+} from "@neko/backstop";
+import {
   rpcUrl,
   networkPassphrase,
   horizonUrl,
@@ -18,57 +21,6 @@ import {
 } from "@/lib/constants/network";
 import { toSmallestUnit } from "../tokenUtils";
 import { extractContractError } from "./contractErrors";
-import { getAvailableTokens } from "./soroswap/tokens";
-
-export const approveToken = async (
-  tokenContractAddress: string,
-  spenderAddress: string,
-  amount: string,
-  decimals: number = 7,
-  walletAddress: string
-): Promise<string> => {
-  try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
-    const horizonServer = new Horizon.Server(horizonUrl);
-    const tokenContract = new Contract(tokenContractAddress);
-
-    const latestLedger = await sorobanServer.getLatestLedger();
-    const currentLedger = latestLedger.sequence;
-
-    const expirationLedger = Math.min(
-      currentLedger + 500000,
-      2147483647 // Max safe u32 value (but contract may have lower limit)
-    );
-
-    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
-
-    const operation = tokenContract.call(
-      "approve",
-      new Address(walletAddress).toScVal(),
-      new Address(spenderAddress).toScVal(),
-      nativeToScVal(amountInSmallestUnit, { type: "i128" }),
-      nativeToScVal(expirationLedger, { type: "u32" })
-    );
-
-    const account = await horizonServer.loadAccount(walletAddress);
-
-    const transaction = new TransactionBuilder(account, {
-      fee: "100",
-      networkPassphrase: networkPassphrase,
-    })
-      .addOperation(operation)
-      .setTimeout(300)
-      .build();
-
-    return transaction.toXDR();
-  } catch (error) {
-    console.error("Error building approve transaction:", error);
-    const friendlyError = extractContractError(error, "rwa-token");
-    throw new Error(friendlyError);
-  }
-};
 
 export const depositToPool = async (
   assetCode: string,
@@ -602,48 +554,22 @@ export const getDTokenRate = async (assetCode: string): Promise<bigint> => {
 };
 
 /**
- * Get the backstop token contract address configured in the lending pool.
+ * Get the backstop token contract address configured in the backstop contract.
  * Returns null if no backstop token has been set by the admin.
  */
 export const getBackstopToken = async (
-  contractId: string = networks.testnet.contractId
+  backstopContractId: string = backstopNetworks.testnet.contractId
 ): Promise<string | null> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
+    const client = new BackstopClient({
+      contractId: backstopContractId,
+      rpcUrl,
+      networkPassphrase,
+      ...(allowHttpForSoroban && { allowHttp: true }),
     });
-    const lendingContract = new Contract(contractId);
 
-    const operation = lendingContract.call("get_backstop_token");
-
-    // Simulation-only: use a known dummy source (sequence 0, no real account needed)
-    const dummyAccount = new Account(
-      "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-      "0"
-    );
-
-    const transaction = new TransactionBuilder(dummyAccount, {
-      fee: "100",
-      networkPassphrase: networkPassphrase,
-    })
-      .addOperation(operation)
-      .setTimeout(300)
-      .build();
-
-    const simResult = await sorobanServer.simulateTransaction(transaction);
-    if ("error" in simResult) return null;
-
-    const retval = (simResult as rpc.Api.SimulateTransactionSuccessResponse)
-      .result?.retval;
-    if (!retval) return null;
-
-    // Option<Address>: scvVoid = None, scvAddress = Some(addr)
-    if (retval.switch().name === "scvVoid") return null;
-    if (retval.switch().name === "scvAddress") {
-      return Address.fromScVal(retval).toString();
-    }
-
-    return null;
+    const tx = await client.get_backstop_token({ simulate: true });
+    return tx.result ?? null;
   } catch (error) {
     console.error("Error getting backstop token:", error);
     return null;
@@ -652,106 +578,75 @@ export const getBackstopToken = async (
 
 export interface BackstopDepositInfo {
   amount: bigint;
+  activeAmount: bigint;
+  queuedAmount: bigint;
   depositedAt: bigint;
   inWithdrawalQueue: boolean;
   queuedAt: bigint | null;
 }
 
 /**
- * Get the backstop deposit info for a depositor from the lending pool.
+ * Get the backstop deposit info for a depositor from the backstop contract.
+ * Maps the on-chain `UserBalance { amount, q4w }` to `BackstopDepositInfo`.
  */
 export const getBackstopDeposit = async (
   depositorAddress: string,
-  contractId: string = networks.testnet.contractId
+  backstopContractId: string = backstopNetworks.testnet.contractId
 ): Promise<BackstopDepositInfo> => {
   const empty: BackstopDepositInfo = {
     amount: 0n,
+    activeAmount: 0n,
+    queuedAmount: 0n,
     depositedAt: 0n,
     inWithdrawalQueue: false,
     queuedAt: null,
   };
 
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
+    const client = new BackstopClient({
+      contractId: backstopContractId,
+      rpcUrl,
+      networkPassphrase,
+      ...(allowHttpForSoroban && { allowHttp: true }),
     });
-    const lendingContract = new Contract(contractId);
 
-    const operation = lendingContract.call(
-      "get_backstop_deposit",
-      new Address(depositorAddress).toScVal()
+    const tx = await client.get_user_balance(
+      { depositor: depositorAddress },
+      { simulate: true }
     );
 
-    const horizonServer = new Horizon.Server(horizonUrl);
-    const account = await horizonServer.loadAccount(depositorAddress);
+    const balance = tx.result;
+    if (!balance) return empty;
 
-    const transaction = new TransactionBuilder(account, {
-      fee: "100",
-      networkPassphrase: networkPassphrase,
-    })
-      .addOperation(operation)
-      .setTimeout(300)
-      .build();
+    const activeAmount =
+      typeof balance.amount === "bigint"
+        ? balance.amount
+        : BigInt(String(balance.amount));
 
-    const simResult = await sorobanServer.simulateTransaction(transaction);
-    if ("error" in simResult) return empty;
+    const queuedTotal = (balance.q4w ?? []).reduce(
+      (sum, entry) =>
+        sum +
+        (typeof entry.amount === "bigint"
+          ? entry.amount
+          : BigInt(String(entry.amount))),
+      0n
+    );
+    const totalAmount = activeAmount + queuedTotal;
 
-    const retval = (simResult as rpc.Api.SimulateTransactionSuccessResponse)
-      .result?.retval;
-    if (!retval) return empty;
-
-    // BackstopDeposit is a struct encoded as scvMap
-    if (retval.switch().name !== "scvMap") return empty;
-
-    const mapEntries = retval.map();
-    if (!mapEntries) return empty;
-
-    const get = (key: string): xdr.ScVal | undefined =>
-      mapEntries
-        .find((e) => {
-          const k = e.key();
-          return k.switch().name === "scvSymbol" && k.sym().toString() === key;
-        })
-        ?.val();
-
-    const amountVal = get("amount");
-    const depositedAtVal = get("deposited_at");
-    const inQueueVal = get("in_withdrawal_queue");
-    const queuedAtVal = get("queued_at");
-
-    const parseI128 = (val: xdr.ScVal | undefined): bigint => {
-      if (!val) return 0n;
-      try {
-        const parts = val.i128();
-        const hi = BigInt(parts.hi().toString());
-        const lo = BigInt(parts.lo().toString());
-        return hi >= 0n ? (hi << 64n) | lo : 0n;
-      } catch {
-        return 0n;
-      }
-    };
-
-    const parseU64 = (val: xdr.ScVal | undefined): bigint => {
-      if (!val) return 0n;
-      try {
-        return BigInt(val.u64().toString());
-      } catch {
-        return 0n;
-      }
-    };
-
-    const parseOptionU64 = (val: xdr.ScVal | undefined): bigint | null => {
-      if (!val) return null;
-      if (val.switch().name === "scvVoid") return null;
-      return parseU64(val);
-    };
+    const hasQueue = (balance.q4w ?? []).length > 0;
+    const oldestEntry = hasQueue ? balance.q4w[0] : null;
 
     return {
-      amount: parseI128(amountVal),
-      depositedAt: parseU64(depositedAtVal),
-      inWithdrawalQueue:
-        inQueueVal?.switch().name === "scvBool" ? inQueueVal.b() : false,
-      queuedAt: parseOptionU64(queuedAtVal),
+      amount: totalAmount,
+      activeAmount,
+      queuedAmount: queuedTotal,
+      depositedAt: 0n,
+      inWithdrawalQueue: hasQueue,
+      queuedAt: oldestEntry
+        ? typeof oldestEntry.exp === "bigint"
+          ? oldestEntry.exp
+          : BigInt(String(oldestEntry.exp))
+        : null,
     };
   } catch (error) {
     console.error("Error getting backstop deposit:", error);
@@ -762,19 +657,19 @@ export const getBackstopDeposit = async (
 export const depositToBackstop = async (
   amount: string,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  backstopContractId: string = backstopNetworks.testnet.contractId
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
       allowHttp: stellarNetwork === "LOCAL",
     });
     const horizonServer = new Horizon.Server(horizonUrl);
-    const lendingContract = new Contract(contractId);
+    const backstopContract = new Contract(backstopContractId);
 
     const amountInSmallestUnit = BigInt(toSmallestUnit(amount, 7));
 
-    const operation = lendingContract.call(
-      "deposit_to_backstop",
+    const operation = backstopContract.call(
+      "deposit",
       new Address(walletAddress).toScVal(),
       nativeToScVal(amountInSmallestUnit, { type: "i128" })
     );
@@ -808,7 +703,7 @@ export const depositToBackstop = async (
 
     return preparedTx.toXDR();
   } catch (error) {
-    console.error("Error building deposit_to_backstop transaction:", error);
+    console.error("Error building backstop deposit transaction:", error);
     if (
       error instanceof Error &&
       error.message &&
@@ -824,19 +719,19 @@ export const depositToBackstop = async (
 export const initiateBackstopWithdrawal = async (
   amount: string,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  backstopContractId: string = backstopNetworks.testnet.contractId
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
       allowHttp: stellarNetwork === "LOCAL",
     });
     const horizonServer = new Horizon.Server(horizonUrl);
-    const lendingContract = new Contract(contractId);
+    const backstopContract = new Contract(backstopContractId);
 
     const amountInSmallestUnit = BigInt(toSmallestUnit(amount, 7));
 
-    const operation = lendingContract.call(
-      "initiate_withdrawal",
+    const operation = backstopContract.call(
+      "queue_withdrawal",
       new Address(walletAddress).toScVal(),
       nativeToScVal(amountInSmallestUnit, { type: "i128" })
     );
@@ -870,7 +765,7 @@ export const initiateBackstopWithdrawal = async (
 
     return preparedTx.toXDR();
   } catch (error) {
-    console.error("Error building initiate_withdrawal transaction:", error);
+    console.error("Error building queue_withdrawal transaction:", error);
     if (
       error instanceof Error &&
       error.message &&
@@ -886,19 +781,19 @@ export const initiateBackstopWithdrawal = async (
 export const withdrawFromBackstop = async (
   amount: string,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  backstopContractId: string = backstopNetworks.testnet.contractId
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
       allowHttp: stellarNetwork === "LOCAL",
     });
     const horizonServer = new Horizon.Server(horizonUrl);
-    const lendingContract = new Contract(contractId);
+    const backstopContract = new Contract(backstopContractId);
 
     const amountInSmallestUnit = BigInt(toSmallestUnit(amount, 7));
 
-    const operation = lendingContract.call(
-      "withdraw_from_backstop",
+    const operation = backstopContract.call(
+      "withdraw",
       new Address(walletAddress).toScVal(),
       nativeToScVal(amountInSmallestUnit, { type: "i128" })
     );
@@ -932,7 +827,7 @@ export const withdrawFromBackstop = async (
 
     return preparedTx.toXDR();
   } catch (error) {
-    console.error("Error building withdraw_from_backstop transaction:", error);
+    console.error("Error building backstop withdraw transaction:", error);
     if (
       error instanceof Error &&
       error.message &&
@@ -1088,13 +983,11 @@ export const createBadDebtAuction = async (
 };
 
 export type FillBadDebtAuctionResult = {
-  approveXdr: string;
   fillXdr: string;
 };
 
 /**
- * Build approve + fill_bad_debt_auction transaction XDRs
- * Bidder must approve lending contract to spend debt tokens, then call fill
+ * Build fill_bad_debt_auction transaction XDR.
  */
 export const buildFillBadDebtAuctionXdr = async (
   auctionId: number,
@@ -1105,20 +998,6 @@ export const buildFillBadDebtAuctionXdr = async (
   walletAddress: string,
   contractId: string = networks.testnet.contractId
 ): Promise<FillBadDebtAuctionResult> => {
-  const tokens = getAvailableTokens();
-  const debtToken = tokens[debtAsset];
-  if (!debtToken?.contract) {
-    throw new Error(`Debt token ${debtAsset} not found`);
-  }
-
-  const approveXdr = await approveToken(
-    debtToken.contract,
-    contractId,
-    amount,
-    decimals,
-    walletAddress
-  );
-
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
       allowHttp: stellarNetwork === "LOCAL",
@@ -1163,7 +1042,6 @@ export const buildFillBadDebtAuctionXdr = async (
     const preparedTx = await sorobanServer.prepareTransaction(transaction);
 
     return {
-      approveXdr,
       fillXdr: preparedTx.toXDR(),
     };
   } catch (error) {
