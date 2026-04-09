@@ -141,6 +141,10 @@ export function useLend() {
       setBTokenBalance(null);
       return;
     }
+    if (selectedPool.isAggregated) {
+      setBTokenBalance(null);
+      return;
+    }
     setIsLoadingBalance(true);
     try {
       const balance = await getBTokenBalance(

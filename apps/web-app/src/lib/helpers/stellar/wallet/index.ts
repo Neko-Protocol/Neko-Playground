@@ -1,7 +1,4 @@
-export {
-  getStellarWalletKit,
-  getWallet,
-} from "./walletKit";
+export { getStellarWalletKit, getWallet } from "./walletKit";
 export {
   signStellarTransactionWithWallet,
   type SignStellarTransactionParams,

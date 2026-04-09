@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@blend-capital/blend-sdk": "^3.2.2",
-    "@creit.tech/stellar-wallets-kit": "^1.0.0",
+    "@creit.tech/stellar-wallets-kit": "^2.1.0",
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@hookform/resolvers": "^5.2.2",

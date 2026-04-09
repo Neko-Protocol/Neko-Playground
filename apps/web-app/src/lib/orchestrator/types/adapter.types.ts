@@ -43,5 +43,17 @@ export interface BasePoolAdapter {
     amount: bigint
   ): Promise<TransactionResult>;
 
+  supplyCollateral?(
+    poolId: string,
+    userAddress: string,
+    amount: bigint
+  ): Promise<TransactionResult>;
+
+  withdrawCollateral?(
+    poolId: string,
+    userAddress: string,
+    amount: bigint
+  ): Promise<TransactionResult>;
+
   supportsAction(action: PoolAction): boolean;
 }

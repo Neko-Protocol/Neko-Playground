@@ -65,113 +65,113 @@ const getDirectPoolQuote = async (
   assetOut: string,
   amountInSmallestUnit: bigint,
   slippageBps: number
-): Promise<QuoteResponse | undefined> => {
-  try {
-    const sdk = getSoroswapSDK();
-    const sdkNet = getSDKNetwork();
-    const [{ address: routerAddress }, { address: factoryAddress }] =
-      await Promise.all([
-        sdk.getContractAddress(sdkNet, "router"),
-        sdk.getContractAddress(sdkNet, "factory"),
-      ]);
-    if (!routerAddress || !factoryAddress) return undefined;
-
-    const server = new rpc.Server(rpcUrl);
-    const dummyAccount = new Account(Keypair.random().publicKey(), "0");
-
-    // Step 1: get the pair contract address from the factory
-    const factory = new Contract(factoryAddress);
-    const getPairTx = new TransactionBuilder(dummyAccount, {
-      fee: "100",
-      networkPassphrase,
-    })
-      .addOperation(
-        factory.call(
-          "get_pair",
-          new Address(assetIn).toScVal(),
-          new Address(assetOut).toScVal()
-        )
-      )
-      .setTimeout(30)
-      .build();
-
-    const pairSim = await server.simulateTransaction(getPairTx);
-    if (!("result" in pairSim) || !pairSim.result?.retval) return undefined;
-
-    const pairAddress = scValToNative(pairSim.result.retval) as string;
-    if (!pairAddress || typeof pairAddress !== "string") return undefined;
-
-    // Step 2: get reserves from the pair contract
-    const pair = new Contract(pairAddress);
-    const reservesTx = new TransactionBuilder(
-      new Account(Keypair.random().publicKey(), "0"),
-      { fee: "100", networkPassphrase }
-    )
-      .addOperation(pair.call("get_reserves"))
-      .setTimeout(30)
-      .build();
-
-    const reservesSim = await server.simulateTransaction(reservesTx);
-    if (!("result" in reservesSim) || !reservesSim.result?.retval)
-      return undefined;
-
-    // get_reserves returns (reserveA, reserveB, blockTimestampLast)
-    // token_0 (reserveA) is the one with the smaller contract address
-    const reservesRaw = scValToNative(reservesSim.result.retval) as bigint[];
-    if (!Array.isArray(reservesRaw) || reservesRaw.length < 2) return undefined;
-
-    const reserveA = BigInt(reservesRaw[0].toString());
-    const reserveB = BigInt(reservesRaw[1].toString());
-    if (reserveA <= 0n || reserveB <= 0n) return undefined;
-
-    // Soroswap stores token_0 as the smaller address (lexicographic)
-    const isAin = assetIn < assetOut;
-    const reserveIn = isAin ? reserveA : reserveB;
-    const reserveOut = isAin ? reserveB : reserveA;
-
-    // Uniswap v2 AMM formula with 0.3% fee
-    const amountInWithFee = amountInSmallestUnit * 997n;
-    const amountOut =
-      (amountInWithFee * reserveOut) / (reserveIn * 1000n + amountInWithFee);
-
-    if (amountOut <= BigInt(0)) return undefined;
-
-    const threshold = (amountOut * BigInt(10000 - slippageBps)) / BigInt(10000);
-
-    const priceImpactPct = "0";
-
-    const sdkQuote = {
-      assetIn,
-      assetOut,
-      amountIn: amountInSmallestUnit.toString(),
-      amountOut: amountOut.toString(),
-      otherAmountThreshold: threshold.toString(),
-      priceImpactPct,
-      tradeType: "EXACT_IN",
-      platform: "soroswap",
-      rawTrade: null,
-      routerAddress,
-      routePlan: [
-        {
-          swapInfo: { protocol: "soroswap", path: [assetIn, assetOut] },
-          percent: "100",
-        },
-      ],
-    };
-
-    return {
-      amountOut: amountOut.toString(),
-      amountIn: amountInSmallestUnit.toString(),
-      priceImpact: priceImpactPct,
-      protocol: "soroswap",
-      _sdkQuote: sdkQuote,
-    };
-  } catch (err) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Soroswap] Direct pool quote error:", err);
-    }
-    return undefined;
+): Promise<QuoteResponse> => {
+  const sdk = getSoroswapSDK();
+  const sdkNet = getSDKNetwork();
+  const [{ address: routerAddress }, { address: factoryAddress }] =
+    await Promise.all([
+      sdk.getContractAddress(sdkNet, "router"),
+      sdk.getContractAddress(sdkNet, "factory"),
+    ]);
+  if (!routerAddress || !factoryAddress) {
+    throw new Error("Soroswap router or factory not found for this network");
   }
+
+  const server = new rpc.Server(rpcUrl);
+  const dummyAccount = new Account(Keypair.random().publicKey(), "0");
+
+  const factory = new Contract(factoryAddress);
+  const getPairTx = new TransactionBuilder(dummyAccount, {
+    fee: "100",
+    networkPassphrase,
+  })
+    .addOperation(
+      factory.call(
+        "get_pair",
+        new Address(assetIn).toScVal(),
+        new Address(assetOut).toScVal()
+      )
+    )
+    .setTimeout(30)
+    .build();
+
+  const pairSim = await server.simulateTransaction(getPairTx);
+  if (!("result" in pairSim) || !pairSim.result?.retval) {
+    throw new Error("No liquidity pair exists for this token combination");
+  }
+
+  const pairAddress = scValToNative(pairSim.result.retval) as string;
+  if (!pairAddress || typeof pairAddress !== "string") {
+    throw new Error("No liquidity pair exists for this token combination");
+  }
+
+  const pair = new Contract(pairAddress);
+  const reservesTx = new TransactionBuilder(
+    new Account(Keypair.random().publicKey(), "0"),
+    { fee: "100", networkPassphrase }
+  )
+    .addOperation(pair.call("get_reserves"))
+    .setTimeout(30)
+    .build();
+
+  const reservesSim = await server.simulateTransaction(reservesTx);
+  if (!("result" in reservesSim) || !reservesSim.result?.retval) {
+    throw new Error("Failed to read pool reserves — simulation error");
+  }
+
+  const reservesRaw = scValToNative(reservesSim.result.retval) as bigint[];
+  if (!Array.isArray(reservesRaw) || reservesRaw.length < 2) {
+    throw new Error("Invalid reserves data from pool");
+  }
+
+  const reserveA = BigInt(reservesRaw[0].toString());
+  const reserveB = BigInt(reservesRaw[1].toString());
+  if (reserveA <= 0n || reserveB <= 0n) {
+    throw new Error("Pool has insufficient reserves");
+  }
+
+  const isAin = assetIn < assetOut;
+  const reserveIn = isAin ? reserveA : reserveB;
+  const reserveOut = isAin ? reserveB : reserveA;
+
+  const amountInWithFee = amountInSmallestUnit * 997n;
+  const amountOut =
+    (amountInWithFee * reserveOut) / (reserveIn * 1000n + amountInWithFee);
+
+  if (amountOut <= BigInt(0)) {
+    throw new Error("Swap would produce zero output — try a larger amount");
+  }
+
+  const threshold = (amountOut * BigInt(10000 - slippageBps)) / BigInt(10000);
+
+  const priceImpactPct = "0";
+
+  const sdkQuote = {
+    assetIn,
+    assetOut,
+    amountIn: amountInSmallestUnit.toString(),
+    amountOut: amountOut.toString(),
+    otherAmountThreshold: threshold.toString(),
+    priceImpactPct,
+    tradeType: "EXACT_IN",
+    platform: "soroswap",
+    rawTrade: null,
+    routerAddress,
+    routePlan: [
+      {
+        swapInfo: { protocol: "soroswap", path: [assetIn, assetOut] },
+        percent: "100",
+      },
+    ],
+  };
+
+  return {
+    amountOut: amountOut.toString(),
+    amountIn: amountInSmallestUnit.toString(),
+    priceImpact: priceImpactPct,
+    protocol: "soroswap",
+    _sdkQuote: sdkQuote,
+  };
 };
 
 export const getPool = async (request: GetPoolRequest): Promise<PoolInfo[]> => {

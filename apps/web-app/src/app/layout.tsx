@@ -5,7 +5,12 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Neko Protocol",
-  description: "Real-World Asset DeFi Protocol",
+  description: "All-in-one platform for RWAs on Stellar",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+  },
 };
 
 export default function RootLayout({

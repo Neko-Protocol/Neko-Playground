@@ -7,13 +7,11 @@
   "packageManager": "npm@10.2.3",
   "scripts": {
     "dev": "turbo run dev",
-    "build": "npm run generate:errors && turbo run build",
+    "build": "turbo run build",
     "start": "turbo run start",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md,yml,yaml}\"",
-    "generate:errors": "node scripts/generate-error-types.js",
-    "check:errors": "node scripts/generate-error-types.js && git diff --exit-code apps/web-app/src/lib/constants/generated/contract-errors.ts",
     "prepare": "npx husky"
   },
   "workspaces": [
@@ -40,7 +38,7 @@
     "husky": "^9.1.7",
     "prettier": "^3.3.3",
     "tailwindcss": "^4",
-    "turbo": "^2.5.8",
+    "turbo": "^2.9.5",
     "typescript": "^5"
   },
   "overrides": {

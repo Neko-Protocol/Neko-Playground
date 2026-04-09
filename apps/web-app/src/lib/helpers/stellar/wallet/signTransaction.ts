@@ -10,16 +10,13 @@ export async function signStellarTransactionWithWallet({
   unsignedTransactionXdr,
   signerPublicKey,
 }: SignStellarTransactionParams): Promise<string> {
-  const stellarWalletKit = getStellarWalletKit();
+  const Kit = await getStellarWalletKit();
   const networkPassphrase = getCurrentNetworkPassphrase();
 
-  const { signedTxXdr } = await stellarWalletKit.signTransaction(
-    unsignedTransactionXdr,
-    {
-      address: signerPublicKey,
-      networkPassphrase,
-    }
-  );
+  const { signedTxXdr } = await Kit.signTransaction(unsignedTransactionXdr, {
+    address: signerPublicKey,
+    networkPassphrase,
+  });
 
   return signedTxXdr;
 }

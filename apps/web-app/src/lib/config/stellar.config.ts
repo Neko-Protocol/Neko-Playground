@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { WalletNetwork } from "@creit.tech/stellar-wallets-kit";
+import { Networks as WalletNetwork } from "@creit.tech/stellar-wallets-kit/types";
 
 type NetworkType = "mainnet" | "testnet" | "futurenet" | "custom";
 interface Network {

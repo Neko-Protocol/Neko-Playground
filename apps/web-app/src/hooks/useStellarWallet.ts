@@ -1,6 +1,5 @@
 "use client";
 
-import { ISupportedWallet } from "@creit.tech/stellar-wallets-kit";
 import { getStellarWalletKit } from "@/lib/helpers/stellar/wallet";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 
@@ -9,20 +8,16 @@ export function useStellarWallet() {
     useStellarWalletStore();
 
   const connect = async () => {
-    const kit = getStellarWalletKit();
-    await kit.openModal({
-      modalTitle: "Connect to your favorite wallet",
-      onWalletSelected: async (wallet: ISupportedWallet) => {
-        kit.setWallet(wallet.id);
-        const { address: walletAddress } = await kit.getAddress();
-        setWallet({ address: walletAddress, walletName: wallet.name });
-      },
-    });
+    const Kit = await getStellarWalletKit();
+
+    // v2 authModal returns { address } directly — no callback needed.
+    const { address: walletAddress } = await Kit.authModal();
+    setWallet({ address: walletAddress, walletName: "Stellar Wallet" });
   };
 
   const disconnect = async () => {
-    const kit = getStellarWalletKit();
-    await kit.disconnect();
+    const Kit = await getStellarWalletKit();
+    await Kit.disconnect();
     clearWallet();
   };
 

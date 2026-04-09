@@ -2,17 +2,18 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   Landmark,
-  TrendingUp,
   BarChart2,
   Settings,
   Shield,
   Banknote,
   Vault,
+  TrendingUp,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Discover", href: "/discover", icon: BarChart2 },
+  { label: "Pools", href: "/pools", icon: Landmark },
   { label: "Swap", href: "/swap", icon: ArrowLeftRight },
   { label: "Borrow", href: "/borrowing", icon: Landmark },
   { label: "Lend", href: "/lending", icon: TrendingUp },
