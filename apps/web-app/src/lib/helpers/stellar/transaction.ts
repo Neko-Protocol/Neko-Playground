@@ -16,24 +16,32 @@ export async function signAndSendTransaction(
     rpcUrl: string;
     address?: string;
     waitForPending?: boolean;
+    onConfirmed?: () => void;
+    onError?: (error: unknown) => void;
   }
 ): Promise<{ hash: string; status: string }> {
-  const signed = await signTransaction(xdr, {
-    networkPassphrase: options.networkPassphrase,
-    address: options.address,
-  });
-  const tx = TransactionBuilder.fromXDR(
-    signed.signedTxXdr,
-    options.networkPassphrase
-  );
-  const sorobanServer = new rpc.Server(options.rpcUrl, {
-    allowHttp: stellarNetwork === "LOCAL",
-  });
-  const result = await sorobanServer.sendTransaction(tx);
+  try {
+    const signed = await signTransaction(xdr, {
+      networkPassphrase: options.networkPassphrase,
+      address: options.address,
+    });
+    const tx = TransactionBuilder.fromXDR(
+      signed.signedTxXdr,
+      options.networkPassphrase
+    );
+    const sorobanServer = new rpc.Server(options.rpcUrl, {
+      allowHttp: stellarNetwork === "LOCAL",
+    });
+    const result = await sorobanServer.sendTransaction(tx);
 
-  if (options.waitForPending !== false && result.status === "PENDING") {
-    await new Promise((resolve) => setTimeout(resolve, PENDING_WAIT_MS));
+    if (options.waitForPending !== false && result.status === "PENDING") {
+      await new Promise((resolve) => setTimeout(resolve, PENDING_WAIT_MS));
+    }
+
+    options.onConfirmed?.();
+    return { hash: result.hash, status: result.status };
+  } catch (error) {
+    options.onError?.(error);
+    throw error;
   }
-
-  return { hash: result.hash, status: result.status };
 }

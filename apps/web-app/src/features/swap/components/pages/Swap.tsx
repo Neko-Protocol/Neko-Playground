@@ -18,6 +18,7 @@ import {
   formatSwapAmount,
 } from "@/lib/helpers/tokenUtils";
 import { useToast } from "@/hooks/useToast";
+import { useHaptic } from "@/hooks/useHaptic";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
@@ -134,6 +135,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
 const Swap: React.FC = () => {
   const { address, network, networkPassphrase, refetchBalances } = useWallet();
   const { addNotification } = useToast();
+  const { trigger } = useHaptic();
   const queryClient = useQueryClient();
 
   const availableTokens = getAvailableTokens();
@@ -227,6 +229,7 @@ const Swap: React.FC = () => {
 
       if (result.orderId) {
         setTxHash(result.orderId);
+        trigger("success");
         addNotification("Success", "success", {
           ...TOAST_CONFIG.defaultOpts,
           description: "Swap completed successfully",
@@ -271,6 +274,7 @@ const Swap: React.FC = () => {
         : err instanceof Error
           ? err.message
           : "Failed to complete swap";
+      trigger("error");
       addNotification("Swap failed", "error", {
         ...TOAST_CONFIG.defaultOpts,
         description: errorMessage,

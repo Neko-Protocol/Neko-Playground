@@ -5,6 +5,7 @@ import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpc } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useWallet } from "@/hooks/useWallet";
+import { useHaptic } from "@/hooks/useHaptic";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import {
@@ -60,25 +61,30 @@ export function useVaultAction() {
     signTransaction,
     networkPassphrase: walletPassphrase,
   } = useWallet();
+  const { trigger } = useHaptic();
   const { addNotification } = useToast();
   const { refetch: refetchBalance } = useVaultBalance();
   const { refetch: refetchVaultData } = useVaultData();
 
   const showError = useCallback(
-    (msg: string) =>
+    (msg: string) => {
+      trigger("error");
       addNotification("Something went wrong", "error", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
-      }),
-    [addNotification]
+      });
+    },
+    [addNotification, trigger]
   );
   const showSuccess = useCallback(
-    (msg: string) =>
+    (msg: string) => {
+      trigger("success");
       addNotification("Success", "success", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
-      }),
-    [addNotification]
+      });
+    },
+    [addNotification, trigger]
   );
 
   const handleDeposit = useCallback(

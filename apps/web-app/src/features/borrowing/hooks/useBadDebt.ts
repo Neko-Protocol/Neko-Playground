@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Networks } from "@stellar/stellar-sdk";
+import { useHaptic } from "@/hooks/useHaptic";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import {
@@ -23,6 +24,7 @@ export type { ActiveBadDebtAuction };
 
 export function useBadDebt() {
   const { addNotification } = useToast();
+  const { trigger } = useHaptic();
   const { address, signTransaction, networkPassphrase } = useWallet();
   const [isFilling, setIsFilling] = useState(false);
 
@@ -78,6 +80,8 @@ export function useBadDebt() {
           rpcUrl,
           address,
           waitForPending: true,
+          onConfirmed: () => trigger("success"),
+          onError: () => trigger("error"),
         });
 
       try {
@@ -116,6 +120,7 @@ export function useBadDebt() {
       signTransaction,
       showError,
       showSuccess,
+      trigger,
       refetchAuctions,
     ]
   );
