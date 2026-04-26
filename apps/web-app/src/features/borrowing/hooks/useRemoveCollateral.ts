@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Networks } from "@stellar/stellar-sdk";
+import { useHaptic } from "@/hooks/useHaptic";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import { removeCollateral } from "@/lib/helpers/stellar/lending";
@@ -23,6 +24,7 @@ export interface RemoveCollateralParams {
 
 export function useRemoveCollateral() {
   const { addNotification } = useToast();
+  const { trigger } = useHaptic();
   const { address, signTransaction, networkPassphrase } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -73,6 +75,8 @@ export function useRemoveCollateral() {
           rpcUrl,
           address,
           waitForPending: true,
+          onConfirmed: () => trigger("success"),
+          onError: () => trigger("error"),
         });
 
       try {
@@ -101,7 +105,14 @@ export function useRemoveCollateral() {
         setIsLoading(false);
       }
     },
-    [address, networkPassphrase, signTransaction, showError, showSuccess]
+    [
+      address,
+      networkPassphrase,
+      signTransaction,
+      showError,
+      showSuccess,
+      trigger,
+    ]
   );
 
   return {

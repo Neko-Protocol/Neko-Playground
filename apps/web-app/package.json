@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "web-haptics": "^0.0.6",
     "@blend-capital/blend-sdk": "^3.2.2",
     "@creit.tech/stellar-wallets-kit": "^2.1.0",
     "@emotion/react": "^11.11.0",

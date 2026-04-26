@@ -1,11 +1,13 @@
 "use client";
 
 import { getStellarWalletKit } from "@/lib/helpers/stellar/wallet";
+import { useHaptic } from "@/hooks/useHaptic";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 
 export function useStellarWallet() {
   const { address, walletName, setWallet, clearWallet } =
     useStellarWalletStore();
+  const { trigger } = useHaptic();
 
   const connect = async () => {
     const Kit = await getStellarWalletKit();
@@ -13,6 +15,7 @@ export function useStellarWallet() {
     // v2 authModal returns { address } directly — no callback needed.
     const { address: walletAddress } = await Kit.authModal();
     setWallet({ address: walletAddress, walletName: "Stellar Wallet" });
+    trigger("connect");
   };
 
   const disconnect = async () => {

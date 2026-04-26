@@ -2,12 +2,10 @@
 
 import { useState, useCallback } from "react";
 import { Networks } from "@stellar/stellar-sdk";
+import { useHaptic } from "@/hooks/useHaptic";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
-import {
-  addCollateral,
-  borrowFromPool,
-} from "@/lib/helpers/stellar/lending";
+import { addCollateral, borrowFromPool } from "@/lib/helpers/stellar/lending";
 import {
   signAndSendTransaction,
   type SignTransactionFn,
@@ -20,6 +18,7 @@ import type { BorrowExecutionParams } from "../types/borrowing";
 
 export function useBorrowExecution() {
   const { addNotification } = useToast();
+  const { trigger } = useHaptic();
   const { address, signTransaction, networkPassphrase } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -85,6 +84,8 @@ export function useBorrowExecution() {
           rpcUrl,
           address,
           waitForPending: true,
+          onConfirmed: () => trigger("success"),
+          onError: () => trigger("error"),
         });
 
       try {
@@ -120,7 +121,14 @@ export function useBorrowExecution() {
         setIsLoading(false);
       }
     },
-    [address, networkPassphrase, signTransaction, showError, showSuccess]
+    [
+      address,
+      networkPassphrase,
+      signTransaction,
+      showError,
+      showSuccess,
+      trigger,
+    ]
   );
 
   return {
