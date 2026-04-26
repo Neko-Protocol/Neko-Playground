@@ -15,8 +15,9 @@ export default function LandingPage() {
           real-world assets.
         </h1>
         <p className="max-w-xl text-lg text-white/70">
-          Bring your tokenized asset to Neko. Escrow liquidity into the
-          distributor and let verified buyers purchase for XLM, atomically.
+          Bring your tokenized asset to Neko. Escrow liquidity in Trustless
+          Work, register the listing on-chain and let verified buyers purchase
+          for XLM, atomically.
         </p>
         <div className="flex gap-3">
           <Link href="/issuer/list">
@@ -62,8 +63,9 @@ export default function LandingPage() {
               Deposit and distribute
             </h3>
             <p className="text-sm text-white/60">
-              Deposit supply into the Neko Distributor escrow. Verified buyers
-              can purchase atomically for XLM with fees split automatically.
+              Deposit supply into a per-listing Trustless Work escrow. Verified
+              buyers purchase atomically for XLM at a fixed or live oracle
+              price, with fees split automatically.
             </p>
           </CardBody>
         </Card>

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["trex-token", "neko-distributor"]
+members = ["trex-token", "neko-listing-registry"]
 
 [workspace.dependencies]
 soroban-sdk = { version = "22.0.0", features = ["alloc"] }

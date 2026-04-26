@@ -18,6 +18,10 @@ export const usePortalStore = create<PortalState>()(
           assets: [...s.assets.filter((x) => x.contractId !== a.contractId), a],
         })),
     }),
-    { name: "issuer-portal-assets" }
+    {
+      name: "issuer-portal-assets",
+      version: 2,
+      migrate: () => ({ assets: [] }),
+    }
   )
 );

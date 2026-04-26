@@ -17,8 +17,47 @@ export const XLM_SAC =
   process.env.NEXT_PUBLIC_XLM_SAC ??
   "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
 
-export const NEKO_DISTRIBUTOR_CONTRACT_ID =
-  process.env.NEXT_PUBLIC_NEKO_DISTRIBUTOR_CONTRACT_ID ?? "";
+/**
+ * v2: Neko Listing Registry. Replaces the old neko-distributor.
+ * The legacy env var name is accepted as a fallback so existing local
+ * .env files keep working during the migration.
+ */
+export const NEKO_LISTING_REGISTRY_CONTRACT_ID =
+  process.env.NEXT_PUBLIC_NEKO_LISTING_REGISTRY_CONTRACT_ID ??
+  process.env.NEXT_PUBLIC_NEKO_DISTRIBUTOR_CONTRACT_ID ??
+  "";
+
+/** Reflector SEP-40 oracles on testnet — defaults for the issuer dropdown. */
+export const REFLECTOR_ORACLES = [
+  {
+    id: "stellar",
+    label: "Stellar Pubnet",
+    address:
+      process.env.NEXT_PUBLIC_REFLECTOR_ORACLE_STELLAR ??
+      "CAVLP5DH2GJPZMVO7IJY4CVOD5MWEFTJFVPD2YY2FQXOQHRGHK4D6HLP",
+    base: "XLM",
+    description:
+      "Stellar-native assets (XLM, USDC, USDT, etc.). Base currency: XLM.",
+  },
+  {
+    id: "external",
+    label: "External CEX/DEX",
+    address:
+      process.env.NEXT_PUBLIC_REFLECTOR_ORACLE_EXTERNAL ??
+      "CCYOZJCOPG34LLQQ7N24YXBM7LL62R7ONMZ3G6WZAAYPB5OYKOMJRN63",
+    base: "USD",
+    description: "External crypto (BTC, ETH, ADA, SOL, …). Base currency: USD.",
+  },
+  {
+    id: "fx",
+    label: "Foreign Exchange",
+    address:
+      process.env.NEXT_PUBLIC_REFLECTOR_ORACLE_FX ??
+      "CCSSOHTBL3LEWUCBBEB5NJFC2OKFRC74OWEIJIZLRJBGAAU4VMU5NV4W",
+    base: "USD",
+    description: "Fiat FX rates (USD, EUR, GBP, JPY, CHF). Base currency: USD.",
+  },
+] as const;
 
 export const ISSUER_KYC_LEVEL = "accredited" as const;
 

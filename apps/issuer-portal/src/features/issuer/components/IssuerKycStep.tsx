@@ -73,6 +73,7 @@ export function IssuerKycStep({ onComplete }: IssuerKycStepProps) {
       const { verificationUrl } = await startKycSession({
         stellarAddress: address,
         kycLevel: ISSUER_KYC_LEVEL,
+        returnPath: "/issuer/list",
       });
       console.info("[kyc] redirecting issuer to", verificationUrl);
       window.location.href = verificationUrl;

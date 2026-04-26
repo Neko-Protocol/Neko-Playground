@@ -1,5 +1,5 @@
 [package]
-name = "neko-distributor"
+name = "neko-listing-registry"
 version = "0.1.0"
 edition = "2021"
 

@@ -13,6 +13,8 @@ interface StoreShape {
       stellarAddress: string;
       status: "pending" | "approved" | "rejected";
       kycLevel: KycEntry["kycLevel"];
+      /** Where to send the browser after DIDIT callback (GET). */
+      returnPath?: string;
       country?: string;
       createdAt: number;
       approvedAt?: number;
@@ -42,6 +44,7 @@ export const kycStore = {
     sessionId: string;
     stellarAddress: string;
     kycLevel: KycEntry["kycLevel"];
+    returnPath?: string;
   }) {
     const data = read();
     data.sessions[input.sessionId] = {

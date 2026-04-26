@@ -1,0 +1,70 @@
+{
+  "sessions": {
+    "mock_1776793337542_zl1rilcs": {
+      "sessionId": "mock_1776793337542_zl1rilcs",
+      "stellarAddress": "GDP3KXDH7F2OXKLLKRUQFJGC4FXMNRHNKOYI7DHYL33GNSJIACIMJ6LG",
+      "kycLevel": "accredited",
+      "status": "pending",
+      "createdAt": 1776793337542,
+      "contractsAdded": []
+    },
+    "mock_1776793366843_wic5o9c3": {
+      "sessionId": "mock_1776793366843_wic5o9c3",
+      "stellarAddress": "GDP3KXDH7F2OXKLLKRUQFJGC4FXMNRHNKOYI7DHYL33GNSJIACIMJ6LG",
+      "kycLevel": "accredited",
+      "status": "pending",
+      "createdAt": 1776793366843,
+      "contractsAdded": []
+    },
+    "mock_1776794344562_a1iuvuvj": {
+      "sessionId": "mock_1776794344562_a1iuvuvj",
+      "stellarAddress": "GDP3KXDH7F2OXKLLKRUQFJGC4FXMNRHNKOYI7DHYL33GNSJIACIMJ6LG",
+      "kycLevel": "accredited",
+      "status": "approved",
+      "createdAt": 1776794344563,
+      "contractsAdded": [
+        "CBFJYMHGK45MLM2OUE7HRHHIXWYLXX7YQVIUELPJFBNJMISABOB4YSWW"
+      ],
+      "country": "US",
+      "approvedAt": 1776794346419
+    },
+    "c5d0d615-9e12-48d7-baf8-38afa4a07f4c": {
+      "sessionId": "c5d0d615-9e12-48d7-baf8-38afa4a07f4c",
+      "stellarAddress": "GDEQD7CITHS4AINJTA4VSACHOXK6ZOY6WTFUNLRHXTCLZXZ5TI4Y7Y5X",
+      "kycLevel": "basic",
+      "status": "pending",
+      "createdAt": 1776816669800,
+      "contractsAdded": []
+    },
+    "a7359958-5d81-44af-a61e-28c7bb934382": {
+      "sessionId": "a7359958-5d81-44af-a61e-28c7bb934382",
+      "stellarAddress": "GDEQD7CITHS4AINJTA4VSACHOXK6ZOY6WTFUNLRHXTCLZXZ5TI4Y7Y5X",
+      "kycLevel": "accredited",
+      "status": "pending",
+      "createdAt": 1776825472211,
+      "contractsAdded": []
+    },
+    "35faa8ae-bf81-4840-a088-a61da7c883f5": {
+      "sessionId": "35faa8ae-bf81-4840-a088-a61da7c883f5",
+      "stellarAddress": "GDEQD7CITHS4AINJTA4VSACHOXK6ZOY6WTFUNLRHXTCLZXZ5TI4Y7Y5X",
+      "kycLevel": "accredited",
+      "status": "pending",
+      "createdAt": 1776843970681,
+      "contractsAdded": []
+    },
+    "cbddd51d-253d-4a44-991d-ba438063221c": {
+      "sessionId": "cbddd51d-253d-4a44-991d-ba438063221c",
+      "stellarAddress": "GDEQD7CITHS4AINJTA4VSACHOXK6ZOY6WTFUNLRHXTCLZXZ5TI4Y7Y5X",
+      "kycLevel": "accredited",
+      "status": "approved",
+      "createdAt": 1776844139806,
+      "contractsAdded": [],
+      "country": "US",
+      "approvedAt": 1776844443551
+    }
+  },
+  "byAddress": {
+    "GDP3KXDH7F2OXKLLKRUQFJGC4FXMNRHNKOYI7DHYL33GNSJIACIMJ6LG": "mock_1776794344562_a1iuvuvj",
+    "GDEQD7CITHS4AINJTA4VSACHOXK6ZOY6WTFUNLRHXTCLZXZ5TI4Y7Y5X": "cbddd51d-253d-4a44-991d-ba438063221c"
+  }
+}

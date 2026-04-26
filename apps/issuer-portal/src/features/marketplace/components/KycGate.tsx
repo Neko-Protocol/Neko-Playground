@@ -40,6 +40,7 @@ export function KycGate({ onApproved }: KycGateProps) {
       const { verificationUrl } = await startKycSession({
         stellarAddress: address,
         kycLevel: "basic",
+        returnPath: "/marketplace",
       });
       console.info("[kyc] redirecting buyer to", verificationUrl);
       window.location.href = verificationUrl;

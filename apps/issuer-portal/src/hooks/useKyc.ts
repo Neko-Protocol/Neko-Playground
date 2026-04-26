@@ -38,6 +38,8 @@ export function useKycStatus(address: string | undefined) {
 export async function startKycSession(input: {
   stellarAddress: string;
   kycLevel: KycLevel;
+  /** Path only (e.g. `/issuer/list`, `/marketplace`) for post-DIDIT browser redirect. */
+  returnPath?: string;
 }): Promise<{ sessionId: string; verificationUrl: string }> {
   const res = await fetch("/api/kyc/create-session", {
     method: "POST",

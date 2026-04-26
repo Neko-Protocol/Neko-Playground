@@ -5,9 +5,11 @@ import type { KycEntry } from "@/types";
 
 export async function POST(req: Request) {
   try {
-    const { stellarAddress, kycLevel } = (await req.json()) as {
+    const { stellarAddress, kycLevel, returnPath } = (await req.json()) as {
       stellarAddress?: string;
       kycLevel?: KycEntry["kycLevel"];
+      /** Browser redirect after DIDIT (GET callback), e.g. `/issuer/list` or `/marketplace`. */
+      returnPath?: string;
     };
     if (!stellarAddress || !kycLevel) {
       return NextResponse.json(
@@ -15,6 +17,14 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    const safeReturnPath =
+      typeof returnPath === "string" &&
+      returnPath.startsWith("/") &&
+      !returnPath.startsWith("//") &&
+      !returnPath.includes("://")
+        ? returnPath.split("?")[0]
+        : "/issuer/list";
 
     const isMock = process.env.NEXT_PUBLIC_DIDIT_MOCK === "true";
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -37,7 +47,12 @@ export async function POST(req: Request) {
       callbackUrl: `${resolvedAppUrl}/api/kyc/webhook`,
     });
 
-    kycStore.createSession({ sessionId, stellarAddress, kycLevel });
+    kycStore.createSession({
+      sessionId,
+      stellarAddress,
+      kycLevel,
+      returnPath: safeReturnPath,
+    });
 
     console.info(
       "[kyc/create-session] created",

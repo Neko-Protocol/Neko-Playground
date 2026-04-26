@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { KycGate } from "@/features/marketplace/components/KycGate";
 import { useBuyAsset } from "@/features/marketplace/hooks/useBuyAsset";
+import { usePricePreview } from "@/features/marketplace/hooks/usePricePreview";
 import { STELLAR_EXPERT_TESTNET } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import type { ListedAsset } from "@/types";
@@ -30,21 +31,37 @@ function BuyModalInner({
 }) {
   const [stage, setStage] = useState<"gate" | "form" | "done">("gate");
   const [amount, setAmount] = useState("1");
+  const [slippage, setSlippage] = useState("1"); // %
+  const { data: price, isLoading: priceLoading } = usePricePreview(asset);
   const { mutateAsync, isPending, error } = useBuyAsset();
   const [result, setResult] = useState<{
-    approveHash: string;
     buyHash: string;
+    releaseTx: string;
+    mockRelease: boolean;
   } | null>(null);
 
-  const total = Number(amount) * asset.priceXlm;
+  const totalXlm = price ? Number(amount) * price.pricePerTokenXlm : null;
+
+  const maxPriceStroops = useMemo(() => {
+    if (!price) return 0n;
+    if (asset.pricing.type === "fixed") return price.pricePerTokenStroops;
+    const slippagePct = Math.max(0, Number(slippage) || 0);
+    const numerator = 10_000n + BigInt(Math.round(slippagePct * 100));
+    return (price.pricePerTokenStroops * numerator) / 10_000n;
+  }, [price, slippage, asset.pricing.type]);
 
   const handleBuy = async () => {
+    if (!price || maxPriceStroops <= 0n) return;
     try {
-      const res = await mutateAsync({ asset, tokenAmount: amount });
+      const res = await mutateAsync({
+        asset,
+        tokenAmount: amount,
+        maxPricePerTokenStroops: maxPriceStroops,
+      });
       setResult(res);
       setStage("done");
     } catch {
-      /* error shown inline */
+      /* surfaced inline */
     }
   };
 
@@ -81,15 +98,57 @@ function BuyModalInner({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-            <div className="rounded-md border border-white/10 bg-white/5 p-3 text-sm">
+
+            {asset.pricing.type === "oracle" ? (
+              <Input
+                label="Max slippage (%)"
+                type="number"
+                min={0}
+                step="0.1"
+                value={slippage}
+                onChange={(e) => setSlippage(e.target.value)}
+                hint="Buy fails if the price moves above this before mining."
+              />
+            ) : null}
+
+            <div className="rounded-md border border-white/10 bg-white/5 p-3 text-sm space-y-1.5">
               <div className="flex justify-between">
-                <span className="text-white/50">Price / token</span>
-                <span>{asset.priceXlm} XLM</span>
+                <span className="text-white/50">
+                  Price / token{" "}
+                  {asset.pricing.type === "oracle" ? "(live)" : null}
+                </span>
+                <span>
+                  {price
+                    ? `${price.pricePerTokenXlm.toLocaleString(undefined, {
+                        maximumFractionDigits: 7,
+                      })} XLM`
+                    : priceLoading
+                      ? "…"
+                      : "—"}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-white/50">Total</span>
-                <span className="font-medium">{total} XLM</span>
+                <span className="text-white/50">Est. total</span>
+                <span className="font-medium">
+                  {totalXlm !== null
+                    ? `${totalXlm.toLocaleString(undefined, {
+                        maximumFractionDigits: 4,
+                      })} XLM`
+                    : "—"}
+                </span>
               </div>
+              {asset.pricing.type === "oracle" ? (
+                <div className="flex justify-between text-xs text-white/40">
+                  <span>Max price / token</span>
+                  <span>
+                    {(Number(maxPriceStroops) / 10_000_000).toLocaleString(
+                      undefined,
+                      { maximumFractionDigits: 7 }
+                    )}{" "}
+                    XLM
+                  </span>
+                </div>
+              ) : null}
             </div>
 
             {error ? (
@@ -101,8 +160,9 @@ function BuyModalInner({
                 onClick={handleBuy}
                 loading={isPending}
                 className="flex-1"
+                disabled={!price || isPending}
               >
-                {isPending ? "Signing…" : "Approve & buy"}
+                {isPending ? "Signing…" : "Sign & buy"}
               </Button>
               <Button variant="secondary" onClick={onClose}>
                 Cancel
@@ -112,18 +172,13 @@ function BuyModalInner({
         ) : result ? (
           <div className="space-y-4">
             <p className="text-sm text-white/70">
-              Purchase complete. Tokens have been delivered to your wallet.
+              Purchase complete. Tokens have been delivered to your wallet
+              {result.mockRelease
+                ? " (via mock TW release)"
+                : " by Trustless Work"}
+              .
             </p>
             <div className="space-y-2 rounded-md border border-white/10 bg-white/5 p-3 text-xs">
-              <a
-                className="flex justify-between text-neko-teal"
-                href={`${STELLAR_EXPERT_TESTNET}/tx/${result.approveHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <span className="text-white/50">Approve</span>
-                <span className="truncate">{result.approveHash}</span>
-              </a>
               <a
                 className="flex justify-between text-neko-teal"
                 href={`${STELLAR_EXPERT_TESTNET}/tx/${result.buyHash}`}
@@ -132,6 +187,15 @@ function BuyModalInner({
               >
                 <span className="text-white/50">Buy</span>
                 <span className="truncate">{result.buyHash}</span>
+              </a>
+              <a
+                className="flex justify-between text-neko-teal"
+                href={`${STELLAR_EXPERT_TESTNET}/tx/${result.releaseTx}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="text-white/50">Release</span>
+                <span className="truncate">{result.releaseTx}</span>
               </a>
             </div>
             <Button onClick={onClose} className="w-full">
