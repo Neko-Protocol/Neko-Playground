@@ -3,14 +3,15 @@ import "@stellar/design-system/build/styles.min.css";
 import "./globals.css";
 import { Providers } from "./providers";
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
   title: "Neko Protocol",
   description: "All-in-one platform for RWAs on Stellar",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    viewportFit: "cover",
-  },
 };
 
 export default function RootLayout({

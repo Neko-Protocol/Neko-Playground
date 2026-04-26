@@ -29,7 +29,9 @@ export function canUseHaptics(): boolean {
   }
   if (prefersReducedMotion()) return false;
   if (isDesktopNoTouch()) return false;
-  return WebHaptics.isSupported;
+  // WebHaptics supports iOS Safari/PWA via a click-audio fallback even when
+  // `navigator.vibrate` is unavailable, so don't gate on `isSupported`.
+  return true;
 }
 
 /**
@@ -43,7 +45,7 @@ export function useHaptic() {
   const trigger = useCallback(
     (pattern: HapticPattern) => {
       if (!canUseHaptics()) return;
-      void webTrigger(HAPTIC_PATTERNS[pattern]);
+      void webTrigger?.(HAPTIC_PATTERNS[pattern]);
     },
     [webTrigger]
   );
