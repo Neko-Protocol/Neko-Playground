@@ -5,10 +5,10 @@ export type HapticPattern =
   | "warning"
   | "selection";
 
-export const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
-  connect: [12],
-  success: [18],
-  error: [25, 40, 25],
-  warning: [15, 25, 15],
-  selection: [8],
+export const HAPTIC_PATTERNS: Record<HapticPattern, string> = {
+  connect: "nudge",
+  success: "success",
+  error: "error",
+  warning: "warning",
+  selection: "nudge",
 };

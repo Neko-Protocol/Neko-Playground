@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import { WebHaptics } from "web-haptics";
+import { useWebHaptics } from "web-haptics/react";
 import { HAPTIC_PATTERNS, type HapticPattern } from "@/lib/constants/haptics";
 
 export type { HapticPattern } from "@/lib/constants/haptics";
@@ -27,12 +29,7 @@ export function canUseHaptics(): boolean {
   }
   if (prefersReducedMotion()) return false;
   if (isDesktopNoTouch()) return false;
-  return typeof navigator.vibrate === "function";
-}
-
-export function triggerHaptic(pattern: HapticPattern): boolean {
-  if (!canUseHaptics()) return false;
-  return navigator.vibrate(HAPTIC_PATTERNS[pattern]);
+  return WebHaptics.isSupported;
 }
 
 /**
@@ -41,10 +38,15 @@ export function triggerHaptic(pattern: HapticPattern): boolean {
  */
 export function useHaptic() {
   const canHaptic = useMemo(() => canUseHaptics(), []);
+  const { trigger: webTrigger } = useWebHaptics();
 
-  const trigger = useCallback((pattern: HapticPattern) => {
-    void triggerHaptic(pattern);
-  }, []);
+  const trigger = useCallback(
+    (pattern: HapticPattern) => {
+      if (!canUseHaptics()) return;
+      void webTrigger(HAPTIC_PATTERNS[pattern]);
+    },
+    [webTrigger]
+  );
 
   return { trigger, canHaptic };
 }
