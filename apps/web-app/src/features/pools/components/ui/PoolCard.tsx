@@ -87,11 +87,24 @@ export const PoolCard: React.FC<PoolCardProps> = ({
 
         {}
         <div className="flex items-center gap-2">
-          <div
-            className={`w-2 h-2 rounded-full ${
-              pool.isActive ? "bg-[#229EDF]" : "bg-gray-400"
-            } animate-pulse`}
-          />
+          {pool.state === "active" && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#229EDF]/10 border border-[#229EDF]/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#229EDF] animate-pulse" />
+              <span className="text-[#229EDF] text-[10px] font-bold uppercase tracking-wider">Active</span>
+            </div>
+          )}
+          {pool.state === "on_ice" && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+              <span className="text-orange-500 text-[10px] font-bold uppercase tracking-wider">On Ice</span>
+            </div>
+          )}
+          {pool.state === "frozen" && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              <span className="text-red-500 text-[10px] font-bold uppercase tracking-wider">Frozen</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

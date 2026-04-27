@@ -10,6 +10,8 @@ import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { parseInterestRateFromContractResult } from "@/lib/helpers/lendingUtils";
 
+import type { PoolState } from "@/lib/orchestrator/types/pool.types";
+
 export interface LendingPool {
   asset: string;
   assetCode: string;
@@ -18,6 +20,7 @@ export interface LendingPool {
   interestRate: number;
   bTokenRate: string;
   isActive: boolean;
+  state: PoolState;
   contractId: string;
 }
 
@@ -46,7 +49,15 @@ async function fetchLendingPools(
     return [];
   }
 
-  if (poolState?.tag !== "Active") return [];
+  const stateTag = (poolState?.tag as string) || "Active";
+  const state: PoolState =
+    stateTag === "Active"
+      ? "active"
+      : stateTag === "OnIce"
+        ? "on_ice"
+        : stateTag === "Frozen"
+          ? "frozen"
+          : "unknown";
 
   const pools: LendingPool[] = [];
 
@@ -109,7 +120,8 @@ async function fetchLendingPools(
         poolBalanceUSD: "Calculating...",
         interestRate,
         bTokenRate,
-        isActive: true,
+        isActive: state === "active",
+        state,
         contractId,
       });
     } catch {

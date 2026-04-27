@@ -102,12 +102,22 @@ export function BorrowTable({
                     {asset.liquidity}
                   </td>
                   <td className="px-4 py-4 align-middle text-center">
-                    <button
-                      onClick={() => onBorrow(asset)}
-                      className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors"
-                    >
-                      Borrow
-                    </button>
+                    <div className="flex flex-col items-center gap-1">
+                      <button
+                        onClick={() => onBorrow(asset)}
+                        disabled={asset.state !== "active"}
+                        className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Borrow
+                      </button>
+                      {asset.state !== "active" && (
+                        <span className={`text-[10px] font-bold uppercase tracking-tighter ${
+                          asset.state === 'on_ice' ? 'text-orange-500' : 'text-red-500'
+                        }`}>
+                          {asset.state === 'on_ice' ? 'On Ice' : asset.state}
+                        </span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -173,12 +183,24 @@ export function BorrowTable({
                     />
                   </div>
 
-                  <button
-                    onClick={() => onBorrow(asset)}
-                    className="w-full rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-2 text-white text-sm font-semibold transition-colors"
-                  >
-                    Borrow
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => onBorrow(asset)}
+                      disabled={asset.state !== "active"}
+                      className="w-full rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-2 text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Borrow
+                    </button>
+                    {asset.state !== "active" && (
+                      <div className="text-center">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                          asset.state === 'on_ice' ? 'text-orange-500' : 'text-red-500'
+                        }`}>
+                          Pool is {asset.state === 'on_ice' ? 'On Ice' : asset.state}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

@@ -1,3 +1,5 @@
+import type { PoolState } from "@/lib/orchestrator/types/pool.types";
+
 export interface PoolData {
   id: string;
   name: string;
@@ -8,6 +10,7 @@ export interface PoolData {
   feeApy: string;
   liquidity: string;
   isActive: boolean;
+  state: PoolState;
   assetCode: string;
   asset: string;
   bTokenRate?: string;
