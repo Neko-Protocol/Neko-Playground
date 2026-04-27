@@ -8,6 +8,7 @@ import QuickActions from "@/features/dashboard/components/ui/QuickActions";
 import DiscoverAssets from "@/features/dashboard/components/ui/DiscoverAssets";
 import AssetBreakdown from "@/features/dashboard/components/ui/AssetBreakdown";
 import YourPositions from "@/features/dashboard/components/ui/YourPositions";
+import ActivityFeed from "@/features/dashboard/components/ui/ActivityFeed";
 import { GetTestTokensBanner } from "@/features/wallet/components/GetTestTokensBanner";
 
 const Dashboard: React.FC = () => {
@@ -27,6 +28,7 @@ const Dashboard: React.FC = () => {
         <DiscoverAssets />
         <AssetBreakdown />
         <YourPositions />
+        <ActivityFeed />
       </PageContainer>
     </div>
   );
