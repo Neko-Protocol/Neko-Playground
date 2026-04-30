@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
@@ -15,12 +15,17 @@ export const SIDEBAR_WIDTH = "270px";
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_LENDING_ADMIN_ADDRESS ?? "";
 
 export function Sidebar() {
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const { isStellarConnected, stellarAddress } = useWalletType();
   const { disconnect: disconnectStellar } = useStellarWallet();
 
-  const isConnected = isStellarConnected;
-  const activeAddress = stellarAddress ?? "";
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isConnected = mounted ? isStellarConnected : false;
+  const activeAddress = mounted ? (stellarAddress ?? "") : "";
 
   const navItems = useMemo(() => {
     return NAV_ITEMS.filter((item) => {

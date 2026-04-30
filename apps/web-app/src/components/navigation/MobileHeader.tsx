@@ -18,6 +18,7 @@ const IS_TESTNET = NETWORK === "TESTNET";
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_LENDING_ADMIN_ADDRESS ?? "";
 
 export function MobileHeader() {
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
   const pathname = usePathname();
@@ -26,8 +27,12 @@ export function MobileHeader() {
   const menuRef = useRef<HTMLDivElement>(null);
   const walletButtonRef = useRef<HTMLDivElement>(null);
 
-  const isConnected = isStellarConnected;
-  const activeAddress = stellarAddress ?? "";
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isConnected = mounted ? isStellarConnected : false;
+  const activeAddress = mounted ? (stellarAddress ?? "") : "";
 
   const navItems = useMemo(() => {
     return NAV_ITEMS.filter((item) => {
@@ -75,7 +80,7 @@ export function MobileHeader() {
 
   return (
     <>
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex flex-col border-b border-white/5 bg-[#121212] pt-6">
+      <header className="mobile-app-header lg:hidden fixed top-0 left-0 right-0 z-50 flex flex-col border-b border-white/5 bg-[#121212] pt-6">
         <div className="flex h-14 min-h-14 justify-between items-center pr-1.5 sm:px-4">
           <div className="min-w-0 items-center justify-start">
             <Link
@@ -176,7 +181,7 @@ export function MobileHeader() {
       <div
         ref={menuRef}
         className={cn(
-          "lg:hidden fixed left-0 right-0 top-20 z-50 bg-[#121212] border-b border-white/5 overflow-hidden",
+          "mobile-app-menu lg:hidden fixed left-0 right-0 top-20 z-50 bg-[#121212] border-b border-white/5 overflow-hidden",
           "transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
           isOpen
             ? "translate-y-0 opacity-100"

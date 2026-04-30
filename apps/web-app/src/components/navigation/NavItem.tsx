@@ -15,9 +15,7 @@ export function NavItem({ label, href, icon: Icon, isActive }: NavItemProps) {
       href={href}
       className={cn(
         "flex items-center gap-3 px-4 py-3 text-base font-medium transition-colors duration-150",
-        isActive
-          ? "text-white"
-          : "text-white/35 hover:text-white/65"
+        isActive ? "text-white" : "text-white/35 hover:text-white/65"
       )}
       style={
         isActive

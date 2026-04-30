@@ -51,7 +51,7 @@ async function ensureAudioRunning(): Promise<AudioContext | null> {
 
   try {
     await ctx.resume();
-    return ctx.state === "running" ? ctx : null;
+    return ctx;
   } catch {
     return null;
   }
