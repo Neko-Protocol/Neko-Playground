@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { MobileHeader } from "@/components/navigation/MobileHeader";
 import { WalletAutoConnect } from "@/components/WalletAutoConnect";
+import { OfflineStatusBanner } from "@/components/pwa/OfflineStatusBanner";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
@@ -10,11 +11,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <Sidebar />
       <MobileHeader />
 
-      {}
       <main
-        className="pt-16 lg:pt-0 lg:ml-[270px] flex min-h-screen min-w-0 flex-1 flex-col items-center overflow-x-hidden text-white w-full"
-        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+        className="mobile-app-main pt-16 lg:pt-0 lg:ml-[270px] flex min-h-screen min-w-0 flex-1 flex-col items-center overflow-x-hidden text-white w-full"
+        style={{
+          paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+        }}
       >
+        <OfflineStatusBanner />
         {children}
       </main>
     </div>
