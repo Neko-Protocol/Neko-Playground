@@ -15,6 +15,7 @@ import {
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { waitForTransaction } from "@/lib/helpers/stellar/waitForTransaction";
 import { usePools, usePoolAction } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
@@ -232,9 +233,10 @@ export function useLend() {
             networkPassphrase: passphrase,
             address,
           });
-          await sorobanServer.sendTransaction(
+          const sendResult = await sorobanServer.sendTransaction(
             TransactionBuilder.fromXDR(signedDeposit.signedTxXdr, passphrase)
           );
+          await waitForTransaction(sendResult.hash, sorobanServer);
         } else {
           if (!selectedPool.bTokenRate)
             throw new Error("Unable to calculate bTokens. Please try again.");
@@ -251,12 +253,12 @@ export function useLend() {
             networkPassphrase: passphrase,
             address,
           });
-          await sorobanServer.sendTransaction(
+          const sendResult = await sorobanServer.sendTransaction(
             TransactionBuilder.fromXDR(signedWithdraw.signedTxXdr, passphrase)
           );
+          await waitForTransaction(sendResult.hash, sorobanServer);
         }
 
-        await new Promise((r) => setTimeout(r, 3000));
         await loadBTokenBalance();
         await refetchPools();
         showSuccess(
