@@ -141,6 +141,7 @@ export function BackstopPanel() {
           backstopTokenConfigured={backstopTokenConfigured}
           inWithdrawalQueue={inWithdrawalQueue}
           queueExpired={queueExpired}
+          queueExpiresAt={queueExpiresAt}
           onDeposit={handleDeposit}
           onInitiateWithdrawal={handleInitiateWithdrawal}
           onWithdraw={handleWithdraw}

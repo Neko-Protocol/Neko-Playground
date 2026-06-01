@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BackstopInfoAlert } from "./BackstopInfoAlert";
+import { QueueCountdown } from "./QueueCountdown";
 
 type ActionTab = "deposit" | "withdraw";
 
@@ -15,6 +16,7 @@ interface BackstopActionPanelProps {
   backstopTokenConfigured: boolean;
   inWithdrawalQueue: boolean;
   queueExpired: boolean;
+  queueExpiresAt: Date | null;
   onDeposit: (amount: string) => Promise<void>;
   onInitiateWithdrawal: (amount: string) => Promise<void>;
   onWithdraw: (amount: string) => Promise<void>;
@@ -30,6 +32,7 @@ export function BackstopActionPanel({
   backstopTokenConfigured,
   inWithdrawalQueue,
   queueExpired,
+  queueExpiresAt,
   onDeposit,
   onInitiateWithdrawal,
   onWithdraw,
@@ -153,7 +156,12 @@ export function BackstopActionPanel({
             <>
               <BackstopInfoAlert variant="warning">
                 To withdraw, you must first queue your withdrawal and wait{" "}
-                <span className="font-semibold text-amber-400">17 days</span>.
+                {inWithdrawalQueue && queueExpiresAt ? (
+                  <QueueCountdown expiresAt={queueExpiresAt} />
+                ) : (
+                  <span className="font-semibold text-amber-400">17 days</span>
+                )}
+                .
               </BackstopInfoAlert>
 
               <div>
