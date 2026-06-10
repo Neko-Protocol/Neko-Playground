@@ -12,6 +12,7 @@ import { POOLS } from "../constants";
 import type { PoolState } from "@neko/lending";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { invalidateProtocolQueries } from "@/lib/helpers/invalidateProtocolQueries";
 
 const POOL_STATES: { value: PoolState; label: string }[] = [
   { value: { tag: "Active", values: undefined }, label: "Active" },
@@ -62,8 +63,7 @@ function PoolStateToggleInner({ pool }: { pool: (typeof POOLS)[number] }) {
       void queryClient.invalidateQueries({
         queryKey: ["admin", "poolState", pool.contractId],
       });
-      void queryClient.invalidateQueries({ queryKey: ["lendingPools"] });
-      void queryClient.invalidateQueries({ queryKey: ["borrowPools"] });
+      void invalidateProtocolQueries(queryClient, ["pools"]);
     } catch (err) {
       const msg = extractContractErrorOrNull(err);
       addNotification("Error", "error", {
