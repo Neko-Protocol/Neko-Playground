@@ -16,6 +16,7 @@ import {
   getTokenBalance,
 } from "@/lib/helpers/stellar/lending";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { waitForTransaction } from "@/lib/helpers/stellar/waitForTransaction";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 
@@ -112,11 +113,11 @@ export function useBackstop(contractId: string) {
           networkPassphrase: passphrase,
           address,
         });
-        await sorobanServer.sendTransaction(
+        const sendResult = await sorobanServer.sendTransaction(
           TransactionBuilder.fromXDR(signedDeposit.signedTxXdr, passphrase)
         );
 
-        await new Promise((r) => setTimeout(r, 3000));
+        await waitForTransaction(sendResult.hash, sorobanServer);
         await refetchAll();
         showSuccess(`Successfully deposited ${amount} tokens to backstop`);
       } catch (err) {
@@ -158,11 +159,11 @@ export function useBackstop(contractId: string) {
           networkPassphrase: passphrase,
           address,
         });
-        await sorobanServer.sendTransaction(
+        const sendResult = await sorobanServer.sendTransaction(
           TransactionBuilder.fromXDR(signed.signedTxXdr, passphrase)
         );
 
-        await new Promise((r) => setTimeout(r, 3000));
+        await waitForTransaction(sendResult.hash, sorobanServer);
         await refetchAll();
         showSuccess(
           `Withdrawal queued. You can withdraw after ${WITHDRAWAL_QUEUE_DAYS} days.`
@@ -202,11 +203,11 @@ export function useBackstop(contractId: string) {
           networkPassphrase: passphrase,
           address,
         });
-        await sorobanServer.sendTransaction(
+        const sendResult = await sorobanServer.sendTransaction(
           TransactionBuilder.fromXDR(signed.signedTxXdr, passphrase)
         );
 
-        await new Promise((r) => setTimeout(r, 3000));
+        await waitForTransaction(sendResult.hash, sorobanServer);
         await refetchAll();
         showSuccess(`Successfully withdrew ${amount} tokens from backstop`);
       } catch (err) {
