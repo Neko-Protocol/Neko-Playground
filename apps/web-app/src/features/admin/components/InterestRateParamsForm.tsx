@@ -9,7 +9,9 @@ import { rpcUrl } from "@/lib/constants/network";
 import { POOLS } from "../constants";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { invalidateProtocolQueries } from "@/lib/helpers/invalidateProtocolQueries";
 import { Networks } from "@stellar/stellar-sdk";
+import { useQueryClient } from "@tanstack/react-query";
 import type { InterestRateParams } from "@neko/lending";
 
 const SCALAR_7 = 10_000_000;
@@ -22,6 +24,7 @@ function pctTo7(pct: number): number {
 export default function InterestRateParamsForm() {
   const { address, signTransaction, networkPassphrase } = useWallet();
   const { addNotification } = useToast();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [poolId, setPoolId] = useState<"pool1" | "pool2">("pool1");
   const [asset, setAsset] = useState("USDC");
@@ -98,6 +101,7 @@ export default function InterestRateParamsForm() {
         ...TOAST_CONFIG.defaultOpts,
         description: `Interest rate params for ${asset} updated`,
       });
+      void invalidateProtocolQueries(queryClient, ["pools", "rates", "positions"]);
     } catch (err) {
       const msg = extractContractErrorOrNull(err);
       addNotification("Error", "error", {

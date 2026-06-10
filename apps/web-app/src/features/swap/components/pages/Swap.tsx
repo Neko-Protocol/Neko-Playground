@@ -14,9 +14,9 @@ import {
 } from "@/lib/helpers/stellar/soroswap";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import {
-  sanitizeAmountInput,
   formatSwapAmount,
 } from "@/lib/helpers/tokenUtils";
+import { AmountInput } from "@/components/AmountInput";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { BannerPage } from "@/components/ui/BannerPage";
@@ -288,7 +288,7 @@ const Swap: React.FC = () => {
 
   const handleMaxClick = () => {
     if (tokenInBalance && parseFloat(tokenInBalance) > 0) {
-      setAmountIn(tokenInBalance);
+      handleAmountChange(tokenInBalance);
     }
   };
 
@@ -330,7 +330,7 @@ const Swap: React.FC = () => {
           <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
             <span className="text-white/50 text-sm font-medium">From</span>
 
-            <TokenSelectorBtn
+<TokenSelectorBtn
               token={tokenIn}
               getTokenId={getTokenId}
               getTokenIconUrl={getTokenIconUrl}
@@ -343,14 +343,9 @@ const Swap: React.FC = () => {
                 Amount
               </span>
               <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center">
-                <input
-                  type="text"
-                  inputMode="decimal"
+                <AmountInput
                   value={amountIn}
-                  onChange={(e) =>
-                    handleAmountChange(sanitizeAmountInput(e.target.value))
-                  }
-                  placeholder="0.00"
+                  onChange={handleAmountChange}
                   disabled={!address || isLoading}
                   className="bg-transparent text-white text-3xl font-bold w-full outline-none placeholder:text-white/30 disabled:opacity-50"
                 />

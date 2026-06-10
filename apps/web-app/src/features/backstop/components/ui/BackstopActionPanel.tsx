@@ -102,18 +102,16 @@ export function BackstopActionPanel({
                 <button
                   onClick={() => setDepositAmount(walletBalance)}
                   disabled={isLoading}
-                  className="text-[#229EDF] text-xs font-semibold hover:text-[#229EDF]/70 transition-colors disabled:opacity-40"
+                  className="text-[#229EDF] text-xs font-semibold hover:text-[#229EDF]/70 transition-colors disabled:opacity-40 shrink-0 ml-2"
                 >
                   Max: {parseFloat(walletBalance).toFixed(4)}
                 </button>
               )}
             </div>
             <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center">
-              <input
-                type="number"
-                placeholder="0.00"
+              <AmountInput
                 value={depositAmount}
-                onChange={(e) => setDepositAmount(e.target.value)}
+                onChange={setDepositAmount}
                 disabled={isLoading || !backstopTokenConfigured}
                 className="bg-transparent text-white text-2xl font-bold w-full outline-none placeholder:text-white/30 disabled:opacity-50"
               />
@@ -180,11 +178,9 @@ export function BackstopActionPanel({
                   )}
                 </div>
                 <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center">
-                  <input
-                    type="number"
-                    placeholder="0.00"
+                  <AmountInput
                     value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    onChange={setWithdrawAmount}
                     disabled={isLoading}
                     className="bg-transparent text-white text-2xl font-bold w-full outline-none placeholder:text-white/30 disabled:opacity-50"
                   />

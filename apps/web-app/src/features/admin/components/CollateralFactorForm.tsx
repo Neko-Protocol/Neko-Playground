@@ -11,6 +11,7 @@ import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { POOLS, POOL2_COLLATERAL_ASSETS } from "../constants";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { invalidateProtocolQueries } from "@/lib/helpers/invalidateProtocolQueries";
 import { Networks } from "@stellar/stellar-sdk";
 import type { AssetType } from "@neko/lending";
 
@@ -138,7 +139,7 @@ export default function CollateralFactorForm() {
           selected.code,
         ],
       });
-      void queryClient.invalidateQueries({ queryKey: ["borrowPools"] });
+      void invalidateProtocolQueries(queryClient, ["pools", "positions"]);
     } catch (err) {
       const msg = extractContractErrorOrNull(err);
       addNotification("Error", "error", {

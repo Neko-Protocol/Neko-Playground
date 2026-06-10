@@ -6,6 +6,7 @@ import { usePoolAction, useUserPosition } from "@/lib/orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { AmountInput } from "@/components/AmountInput";
 import type { PoolInfo, PoolAction } from "@/lib/orchestrator";
 
 interface PoolActionModalProps {
@@ -159,23 +160,19 @@ export function PoolActionModal({
                   Amount ({tokenCode})
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="0.00"
+                  <AmountInput
                     value={amount}
-                    onChange={(e) =>
-                      setAmount(e.target.value.replace(/[^0-9.]/g, ""))
-                    }
-                    className="flex-1 px-4 py-3 rounded-xl border border-[#334EAC]/30 bg-[#f8fafc] text-[#081F5C] focus:outline-none focus:ring-2 focus:ring-[#334EAC]/50 focus:border-[#334EAC]"
+                    onChange={setAmount}
+                    decimals={decimals}
                     disabled={mutate.isPending}
+                    className="flex-1 px-4 py-3 rounded-xl border border-[#334EAC]/30 bg-[#f8fafc] text-[#081F5C] focus:outline-none focus:ring-2 focus:ring-[#334EAC]/50 focus:border-[#334EAC]"
                   />
                   {maxAmount !== "" && Number(maxAmount) > 0 && (
                     <button
                       type="button"
                       onClick={() => setAmount(maxAmount)}
-                      className="px-4 py-3 rounded-xl border border-[#334EAC]/30 bg-[#eaf4ff] text-[#334EAC] font-medium hover:bg-[#d4e8ff] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={mutate.isPending}
+                      className="px-4 py-3 rounded-xl border border-[#334EAC]/30 bg-[#eaf4ff] text-[#334EAC] font-medium hover:bg-[#d4e8ff] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Max
                     </button>
