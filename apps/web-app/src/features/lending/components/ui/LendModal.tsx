@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { X, RefreshCw } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { AmountInput } from "@/components/AmountInput";
 import type { PoolData } from "../../types/lending";
 
 interface LendModalProps {
@@ -125,11 +126,9 @@ export function LendModal({
             {isDeposit ? "Amount to Deposit" : "Amount to Withdraw"} (
             {pool.token1})
           </label>
-          <input
-            type="number"
-            placeholder="0.00"
+          <AmountInput
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={setAmount}
             disabled={isLoading}
             className="w-full bg-[#2A2A2A] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-[#229EDF]/50 transition-colors disabled:opacity-50"
           />
