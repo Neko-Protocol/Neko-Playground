@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, isValidProvider, AnchorError } from "@/lib/anchors";
+import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { parseJsonBody, parseParam } from "@/lib/validation/parse";
+import { ProviderSchema, QuoteBodySchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -8,15 +10,13 @@ export async function POST(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
-        { status: 400 }
-      );
-    }
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
+    const provider = providerResult.data;
 
-    const body = await request.json();
+    const parsed = await parseJsonBody(request, QuoteBodySchema);
+    if ("error" in parsed) return parsed.error;
     const {
       fromCurrency,
       toCurrency,
@@ -25,20 +25,7 @@ export async function POST(
       customerId,
       stellarAddress,
       resourceId,
-    } = body;
-
-    if (!fromCurrency || !toCurrency) {
-      return NextResponse.json(
-        { error: "fromCurrency and toCurrency are required" },
-        { status: 400 }
-      );
-    }
-    if (!fromAmount && !toAmount) {
-      return NextResponse.json(
-        { error: "Either fromAmount or toAmount is required" },
-        { status: 400 }
-      );
-    }
+    } = parsed.data;
 
     const client = getAnchorClient(provider);
     const quote = await client.getQuote({

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, isValidProvider, AnchorError } from "@/lib/anchors";
-import { EtherfuseClient } from "@/lib/anchors/etherfuse";
+import { AnchorError } from "@/lib/anchors";
+import { parseJsonBody, parseParam } from "@/lib/validation/parse";
+import {
+  OffRampSignBodySchema,
+  ProviderSchema,
+} from "@/lib/validation/schemas";
 import { rpc, Horizon, TransactionBuilder } from "@stellar/stellar-sdk";
 
 export const dynamic = "force-dynamic";
@@ -15,23 +19,13 @@ export async function POST(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
-        { status: 400 }
-      );
-    }
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
 
-    const body = await request.json();
-    const { signedXdr, transactionId } = body;
-
-    if (!signedXdr) {
-      return NextResponse.json(
-        { error: "signedXdr is required" },
-        { status: 400 }
-      );
-    }
+    const parsed = await parseJsonBody(request, OffRampSignBodySchema);
+    if ("error" in parsed) return parsed.error;
+    const { signedXdr, transactionId } = parsed.data;
 
     const rpcUrl =
       process.env.NEXT_PUBLIC_STELLAR_RPC_URL ||
@@ -43,12 +37,10 @@ export async function POST(
       process.env.NEXT_PUBLIC_STELLAR_HORIZON_URL ||
       "https://horizon-testnet.stellar.org";
 
-    // Submit the signed XDR directly to Stellar network
     const sorobanServer = new rpc.Server(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
 
     try {
-      // Try Soroban RPC first
       const tx = TransactionBuilder.fromXDR(signedXdr, networkPassphrase);
       const response = await sorobanServer.sendTransaction(
         tx as Parameters<typeof sorobanServer.sendTransaction>[0]
@@ -60,7 +52,6 @@ export async function POST(
         transactionId,
       });
     } catch {
-      // Fall back to Horizon for classic transactions
       try {
         const response = await horizonServer.submitTransaction(
           TransactionBuilder.fromXDR(

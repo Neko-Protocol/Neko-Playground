@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, isValidProvider, AnchorError } from "@/lib/anchors";
+import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { parseJsonBody, parseParam, parseQuery } from "@/lib/validation/parse";
+import {
+  CustomerIdQuerySchema,
+  FiatAccountBodySchema,
+  ProviderSchema,
+} from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -8,23 +14,14 @@ export async function POST(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
-        { status: 400 }
-      );
-    }
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
+    const provider = providerResult.data;
 
-    const body = await request.json();
-    const { customerId, publicKey, bankName, clabe, beneficiary } = body;
-
-    if (!customerId || !clabe || !beneficiary) {
-      return NextResponse.json(
-        { error: "customerId, clabe, and beneficiary are required" },
-        { status: 400 }
-      );
-    }
+    const parsed = await parseJsonBody(request, FiatAccountBodySchema);
+    if ("error" in parsed) return parsed.error;
+    const { customerId, publicKey, bankName, clabe, beneficiary } = parsed.data;
 
     const client = getAnchorClient(provider);
     const result = await client.registerFiatAccount({
@@ -61,23 +58,15 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
-        { status: 400 }
-      );
-    }
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
+    const provider = providerResult.data;
 
     const { searchParams } = new URL(request.url);
-    const customerId = searchParams.get("customerId");
-
-    if (!customerId) {
-      return NextResponse.json(
-        { error: "customerId query parameter is required" },
-        { status: 400 }
-      );
-    }
+    const queryResult = parseQuery(searchParams, CustomerIdQuerySchema);
+    if ("error" in queryResult) return queryResult.error;
+    const { customerId } = queryResult.data;
 
     const client = getAnchorClient(provider);
     const accounts = await client.getFiatAccounts(customerId);

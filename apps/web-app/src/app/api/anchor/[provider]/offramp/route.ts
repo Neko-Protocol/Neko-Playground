@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, isValidProvider, AnchorError } from "@/lib/anchors";
+import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { parseJsonBody, parseParam, parseQuery } from "@/lib/validation/parse";
+import {
+  OffRampBodySchema,
+  ProviderSchema,
+  TransactionIdQuerySchema,
+} from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -8,15 +14,13 @@ export async function POST(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
-        { status: 400 }
-      );
-    }
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
+    const provider = providerResult.data;
 
-    const body = await request.json();
+    const parsed = await parseJsonBody(request, OffRampBodySchema);
+    if ("error" in parsed) return parsed.error;
     const {
       customerId,
       quoteId,
@@ -27,31 +31,7 @@ export async function POST(
       fiatAccountId: existingFiatAccountId,
       bankAccount,
       memo,
-    } = body;
-
-    if (
-      !customerId ||
-      !quoteId ||
-      !stellarAddress ||
-      !fromCurrency ||
-      !toCurrency ||
-      !amount
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "customerId, quoteId, stellarAddress, fromCurrency, toCurrency, and amount are required",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!existingFiatAccountId && !bankAccount) {
-      return NextResponse.json(
-        { error: "Either fiatAccountId or bankAccount is required" },
-        { status: 400 }
-      );
-    }
+    } = parsed.data;
 
     const client = getAnchorClient(provider);
     let fiatAccountId: string;
@@ -59,13 +39,7 @@ export async function POST(
     if (existingFiatAccountId) {
       fiatAccountId = existingFiatAccountId;
     } else {
-      const { bankName, clabe, beneficiary } = bankAccount;
-      if (!clabe || !beneficiary) {
-        return NextResponse.json(
-          { error: "bankAccount must include clabe and beneficiary" },
-          { status: 400 }
-        );
-      }
+      const { bankName, clabe, beneficiary } = bankAccount!;
       const fiatAccount = await client.registerFiatAccount({
         customerId,
         account: {
@@ -112,23 +86,15 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
-        { status: 400 }
-      );
-    }
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
+    const provider = providerResult.data;
 
     const { searchParams } = new URL(request.url);
-    const transactionId = searchParams.get("transactionId");
-
-    if (!transactionId) {
-      return NextResponse.json(
-        { error: "transactionId query parameter is required" },
-        { status: 400 }
-      );
-    }
+    const queryResult = parseQuery(searchParams, TransactionIdQuerySchema);
+    if ("error" in queryResult) return queryResult.error;
+    const { transactionId } = queryResult.data;
 
     const client = getAnchorClient(provider);
     const transaction = await client.getOffRampTransaction(transactionId);

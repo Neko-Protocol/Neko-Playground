@@ -13,6 +13,8 @@ import {
   buildMintRequestsScVal,
   FAUCET_COOLDOWN_MS,
 } from "@/lib/constants/faucet";
+import { parseJsonBody } from "@/lib/validation/parse";
+import { FaucetBodySchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -152,15 +154,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { address } = body as { address?: string };
-
-    if (!address || typeof address !== "string") {
-      return NextResponse.json(
-        { error: "Missing or invalid address" },
-        { status: 400 }
-      );
-    }
+    const parsed = await parseJsonBody(request, FaucetBodySchema);
+    if ("error" in parsed) return parsed.error;
+    const { address } = parsed.data;
 
     if (!checkRateLimit(address)) {
       const remaining = Math.ceil(
