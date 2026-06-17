@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, isValidProvider, AnchorError } from "@/lib/anchors";
+import { getAnchorClient, AnchorError } from "@/lib/anchors";
 import { AlfredPayClient } from "@/lib/anchors/alfredpay";
-import type { AlfredPayKycFileType } from "@/lib/anchors/alfredpay/types";
+import {
+  parseJsonBody,
+  parseParam,
+  parseQuery,
+  zodErrorResponse,
+} from "@/lib/validation/parse";
+import {
+  KycFileUploadSchema,
+  KycGetQuerySchema,
+  KycPostTypeSchema,
+  KycSubmitFormFieldsSchema,
+  KycSubmitJsonBodySchema,
+  ProviderSchema,
+} from "@/lib/validation/schemas";
+import { ZodError } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -10,19 +24,21 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
-        { status: 400 }
-      );
-    }
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
+    const provider = providerResult.data;
 
     const { searchParams } = new URL(request.url);
-    const customerId = searchParams.get("customerId") || undefined;
-    const type = searchParams.get("type") || "status";
-    const country = searchParams.get("country") || "MX";
-    const publicKey = searchParams.get("publicKey") || undefined;
+    const queryResult = parseQuery(searchParams, KycGetQuerySchema);
+    if ("error" in queryResult) return queryResult.error;
+    const {
+      customerId,
+      type = "status",
+      country = "MX",
+      publicKey,
+      bankAccountId,
+    } = queryResult.data;
 
     const client = getAnchorClient(provider);
 
@@ -44,15 +60,8 @@ export async function GET(
           { status: 501 }
         );
       }
-      if (!customerId) {
-        return NextResponse.json(
-          { error: "customerId query parameter is required" },
-          { status: 400 }
-        );
-      }
-      const bankAccountId = searchParams.get("bankAccountId") || undefined;
       const kycUrl = await client.getKycUrl(
-        customerId,
+        customerId!,
         publicKey,
         bankAccountId
       );
@@ -60,24 +69,11 @@ export async function GET(
     }
 
     if (type === "submission" && client instanceof AlfredPayClient) {
-      if (!customerId) {
-        return NextResponse.json(
-          { error: "customerId query parameter is required" },
-          { status: 400 }
-        );
-      }
-      const submission = await client.getKycSubmission(customerId);
+      const submission = await client.getKycSubmission(customerId!);
       return NextResponse.json({ submission });
     }
 
-    // Default: return status
-    if (!customerId) {
-      return NextResponse.json(
-        { error: "customerId query parameter is required" },
-        { status: 400 }
-      );
-    }
-    const status = await client.getKycStatus(customerId, publicKey);
+    const status = await client.getKycStatus(customerId!, publicKey);
     return NextResponse.json({ status });
   } catch (error) {
     if (error instanceof AnchorError) {
@@ -101,16 +97,22 @@ export async function POST(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
+    const provider = providerResult.data;
+
+    const { searchParams } = new URL(request.url);
+    const typeParam = searchParams.get("type");
+    const typeResult = parseParam(typeParam ?? "", KycPostTypeSchema);
+    if ("error" in typeResult) {
       return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
+        { error: 'type query parameter must be "submit-kyc" or "file"' },
         { status: 400 }
       );
     }
+    const type = typeResult.data;
 
-    const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type");
     const client = getAnchorClient(provider);
 
     if (type === "submit-kyc") {
@@ -125,11 +127,32 @@ export async function POST(
 
       if (contentType.includes("multipart/form-data")) {
         const formData = await request.formData();
-        const customerId = formData.get("customerId") as string;
-        const fields = JSON.parse(formData.get("fields") as string);
-        const metadata = formData.has("metadata")
-          ? JSON.parse(formData.get("metadata") as string)
-          : undefined;
+
+        let fields: Record<string, string>;
+        let metadata: Record<string, string> | undefined;
+        try {
+          fields = JSON.parse(formData.get("fields") as string);
+          metadata = formData.has("metadata")
+            ? JSON.parse(formData.get("metadata") as string)
+            : undefined;
+        } catch {
+          return NextResponse.json(
+            {
+              error: "Invalid request",
+              issues: [{ message: "Invalid JSON in form fields" }],
+            },
+            { status: 400 }
+          );
+        }
+
+        const formParsed = KycSubmitFormFieldsSchema.safeParse({
+          customerId: formData.get("customerId"),
+          fields,
+          metadata,
+        });
+        if (!formParsed.success) {
+          return zodErrorResponse(formParsed.error);
+        }
 
         const documents: Record<string, File | string> = {};
         for (const [key, value] of formData.entries()) {
@@ -138,37 +161,48 @@ export async function POST(
           }
         }
 
-        const result = await client.submitKyc(customerId, {
-          fields,
+        const result = await client.submitKyc(formParsed.data.customerId, {
+          fields: formParsed.data.fields,
           documents,
-          metadata,
+          metadata: formParsed.data.metadata,
         });
         return NextResponse.json(result);
-      } else {
-        const body = await request.json();
-        const { customerId, data } = body;
-        const result = await client.submitKyc(customerId, data);
-        return NextResponse.json(result);
       }
+
+      const parsed = await parseJsonBody(request, KycSubmitJsonBodySchema);
+      if ("error" in parsed) return parsed.error;
+      const { customerId, data } = parsed.data;
+      const result = await client.submitKyc(customerId, {
+        fields: data.fields,
+        documents: data.documents ?? {},
+        metadata: data.metadata,
+      });
+      return NextResponse.json(result);
     }
 
-    // AlfredPay-specific: file upload
     if (type === "file" && client instanceof AlfredPayClient) {
       const formData = await request.formData();
-      const customerId = formData.get("customerId") as string;
-      const submissionId = formData.get("submissionId") as string;
-      const fileType = formData.get("fileType") as AlfredPayKycFileType;
-      const file = formData.get("file") as File;
+      const file = formData.get("file");
 
-      if (!customerId || !submissionId || !fileType || !file) {
+      const fileParsed = KycFileUploadSchema.safeParse({
+        customerId: formData.get("customerId"),
+        submissionId: formData.get("submissionId"),
+        fileType: formData.get("fileType"),
+      });
+      if (!fileParsed.success) {
+        return zodErrorResponse(fileParsed.error);
+      }
+      if (!(file instanceof File)) {
         return NextResponse.json(
           {
-            error: "customerId, submissionId, fileType, and file are required",
+            error: "Invalid request",
+            issues: [{ message: "file is required", path: ["file"] }],
           },
           { status: 400 }
         );
       }
 
+      const { customerId, submissionId, fileType } = fileParsed.data;
       const result = await client.submitKycFile(
         customerId,
         submissionId,
@@ -184,6 +218,9 @@ export async function POST(
       { status: 400 }
     );
   } catch (error) {
+    if (error instanceof ZodError) {
+      return zodErrorResponse(error);
+    }
     if (error instanceof AnchorError) {
       return NextResponse.json(
         { error: error.message, code: error.code },

@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, isValidProvider, AnchorError } from "@/lib/anchors";
+import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { parseJsonBody, parseParam, parseQuery } from "@/lib/validation/parse";
+import {
+  CreateCustomerBodySchema,
+  GetCustomerQuerySchema,
+  ProviderSchema,
+} from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -8,16 +14,14 @@ export async function POST(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
-        { status: 400 }
-      );
-    }
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
+    const provider = providerResult.data;
 
-    const body = await request.json();
-    const { email, country = "MX", publicKey } = body;
+    const parsed = await parseJsonBody(request, CreateCustomerBodySchema);
+    if ("error" in parsed) return parsed.error;
+    const { email, country = "MX", publicKey } = parsed.data;
 
     const client = getAnchorClient(provider);
     const customer = await client.createCustomer({ email, country, publicKey });
@@ -45,25 +49,15 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
-        { status: 400 }
-      );
-    }
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
+    const provider = providerResult.data;
 
     const { searchParams } = new URL(request.url);
-    const email = searchParams.get("email");
-    const customerId = searchParams.get("customerId");
-    const country = searchParams.get("country") || "MX";
-
-    if (!email && !customerId) {
-      return NextResponse.json(
-        { error: "email or customerId query parameter is required" },
-        { status: 400 }
-      );
-    }
+    const queryResult = parseQuery(searchParams, GetCustomerQuerySchema);
+    if ("error" in queryResult) return queryResult.error;
+    const { email, customerId, country = "MX" } = queryResult.data;
 
     const client = getAnchorClient(provider);
     const customer = await client.getCustomer({

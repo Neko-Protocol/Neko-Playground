@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, isValidProvider, AnchorError } from "@/lib/anchors";
+import { getAnchorClient, AnchorError } from "@/lib/anchors";
 import { EtherfuseClient } from "@/lib/anchors/etherfuse";
 import { AlfredPayClient } from "@/lib/anchors/alfredpay";
+import { parseJsonBody, parseParam } from "@/lib/validation/parse";
+import { ProviderSchema, SandboxBodySchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -21,27 +23,18 @@ export async function POST(
   }
 
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
-        { status: 400 }
-      );
-    }
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
+    const provider = providerResult.data;
 
-    const body = await request.json();
-    const { action } = body;
-
-    if (!action) {
-      return NextResponse.json(
-        { error: "action is required" },
-        { status: 400 }
-      );
-    }
+    const parsed = await parseJsonBody(request, SandboxBodySchema);
+    if ("error" in parsed) return parsed.error;
+    const body = parsed.data;
 
     const client = getAnchorClient(provider);
 
-    switch (action) {
+    switch (body.action) {
       case "simulateFiatReceived": {
         if (!(client instanceof EtherfuseClient)) {
           return NextResponse.json(
@@ -49,14 +42,7 @@ export async function POST(
             { status: 400 }
           );
         }
-        const { orderId } = body;
-        if (!orderId) {
-          return NextResponse.json(
-            { error: "orderId is required for simulateFiatReceived" },
-            { status: 400 }
-          );
-        }
-        const statusCode = await client.simulateFiatReceived(orderId);
+        const statusCode = await client.simulateFiatReceived(body.orderId);
         return NextResponse.json({ success: statusCode === 200, statusCode });
       }
 
@@ -67,25 +53,12 @@ export async function POST(
             { status: 400 }
           );
         }
-        const { submissionId } = body;
-        if (!submissionId) {
-          return NextResponse.json(
-            { error: "submissionId is required for completeKyc" },
-            { status: 400 }
-          );
-        }
-        await client.completeKycSandbox(submissionId);
+        await client.completeKycSandbox(body.submissionId);
         return NextResponse.json({
           success: true,
           message: "KYC marked as completed",
         });
       }
-
-      default:
-        return NextResponse.json(
-          { error: `Unknown action: ${action}` },
-          { status: 400 }
-        );
     }
   } catch (error) {
     if (error instanceof AnchorError) {

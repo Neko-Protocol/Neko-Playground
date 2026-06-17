@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, isValidProvider, AnchorError } from "@/lib/anchors";
+import { getAnchorClient, AnchorError } from "@/lib/anchors";
 import { EtherfuseClient } from "@/lib/anchors/etherfuse";
+import { parseParam, parseQuery } from "@/lib/validation/parse";
+import { AssetsQuerySchema, ProviderSchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -13,22 +15,15 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = await params;
-    if (!isValidProvider(provider)) {
-      return NextResponse.json(
-        { error: `Invalid provider: ${provider}` },
-        { status: 400 }
-      );
-    }
+    const { provider: providerParam } = await params;
+    const providerResult = parseParam(providerParam, ProviderSchema);
+    if ("error" in providerResult) return providerResult.error;
+    const provider = providerResult.data;
 
     const { searchParams } = new URL(request.url);
-    const wallet = searchParams.get("wallet");
-    if (!wallet) {
-      return NextResponse.json(
-        { error: "wallet query parameter is required" },
-        { status: 400 }
-      );
-    }
+    const queryResult = parseQuery(searchParams, AssetsQuerySchema);
+    if ("error" in queryResult) return queryResult.error;
+    const { wallet } = queryResult.data;
 
     const client = getAnchorClient(provider);
     if (!(client instanceof EtherfuseClient)) {
