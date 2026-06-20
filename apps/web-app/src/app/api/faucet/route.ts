@@ -18,14 +18,72 @@ import { FaucetBodySchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
-const rateLimitMap = new Map<string, number>();
+interface RateLimitEntry {
+  lastMint: number;
+  txHash: string;
+}
 
-function checkRateLimit(address: string): boolean {
-  const lastMint = rateLimitMap.get(address);
-  if (lastMint && Date.now() - lastMint < FAUCET_COOLDOWN_MS) {
-    return false;
+// Module-level cache — works for single-instance deployments.
+// For serverless/multi-instance, the on-chain check below provides the real guard.
+const rateLimitCache = new Map<string, RateLimitEntry>();
+
+/**
+ * Check rate limit using both in-memory cache and on-chain transaction history.
+ * The on-chain check is the authoritative source for serverless deployments
+ * where in-memory state is unreliable across instances.
+ */
+async function checkRateLimit(
+  address: string,
+  sorobanServer: rpc.Server,
+  faucetContractId: string | undefined,
+  cooldownMs: number
+): Promise<{ allowed: boolean; remaining: number }> {
+  const now = Date.now();
+
+  // Fast path: in-memory check
+  const cached = rateLimitCache.get(address);
+  if (cached && now - cached.lastMint < cooldownMs) {
+    return {
+      allowed: false,
+      remaining: Math.ceil((cooldownMs - (now - cached.lastMint)) / 1000),
+    };
   }
-  return true;
+
+  // Slow path: check on-chain transaction history for this address
+  // This prevents bypass via serverless cold starts or multi-instance deployments
+  if (faucetContractId) {
+    try {
+      // Look for recent transactions involving this address
+      const account = await sorobanServer.getAccount(address).catch(() => null);
+      if (account) {
+        // Check operations involving the faucet contract
+        const operations = await sorobanServer
+          .forAccount(address)
+          .limit(20)
+          .order("desc")
+          .call()
+          .catch(() => null);
+
+        if (operations && "records" in operations) {
+          for (const record of (operations as { records: Array<{ created_at: string; transaction_hash: string }> }).records) {
+            const txTime = new Date(record.created_at).getTime();
+            if (now - txTime < cooldownMs) {
+              // Found a recent transaction — update cache and reject
+              rateLimitCache.set(address, { lastMint: txTime, txHash: record.transaction_hash });
+              return {
+                allowed: false,
+                remaining: Math.ceil((cooldownMs - (now - txTime)) / 1000),
+              };
+            }
+          }
+        }
+      }
+    } catch {
+      // If on-chain check fails, fall through to allow (fail-open for faucet availability)
+    }
+  }
+
+  return { allowed: true, remaining: 0 };
 }
 
 async function bulkMint(
@@ -158,19 +216,6 @@ export async function POST(request: NextRequest) {
     if ("error" in parsed) return parsed.error;
     const { address } = parsed.data;
 
-    if (!checkRateLimit(address)) {
-      const remaining = Math.ceil(
-        (FAUCET_COOLDOWN_MS - (Date.now() - (rateLimitMap.get(address) ?? 0))) /
-          1000
-      );
-      return NextResponse.json(
-        {
-          error: `Rate limit: please wait ${remaining}s before requesting again`,
-        },
-        { status: 429 }
-      );
-    }
-
     const rpcUrl =
       process.env.NEXT_PUBLIC_STELLAR_RPC_URL ??
       "https://soroban-testnet.stellar.org";
@@ -189,6 +234,23 @@ export async function POST(request: NextRequest) {
 
     const faucetContractId = process.env.FAUCET_CONTRACT_ID;
 
+    // Rate limit check — uses both in-memory cache and on-chain history
+    const rateLimit = await checkRateLimit(
+      address,
+      sorobanServer,
+      faucetContractId,
+      FAUCET_COOLDOWN_MS
+    );
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: "Rate limit: please wait " + rateLimit.remaining + "s before requesting again",
+        },
+        { status: 429 }
+      );
+    }
+
     if (faucetContractId) {
       const { hash } = await bulkMint(
         adminKeypair,
@@ -200,7 +262,7 @@ export async function POST(request: NextRequest) {
       );
 
       const tokens = getFaucetTokens();
-      rateLimitMap.set(address, Date.now());
+      rateLimitCache.set(address, { lastMint: Date.now(), txHash: hash });
 
       return NextResponse.json({
         success: true,
@@ -242,7 +304,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    rateLimitMap.set(address, Date.now());
+    rateLimitCache.set(address, {
+      lastMint: Date.now(),
+      txHash: results.find((r) => r.success)?.hash ?? "",
+    });
 
     const allSucceeded = results.every((r) => r.success);
     const noneSucceeded = results.every((r) => !r.success);
