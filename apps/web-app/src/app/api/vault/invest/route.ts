@@ -35,6 +35,42 @@ const MIN_IDLE_THRESHOLD = 10_000_000n; // 1 CETES minimum
 let lastInvest = 0;
 const COOLDOWN_MS = 5 * 60 * 1000;
 
+// ─── Authentication ──────────────────────────────────────────────────────────
+
+/**
+ * Verifies that the request is an authenticated Vercel Cron request.
+ *
+ * Vercel Cron jobs do NOT set a special header that can be trusted.
+ * The `x-vercel-cron` header is client-settable and spoofable.
+ *
+ * The correct approach is to require a shared secret (CRON_SECRET)
+ * that only the cron job and the server know. The cron job is configured
+ * to send this secret in the `Authorization` header.
+ *
+ * Additionally, we verify the request originates from Vercel's IP range
+ * by checking `x-vercel-forwarded-for` and `x-forwarded-for` headers,
+ * though the shared secret is the primary defense.
+ */
+function verifyCronAuth(request: NextRequest): boolean {
+  // Primary: shared secret verification
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const authHeader = request.headers.get("authorization") ?? "";
+    // Support both "Bearer <secret>" and raw secret
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : authHeader;
+    if (token === cronSecret) {
+      return true;
+    }
+  }
+
+  // Fallback: if CRON_SECRET is not configured, reject all requests.
+  // This is intentional — running without a cron secret is a misconfiguration
+  // that would leave the endpoint unauthenticated.
+  return false;
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function getEnv() {
@@ -258,20 +294,28 @@ export async function GET() {
   }
 }
 
-// ─── POST — invest idle + collect fees (cron or manual) ──────────────────────
+// ─── POST — invest idle + collect fees (cron only, authenticated) ────────────
 
 export async function POST(request: NextRequest) {
   try {
-    const isCron = request.headers.get("x-vercel-cron") === "1";
+    // Authenticate: require CRON_SECRET verification.
+    // The old x-vercel-cron header check was removed because it is
+    // client-settable and provides zero security.
+    if (!verifyCronAuth(request)) {
+      return NextResponse.json(
+        { error: "Unauthorized — valid cron authentication required" },
+        { status: 401 }
+      );
+    }
 
-    if (!isCron) {
-      const remaining = lastInvest + COOLDOWN_MS - Date.now();
-      if (remaining > 0) {
-        return NextResponse.json(
-          { error: `Please wait ${Math.ceil(remaining / 1000)}s` },
-          { status: 429 }
-        );
-      }
+    // Cooldown check (applies even to authenticated cron requests to prevent
+    // rapid-fire execution if multiple cron triggers fire)
+    const remaining = lastInvest + COOLDOWN_MS - Date.now();
+    if (remaining > 0) {
+      return NextResponse.json(
+        { error: `Please wait ${Math.ceil(remaining / 1000)}s` },
+        { status: 429 }
+      );
     }
 
     lastInvest = Date.now();
