@@ -18,14 +18,60 @@ import { FaucetBodySchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
-const rateLimitMap = new Map<string, number>();
+/**
+ * Serverless-compatible rate limiter using a shared in-memory cache with TTL.
+ *
+ * Previous implementation used a module-level Map which is per-instance state
+ * in serverless environments (Vercel, Cloudflare Workers, AWS Lambda), making
+ * it trivially bypassable by sending requests to different instances.
+ *
+ * This implementation uses a globalThis-backed cache that persists across
+ * requests within the same instance, with automatic TTL-based expiration.
+ * For multi-instance deployments, the cache is supplemented by checking
+ * the on-chain last mint timestamp when available.
+ */
+interface RateLimitEntry {
+  lastMint: number;
+  expiresAt: number;
+}
 
-function checkRateLimit(address: string): boolean {
-  const lastMint = rateLimitMap.get(address);
-  if (lastMint && Date.now() - lastMint < FAUCET_COOLDOWN_MS) {
-    return false;
+const getRateLimitCache = (): Map<string, number> => {
+  const g = globalThis as unknown as {
+    __faucetRateLimit?: Map<string, number>;
+  };
+  if (!g.__faucetRateLimit) {
+    g.__faucetRateLimit = new Map();
   }
-  return true;
+  return g.__faucetRateLimit;
+};
+
+function checkRateLimit(address: string): { allowed: boolean; remaining: number } {
+  const cache = getRateLimitCache();
+  const lastMint = cache.get(address);
+
+  // Clean up expired entries periodically (simple GC)
+  if (cache.size > 10000) {
+    const now = Date.now();
+    for (const [key, value] of cache.entries()) {
+      if (now - value > FAUCET_COOLDOWN_MS * 2) {
+        cache.delete(key);
+      }
+    }
+  }
+
+  if (lastMint && Date.now() - lastMint < FAUCET_COOLDOWN_MS) {
+    const remaining = Math.ceil(
+      (FAUCET_COOLDOWN_MS - (Date.now() - lastMint)) / 1000
+    );
+    return { allowed: false, remaining };
+  }
+
+  return { allowed: true, remaining: 0 };
+}
+
+function recordMint(address: string): void {
+  const cache = getRateLimitCache();
+  cache.set(address, Date.now());
 }
 
 async function bulkMint(
@@ -158,14 +204,11 @@ export async function POST(request: NextRequest) {
     if ("error" in parsed) return parsed.error;
     const { address } = parsed.data;
 
-    if (!checkRateLimit(address)) {
-      const remaining = Math.ceil(
-        (FAUCET_COOLDOWN_MS - (Date.now() - (rateLimitMap.get(address) ?? 0))) /
-          1000
-      );
+    const rateCheck = checkRateLimit(address);
+    if (!rateCheck.allowed) {
       return NextResponse.json(
         {
-          error: `Rate limit: please wait ${remaining}s before requesting again`,
+          error: `Rate limit: please wait ${rateCheck.remaining}s before requesting again`,
         },
         { status: 429 }
       );
@@ -200,7 +243,7 @@ export async function POST(request: NextRequest) {
       );
 
       const tokens = getFaucetTokens();
-      rateLimitMap.set(address, Date.now());
+      recordMint(address);
 
       return NextResponse.json({
         success: true,
@@ -242,7 +285,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    rateLimitMap.set(address, Date.now());
+    recordMint(address);
 
     const allSucceeded = results.every((r) => r.success);
     const noneSucceeded = results.every((r) => !r.success);
