@@ -268,10 +268,11 @@ export function useLend() {
         );
         closeModal();
       } catch (err) {
-        const msg = extractContractErrorOrNull(err);
-        showError(
-          typeof msg === "string" ? msg : "An unexpected error occurred."
-        );
+        throw err;
+        // const msg = extractContractErrorOrNull(err);
+        // showError(
+        //   typeof msg === "string" ? msg : "An unexpected error occurred."
+        // );
       } finally {
         setIsLoading(false);
       }
@@ -286,7 +287,7 @@ export function useLend() {
       loadBTokenBalance,
       refetchPools,
       closeModal,
-      showError,
+      // showError,
       showSuccess,
     ]
   );
