@@ -1,5 +1,8 @@
 export const DEBOUNCE_MS = 50;
 
+/** Fee buffer (in XLM) reserved for transaction fees when computing Max spendable XLM */
+export const XLM_FEE_BUFFER = 0.01;
+
 export const QUOTE_REFRESH_INTERVAL_MS = 5000;
 
 export const DEFAULT_SLIPPAGE_BPS = 500;
