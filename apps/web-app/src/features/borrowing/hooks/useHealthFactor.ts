@@ -4,19 +4,11 @@ import { useQueries } from "@tanstack/react-query";
 import { networks } from "@neko/lending";
 import { lendingService } from "@/lib/services/lending.service";
 
-export function getHealthFactorColor(hf: number | null): string {
-  if (hf === null) return "text-white/40";
-  if (hf >= 1.5) return "text-green-400";
-  if (hf >= 1.0) return "text-yellow-400";
-  return "text-red-400";
-}
-
-export function getHealthFactorLabel(hf: number | null): string {
-  if (hf === null) return "No Position";
-  if (hf >= 1.5) return "Safe";
-  if (hf >= 1.0) return "Caution";
-  return "At Risk";
-}
+// Re-export from the single source of truth so existing consumers keep working.
+export {
+  getHealthFactorColor,
+  getHealthFactorLabel,
+} from "../const/riskThresholds";
 
 const POOLS = [
   {

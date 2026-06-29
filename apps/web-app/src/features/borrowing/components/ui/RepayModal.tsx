@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react";
 import { X, AlertTriangle } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { usePositionSimulation } from "../../hooks/usePositionSimulation";
+import { PositionPreviewPanel } from "./PositionPreviewPanel";
 import type { BorrowPosition } from "../../hooks/useUserBorrowPositions";
 
 const SCALAR_12 = 1_000_000_000_000n;
@@ -23,6 +25,10 @@ interface RepayModalProps {
   isBalanceLoading: boolean;
   isProcessing: boolean;
   isWalletConnected: boolean;
+  /** Collateral factor percentage for the pool (e.g. 75). */
+  collateralFactorPct?: number;
+  /** Current on-chain health factor for comparison display. */
+  currentHealthFactor?: number | null;
   onClose: () => void;
   onSubmit: (dTokens: bigint) => Promise<void>;
 }
@@ -33,6 +39,8 @@ export function RepayModal({
   isBalanceLoading,
   isProcessing,
   isWalletConnected,
+  collateralFactorPct = 75,
+  currentHealthFactor = null,
   onClose,
   onSubmit,
 }: RepayModalProps) {
@@ -79,6 +87,22 @@ export function RepayModal({
   const exceedsDebt =
     !isMaxRepay && amountSmallest > position.debtRaw && position.debtRaw > 0n;
 
+  // ─── Position simulation ─────────────────────────────────────────────
+  const repayNum = parseFloat(repayAmount) || 0;
+  const currentCollateralNum =
+    Number(position.collateralRaw) / Number(STELLAR_DIVISOR);
+  const currentDebtNum = Number(position.debtRaw) / Number(STELLAR_DIVISOR);
+
+  const simulation = usePositionSimulation({
+    collateralFactorPct,
+    action: { type: "repay", repayAmount: repayNum },
+    currentCollateral: currentCollateralNum,
+    currentDebt: currentDebtNum,
+    currentHealthFactor,
+    enabled: isWalletConnected && repayNum > 0,
+  });
+
+  // Repay remains submittable even if simulation warns — reducing risk is always safe.
   const canSubmit = isWalletConnected && dTokensToRepay > 0n && !exceedsBalance;
 
   const handleMax = () => {
@@ -106,7 +130,7 @@ export function RepayModal({
   return (
     <ModalPortal>
       <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate__animated animate__fadeIn animate__faster">
-        <div className="bg-[#1C1C1C] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-4 sm:p-5 animate__animated animate__fadeInUp animate__faster">
+        <div className="bg-[#1C1C1C] border border-white/10 rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl p-4 sm:p-5 animate__animated animate__fadeInUp animate__faster">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-white text-lg font-bold">
               Repay {position.assetCode}
@@ -162,7 +186,7 @@ export function RepayModal({
           )}
 
           {/* Amount input */}
-          <div className="mb-4">
+          <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
               <label className="text-white/60 text-xs font-medium">
                 Repay Amount ({position.assetCode})
@@ -197,7 +221,7 @@ export function RepayModal({
 
           {/* Estimated cost */}
           {dTokensToRepay > 0n && (
-            <div className="mb-4 rounded-xl bg-white/5 border border-white/5 px-3 py-2">
+            <div className="mb-3 rounded-xl bg-white/5 border border-white/5 px-3 py-2">
               <p className="text-white/40 text-xs">
                 Estimated cost:{" "}
                 <span className="text-white font-medium tabular-nums">
@@ -205,6 +229,16 @@ export function RepayModal({
                 </span>
               </p>
             </div>
+          )}
+
+          {/* Position Preview */}
+          {isWalletConnected && repayNum > 0 && (
+            <PositionPreviewPanel
+              simulation={simulation}
+              currentHealthFactor={currentHealthFactor}
+              collateralTokenCode={position.collateralTokenCode}
+              debtTokenCode={position.assetCode}
+            />
           )}
 
           <div className="flex gap-2">

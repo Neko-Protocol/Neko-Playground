@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import { X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { calculateBorrowLimit } from "../../utils/borrowUtils";
+import { usePositionSimulation } from "../../hooks/usePositionSimulation";
+import { PositionPreviewPanel } from "./PositionPreviewPanel";
 import type { BorrowTableAsset } from "../../types/borrowing";
 
 interface BorrowModalProps {
@@ -37,11 +39,27 @@ export function BorrowModal({
 
   const borrowLimitExceeded =
     borrowAmount !== "" && parseFloat(borrowAmount) > borrowLimit;
+
+  // ─── Position simulation ─────────────────────────────────────────────
+  const collateralNum = parseFloat(collateralAmount) || 0;
+  const borrowNum = parseFloat(borrowAmount) || 0;
+
+  const simulation = usePositionSimulation({
+    collateralFactorPct: asset.collateralFactor,
+    action: {
+      type: "borrow",
+      collateralAmount: collateralNum,
+      borrowAmount: borrowNum,
+    },
+    enabled: isWalletConnected && (collateralNum > 0 || borrowNum > 0),
+  });
+
   const canSubmit =
     isWalletConnected &&
     parseFloat(collateralAmount) > 0 &&
     parseFloat(borrowAmount) > 0 &&
-    !borrowLimitExceeded;
+    !borrowLimitExceeded &&
+    simulation.canSubmit;
 
   const handleSubmit = async () => {
     await onSubmit(collateralAmount, borrowAmount);
@@ -96,7 +114,7 @@ export function BorrowModal({
             </p>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-3">
             <label className="text-white/60 text-xs font-medium block mb-1">
               Borrow Amount ({asset.assetCode})
             </label>
@@ -114,6 +132,15 @@ export function BorrowModal({
               </p>
             )}
           </div>
+
+          {/* Position Preview */}
+          {isWalletConnected && (collateralNum > 0 || borrowNum > 0) && (
+            <PositionPreviewPanel
+              simulation={simulation}
+              collateralTokenCode={asset.collateralTokenCode}
+              debtTokenCode={asset.assetCode}
+            />
+          )}
 
           <div className="flex gap-2">
             <button
