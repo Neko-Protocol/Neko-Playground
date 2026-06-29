@@ -3,7 +3,8 @@
 import {
   getHealthFactorColor,
   getHealthFactorLabel,
-} from "../../hooks/useHealthFactor";
+  getHealthFactorBadgeClasses,
+} from "../../const/riskThresholds";
 
 interface HealthFactorBadgeProps {
   healthFactor: number | null;
@@ -25,22 +26,7 @@ export function HealthFactorBadge({
 
   const color = getHealthFactorColor(healthFactor);
   const label = getHealthFactorLabel(healthFactor);
-
-  let bgBorder = "bg-white/5 border-white/10";
-  let dotColor = "bg-white/20";
-
-  if (healthFactor !== null) {
-    if (healthFactor >= 1.5) {
-      bgBorder = "bg-green-500/10 border-green-500/20";
-      dotColor = "bg-green-400";
-    } else if (healthFactor >= 1.0) {
-      bgBorder = "bg-yellow-500/10 border-yellow-500/20";
-      dotColor = "bg-yellow-400";
-    } else {
-      bgBorder = "bg-red-500/10 border-red-500/20";
-      dotColor = "bg-red-400";
-    }
-  }
+  const { bgBorder, dotColor } = getHealthFactorBadgeClasses(healthFactor);
 
   return (
     <div
