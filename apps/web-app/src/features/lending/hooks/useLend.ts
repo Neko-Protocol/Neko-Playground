@@ -229,7 +229,7 @@ export function useLend() {
             lendingContractId
           );
 
-          const signedDeposit = await signTransaction(depositXdr as any, {
+          const signedDeposit = await signTransaction(depositXdr, {
             networkPassphrase: passphrase,
             address,
           });
@@ -249,7 +249,7 @@ export function useLend() {
             lendingContractId
           );
 
-          const signedWithdraw = await signTransaction(withdrawXdr as any, {
+          const signedWithdraw = await signTransaction(withdrawXdr, {
             networkPassphrase: passphrase,
             address,
           });

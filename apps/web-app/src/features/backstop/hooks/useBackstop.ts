@@ -109,7 +109,7 @@ export function useBackstop(contractId: string) {
         });
 
         const depositXdr = await depositToBackstop(amount, address, contractId);
-        const signedDeposit = await signTransaction(depositXdr as any, {
+        const signedDeposit = await signTransaction(depositXdr, {
           networkPassphrase: passphrase,
           address,
         });
@@ -155,7 +155,7 @@ export function useBackstop(contractId: string) {
           address,
           contractId
         );
-        const signed = await signTransaction(xdr as any, {
+        const signed = await signTransaction(xdr, {
           networkPassphrase: passphrase,
           address,
         });
@@ -199,7 +199,7 @@ export function useBackstop(contractId: string) {
         });
 
         const xdr = await withdrawFromBackstop(amount, address, contractId);
-        const signed = await signTransaction(xdr as any, {
+        const signed = await signTransaction(xdr, {
           networkPassphrase: passphrase,
           address,
         });

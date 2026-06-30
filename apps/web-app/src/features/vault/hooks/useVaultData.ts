@@ -24,17 +24,15 @@ function formatTvl(stroops: bigint): string {
 /** Safely extracts the value from a stellar SDK Result<T> or a raw value. */
 function unwrapResult<T>(result: unknown, fallback: T): T {
   if (result === null || result === undefined) return fallback;
-  // Ok/Err objects from @stellar/stellar-sdk/contract
-  if (typeof (result as any).unwrap === "function") {
+  const obj = result as Record<string, unknown>;
+  if (typeof obj.unwrap === "function") {
     try {
-      return (result as any).unwrap() as T;
+      return (obj.unwrap as () => T)();
     } catch {
       return fallback;
     }
   }
-  // Some SDK versions expose .value directly on Ok
-  if ((result as any).tag === "ok") return (result as any).value as T;
-  // Already a raw value (e.g. i128 methods)
+  if (obj.tag === "ok") return obj.value as T;
   return result as T;
 }
 
