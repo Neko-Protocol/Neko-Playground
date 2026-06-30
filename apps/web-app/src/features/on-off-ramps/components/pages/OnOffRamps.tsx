@@ -286,6 +286,13 @@ const OnOffRamps: React.FC = () => {
           disabled={isLoadingTx || isPollingTx}
         />
 
+        <div
+          id={isOnRamp ? "on-ramp-panel" : "off-ramp-panel"}
+          role="tabpanel"
+          aria-labelledby={isOnRamp ? "on-ramp-tab" : "off-ramp-tab"}
+          tabIndex={0}
+          className="flex flex-col gap-4"
+        >
         {/* KYC Banner */}
         {address && customerId && (
           <KycBanner
@@ -423,6 +430,13 @@ const OnOffRamps: React.FC = () => {
             </button>
           </>
         )}
+        </div>
+        <div
+          id={isOnRamp ? "off-ramp-panel" : "on-ramp-panel"}
+          role="tabpanel"
+          aria-labelledby={isOnRamp ? "off-ramp-tab" : "on-ramp-tab"}
+          hidden
+        />
       </div>
     </PageContainer>
   );

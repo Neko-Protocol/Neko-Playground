@@ -65,14 +65,44 @@ const Vault: React.FC = () => {
       </div>
 
       {activeTab === "vaults" ? (
-        <VaultGrid
-          vaults={vaults}
-          isLoading={isLoading}
-          onDetailsClick={setSelectedVault}
-          onDepositClick={openDepositModal}
-        />
+        <>
+          <div
+            id="vaults-panel"
+            role="tabpanel"
+            aria-labelledby="vaults-tab"
+            tabIndex={0}
+          >
+            <VaultGrid
+              vaults={vaults}
+              isLoading={isLoading}
+              onDetailsClick={setSelectedVault}
+              onDepositClick={openDepositModal}
+            />
+          </div>
+          <div
+            id="vault-positions-panel"
+            role="tabpanel"
+            aria-labelledby="vault-positions-tab"
+            hidden
+          />
+        </>
       ) : (
-        <MyVaultPositions />
+        <>
+          <div
+            id="vaults-panel"
+            role="tabpanel"
+            aria-labelledby="vaults-tab"
+            hidden
+          />
+          <div
+            id="vault-positions-panel"
+            role="tabpanel"
+            aria-labelledby="vault-positions-tab"
+            tabIndex={0}
+          >
+            <MyVaultPositions />
+          </div>
+        </>
       )}
 
       {selectedVault && (
