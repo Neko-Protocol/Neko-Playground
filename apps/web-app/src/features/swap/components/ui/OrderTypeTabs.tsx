@@ -24,9 +24,12 @@ export const OrderTypeTabs: React.FC<OrderTypeTabsProps> = ({
         Swap
       </button>
       <button
-        disabled
-        className="px-5 py-2.5 text-base font-semibold rounded-lg text-gray-600 cursor-not-allowed opacity-40"
-        title="Coming soon"
+        onClick={() => onOrderTypeChange("limit")}
+        className={`px-5 py-2.5 text-base font-semibold rounded-lg transition-colors ${
+          orderType === "limit"
+            ? "text-white bg-[#229EDF]"
+            : "text-gray-400 hover:text-gray-300"
+        }`}
       >
         Limit
       </button>

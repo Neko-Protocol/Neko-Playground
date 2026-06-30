@@ -1,14 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { X, AlertTriangle } from "lucide-react";
+import { X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { usePositionSimulation } from "../../hooks/usePositionSimulation";
+import { PositionPreviewPanel } from "./PositionPreviewPanel";
 import type { BorrowPosition } from "../../hooks/useUserBorrowPositions";
+
+const STELLAR_DIVISOR = 10_000_000n;
 
 interface RemoveCollateralModalProps {
   position: BorrowPosition;
   isProcessing: boolean;
   isWalletConnected: boolean;
+  /** Collateral factor percentage for the pool (e.g. 75). */
+  collateralFactorPct?: number;
+  /** Current on-chain health factor for comparison display. */
+  currentHealthFactor?: number | null;
   onClose: () => void;
   onSubmit: (amount: string) => Promise<void>;
 }
@@ -17,6 +25,8 @@ export function RemoveCollateralModal({
   position,
   isProcessing,
   isWalletConnected,
+  collateralFactorPct = 75,
+  currentHealthFactor = null,
   onClose,
   onSubmit,
 }: RemoveCollateralModalProps) {
@@ -31,7 +41,23 @@ export function RemoveCollateralModal({
     Number.isFinite(amountNum) &&
     amountNum > parseFloat(position.collateralFormatted);
 
-  const canSubmit = isWalletConnected && isValidAmount && !isProcessing;
+  // ─── Position simulation ─────────────────────────────────────────────
+  const removeNum = parseFloat(amount) || 0;
+  const currentCollateralNum =
+    Number(position.collateralRaw) / Number(STELLAR_DIVISOR);
+  const currentDebtNum = Number(position.debtRaw) / Number(STELLAR_DIVISOR);
+
+  const simulation = usePositionSimulation({
+    collateralFactorPct,
+    action: { type: "remove-collateral", removeAmount: removeNum },
+    currentCollateral: currentCollateralNum,
+    currentDebt: currentDebtNum,
+    currentHealthFactor,
+    enabled: isWalletConnected && removeNum > 0,
+  });
+
+  const canSubmit =
+    isWalletConnected && isValidAmount && !isProcessing && simulation.canSubmit;
 
   const handleMax = () => {
     setAmount(position.collateralFormatted);
@@ -46,7 +72,7 @@ export function RemoveCollateralModal({
   return (
     <ModalPortal>
       <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate__animated animate__fadeIn animate__faster">
-        <div className="bg-[#1C1C1C] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-4 sm:p-5 animate__animated animate__fadeInUp animate__faster">
+        <div className="bg-[#1C1C1C] border border-white/10 rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl p-4 sm:p-5 animate__animated animate__fadeInUp animate__faster">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-white text-lg font-bold">
               Remove {position.collateralTokenCode} Collateral
@@ -70,18 +96,8 @@ export function RemoveCollateralModal({
             </p>
           </div>
 
-          {/* Health factor warning */}
-          <div className="mb-3 flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
-            <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-            <p className="text-amber-400/90 text-xs leading-relaxed">
-              Removing too much collateral may lower your health factor and
-              increase liquidation risk. The contract will reject the
-              transaction if it would drop below the minimum.
-            </p>
-          </div>
-
           {/* Amount input */}
-          <div className="mb-4">
+          <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
               <label className="text-white/60 text-xs font-medium">
                 Amount to Remove ({position.collateralTokenCode})
@@ -108,6 +124,16 @@ export function RemoveCollateralModal({
               </p>
             )}
           </div>
+
+          {/* Position Preview — replaces the old static warning */}
+          {isWalletConnected && removeNum > 0 && (
+            <PositionPreviewPanel
+              simulation={simulation}
+              currentHealthFactor={currentHealthFactor}
+              collateralTokenCode={position.collateralTokenCode}
+              debtTokenCode={position.assetCode}
+            />
+          )}
 
           <div className="flex gap-2">
             <button
