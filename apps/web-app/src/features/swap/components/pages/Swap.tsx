@@ -14,6 +14,7 @@ import {
 } from "@/lib/helpers/stellar/soroswap";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { formatSwapAmount } from "@/lib/helpers/tokenUtils";
+import { getSpendableXlmAmount } from "../../utils/xlmSpendable";
 import { AmountInput } from "@/components/AmountInput";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
@@ -187,6 +188,21 @@ const Swap: React.FC = () => {
 
   const { balance: tokenInBalance, isLoading: isLoadingBalance } =
     useTokenBalance(tokenIn as Token | string | undefined);
+
+  const tokens = getTokens();
+  const tokenInAddress = getTokenAddress(
+    tokenIn as Parameters<typeof getTokenAddress>[0]
+  );
+  const isTokenInXlm =
+    tokenInAddress === tokens.XLM ||
+    (typeof tokenIn !== "string" &&
+      (tokenIn as { type?: string })?.type === "native");
+
+  // For XLM: further subtract a fee buffer from the reserve-adjusted balance.
+  // For other tokens: the full balance is spendable.
+  const spendableBalance = isTokenInXlm
+    ? getSpendableXlmAmount(tokenInBalance)
+    : tokenInBalance;
 
   const {
     amountOut: quoteAmountOut,
@@ -375,7 +391,7 @@ const Swap: React.FC = () => {
         const tokenOutAddress = getTokenAddress(
           tokenOut as Parameters<typeof getTokenAddress>[0]
         );
-        const tokenInAddress = getTokenAddress(
+        const tokenInAddressForInvalidation = getTokenAddress(
           tokenIn as Parameters<typeof getTokenAddress>[0]
         );
 
@@ -388,7 +404,7 @@ const Swap: React.FC = () => {
           queryKey: ["tokenBalance", tokenOutAddress, address],
         });
         void queryClient.invalidateQueries({
-          queryKey: ["tokenBalance", tokenInAddress, address],
+          queryKey: ["tokenBalance", tokenInAddressForInvalidation, address],
         });
         // Also invalidate Horizon-sourced balances used by useWallet
         void queryClient.invalidateQueries({
@@ -427,8 +443,8 @@ const Swap: React.FC = () => {
   };
 
   const handleMaxClick = () => {
-    if (tokenInBalance && parseFloat(tokenInBalance) > 0) {
-      handleAmountChange(tokenInBalance);
+    if (spendableBalance && parseFloat(spendableBalance) > 0) {
+      handleAmountChange(spendableBalance);
     }
   };
 
@@ -436,8 +452,8 @@ const Swap: React.FC = () => {
 
   const isInsufficientBalance =
     !!amountIn &&
-    !!tokenInBalance &&
-    parseFloat(amountIn) > parseFloat(tokenInBalance);
+    !!spendableBalance &&
+    parseFloat(amountIn) > parseFloat(spendableBalance);
 
   return (
     <PageContainer maxWidth="4xl">
@@ -467,17 +483,25 @@ const Swap: React.FC = () => {
       {orderType === "swap" && (
         <>
           {}
-          <div className="relative">
-            <div className="grid grid-cols-2 gap-4">
-              {}
-              <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
-                <span className="text-white/50 text-sm font-medium">From</span>
+          <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
+            <span className="text-white/50 text-sm font-medium">From</span>
 
-                <TokenSelectorBtn
-                  token={tokenIn}
-                  getTokenId={getTokenId}
-                  getTokenIconUrl={getTokenIconUrl}
-                  onClick={() => openTokenSelector("from")}
+            <TokenSelectorBtn
+              token={tokenIn}
+              getTokenId={getTokenId}
+              getTokenIconUrl={getTokenIconUrl}
+              onClick={() => openTokenSelector("from")}
+              disabled={!address || isLoading}
+            />
+
+            <div>
+              <span className="text-white/50 text-sm font-semibold block mb-2">
+                Amount
+              </span>
+              <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center">
+                <AmountInput
+                  value={amountIn}
+                  onChange={handleAmountChange}
                   disabled={!address || isLoading}
                 />
 
@@ -503,10 +527,21 @@ const Swap: React.FC = () => {
                   onMaxClick={handleMaxClick}
                 />
               </div>
+              {isInsufficientBalance && (
+                <p className="text-red-400 text-xs mt-1.5">
+                  Insufficient balance
+                </p>
+              )}
+            </div>
 
-              {}
-              <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
-                <span className="text-white/50 text-sm font-medium">To</span>
+            <BalanceCard
+              balance={spendableBalance}
+              usdValue={usdValue}
+              isLoadingBalance={isLoadingBalance}
+              isLoadingPrice={isLoadingPrice}
+              onMaxClick={handleMaxClick}
+            />
+          </div>
 
                 <TokenSelectorBtn
                   token={tokenOut}
