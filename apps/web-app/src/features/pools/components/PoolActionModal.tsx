@@ -71,6 +71,17 @@ export function PoolActionModal({
     e.preventDefault();
     if (!address) return;
 
+    // Safety check for pool state
+    if (pool.state === "frozen") return;
+    if (
+      pool.state === "on_ice" &&
+      !["withdraw", "repay", "withdrawCollateral", "claimRewards"].includes(
+        action
+      )
+    ) {
+      return;
+    }
+
     const onSuccess = async () => {
       setAmount("");
       await Promise.all([

@@ -25,6 +25,7 @@ export function poolsToTableAssets(pools: BorrowPool[]): BorrowTableAsset[] {
       collateralFactorDisplay: `${pool.collateralFactor}%`,
       liquidity,
       isActive: pool.isActive,
+      state: pool.state,
       assetCode: pool.assetCode,
       collateralTokenCode: pool.collateralTokenCode,
       collateralFactor: pool.collateralFactor,

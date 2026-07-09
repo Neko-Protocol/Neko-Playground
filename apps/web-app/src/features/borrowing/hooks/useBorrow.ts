@@ -72,6 +72,7 @@ export function useBorrow() {
           collateralFactorDisplay: "Aggregated",
           liquidity,
           isActive: p.state === "active",
+          state: p.state,
           assetCode: token?.code ?? "?",
           collateralTokenCode: "",
           collateralFactor: 0,

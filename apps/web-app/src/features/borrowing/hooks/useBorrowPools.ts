@@ -39,7 +39,15 @@ async function fetchPoolPools(
     return [];
   }
 
-  if (poolState?.tag !== "Active") return [];
+  const stateTag = (poolState?.tag as string) || "Active";
+  const state: import("@/lib/orchestrator/types/pool.types").PoolState =
+    stateTag === "Active"
+      ? "active"
+      : stateTag === "OnIce"
+        ? "on_ice"
+        : stateTag === "Frozen"
+          ? "frozen"
+          : "unknown";
 
   const pools: BorrowPool[] = [];
 
@@ -107,7 +115,8 @@ async function fetchPoolPools(
           interestRate,
           poolBalance,
           poolBalanceUSD: "Calculating...",
-          isActive: true,
+          isActive: state === "active",
+          state,
           contractId,
         });
       } catch {

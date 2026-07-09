@@ -1,3 +1,5 @@
+import type { PoolState } from "@/lib/orchestrator/types/pool.types";
+
 export interface PoolCardData {
   id: string;
   token1: string;
@@ -7,6 +9,7 @@ export interface PoolCardData {
   feeApy: string;
   liquidity: string;
   isActive: boolean;
+  state: PoolState;
   type: string;
 }
 

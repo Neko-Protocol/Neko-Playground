@@ -87,19 +87,30 @@ export function LendTable({
                   </td>
                   {!hideActions && (
                     <td className="px-4 py-4 align-middle text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => onDeposit(pool)}
-                          className="rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-1.5 text-white/70 hover:text-white text-xs font-semibold transition-colors"
-                        >
-                          Deposit
-                        </button>
-                        <button
-                          onClick={() => onWithdraw(pool)}
-                          className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors"
-                        >
-                          Withdraw
-                        </button>
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => onDeposit(pool)}
+                            disabled={pool.state !== "active"}
+                            className="rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-1.5 text-white/70 hover:text-white text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Deposit
+                          </button>
+                          <button
+                            onClick={() => onWithdraw(pool)}
+                            disabled={pool.state === "frozen"}
+                            className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Withdraw
+                          </button>
+                        </div>
+                        {pool.state !== "active" && (
+                          <span className={`text-[10px] font-bold uppercase tracking-tighter ${
+                            pool.state === 'on_ice' ? 'text-orange-500' : 'text-red-500'
+                          }`}>
+                            {pool.state === 'on_ice' ? 'On Ice' : pool.state}
+                          </span>
+                        )}
                       </div>
                     </td>
                   )}
@@ -154,19 +165,32 @@ export function LendTable({
                 </div>
 
                 {!hideActions && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => onDeposit(pool)}
-                      className="flex-1 rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-2 text-white/70 hover:text-white text-sm font-semibold transition-colors"
-                    >
-                      Deposit
-                    </button>
-                    <button
-                      onClick={() => onWithdraw(pool)}
-                      className="flex-1 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-2 text-white text-sm font-semibold transition-colors"
-                    >
-                      Withdraw
-                    </button>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onDeposit(pool)}
+                        disabled={pool.state !== "active"}
+                        className="flex-1 rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-2 text-white/70 hover:text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Deposit
+                      </button>
+                      <button
+                        onClick={() => onWithdraw(pool)}
+                        disabled={pool.state === "frozen"}
+                        className="flex-1 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-2 text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Withdraw
+                      </button>
+                    </div>
+                    {pool.state !== "active" && (
+                      <div className="text-center">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                          pool.state === 'on_ice' ? 'text-orange-500' : 'text-red-500'
+                        }`}>
+                          Pool is {pool.state === 'on_ice' ? 'On Ice' : pool.state}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </li>
