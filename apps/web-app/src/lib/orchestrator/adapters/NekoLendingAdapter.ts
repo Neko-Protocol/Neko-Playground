@@ -141,9 +141,11 @@ export class NekoLendingAdapter implements BasePoolAdapter {
         state:
           stateTag === "Active"
             ? "active"
-            : stateTag === "Frozen"
-              ? "frozen"
-              : "unknown",
+            : stateTag === "OnIce"
+              ? "on_ice"
+              : stateTag === "Frozen"
+                ? "frozen"
+                : "unknown",
         supportedActions: SUPPORTED_ACTIONS,
         metadata: {
           contractId,

@@ -1,3 +1,5 @@
+import type { PoolState } from "@/lib/orchestrator/types/pool.types";
+
 export interface BorrowPool {
   asset: string;
   assetCode: string;
@@ -8,6 +10,7 @@ export interface BorrowPool {
   poolBalance: string;
   poolBalanceUSD: string;
   isActive: boolean;
+  state: PoolState;
   contractId: string;
 }
 
@@ -22,6 +25,7 @@ export interface BorrowTableAsset {
   collateralFactorDisplay: string;
   liquidity: string;
   isActive: boolean;
+  state: PoolState;
   assetCode: string;
   collateralTokenCode: string;
   collateralFactor: number;

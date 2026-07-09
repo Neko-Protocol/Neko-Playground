@@ -139,11 +139,26 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
                 {typeLabel}
               </div>
             </div>
-            <div
-              className={`shrink-0 w-3 h-3 rounded-full ${
-                pool.state === "active" ? "bg-[#229EDF]" : "bg-gray-400"
-              } animate-pulse`}
-            />
+            <div className="flex items-center gap-2">
+              {pool.state === "active" && (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#229EDF]/10 border border-[#229EDF]/20">
+                  <div className="w-2 h-2 rounded-full bg-[#229EDF] animate-pulse" />
+                  <span className="text-[#229EDF] text-xs font-bold uppercase tracking-wider">Active</span>
+                </div>
+              )}
+              {pool.state === "on_ice" && (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20">
+                  <div className="w-2 h-2 rounded-full bg-orange-500" />
+                  <span className="text-orange-500 text-xs font-bold uppercase tracking-wider">On Ice</span>
+                </div>
+              )}
+              {pool.state === "frozen" && (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20">
+                  <div className="w-2 h-2 rounded-full bg-red-500" />
+                  <span className="text-red-500 text-xs font-bold uppercase tracking-wider">Frozen</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -159,8 +174,12 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           </div>
           <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
             <p className="text-white/40 text-xs mb-1">Status</p>
-            <p className="text-white text-lg font-bold capitalize">
-              {pool.state}
+            <p className={`text-lg font-bold capitalize ${
+              pool.state === 'active' ? 'text-[#229EDF]' : 
+              pool.state === 'on_ice' ? 'text-orange-500' : 
+              pool.state === 'frozen' ? 'text-red-500' : 'text-white'
+            }`}>
+              {pool.state === 'on_ice' ? 'On Ice' : pool.state}
             </p>
           </div>
           <div className="bg-[#2A2A2A] rounded-xl p-4 border border-white/10">
@@ -221,8 +240,9 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         <div className="relative z-10 flex flex-wrap gap-3">
           {(pool.type === "blend" || pool.type === "neko") && (
             <button
-              className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors"
+              className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#229EDF]"
               onClick={() => setActionModal("deposit")}
+              disabled={pool.state !== "active"}
             >
               Lend
             </button>
@@ -231,56 +251,63 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
             pool.type !== "blend" &&
             pool.type !== "neko" && (
               <button
-                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
+                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setActionModal("deposit")}
+                disabled={pool.state !== "active"}
               >
                 Deposit
               </button>
             )}
           {supportedActions.includes("withdraw") && (
             <button
-              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
+              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => setActionModal("withdraw")}
+              disabled={pool.state === "frozen"}
             >
               Withdraw
             </button>
           )}
           {supportedActions.includes("borrow") && (
             <button
-              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
+              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => setActionModal("borrow")}
+              disabled={pool.state !== "active"}
             >
               Borrow
             </button>
           )}
           {supportedActions.includes("repay") && (
             <button
-              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
+              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => setActionModal("repay")}
+              disabled={pool.state === "frozen"}
             >
               Repay
             </button>
           )}
           {supportedActions.includes("supplyCollateral") && (
             <button
-              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
+              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => setActionModal("supplyCollateral")}
+              disabled={pool.state !== "active"}
             >
               Supply Collateral
             </button>
           )}
           {supportedActions.includes("withdrawCollateral") && (
             <button
-              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20"
+              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => setActionModal("withdrawCollateral")}
+              disabled={pool.state === "frozen"}
             >
               Withdraw Collateral
             </button>
           )}
           {supportedActions.includes("claimRewards") && (
             <button
-              className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors"
+              className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => setActionModal("claimRewards")}
+              disabled={pool.state === "frozen"}
             >
               Claim Rewards
             </button>

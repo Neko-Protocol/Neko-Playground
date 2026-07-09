@@ -71,6 +71,7 @@ export function usePoolsData() {
           feeApy: apy,
           liquidity,
           isActive: pool.state === "active",
+          state: pool.state,
           type: pool.type,
         };
       });
