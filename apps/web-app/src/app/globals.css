@@ -35,6 +35,32 @@ body {
   overflow-y: auto;
 }
 
+@media (max-width: 1023px) {
+  .mobile-app-header {
+    padding-top: 1rem;
+  }
+
+  .mobile-app-menu {
+    top: 4.25rem;
+  }
+
+  .mobile-app-main {
+    padding-top: 4rem;
+  }
+
+  body[data-standalone="true"] .mobile-app-header {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  body[data-standalone="true"] .mobile-app-menu {
+    top: calc(env(safe-area-inset-top) + 3.5rem);
+  }
+
+  body[data-standalone="true"] .mobile-app-main {
+    padding-top: max(4rem, calc(env(safe-area-inset-top) + 3rem));
+  }
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
