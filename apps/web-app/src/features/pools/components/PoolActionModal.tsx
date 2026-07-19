@@ -91,7 +91,7 @@ export function PoolActionModal({
     if (needsAmount) {
       const num = parseFloat(amount);
       if (isNaN(num) || num <= 0) return;
-      const amountBigInt = BigInt(toSmallestUnit(amount, decimals));
+      const amountBigInt = toSmallestUnit(amount, decimals);
       mutate.mutate(
         { poolId, action, amount: amountBigInt, tokenIndex: 0 },
         { onSuccess }
