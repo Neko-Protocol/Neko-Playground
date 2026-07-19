@@ -98,10 +98,13 @@ export function useVaultAction() {
           ...(allowHttpForSoroban && { allowHttp: true }),
         });
 
-        const amountBigInt = BigInt(toSmallestUnit(amount, 7));
+        const amountBigInt = toSmallestUnit(amount, 7);
+        // SLIPPAGE is a decimal fraction (0.01 = 1%). Scale it string-safely (7 decimals)
+        // so there is no float multiplication.
+        const SLIPPAGE_SCALE = 10_000_000n;
+        const slippageScaled = toSmallestUnit(String(SLIPPAGE), 7); // 0.01 -> 100000n
         const minAmount =
-          amountBigInt -
-          (amountBigInt * BigInt(Math.floor(SLIPPAGE * 100))) / 100n;
+          amountBigInt - (amountBigInt * slippageScaled) / SLIPPAGE_SCALE;
 
         // Simulate — the resulting XDR already includes Soroban auth entries
         const depositTx = await client.deposit({
@@ -158,7 +161,7 @@ export function useVaultAction() {
           ...(allowHttpForSoroban && { allowHttp: true }),
         });
 
-        const sharesBigInt = BigInt(toSmallestUnit(shares, 7));
+        const sharesBigInt = toSmallestUnit(shares, 7);
 
         const withdrawTx = await client.withdraw({
           withdraw_shares: sharesBigInt,
