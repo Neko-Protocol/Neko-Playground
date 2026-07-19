@@ -11,12 +11,12 @@ import {
 } from "@stellar/stellar-sdk";
 import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
 import { getCurrentNetwork, getAvailableTokens } from "./tokens";
+import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import {
   getApiKey,
   getSDKNetwork,
   getSoroswapSDK,
   makeAPIRequest,
-  toSmallestUnit,
   isValidContractAddress,
   formatTokenForAPI,
 } from "./utils";

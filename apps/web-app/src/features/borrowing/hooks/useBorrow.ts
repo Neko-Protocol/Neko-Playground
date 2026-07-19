@@ -6,7 +6,7 @@ import { useBorrowExecution } from "./useBorrowExecution";
 import { poolsToTableAssets } from "../utils/borrowUtils";
 import { usePools, usePoolAction } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit, toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { BorrowTableAsset } from "../types/borrowing";
 
@@ -104,10 +104,7 @@ export function useBorrow() {
       if (!selectedAsset) return;
 
       if (selectedAsset.isAggregated && selectedAsset.orchestratorId) {
-        const decimals = 7;
-        const rawAmount = BigInt(
-          Math.floor(parseFloat(borrowAmount) * 10 ** decimals)
-        );
+        const rawAmount = toSmallestUnit(borrowAmount, 7);
         await executePoolAction({
           poolId: selectedAsset.orchestratorId,
           action: "borrow",

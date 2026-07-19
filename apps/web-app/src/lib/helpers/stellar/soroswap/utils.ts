@@ -111,18 +111,6 @@ export const makeAPIRequest = async <T>(
   }
 };
 
-export const toSmallestUnit = (
-  amount: string,
-  decimals: number = 7
-): bigint => {
-  const numAmount = parseFloat(amount);
-  if (isNaN(numAmount)) return BigInt(0);
-
-  const multiplier = BigInt(10 ** decimals);
-  const amountFloat = numAmount * Number(multiplier);
-  return BigInt(Math.floor(amountFloat));
-};
-
 export const isValidContractAddress = (address: string): boolean => {
   return address.startsWith("C") && address.length === 56;
 };

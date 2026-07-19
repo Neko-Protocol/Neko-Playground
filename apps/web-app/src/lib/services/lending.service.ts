@@ -88,7 +88,7 @@ export class LendingService {
       const lendingContract = new Contract(networks.testnet.contractId);
 
       // Convert amount to smallest unit (i128)
-      const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
+      const amountInSmallestUnit = toSmallestUnit(amount, decimals);
 
       // Convert assetCode to Symbol (ScVal)
       const assetSymbol = xdr.ScVal.scvSymbol(assetCode);
@@ -158,7 +158,7 @@ export class LendingService {
       const lendingContract = new Contract(networks.testnet.contractId);
 
       // Convert bTokens to smallest unit (i128)
-      const bTokensInSmallestUnit = BigInt(toSmallestUnit(bTokens, decimals));
+      const bTokensInSmallestUnit = toSmallestUnit(bTokens, decimals);
 
       // Convert assetCode to Symbol (ScVal)
       const assetSymbol = xdr.ScVal.scvSymbol(assetCode);
@@ -228,7 +228,7 @@ export class LendingService {
       const lendingContract = new Contract(networks.testnet.contractId);
 
       // Convert amount to smallest unit (i128)
-      const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
+      const amountInSmallestUnit = toSmallestUnit(amount, decimals);
 
       // Convert assetCode to Symbol (ScVal)
       const assetSymbol = xdr.ScVal.scvSymbol(assetCode);
@@ -355,7 +355,7 @@ export class LendingService {
       const lendingContract = new Contract(networks.testnet.contractId);
 
       // Convert amount to smallest unit (i128)
-      const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
+      const amountInSmallestUnit = toSmallestUnit(amount, decimals);
 
       // Build add_collateral transaction
       const operation = lendingContract.call(

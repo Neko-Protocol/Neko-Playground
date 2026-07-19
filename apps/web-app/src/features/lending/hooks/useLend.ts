@@ -18,7 +18,7 @@ import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors
 import { waitForTransaction } from "@/lib/helpers/stellar/waitForTransaction";
 import { usePools, usePoolAction } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit, toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolData } from "../types/lending";
 
@@ -186,10 +186,7 @@ export function useLend() {
 
       try {
         if (selectedPool.isAggregated && selectedPool.orchestratorId) {
-          const decimals = 7;
-          const rawAmount = BigInt(
-            Math.floor(parseFloat(amount) * 10 ** decimals)
-          );
+          const rawAmount = toSmallestUnit(amount, 7);
 
           await executePoolAction({
             poolId: selectedPool.orchestratorId,

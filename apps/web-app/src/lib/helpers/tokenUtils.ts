@@ -20,16 +20,56 @@ export const formatSwapAmount = (
   return formatter.format(numAmount);
 };
 
+/**
+ * Expands exponential notation (e.g., "1e-7", "1.5e2") to plain decimal string.
+ * Handles both positive and negative exponents, preserving sign.
+ */
+const expandExponential = (s: string): string => {
+  const match = s.match(/^(-?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/);
+  if (!match) return s;
+  const [, sign, intPart, fracPart = "", expStr] = match;
+  const exp = parseInt(expStr, 10);
+  const digits = intPart + fracPart;
+  const pointPos = intPart.length + exp;
+  let result: string;
+  if (pointPos <= 0) {
+    result = "0." + "0".repeat(-pointPos) + digits;
+  } else if (pointPos >= digits.length) {
+    result = digits + "0".repeat(pointPos - digits.length);
+  } else {
+    result = digits.slice(0, pointPos) + "." + digits.slice(pointPos);
+  }
+  return sign + result;
+};
+
+/**
+ * Convert a decimal amount into its smallest on-chain integer unit.
+ *
+ * String/BigInt-safe: parses the decimal string directly with no float
+ * multiplication, so values like "0.41" convert exactly (4100000n, not
+ * 4099999n). Fractional digits beyond `decimals` are truncated (floored).
+ *
+ * For money paths, pass the raw user string rather than a parsed number —
+ * a `number` argument is coerced via toString() and may already carry
+ * float error before it reaches this function.
+ */
 export const toSmallestUnit = (
   amount: string | number,
   decimals: number = 7
-): string => {
-  const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(numAmount)) return "0";
+): bigint => {
+  const str = typeof amount === "number" ? amount.toString() : amount.trim();
+  if (!/^-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(str)) return 0n;
 
-  const multiplier = Math.pow(10, decimals);
-  const result = Math.floor(numAmount * multiplier).toString();
-  return result;
+  const normalized = expandExponential(str);
+  const negative = normalized.startsWith("-");
+  const unsigned = negative ? normalized.slice(1) : normalized;
+  const [whole = "0", frac = ""] = unsigned.split(".");
+
+  const fracTruncated = frac.slice(0, decimals).padEnd(decimals, "0");
+  const digits = `${whole}${fracTruncated}`.replace(/^0+(?=\d)/, "");
+
+  const result = BigInt(digits || "0");
+  return negative ? -result : result;
 };
 
 export const fromSmallestUnit = (

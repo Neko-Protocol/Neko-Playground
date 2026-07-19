@@ -10,15 +10,16 @@ import { POOLS } from "../constants";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { invalidateProtocolQueries } from "@/lib/helpers/invalidateProtocolQueries";
+import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { Networks } from "@stellar/stellar-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import type { InterestRateParams } from "@neko/lending";
 
 const SCALAR_7 = 10_000_000;
 
-/** Convert percentage (e.g. 75) to 7 decimals (7_500_000) */
-function pctTo7(pct: number): number {
-  return Math.round((pct / 100) * SCALAR_7);
+/** Convert a percentage string (e.g. "75") to a 7-decimal scalar (7_500_000). */
+function pctTo7(pctStr: string): number {
+  return Number(toSmallestUnit(pctStr, 7) / 100n);
 }
 
 export default function InterestRateParamsForm() {
@@ -47,18 +48,16 @@ export default function InterestRateParamsForm() {
     if (!address) return;
 
     const params: InterestRateParams = {
-      target_util: pctTo7(parseFloat(targetUtil) || 0),
-      max_util: pctTo7(parseFloat(maxUtil) || 0),
-      r_base: pctTo7(parseFloat(rBase) || 0),
-      r_one: pctTo7(parseFloat(rOne) || 0),
-      r_two: pctTo7(parseFloat(rTwo) || 0),
-      r_three: pctTo7(parseFloat(rThree) || 0),
-      reactivity: Math.round(parseFloat(reactivity) * SCALAR_7) || 0,
+      target_util: pctTo7(targetUtil),
+      max_util: pctTo7(maxUtil),
+      r_base: pctTo7(rBase),
+      r_one: pctTo7(rOne),
+      r_two: pctTo7(rTwo),
+      r_three: pctTo7(rThree),
+      reactivity: Number(toSmallestUnit(reactivity, 7)),
       enabled,
-      l_factor: pctTo7(parseFloat(lFactor) || 0),
-      supply_cap: BigInt(
-        Math.round((parseFloat(supplyCap) || 0) * 10 ** 7)
-      ),
+      l_factor: pctTo7(lFactor),
+      supply_cap: toSmallestUnit(supplyCap, 7),
     };
 
     if (params.target_util > 9_500_000) {
@@ -101,7 +100,11 @@ export default function InterestRateParamsForm() {
         ...TOAST_CONFIG.defaultOpts,
         description: `Interest rate params for ${asset} updated`,
       });
-      void invalidateProtocolQueries(queryClient, ["pools", "rates", "positions"]);
+      void invalidateProtocolQueries(queryClient, [
+        "pools",
+        "rates",
+        "positions",
+      ]);
     } catch (err) {
       const msg = extractContractErrorOrNull(err);
       addNotification("Error", "error", {

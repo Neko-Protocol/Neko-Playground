@@ -12,6 +12,7 @@ import { POOLS, POOL2_COLLATERAL_ASSETS } from "../constants";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { invalidateProtocolQueries } from "@/lib/helpers/invalidateProtocolQueries";
+import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { Networks } from "@stellar/stellar-sdk";
 import type { AssetType } from "@neko/lending";
 
@@ -85,7 +86,7 @@ export default function CollateralFactorForm() {
       });
       return;
     }
-    const factor = Math.round(factorNum * 100_000); // 7 decimals: 75% = 7_500_000
+    const factor = Number(toSmallestUnit(factorPercent, 7) / 100n); // 7 decimals: 75% = 7_500_000
     if (factor > SCALAR_7) {
       addNotification("Error", "error", {
         ...TOAST_CONFIG.defaultOpts,
