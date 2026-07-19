@@ -57,7 +57,7 @@ export default function InterestRateParamsForm() {
       reactivity: Number(toSmallestUnit(reactivity, 7)),
       enabled,
       l_factor: pctTo7(lFactor),
-      supply_cap: BigInt(Number(toSmallestUnit(supplyCap, 7))),
+      supply_cap: toSmallestUnit(supplyCap, 7),
     };
 
     if (params.target_util > 9_500_000) {
