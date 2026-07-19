@@ -36,7 +36,7 @@ export const depositToPool = async (
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
-    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
+    const amountInSmallestUnit = toSmallestUnit(amount, decimals);
 
     const assetSymbol = xdr.ScVal.scvSymbol(assetCode);
 
@@ -105,7 +105,7 @@ export const withdrawFromPool = async (
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
-    const bTokensInSmallestUnit = BigInt(toSmallestUnit(bTokens, decimals));
+    const bTokensInSmallestUnit = toSmallestUnit(bTokens, decimals);
 
     const assetSymbol = xdr.ScVal.scvSymbol(assetCode);
 
@@ -172,7 +172,7 @@ export const addCollateral = async (
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
-    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
+    const amountInSmallestUnit = toSmallestUnit(amount, decimals);
 
     const operation = lendingContract.call(
       "add_collateral",
@@ -237,7 +237,7 @@ export const removeCollateral = async (
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
-    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
+    const amountInSmallestUnit = toSmallestUnit(amount, decimals);
 
     const operation = lendingContract.call(
       "remove_collateral",
@@ -302,7 +302,7 @@ export const borrowFromPool = async (
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
-    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
+    const amountInSmallestUnit = toSmallestUnit(amount, decimals);
 
     const assetSymbol = xdr.ScVal.scvSymbol(assetCode);
 
@@ -666,7 +666,7 @@ export const depositToBackstop = async (
     const horizonServer = new Horizon.Server(horizonUrl);
     const backstopContract = new Contract(backstopContractId);
 
-    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, 7));
+    const amountInSmallestUnit = toSmallestUnit(amount, 7);
 
     const operation = backstopContract.call(
       "deposit",
@@ -728,7 +728,7 @@ export const initiateBackstopWithdrawal = async (
     const horizonServer = new Horizon.Server(horizonUrl);
     const backstopContract = new Contract(backstopContractId);
 
-    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, 7));
+    const amountInSmallestUnit = toSmallestUnit(amount, 7);
 
     const operation = backstopContract.call(
       "queue_withdrawal",
@@ -790,7 +790,7 @@ export const withdrawFromBackstop = async (
     const horizonServer = new Horizon.Server(horizonUrl);
     const backstopContract = new Contract(backstopContractId);
 
-    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, 7));
+    const amountInSmallestUnit = toSmallestUnit(amount, 7);
 
     const operation = backstopContract.call(
       "withdraw",
@@ -1005,7 +1005,7 @@ export const buildFillBadDebtAuctionXdr = async (
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
-    const amountInSmallestUnit = BigInt(toSmallestUnit(amount, decimals));
+    const amountInSmallestUnit = toSmallestUnit(amount, decimals);
 
     const operation = lendingContract.call(
       "fill_bad_debt_auction",
