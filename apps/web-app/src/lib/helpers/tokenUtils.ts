@@ -21,6 +21,28 @@ export const formatSwapAmount = (
 };
 
 /**
+ * Expands exponential notation (e.g., "1e-7", "1.5e2") to plain decimal string.
+ * Handles both positive and negative exponents, preserving sign.
+ */
+const expandExponential = (s: string): string => {
+  const match = s.match(/^(-?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/);
+  if (!match) return s;
+  const [, sign, intPart, fracPart = "", expStr] = match;
+  const exp = parseInt(expStr, 10);
+  const digits = intPart + fracPart;
+  const pointPos = intPart.length + exp;
+  let result: string;
+  if (pointPos <= 0) {
+    result = "0." + "0".repeat(-pointPos) + digits;
+  } else if (pointPos >= digits.length) {
+    result = digits + "0".repeat(pointPos - digits.length);
+  } else {
+    result = digits.slice(0, pointPos) + "." + digits.slice(pointPos);
+  }
+  return sign + result;
+};
+
+/**
  * Convert a decimal amount into its smallest on-chain integer unit.
  *
  * String/BigInt-safe: parses the decimal string directly with no float
@@ -38,8 +60,9 @@ export const toSmallestUnit = (
   const str = typeof amount === "number" ? amount.toString() : amount.trim();
   if (str === "" || isNaN(Number(str))) return 0n;
 
-  const negative = str.startsWith("-");
-  const unsigned = negative ? str.slice(1) : str;
+  const normalized = expandExponential(str);
+  const negative = normalized.startsWith("-");
+  const unsigned = negative ? normalized.slice(1) : normalized;
   const [whole = "0", frac = ""] = unsigned.split(".");
 
   const fracTruncated = frac.slice(0, decimals).padEnd(decimals, "0");

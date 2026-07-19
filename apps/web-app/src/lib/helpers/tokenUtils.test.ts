@@ -48,4 +48,18 @@ describe("toSmallestUnit", () => {
   it("handles a trailing dot and no fraction", () => {
     expect(toSmallestUnit("7.", 7)).toBe(70000000n);
   });
+
+  it("handles number input in exponential notation", () => {
+    expect(toSmallestUnit(0.0000001, 7)).toBe(1n); // (0.0000001).toString() === "1e-7"
+    expect(toSmallestUnit(1e-7, 7)).toBe(1n);
+  });
+
+  it("handles string input in exponential notation", () => {
+    expect(toSmallestUnit("1e-7", 7)).toBe(1n);
+    expect(toSmallestUnit("1.5e2", 7)).toBe(1500000000n); // 150
+  });
+
+  it("does not crash on large-magnitude number input", () => {
+    expect(toSmallestUnit(1e21, 7)).toBe(10000000000000000000000000000n);
+  });
 });
