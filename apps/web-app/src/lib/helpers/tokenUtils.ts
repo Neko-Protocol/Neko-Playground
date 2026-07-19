@@ -58,7 +58,7 @@ export const toSmallestUnit = (
   decimals: number = 7
 ): bigint => {
   const str = typeof amount === "number" ? amount.toString() : amount.trim();
-  if (str === "" || isNaN(Number(str))) return 0n;
+  if (!/^-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(str)) return 0n;
 
   const normalized = expandExponential(str);
   const negative = normalized.startsWith("-");

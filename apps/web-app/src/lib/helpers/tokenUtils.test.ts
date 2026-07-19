@@ -62,4 +62,12 @@ describe("toSmallestUnit", () => {
   it("does not crash on large-magnitude number input", () => {
     expect(toSmallestUnit(1e21, 7)).toBe(10000000000000000000000000000n);
   });
+
+  it("rejects non-decimal strings as 0n (hardening)", () => {
+    expect(toSmallestUnit("0x10", 7)).toBe(0n);
+    expect(toSmallestUnit("Infinity", 7)).toBe(0n);
+    expect(toSmallestUnit("+5", 7)).toBe(0n);
+    expect(toSmallestUnit("-", 7)).toBe(0n);
+    expect(toSmallestUnit(".", 7)).toBe(0n);
+  });
 });
