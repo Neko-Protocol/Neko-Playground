@@ -1,3 +1,4 @@
+import { describe, it, expect } from "vitest";
 import { matchLimitOrder, deriveMarketPrice } from "./limitOrderMatching";
 
 // ─── Buy limit ────────────────────────────────────────────────────────────────
