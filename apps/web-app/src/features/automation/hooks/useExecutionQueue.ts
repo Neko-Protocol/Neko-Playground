@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { RebalancePlan } from "../types/automation";
 import { STRATEGY_QUERY_KEYS } from "../const/automation";
+import { useActivityStore } from "@/stores/activityStore";
 
 async function fetchQueue(strategyId: string): Promise<RebalancePlan[]> {
   const res = await fetch(`/api/automation/execute?strategyId=${strategyId}`);
@@ -40,6 +41,13 @@ export function useConfirmPlan() {
       return res.json() as Promise<RebalancePlan>;
     },
     onSuccess: (_data, { strategyId }) => {
+      useActivityStore.getState().pushEvent({
+        source: "automation",
+        type: "plan-confirmed",
+        timestamp: Date.now(),
+        summary: "Strategy execution plan confirmed",
+        link: "/automation",
+      });
       qc.invalidateQueries({ queryKey: STRATEGY_QUERY_KEYS.queue(strategyId) });
       qc.invalidateQueries({
         queryKey: STRATEGY_QUERY_KEYS.simulate(strategyId),
@@ -66,6 +74,13 @@ export function useCancelPlan() {
       if (!res.ok) throw new Error("Failed to cancel plan");
     },
     onSuccess: (_data, { strategyId }) => {
+      useActivityStore.getState().pushEvent({
+        source: "automation",
+        type: "plan-cancelled",
+        timestamp: Date.now(),
+        summary: "Strategy execution plan cancelled",
+        link: "/automation",
+      });
       qc.invalidateQueries({ queryKey: STRATEGY_QUERY_KEYS.queue(strategyId) });
     },
   });

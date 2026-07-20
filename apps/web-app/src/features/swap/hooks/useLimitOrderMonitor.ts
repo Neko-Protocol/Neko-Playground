@@ -20,6 +20,7 @@ import {
 import type { UseLimitOrdersReturn } from "./useLimitOrders";
 import type { LimitOrder } from "../types/limitOrder";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
+import { useActivityStore } from "@/stores/activityStore";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -135,6 +136,13 @@ export function useLimitOrderMonitor({
       // ── Expiry check ────────────────────────────────────────────────────
       if (order.expiresAt !== null && now >= order.expiresAt) {
         markExpired(order.id);
+        useActivityStore.getState().pushEvent({
+          source: "swap",
+          type: "limit-order-expired",
+          timestamp: Date.now(),
+          summary: `Limit order expired: Sell ${order.amountIn} ${order.tokenInSymbol} for ${order.tokenOutSymbol}`,
+          link: "/swap",
+        });
         continue;
       }
 
@@ -173,6 +181,13 @@ export function useLimitOrderMonitor({
 
         if (confirmations >= LIMIT_ORDER_CONFIRM_POLLS) {
           markReady(order.id);
+          useActivityStore.getState().pushEvent({
+            source: "swap",
+            type: "limit-order-ready",
+            timestamp: Date.now(),
+            summary: `Limit order ready: Sell ${order.amountIn} ${order.tokenInSymbol} for ${order.tokenOutSymbol}`,
+            link: "/swap",
+          });
           onOrderReadyRef.current?.(order);
         }
       } else {
