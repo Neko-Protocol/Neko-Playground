@@ -6,7 +6,14 @@ import {
 } from "@/lib/constants/network";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
-import { depositToPool, withdrawFromPool } from "@/lib/helpers/stellar/lending";
+import {
+  depositToPool,
+  withdrawFromPool,
+  borrowFromPool,
+  repayPool,
+  addCollateral,
+  removeCollateral,
+} from "@/lib/helpers/stellar/lending";
 
 import type { BasePoolAdapter } from "../types/adapter.types";
 import type {
@@ -18,7 +25,35 @@ import type {
 } from "../types/pool.types";
 import { AdapterError, UnsupportedActionError } from "../types/errors";
 
-const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw"];
+const SUPPORTED_ACTIONS: PoolAction[] = [
+  "deposit",
+  "withdraw",
+  "borrow",
+  "repay",
+  "supplyCollateral",
+  "withdrawCollateral",
+];
+
+const D_TOKEN_SCALAR_12 = 1_000_000_000_000n;
+
+/** Collateral is keyed by (pool contract, RWA token), not a single asset code — mirrors Blend's <poolContractId>:<assetAddress> raw-id convention. */
+function parseCollateralRawId(rawId: string): {
+  contractId: string;
+  tokenAddress: string;
+} {
+  const idx = rawId.indexOf(":");
+  if (idx === -1) {
+    throw new AdapterError(
+      "neko",
+      "parseCollateralRawId",
+      `Invalid raw id "${rawId}" — expected <poolContractId>:<rwaTokenAddress>`
+    );
+  }
+  return {
+    contractId: rawId.slice(0, idx),
+    tokenAddress: rawId.slice(idx + 1),
+  };
+}
 
 /** Assets that belong to Pool 1 (RWA collateral → borrow USDC/XLM) */
 const POOL1_ASSETS = new Set(["USDC", "XLM"]);
@@ -270,6 +305,110 @@ export class NekoLendingAdapter implements BasePoolAdapter {
 
   async claimRewards(): Promise<TransactionResult> {
     throw new UnsupportedActionError("neko", "claimRewards");
+  }
+
+  async borrow(
+    poolId: string,
+    userAddress: string,
+    amount: bigint
+  ): Promise<TransactionResult> {
+    const assetCode = poolId;
+    const tokens = getAvailableTokens();
+    const decimals = tokens[assetCode]?.decimals ?? 7;
+    const humanAmount = fromSmallestUnit(amount.toString(), decimals);
+    const contractId = getPoolContractId(assetCode);
+
+    try {
+      const xdr = await borrowFromPool(
+        assetCode,
+        humanAmount,
+        decimals,
+        userAddress,
+        contractId
+      );
+      return { xdr, networkPassphrase };
+    } catch (error) {
+      throw new AdapterError("neko", "borrow", error);
+    }
+  }
+
+  /**
+   * `amount` is underlying-asset units (matching Blend's repay contract), not
+   * dTokens — the on-chain repay() call takes dTokens, so it's derived here
+   * via the pool's own d_token rate rather than the pool-unaware
+   * `getDTokenRate` helper in lending.ts.
+   */
+  async repay(
+    poolId: string,
+    userAddress: string,
+    amount: bigint
+  ): Promise<TransactionResult> {
+    const assetCode = poolId;
+    const contractId = getPoolContractId(assetCode);
+    const client = this.clientFor(assetCode);
+
+    try {
+      const rateTx = await client.get_d_token_rate(
+        { asset: assetCode },
+        { simulate: true }
+      );
+      const dRate = unwrapResult(rateTx.result);
+      if (dRate <= 0n) {
+        throw new Error(`No active debt / d-token rate for ${assetCode}`);
+      }
+      const dTokens = (amount * D_TOKEN_SCALAR_12) / dRate;
+      const xdr = await repayPool(assetCode, dTokens, userAddress, contractId);
+      return { xdr, networkPassphrase };
+    } catch (error) {
+      throw new AdapterError("neko", "repay", error);
+    }
+  }
+
+  /** poolId here is "<poolContractId>:<rwaTokenAddress>" — see parseCollateralRawId. */
+  async supplyCollateral(
+    poolId: string,
+    userAddress: string,
+    amount: bigint
+  ): Promise<TransactionResult> {
+    const { contractId, tokenAddress } = parseCollateralRawId(poolId);
+    const decimals = 7;
+    const humanAmount = fromSmallestUnit(amount.toString(), decimals);
+
+    try {
+      const xdr = await addCollateral(
+        tokenAddress,
+        humanAmount,
+        decimals,
+        userAddress,
+        contractId
+      );
+      return { xdr, networkPassphrase };
+    } catch (error) {
+      throw new AdapterError("neko", "supplyCollateral", error);
+    }
+  }
+
+  async withdrawCollateral(
+    poolId: string,
+    userAddress: string,
+    amount: bigint
+  ): Promise<TransactionResult> {
+    const { contractId, tokenAddress } = parseCollateralRawId(poolId);
+    const decimals = 7;
+    const humanAmount = fromSmallestUnit(amount.toString(), decimals);
+
+    try {
+      const xdr = await removeCollateral(
+        tokenAddress,
+        humanAmount,
+        decimals,
+        userAddress,
+        contractId
+      );
+      return { xdr, networkPassphrase };
+    } catch (error) {
+      throw new AdapterError("neko", "withdrawCollateral", error);
+    }
   }
 
   supportsAction(action: PoolAction): boolean {
