@@ -35,8 +35,12 @@ export function NavChart({ data = EMPTY, isLoading }: NavChartProps) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] p-6 h-80 flex items-center justify-center">
-        <p className="text-white/40 text-sm">No NAV history available</p>
+      <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] p-6 h-80 flex flex-col items-center justify-center gap-1">
+        <p className="text-white/40 text-sm">No NAV history yet</p>
+        <p className="text-white/25 text-xs">
+          A snapshot of your real net worth is recorded once per day — come back
+          tomorrow to start seeing a trend.
+        </p>
       </div>
     );
   }
@@ -46,7 +50,12 @@ export function NavChart({ data = EMPTY, isLoading }: NavChartProps) {
   return (
     <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-semibold text-sm">NAV History</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-white font-semibold text-sm">NAV History</h3>
+          <span className="text-[10px] font-medium uppercase tracking-wide text-[#76C464]/70 bg-[#76C464]/10 px-1.5 py-0.5 rounded">
+            Live
+          </span>
+        </div>
         {maxDrawdown < -0.01 && (
           <span className="text-xs text-red-400 bg-red-400/10 px-2 py-1 rounded-lg">
             Max DD: {maxDrawdown.toFixed(2)}%
@@ -97,7 +106,8 @@ export function NavChart({ data = EMPTY, isLoading }: NavChartProps) {
             formatter={(value: number, name: string) => {
               if (name === "nav")
                 return [
-                  "$" + value.toLocaleString("en-US", { maximumFractionDigits: 2 }),
+                  "$" +
+                    value.toLocaleString("en-US", { maximumFractionDigits: 2 }),
                   "NAV",
                 ];
               return [`${value.toFixed(2)}%`, "Drawdown"];
@@ -114,7 +124,12 @@ export function NavChart({ data = EMPTY, isLoading }: NavChartProps) {
             stroke="#68f9f2"
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4, fill: "#68f9f2", stroke: "#1C1C1C", strokeWidth: 2 }}
+            activeDot={{
+              r: 4,
+              fill: "#68f9f2",
+              stroke: "#1C1C1C",
+              strokeWidth: 2,
+            }}
             name="nav"
           />
           <Area
