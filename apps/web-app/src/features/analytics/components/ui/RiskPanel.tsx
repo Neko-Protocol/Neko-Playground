@@ -56,12 +56,12 @@ export function RiskPanel({ data, isLoading }: RiskPanelProps) {
 
       <MetricRow
         label="Sharpe Ratio"
-        sub="Annualised, rf = 5%"
+        sub="Annualised, rf = 5% · needs 2+ days of history"
         value={formatRatio(data?.sharpe ?? null)}
       />
       <MetricRow
         label="Sortino Ratio"
-        sub="Downside deviation"
+        sub="Downside deviation · needs 2+ days of history"
         value={formatRatio(data?.sortino ?? null)}
       />
       <MetricRow
@@ -95,6 +95,7 @@ export function RiskPanel({ data, isLoading }: RiskPanelProps) {
       />
       <MetricRow
         label="Health Factor"
+        sub="Live · lowest across pools"
         value={
           <span className={getHealthFactorColor(data?.healthFactor ?? null)}>
             {data?.healthFactor != null
