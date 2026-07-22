@@ -5,6 +5,7 @@ import { DollarSign, Coins, TrendingUp } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { usePortfolioValue } from "@/features/dashboard/hooks/usePortfolioValue";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
+import { useUnifiedPositions } from "@/features/dashboard/hooks/useUnifiedPositions";
 import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
 import { StatCard } from "@/features/stocks/components/ui/StatCard";
 
@@ -19,12 +20,13 @@ function formatUsd(value: number): string {
 
 const MainStats: React.FC = () => {
   const { address, isFetchingBalances } = useWallet();
-  const {
-    totalUsd,
-    holdings,
-    isLoading: isLoadingPortfolio,
-  } = usePortfolioValue();
+  const { holdings, isLoading: isLoadingPortfolio } = usePortfolioValue();
   const { assets } = useDashboardPools();
+  const {
+    totalValueUsd,
+    unpricedPositionCount,
+    isLoading: isLoadingUnified,
+  } = useUnifiedPositions();
 
   const avgPoolApy = React.useMemo(() => {
     if (assets.length === 0) return null;
@@ -53,8 +55,24 @@ const MainStats: React.FC = () => {
         <StatCard
           icon={<DollarSign className="h-5 w-5" />}
           label="Total Portfolio Value"
-          value={address ? formatUsd(totalUsd) : "$0.00"}
-          isLoading={isLoading && !!address}
+          value={
+            address ? (
+              <>
+                {formatUsd(totalValueUsd)}
+                {unpricedPositionCount > 0 && (
+                  <span
+                    className="ml-1.5 align-middle text-[10px] font-normal text-white/30"
+                    title="Some positions (e.g. AMM liquidity) don't have a reliable USD price yet and aren't included in this total."
+                  >
+                    +{unpricedPositionCount} unpriced
+                  </span>
+                )}
+              </>
+            ) : (
+              "$0.00"
+            )
+          }
+          isLoading={(isLoading || isLoadingUnified) && !!address}
         />
         <StatCard
           icon={<Coins className="h-5 w-5" />}
