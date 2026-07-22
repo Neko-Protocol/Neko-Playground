@@ -126,19 +126,18 @@ export function AllocationDonut({
   return (
     <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-semibold text-sm">Asset Allocation</h3>
-        {hhi != null && (
-          <span className="text-xs text-white/40">
-            HHI: {hhi.toFixed(0)}
+        <div className="flex items-center gap-2">
+          <h3 className="text-white font-semibold text-sm">Asset Allocation</h3>
+          <span className="text-[10px] font-medium uppercase tracking-wide text-[#76C464]/70 bg-[#76C464]/10 px-1.5 py-0.5 rounded">
+            Live
           </span>
+        </div>
+        {hhi != null && (
+          <span className="text-xs text-white/40">HHI: {hhi.toFixed(0)}</span>
         )}
       </div>
       <div className="relative h-52">
-        <Doughnut
-          data={chartData}
-          options={options}
-          plugins={[centerPlugin]}
-        />
+        <Doughnut data={chartData} options={options} plugins={[centerPlugin]} />
       </div>
     </div>
   );
