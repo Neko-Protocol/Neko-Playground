@@ -7,17 +7,23 @@ interface NavItemProps {
   href: string;
   icon: React.ElementType;
   isActive: boolean;
+  /** Shows a red danger dot on the item (e.g. an open position in breach). */
+  showDot?: boolean;
 }
 
-export function NavItem({ label, href, icon: Icon, isActive }: NavItemProps) {
+export function NavItem({
+  label,
+  href,
+  icon: Icon,
+  isActive,
+  showDot = false,
+}: NavItemProps) {
   return (
     <Link
       href={href}
       className={cn(
         "flex items-center gap-3 px-4 py-3 text-base font-medium transition-colors duration-150",
-        isActive
-          ? "text-white"
-          : "text-white/35 hover:text-white/65"
+        isActive ? "text-white" : "text-white/35 hover:text-white/65"
       )}
       style={
         isActive
@@ -32,6 +38,13 @@ export function NavItem({ label, href, icon: Icon, isActive }: NavItemProps) {
         )}
       />
       {label}
+      {showDot && (
+        <span
+          className="ml-auto h-2 w-2 shrink-0 rounded-full bg-red-500"
+          aria-label="Position at risk"
+          title="A borrow position is currently in breach"
+        />
+      )}
     </Link>
   );
 }

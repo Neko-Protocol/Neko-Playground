@@ -21,6 +21,21 @@ export const HF_WARNING = 1.2;
  */
 export const HF_LIQUIDATION = 1.0;
 
+/**
+ * Hardcoded "danger zone".  An open position at or below this health factor is
+ * always alerted on — even when the user has not configured a threshold.
+ * Used by the borrow-position risk alerting evaluator.
+ */
+export const HF_DANGER_ZONE = 1.1;
+
+/**
+ * Recovery margin used for alert de-duplication.  A breached position is only
+ * re-armed (able to raise a new alert) once its health factor climbs back above
+ * `threshold + HF_ALERT_HYSTERESIS`, preventing spam when the value oscillates
+ * around the boundary.
+ */
+export const HF_ALERT_HYSTERESIS = 0.05;
+
 // ─── Risk-tier type ─────────────────────────────────────────────────────────
 export type RiskTier = "safe" | "caution" | "at-risk" | "unknown";
 

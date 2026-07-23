@@ -9,6 +9,10 @@ import { SidebarLogo } from "./SidebarLogo";
 import { NavItem } from "./NavItem";
 import { ConnectedCard } from "./ConnectedCard";
 import { SetupCard } from "./SetupCard";
+import { useRiskAlertContext } from "@/features/borrowing/context/RiskAlertContext";
+
+/** Nav item whose danger dot reflects an open borrow position in breach. */
+const BORROW_HREF = "/borrowing";
 
 export const SIDEBAR_WIDTH = "270px";
 
@@ -18,6 +22,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { isStellarConnected, stellarAddress } = useWalletType();
   const { disconnect: disconnectStellar } = useStellarWallet();
+  const { hasActiveBreach } = useRiskAlertContext();
 
   const isConnected = isStellarConnected;
   const activeAddress = stellarAddress ?? "";
@@ -54,6 +59,7 @@ export function Sidebar() {
             href={href}
             icon={icon}
             isActive={isActive(href)}
+            showDot={href === BORROW_HREF && hasActiveBreach}
           />
         ))}
       </nav>
