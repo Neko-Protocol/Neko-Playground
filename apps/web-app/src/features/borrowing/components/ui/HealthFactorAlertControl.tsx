@@ -6,6 +6,12 @@ import { useRiskAlertContext } from "../../context/RiskAlertContext";
 
 const DEFAULT_THRESHOLD = "1.3";
 
+// Shared pill shape — mirrors HealthFactorBadge so the Alert cell reads as part
+// of the same visual system as the "Caution" health-factor badge beside it.
+const PILL = "flex items-center gap-2 rounded-lg border px-2.5 py-1.5";
+// Amber treatment, matching the "Caution" health-factor badge.
+const AMBER = "border-yellow-500/20 bg-yellow-500/10 text-yellow-400";
+
 interface HealthFactorAlertControlProps {
   /** Pool contract id this alert threshold applies to. */
   contractId: string;
@@ -13,7 +19,8 @@ interface HealthFactorAlertControlProps {
 
 /**
  * Compact per-position control to set / edit / clear a health-factor alert
- * threshold.  Renders inline in the positions table.
+ * threshold.  Renders inline in the positions table, styled to match the
+ * neighbouring health-factor badge.
  */
 export function HealthFactorAlertControl({
   contractId,
@@ -40,7 +47,7 @@ export function HealthFactorAlertControl({
 
   if (editing) {
     return (
-      <div className="flex items-center justify-center gap-1">
+      <div className="flex items-center justify-center gap-2">
         <input
           type="number"
           step="0.05"
@@ -51,21 +58,23 @@ export function HealthFactorAlertControl({
             if (e.key === "Enter") save();
             if (e.key === "Escape") setEditing(false);
           }}
-          className="w-16 rounded-md border border-white/10 bg-[#242424] px-2 py-1 text-center text-xs text-white outline-none focus:border-[#229EDF]"
+          className={`w-16 rounded-lg border px-2.5 py-1.5 text-center text-sm font-bold outline-none ${AMBER} focus:border-yellow-400/50`}
           autoFocus
           aria-label="Alert threshold health factor"
         />
         <button
           onClick={save}
-          className="p-1 text-green-400 hover:text-green-300"
+          className="rounded-lg border border-green-500/20 bg-green-500/10 flex h-[34px] w-[34px] items-center justify-center text-green-400 transition-colors hover:bg-green-500/20"
           aria-label="Save alert threshold"
+          title="Save"
         >
           <Check className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={() => setEditing(false)}
-          className="p-1 text-white/40 hover:text-white/70"
+          className="rounded-lg border border-white/10 bg-white/5 flex h-[34px] w-[34px] items-center justify-center text-white/50 transition-colors hover:bg-white/10 hover:text-white/80"
           aria-label="Cancel"
+          title="Cancel"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -75,20 +84,23 @@ export function HealthFactorAlertControl({
 
   if (current != null) {
     return (
-      <div className="flex items-center justify-center gap-1.5">
+      <div className="flex items-center justify-center gap-2">
         <button
           onClick={startEditing}
-          className="flex items-center gap-1 rounded-md border border-[#229EDF]/20 bg-[#229EDF]/10 px-2 py-1 text-[11px] text-[#229EDF] hover:bg-[#229EDF]/20"
+          className={`${PILL} ${AMBER} transition-colors hover:bg-yellow-500/20`}
           title="Edit alert threshold"
         >
-          <Bell className="h-3 w-3" />
-          {"< "}
-          {current.toFixed(2)}
+          <Bell className="h-3.5 w-3.5 shrink-0" />
+          <span className="whitespace-nowrap text-sm font-bold tabular-nums">
+            {"< "}
+            {current.toFixed(2)}
+          </span>
         </button>
         <button
           onClick={() => removeThreshold(contractId)}
-          className="p-1 text-white/30 hover:text-red-400"
+          className="rounded-lg border border-white/10 bg-white/5 flex h-[34px] w-[34px] items-center justify-center text-white/40 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400"
           aria-label="Remove alert threshold"
+          title="Remove alert"
         >
           <BellOff className="h-3.5 w-3.5" />
         </button>
@@ -99,11 +111,11 @@ export function HealthFactorAlertControl({
   return (
     <button
       onClick={startEditing}
-      className="mx-auto flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-[11px] text-white/40 hover:border-white/20 hover:text-white/70"
+      className={`mx-auto ${PILL} ${AMBER} transition-colors hover:bg-yellow-500/20`}
       title="Set a health-factor alert"
     >
-      <Bell className="h-3 w-3" />
-      Set alert
+      <Bell className="h-3.5 w-3.5 shrink-0" />
+      <span className="whitespace-nowrap text-xs font-semibold">Set alert</span>
     </button>
   );
 }

@@ -71,6 +71,14 @@ export function RiskAlertProvider({ children }: { children: ReactNode }) {
     .map((p) => `${p.contractId}:${p.healthFactor ?? "x"}`)
     .join("|");
 
+  // Also re-evaluate when thresholds change, so setting/editing a threshold that
+  // is already breached raises the alert immediately instead of on the next
+  // poll tick.
+  const thresholdSignature = Object.entries(thresholds)
+    .map(([k, v]) => `${k}:${v}`)
+    .sort()
+    .join("|");
+
   useEffect(() => {
     if (!address) return;
     const open = pools.filter((p) => p.healthFactor !== null);
@@ -99,12 +107,20 @@ export function RiskAlertProvider({ children }: { children: ReactNode }) {
         addAlert(alert);
       }
       if (result.nextBreached !== prevBreached) {
+        // Update the ref synchronously so a re-entrant evaluation — React
+        // StrictMode's double-invoke in dev, or overlapping HF/threshold dep
+        // changes before the next render — sees the new breach state and does
+        // not create a duplicate alert for the same ongoing breach.
+        breachRef.current = {
+          ...breachRef.current,
+          [pool.contractId]: result.nextBreached,
+        };
         setBreach(pool.contractId, result.nextBreached);
       }
     }
     // `pools`, `addAlert`, `setBreach` are stable or captured via refs/signature.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, hfSignature]);
+  }, [address, hfSignature, thresholdSignature]);
 
   // Live "currently in breach" derivation for the sidebar indicator.
   const breachContractIds = useMemo(() => {
