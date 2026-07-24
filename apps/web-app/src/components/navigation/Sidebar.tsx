@@ -9,6 +9,7 @@ import { SidebarLogo } from "./SidebarLogo";
 import { NavItem } from "./NavItem";
 import { ConnectedCard } from "./ConnectedCard";
 import { SetupCard } from "./SetupCard";
+import { useActivityFeed } from "@/features/activity/hooks/useActivityFeed";
 
 export const SIDEBAR_WIDTH = "270px";
 
@@ -18,6 +19,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { isStellarConnected, stellarAddress } = useWalletType();
   const { disconnect: disconnectStellar } = useStellarWallet();
+  const { unreadCount } = useActivityFeed();
 
   const isConnected = isStellarConnected;
   const activeAddress = stellarAddress ?? "";
@@ -54,6 +56,7 @@ export function Sidebar() {
             href={href}
             icon={icon}
             isActive={isActive(href)}
+            badge={label === "Activity" ? unreadCount : undefined}
           />
         ))}
       </nav>
