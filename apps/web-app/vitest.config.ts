@@ -12,11 +12,19 @@ import { defineConfig } from "vitest/config";
  * `it` / `expect` / `vi` explicitly. React-hook tests opt into the jsdom
  * environment per-file with a `// @vitest-environment jsdom` docblock, so the
  * default (node) stays fast for the pure-logic and adapter suites.
+ *
+ * `esbuild.jsx` overrides the `jsx: "preserve"` this project's shared
+ * tsconfig sets for Next.js's own SWC-based build pipeline — Vitest's
+ * esbuild transform needs an actual JSX transform (not "preserve") to parse
+ * `.tsx` component tests, which this config previously had no need to run.
  */
 export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
+  },
+  oxc: {
+    jsx: { runtime: "automatic" },
   },
 });

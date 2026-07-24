@@ -21,6 +21,7 @@ export const NAV_ITEMS = [
   { label: "Borrow", href: "/borrowing", icon: Landmark },
   { label: "Lend", href: "/lending", icon: TrendingUp },
   { label: "Vault", href: "/vaults", icon: Vault },
+  { label: "Strategies", href: "/strategies", icon: Workflow },
   { label: "Analytics", href: "/analytics", icon: PieChart },
   { label: "Automation", href: "/automation", icon: Zap },
   { label: "Activity", href: "/activity", icon: Bell },
