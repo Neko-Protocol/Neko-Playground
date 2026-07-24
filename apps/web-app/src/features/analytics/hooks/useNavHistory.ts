@@ -1,30 +1,47 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { useWallet } from "@/hooks/useWallet";
-import type { NavHistoryApiResponse, TimeWindow } from "../types/analytics";
+import { usePortfolioHistory } from "@/features/dashboard/hooks/usePortfolioHistory";
+import { filterSnapshotsByWindow } from "@/features/dashboard/positions/portfolioHistory";
+import { computeDrawdown } from "../utils/drawdown";
+import { WINDOW_DAYS } from "../const/analytics";
+import type {
+  NavHistoryApiResponse,
+  NavPoint,
+  TimeWindow,
+} from "../types/analytics";
 
-async function fetchNavHistory(
-  address: string,
-  window: TimeWindow
-): Promise<NavHistoryApiResponse> {
-  const res = await fetch(
-    `/api/analytics/nav-history?address=${encodeURIComponent(address)}&window=${window}`
-  );
-  if (!res.ok) throw new Error("Failed to fetch NAV history");
-  return res.json();
-}
-
+/**
+ * Builds the NAV series from the wallet's real, locally-persisted net-worth
+ * snapshots (see `usePortfolioHistory`) instead of the seeded-random walk
+ * the `/api/analytics/nav-history` route used to fabricate. There is no
+ * historical feed to backfill: the series is simply as long as the wallet
+ * has been opened since this shipped, so it can legitimately be short or
+ * empty for a wallet seen for the first time — that is surfaced as an
+ * empty series rather than padded with invented points.
+ */
 export function useNavHistory(window: TimeWindow) {
   const { address } = useWallet();
+  const { snapshots, isLoading } = usePortfolioHistory();
 
-  return useQuery({
-    queryKey: ["analytics-nav-history", address, window],
-    queryFn: () => fetchNavHistory(address!, window),
-    enabled: !!address,
-    staleTime: 5 * 60_000,
-    refetchInterval: 10 * 60_000,
-    placeholderData: (prev) => prev,
-    throwOnError: false,
-  });
+  const data: NavHistoryApiResponse | undefined = useMemo(() => {
+    if (!address) return undefined;
+
+    const days =
+      window === "all" ? Number.MAX_SAFE_INTEGER : WINDOW_DAYS[window];
+    const windowed = filterSnapshotsByWindow(snapshots, days);
+    const navValues = windowed.map((s) => s.totalValueUsd);
+    const { drawdownSeries } = computeDrawdown(navValues);
+
+    const series: NavPoint[] = windowed.map((s, i) => ({
+      date: s.date,
+      nav: s.totalValueUsd,
+      drawdown: drawdownSeries[i] ?? 0,
+    }));
+
+    return { series, window, generatedAt: new Date().toISOString() };
+  }, [address, snapshots, window]);
+
+  return { data, isLoading };
 }

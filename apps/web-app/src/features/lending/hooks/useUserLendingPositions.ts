@@ -11,6 +11,7 @@ export interface LendingPosition {
   bTokens: bigint;
   bTokensFormatted: string;
   bTokenRate: string;
+  deposited: number;
   depositedFormatted: string;
   interestRate: number;
 }
@@ -56,6 +57,7 @@ export function useUserLendingPositions() {
       bTokens,
       bTokensFormatted: formatAmount(bTokensHuman),
       bTokenRate,
+      deposited,
       depositedFormatted: formatAmount(deposited),
       interestRate: pool.interestRate,
     });

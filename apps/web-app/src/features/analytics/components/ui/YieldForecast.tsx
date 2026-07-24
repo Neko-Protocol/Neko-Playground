@@ -22,10 +22,7 @@ export function YieldForecastPanel({ data, isLoading }: YieldForecastProps) {
         <div className="h-4 w-40 bg-white/10 rounded animate-pulse mb-4" />
         <div className="grid grid-cols-3 gap-3">
           {[...Array(3)].map((_, i) => (
-            <div
-              key={i}
-              className="h-20 bg-white/5 rounded-xl animate-pulse"
-            />
+            <div key={i} className="h-20 bg-white/5 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -37,6 +34,9 @@ export function YieldForecastPanel({ data, isLoading }: YieldForecastProps) {
       <div className="flex items-center gap-2 mb-4">
         <TrendingUp className="h-4 w-4 text-[#68f9f2]" />
         <h3 className="text-white font-semibold text-sm">Yield Forecast</h3>
+        <span className="text-[10px] font-medium uppercase tracking-wide text-white/30 bg-white/5 px-1.5 py-0.5 rounded">
+          Modeled
+        </span>
         {data?.blendedApy != null && (
           <span className="ml-auto text-xs text-white/30">
             @ {data.blendedApy.toFixed(2)}% blended APY
