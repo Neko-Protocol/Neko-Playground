@@ -4,12 +4,9 @@ import React from "react";
 import { ArrowRight, LogOut } from "lucide-react";
 import { truncateAddress } from "@/lib/utils";
 import { CARD_STYLES, CARD_BUTTON_STYLES } from "./sidebarConfig";
+import { clientEnv } from "@/lib/env.client";
 
-const NETWORK = (
-  process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET"
-).toUpperCase();
-
-const IS_TESTNET = NETWORK === "TESTNET";
+const IS_TESTNET = clientEnv.stellarNetwork === "TESTNET";
 
 interface ConnectedCardProps {
   address: string;

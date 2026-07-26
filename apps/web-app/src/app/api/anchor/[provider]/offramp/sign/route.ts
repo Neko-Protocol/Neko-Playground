@@ -6,6 +6,7 @@ import {
   ProviderSchema,
 } from "@/lib/validation/schemas";
 import { rpc, Horizon, TransactionBuilder } from "@stellar/stellar-sdk";
+import { clientEnv } from "@/lib/env.client";
 
 export const dynamic = "force-dynamic";
 
@@ -27,15 +28,7 @@ export async function POST(
     if ("error" in parsed) return parsed.error;
     const { signedXdr, transactionId } = parsed.data;
 
-    const rpcUrl =
-      process.env.NEXT_PUBLIC_STELLAR_RPC_URL ||
-      "https://soroban-testnet.stellar.org";
-    const networkPassphrase =
-      process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE ||
-      "Test SDF Network ; September 2015";
-    const horizonUrl =
-      process.env.NEXT_PUBLIC_STELLAR_HORIZON_URL ||
-      "https://horizon-testnet.stellar.org";
+    const { rpcUrl, networkPassphrase, horizonUrl } = clientEnv;
 
     const sorobanServer = new rpc.Server(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
