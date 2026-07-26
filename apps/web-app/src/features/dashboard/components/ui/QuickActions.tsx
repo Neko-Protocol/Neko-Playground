@@ -10,7 +10,7 @@ import {
   Gavel,
 } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
-import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
+import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModalLazy";
 
 const actions = [
   {
