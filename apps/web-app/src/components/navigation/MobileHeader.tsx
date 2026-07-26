@@ -12,12 +12,10 @@ import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { truncateAddress } from "@/lib/utils";
 import { useActivityFeed } from "@/features/activity/hooks/useActivityFeed";
+import { clientEnv } from "@/lib/env.client";
 
-const NETWORK = (
-  process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET"
-).toUpperCase();
-const IS_TESTNET = NETWORK === "TESTNET";
-const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_LENDING_ADMIN_ADDRESS ?? "";
+const IS_TESTNET = clientEnv.stellarNetwork === "TESTNET";
+const ADMIN_ADDRESS = clientEnv.lendingAdminAddress;
 
 export function MobileHeader() {
   const [isOpen, setIsOpen] = useState(false);

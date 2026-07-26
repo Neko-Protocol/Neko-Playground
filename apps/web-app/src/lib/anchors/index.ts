@@ -2,6 +2,7 @@ import type { Anchor, AnchorProvider } from "./types";
 import { AnchorError } from "./types";
 import { EtherfuseClient } from "./etherfuse";
 import { AlfredPayClient } from "./alfredpay";
+import { serverEnv } from "@/lib/env.server";
 
 export * from "./types";
 export { EtherfuseClient } from "./etherfuse";
@@ -19,8 +20,8 @@ export function getAnchorClient(provider: AnchorProvider): Anchor {
   if (!anchor) {
     switch (provider) {
       case "etherfuse": {
-        const apiKey = process.env.ETHERFUSE_API_KEY;
-        const baseUrl = process.env.ETHERFUSE_BASE_URL;
+        const { ETHERFUSE_API_KEY: apiKey, ETHERFUSE_BASE_URL: baseUrl } =
+          serverEnv;
         if (!apiKey || !baseUrl) {
           throw new AnchorError(
             "Etherfuse is not configured (missing ETHERFUSE_API_KEY or ETHERFUSE_BASE_URL)",
@@ -32,9 +33,11 @@ export function getAnchorClient(provider: AnchorProvider): Anchor {
         break;
       }
       case "alfredpay": {
-        const apiKey = process.env.ALFREDPAY_API_KEY;
-        const apiSecret = process.env.ALFREDPAY_API_SECRET;
-        const baseUrl = process.env.ALFREDPAY_BASE_URL;
+        const {
+          ALFREDPAY_API_KEY: apiKey,
+          ALFREDPAY_API_SECRET: apiSecret,
+          ALFREDPAY_BASE_URL: baseUrl,
+        } = serverEnv;
         if (!apiKey || !apiSecret || !baseUrl) {
           throw new AnchorError(
             "Alfred Pay is not configured (missing ALFREDPAY_API_KEY, ALFREDPAY_API_SECRET, or ALFREDPAY_BASE_URL)",

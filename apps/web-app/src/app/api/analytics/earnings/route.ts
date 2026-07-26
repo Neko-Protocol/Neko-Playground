@@ -7,13 +7,12 @@ import type {
   EarningsSourceId,
   TimeWindow,
 } from "@/features/analytics/types/analytics";
+import { clientEnv } from "@/lib/env.client";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-const HORIZON_URL =
-  process.env.NEXT_PUBLIC_STELLAR_HORIZON_URL ??
-  "https://horizon-testnet.stellar.org";
+const HORIZON_URL = clientEnv.horizonUrl;
 
 const WINDOW_DAYS: Record<TimeWindow, number> = {
   "24h": 1,

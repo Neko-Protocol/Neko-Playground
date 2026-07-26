@@ -15,6 +15,8 @@ import {
 } from "@/lib/constants/faucet";
 import { parseJsonBody } from "@/lib/validation/parse";
 import { FaucetBodySchema } from "@/lib/validation/schemas";
+import { clientEnv } from "@/lib/env.client";
+import { serverEnv } from "@/lib/env.server";
 
 export const dynamic = "force-dynamic";
 
@@ -138,7 +140,7 @@ async function mintTokenLegacy(
 
 export async function POST(request: NextRequest) {
   try {
-    const network = process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET";
+    const network = clientEnv.stellarNetwork;
     if (network === "PUBLIC") {
       return NextResponse.json(
         { error: "Faucet is not available on mainnet" },
@@ -146,7 +148,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const secretKey = process.env.FAUCET_SECRET_KEY;
+    const secretKey = serverEnv.FAUCET_SECRET_KEY;
     if (!secretKey) {
       return NextResponse.json(
         { error: "Faucet is not configured" },
@@ -171,15 +173,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const rpcUrl =
-      process.env.NEXT_PUBLIC_STELLAR_RPC_URL ??
-      "https://soroban-testnet.stellar.org";
-    const horizonUrl =
-      process.env.NEXT_PUBLIC_STELLAR_HORIZON_URL ??
-      "https://horizon-testnet.stellar.org";
-    const passphrase =
-      process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE ??
-      "Test SDF Network ; September 2015";
+    const { rpcUrl, horizonUrl, networkPassphrase: passphrase } = clientEnv;
 
     const adminKeypair = Keypair.fromSecret(secretKey);
     const sorobanServer = new rpc.Server(rpcUrl, {
@@ -187,7 +181,7 @@ export async function POST(request: NextRequest) {
     });
     const horizonServer = new Horizon.Server(horizonUrl);
 
-    const faucetContractId = process.env.FAUCET_CONTRACT_ID;
+    const faucetContractId = serverEnv.FAUCET_CONTRACT_ID;
 
     if (faucetContractId) {
       const { hash } = await bulkMint(
