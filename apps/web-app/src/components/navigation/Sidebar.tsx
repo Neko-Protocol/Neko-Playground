@@ -10,10 +10,11 @@ import { NavItem } from "./NavItem";
 import { ConnectedCard } from "./ConnectedCard";
 import { SetupCard } from "./SetupCard";
 import { useActivityFeed } from "@/features/activity/hooks/useActivityFeed";
+import { clientEnv } from "@/lib/env.client";
 
 export const SIDEBAR_WIDTH = "270px";
 
-const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_LENDING_ADMIN_ADDRESS ?? "";
+const ADMIN_ADDRESS = clientEnv.lendingAdminAddress;
 
 export function Sidebar() {
   const pathname = usePathname();

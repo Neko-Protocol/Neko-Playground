@@ -10,6 +10,7 @@ import {
   xdr,
 } from "@stellar/stellar-sdk";
 import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
+import { clientEnv } from "@/lib/env.client";
 import { getCurrentNetwork, getAvailableTokens } from "./tokens";
 import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import {
@@ -203,10 +204,7 @@ export const getPool = async (request: GetPoolRequest): Promise<PoolInfo[]> => {
   try {
     const pools = await makeAPIRequest<PoolInfo[]>(endpoint, { method: "GET" });
 
-    if (
-      process.env.NODE_ENV === "development" &&
-      process.env.NEXT_PUBLIC_VERBOSE_LOGGING === "true"
-    ) {
+    if (process.env.NODE_ENV === "development" && clientEnv.verboseLogging) {
       console.log("💧 Pool information received:", pools);
     }
 

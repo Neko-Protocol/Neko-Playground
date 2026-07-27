@@ -9,6 +9,8 @@ import {
   rpc,
 } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { clientEnv } from "@/lib/env.client";
+import { serverEnv } from "@/lib/env.server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -30,12 +32,8 @@ const SCALAR_7 = 10_000_000;
 
 function getRpcConfig() {
   return {
-    rpcUrl:
-      process.env.NEXT_PUBLIC_STELLAR_RPC_URL ??
-      "https://soroban-testnet.stellar.org",
-    networkPassphrase:
-      process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE ??
-      "Test SDF Network ; September 2015",
+    rpcUrl: clientEnv.rpcUrl,
+    networkPassphrase: clientEnv.networkPassphrase,
   };
 }
 
@@ -92,8 +90,7 @@ async function getNekoApy(
 
 async function getAquariusApy(): Promise<number | null> {
   try {
-    const isTestnet =
-      (process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET") !== "PUBLIC";
+    const isTestnet = clientEnv.stellarNetwork !== "PUBLIC";
     const base = isTestnet
       ? "https://amm-api-testnet.aqua.network"
       : "https://amm-api.aqua.network";
@@ -150,7 +147,7 @@ async function getAllocations(
 
 export async function GET() {
   try {
-    const secretKey = process.env.VAULT_MANAGER_SECRET_KEY;
+    const secretKey = serverEnv.VAULT_MANAGER_SECRET_KEY;
     if (!secretKey) {
       return NextResponse.json({ error: "Not configured" }, { status: 503 });
     }

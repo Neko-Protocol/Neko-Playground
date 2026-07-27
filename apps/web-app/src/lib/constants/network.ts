@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { Networks as WalletNetwork } from "@creit.tech/stellar-wallets-kit/types";
+import { clientEnv } from "@/lib/env.client";
 
 export type NetworkType = "mainnet" | "testnet" | "futurenet" | "custom";
 export interface Network {
@@ -10,42 +9,8 @@ export interface Network {
   horizonUrl: string;
 }
 
-const envSchema = z.object({
-  PUBLIC_STELLAR_NETWORK: z.enum([
-    "PUBLIC",
-    "FUTURENET",
-    "TESTNET",
-    "LOCAL",
-    "STANDALONE", // deprecated in favor of LOCAL
-  ] as const),
-  PUBLIC_STELLAR_NETWORK_PASSPHRASE: z.nativeEnum(WalletNetwork),
-  PUBLIC_STELLAR_RPC_URL: z.string(),
-  PUBLIC_STELLAR_HORIZON_URL: z.string(),
-});
-
-const envVars = {
-  PUBLIC_STELLAR_NETWORK: process.env.NEXT_PUBLIC_STELLAR_NETWORK,
-  PUBLIC_STELLAR_NETWORK_PASSPHRASE:
-    process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE,
-  PUBLIC_STELLAR_RPC_URL: process.env.NEXT_PUBLIC_STELLAR_RPC_URL,
-  PUBLIC_STELLAR_HORIZON_URL: process.env.NEXT_PUBLIC_STELLAR_HORIZON_URL,
-};
-const parsed = envSchema.safeParse(envVars);
-
-const env: z.infer<typeof envSchema> = parsed.success
-  ? parsed.data
-  : {
-      PUBLIC_STELLAR_NETWORK: "LOCAL",
-      PUBLIC_STELLAR_NETWORK_PASSPHRASE: WalletNetwork.STANDALONE,
-      PUBLIC_STELLAR_RPC_URL: "http://localhost:8000/rpc",
-      PUBLIC_STELLAR_HORIZON_URL: "http://localhost:8000",
-    };
-
-export const stellarNetwork =
-  env.PUBLIC_STELLAR_NETWORK === "STANDALONE"
-    ? "LOCAL"
-    : env.PUBLIC_STELLAR_NETWORK;
-export const networkPassphrase = env.PUBLIC_STELLAR_NETWORK_PASSPHRASE;
+export const stellarNetwork = clientEnv.stellarNetwork;
+export const networkPassphrase = clientEnv.networkPassphrase;
 
 const stellarEncode = (str: string) => {
   return str.replace(/\//g, "//").replace(/;/g, "/;");
@@ -66,12 +31,12 @@ export const labPrefix = () => {
   }
 };
 
-export const rpcUrl = env.PUBLIC_STELLAR_RPC_URL;
+export const rpcUrl = clientEnv.rpcUrl;
 
 export const allowHttpForSoroban =
   typeof rpcUrl === "string" && rpcUrl.startsWith("http:");
 
-export const horizonUrl = env.PUBLIC_STELLAR_HORIZON_URL;
+export const horizonUrl = clientEnv.horizonUrl;
 
 const networkToId = (network: string): NetworkType => {
   switch (network) {

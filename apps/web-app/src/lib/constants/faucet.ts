@@ -7,6 +7,7 @@ import {
   rpc,
   Horizon,
 } from "@stellar/stellar-sdk";
+import { clientEnv } from "@/lib/env.client";
 export interface FaucetToken {
   symbol: string;
   contractId: string;
@@ -58,8 +59,7 @@ const TESTNET_FAUCET_TOKENS: {
   },
 ];
 
-export const FAUCET_CONTRACT_ID =
-  process.env.NEXT_PUBLIC_FAUCET_CONTRACT_ID ?? "";
+export const FAUCET_CONTRACT_ID = clientEnv.faucetContractId;
 
 export const FAUCET_COOLDOWN_MS = 5 * 60 * 1000;
 

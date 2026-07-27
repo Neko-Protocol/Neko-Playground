@@ -10,6 +10,8 @@ import {
   xdr,
 } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { clientEnv } from "@/lib/env.client";
+import { requireServerEnv } from "@/lib/env.server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -38,16 +40,13 @@ const COOLDOWN_MS = 5 * 60 * 1000;
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function getEnv() {
-  const secretKey = process.env.VAULT_MANAGER_SECRET_KEY;
-  if (!secretKey) throw new Error("VAULT_MANAGER_SECRET_KEY not configured");
+  const { VAULT_MANAGER_SECRET_KEY: secretKey } = requireServerEnv([
+    "VAULT_MANAGER_SECRET_KEY",
+  ]);
   return {
     secretKey,
-    rpcUrl:
-      process.env.NEXT_PUBLIC_STELLAR_RPC_URL ??
-      "https://soroban-testnet.stellar.org",
-    networkPassphrase:
-      process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE ??
-      "Test SDF Network ; September 2015",
+    rpcUrl: clientEnv.rpcUrl,
+    networkPassphrase: clientEnv.networkPassphrase,
   };
 }
 

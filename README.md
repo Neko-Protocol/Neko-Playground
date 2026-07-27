@@ -359,19 +359,36 @@ This will build the Next.js app. Deploy the contents of `apps/web-app/.next` dir
 
 ## Environment Configuration
 
-The project uses environment variables with the `NEXT_PUBLIC_` prefix for client-side access.
+Environment variables are parsed and validated in one place — `apps/web-app/src/lib/env.client.ts` (public, `NEXT_PUBLIC_*`) and `apps/web-app/src/lib/env.server.ts` (server-only secrets). The rest of the app imports typed values from those modules instead of reading `process.env` directly.
 
-Create `apps/web-app/.env.local`:
+The **core Stellar network** vars are **required**: if any is missing or malformed, the app fails fast at build/startup with a single readable error, instead of silently falling back to testnet. Everything else is optional.
+
+Create `apps/web-app/.env.local` (the block below matches the validation schema):
 
 ```env
-# Stellar Network Configuration
+# --- Core Stellar network (REQUIRED — app won't start without these) ---
 NEXT_PUBLIC_STELLAR_NETWORK=TESTNET
 NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
 NEXT_PUBLIC_STELLAR_RPC_URL=https://soroban-testnet.stellar.org
 NEXT_PUBLIC_STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
 
-# SoroSwap ApiKey
+# --- Optional public config (NEXT_PUBLIC_, safe in the browser) ---
 NEXT_PUBLIC_SOROSWAP_API_KEY=your_api_key_here
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
+NEXT_PUBLIC_LENDING_ADMIN_ADDRESS=      # Stellar public key allowed into /dashboard/admin
+NEXT_PUBLIC_FAUCET_CONTRACT_ID=
+NEXT_PUBLIC_VERBOSE_LOGGING=false       # "true" | "false"
+
+# --- Server-only secrets (NO NEXT_PUBLIC_ prefix — never sent to the browser) ---
+# Optional: each integration surfaces a clear error only when its route is used.
+VAULT_MANAGER_SECRET_KEY=
+FAUCET_SECRET_KEY=
+FAUCET_CONTRACT_ID=
+ETHERFUSE_API_KEY=
+ETHERFUSE_BASE_URL=https://api.sand.etherfuse.com
+ALFREDPAY_API_KEY=
+ALFREDPAY_API_SECRET=
+ALFREDPAY_BASE_URL=https://api-service-co.alfredpay.app/api/v1/third-party-service/penny
 ```
 
 Available networks:

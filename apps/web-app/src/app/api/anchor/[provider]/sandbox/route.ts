@@ -4,6 +4,7 @@ import { EtherfuseClient } from "@/lib/anchors/etherfuse";
 import { AlfredPayClient } from "@/lib/anchors/alfredpay";
 import { parseJsonBody, parseParam } from "@/lib/validation/parse";
 import { ProviderSchema, SandboxBodySchema } from "@/lib/validation/schemas";
+import { clientEnv } from "@/lib/env.client";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ provider: string }> }
 ) {
-  if (process.env.NEXT_PUBLIC_STELLAR_NETWORK === "PUBLIC") {
+  if (clientEnv.stellarNetwork === "PUBLIC") {
     return NextResponse.json(
       { error: "Sandbox endpoints are not available on mainnet" },
       { status: 403 }

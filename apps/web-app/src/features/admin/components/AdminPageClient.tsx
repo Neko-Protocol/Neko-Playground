@@ -10,8 +10,9 @@ import PoolStateToggle from "./PoolStateToggle";
 import TreasuryFeesTable from "./TreasuryFeesTable";
 import CollateralFactorForm from "./CollateralFactorForm";
 import InterestRateParamsForm from "./InterestRateParamsForm";
+import { clientEnv } from "@/lib/env.client";
 
-const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_LENDING_ADMIN_ADDRESS ?? "";
+const ADMIN_ADDRESS = clientEnv.lendingAdminAddress;
 
 function ConnectWalletPrompt() {
   const [showModal, setShowModal] = React.useState(false);

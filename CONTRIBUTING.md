@@ -54,11 +54,13 @@ See the [README.md](./README.md) for detailed installation instructions.
 ### Initial Setup
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 2. **Build contract packages**:
+
    ```bash
    npm run build
    ```
@@ -245,6 +247,27 @@ When opening a PR, fill out the [Pull Request template](.github/ISSUE_TEMPLATE/p
 2. **Maintainers will review** your code
 3. **Address feedback** by pushing new commits to your branch
 4. **Once approved**, your PR will be merged
+
+### Continuous Integration (CI)
+
+Every pull request (and every push to `dev`) triggers the **CI** workflow
+(`.github/workflows/ci.yml`), which runs on GitHub Actions:
+
+- `npm run lint` — ESLint
+- `npm run typecheck` — `tsc --noEmit`
+- `npm run build` — production build
+- `npm run test` — Vitest suite
+
+If any step fails, the PR is marked with a red ❌ and **should not be
+merged** until it is green. You can reproduce the exact checks locally with:
+
+```bash
+npm run lint && npm run typecheck && npm run build && npm run test
+```
+
+> **Maintainers:** mark the `CI / Lint · Typecheck · Build · Test` check as a
+> required status check under **Settings → Branches → Branch protection**
+> for `dev` (and `main`) so failing PRs are blocked from merging.
 
 ## Commit Message Conventions
 

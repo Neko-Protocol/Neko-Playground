@@ -28,8 +28,9 @@ import { KycBanner } from "../ui/KycBanner";
 import { PaymentInstructionsDisplay } from "../ui/PaymentInstructions";
 import { FiatAccountSelector } from "../ui/FiatAccountSelector";
 import { TransactionStatusDisplay } from "../ui/TransactionStatus";
+import { clientEnv } from "@/lib/env.client";
 
-const isSandbox = process.env.NEXT_PUBLIC_STELLAR_NETWORK !== "PUBLIC";
+const isSandbox = clientEnv.stellarNetwork !== "PUBLIC";
 const etherfusePortalUrl = isSandbox
   ? "https://devnet.etherfuse.com"
   : "https://app.etherfuse.com";
@@ -293,143 +294,145 @@ const OnOffRamps: React.FC = () => {
           tabIndex={0}
           className="flex flex-col gap-4"
         >
-        {/* KYC Banner */}
-        {address && customerId && (
-          <KycBanner
-            status={kycStatus}
-            onStartKyc={() => void openKycFlow()}
-            isLoading={isCheckingKyc}
-          />
-        )}
+          {/* KYC Banner */}
+          {address && customerId && (
+            <KycBanner
+              status={kycStatus}
+              onStartKyc={() => void openKycFlow()}
+              isLoading={isCheckingKyc}
+            />
+          )}
 
-        {/* Trustline warning — shown after quote, before confirming on-ramp */}
-        {isOnRamp && quote && !currentTx && !hasTrustline && (
-          <div className="flex items-center justify-between gap-3 bg-orange-400/10 border border-orange-400/20 rounded-xl px-4 py-3">
-            <div>
-              <p className="text-orange-400 text-sm font-medium">
-                CETES trustline not enabled
-              </p>
-              <p className="text-white/40 text-xs">
-                You need a trustline to receive CETES in your wallet.
-              </p>
+          {/* Trustline warning — shown after quote, before confirming on-ramp */}
+          {isOnRamp && quote && !currentTx && !hasTrustline && (
+            <div className="flex items-center justify-between gap-3 bg-orange-400/10 border border-orange-400/20 rounded-xl px-4 py-3">
+              <div>
+                <p className="text-orange-400 text-sm font-medium">
+                  CETES trustline not enabled
+                </p>
+                <p className="text-white/40 text-xs">
+                  You need a trustline to receive CETES in your wallet.
+                </p>
+              </div>
+              <button
+                onClick={() => addTrustline()}
+                disabled={isAddingTrustline}
+                className="shrink-0 px-4 py-2 rounded-lg bg-orange-400 hover:bg-orange-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {isAddingTrustline ? "Enabling..." : "Enable Trustline"}
+              </button>
             </div>
+          )}
+
+          {/* Polling KYC banner - let user know to refresh */}
+          {kycStatus === "pending" && (
             <button
-              onClick={() => addTrustline()}
-              disabled={isAddingTrustline}
-              className="shrink-0 px-4 py-2 rounded-lg bg-orange-400 hover:bg-orange-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
+              onClick={() => refetchKycStatus()}
+              className="text-xs text-white/40 hover:text-white/60 text-center"
             >
-              {isAddingTrustline ? "Enabling..." : "Enable Trustline"}
+              Refresh KYC status
             </button>
-          </div>
-        )}
+          )}
 
-        {/* Polling KYC banner - let user know to refresh */}
-        {kycStatus === "pending" && (
-          <button
-            onClick={() => refetchKycStatus()}
-            className="text-xs text-white/40 hover:text-white/60 text-center"
-          >
-            Refresh KYC status
-          </button>
-        )}
+          {/* Active transaction status */}
+          {currentTx &&
+            (isPollingTx ||
+              currentTx.status === "completed" ||
+              ["failed", "expired", "cancelled"].includes(
+                currentTx.status
+              )) && (
+              <TransactionStatusDisplay
+                status={currentTx.status}
+                type={isOnRamp ? "onramp" : "offramp"}
+                transactionId={currentTx.id}
+                onDone={() => {
+                  dispatch({ type: "RESET" });
+                  clearQuote();
+                }}
+              />
+            )}
 
-        {/* Active transaction status */}
-        {currentTx &&
-          (isPollingTx ||
-            currentTx.status === "completed" ||
-            ["failed", "expired", "cancelled"].includes(currentTx.status)) && (
-            <TransactionStatusDisplay
-              status={currentTx.status}
-              type={isOnRamp ? "onramp" : "offramp"}
-              transactionId={currentTx.id}
-              onDone={() => {
-                dispatch({ type: "RESET" });
-                clearQuote();
-              }}
+          {/* On-ramp: Payment instructions — shown while awaiting payment */}
+          {isOnRamp &&
+            onRampTx &&
+            onRampTx.paymentInstructions &&
+            onRampTx.status !== "completed" && (
+              <PaymentInstructionsDisplay
+                instructions={onRampTx.paymentInstructions}
+                statusPage={onRampTx.statusPage}
+                onSimulateFiat={isSandbox ? handleSimulateFiat : undefined}
+                isSandbox={isSandbox}
+                isSimulating={isSimulating}
+              />
+            )}
+
+          {/* Quote display */}
+          {quote && !currentTx && (
+            <QuoteDisplay
+              quote={quote}
+              isExpired={isExpired}
+              secondsLeft={secondsLeft}
+              onConfirm={isOnRamp ? handleConfirmOnRamp : handleConfirmOffRamp}
+              onRefresh={handleGetQuote}
+              onCancel={clearQuote}
+              isLoading={isLoadingTx}
             />
           )}
 
-        {/* On-ramp: Payment instructions — shown while awaiting payment */}
-        {isOnRamp &&
-          onRampTx &&
-          onRampTx.paymentInstructions &&
-          onRampTx.status !== "completed" && (
-            <PaymentInstructionsDisplay
-              instructions={onRampTx.paymentInstructions}
-              statusPage={onRampTx.statusPage}
-              onSimulateFiat={isSandbox ? handleSimulateFiat : undefined}
-              isSandbox={isSandbox}
-              isSimulating={isSimulating}
+          {/* Off-ramp: bank account selector (shown before confirming) */}
+          {!isOnRamp && quote && !offRampTx && (
+            <FiatAccountSelector
+              accounts={accounts}
+              selected={state.selectedFiatAccount}
+              onSelect={(account) =>
+                dispatch({ type: "SET_FIAT_ACCOUNT", account })
+              }
+              isLoading={isLoadingAccounts}
+              addAccountUrl={
+                state.provider === "etherfuse" ? etherfusePortalUrl : undefined
+              }
             />
           )}
 
-        {/* Quote display */}
-        {quote && !currentTx && (
-          <QuoteDisplay
-            quote={quote}
-            isExpired={isExpired}
-            secondsLeft={secondsLeft}
-            onConfirm={isOnRamp ? handleConfirmOnRamp : handleConfirmOffRamp}
-            onRefresh={handleGetQuote}
-            onCancel={clearQuote}
-            isLoading={isLoadingTx}
-          />
-        )}
+          {/* Amount input + get quote button */}
+          {!currentTx && !quote && (
+            <>
+              <AmountInput
+                value={state.amount}
+                onChange={(value) =>
+                  dispatch({ type: "SET_AMOUNT", amount: value })
+                }
+                currency={fromCurrency}
+                label={
+                  isOnRamp
+                    ? "You send (MXN)"
+                    : `You send (${config.supportedAssets[0]})`
+                }
+                disabled={!address || isLoadingTx}
+              />
 
-        {/* Off-ramp: bank account selector (shown before confirming) */}
-        {!isOnRamp && quote && !offRampTx && (
-          <FiatAccountSelector
-            accounts={accounts}
-            selected={state.selectedFiatAccount}
-            onSelect={(account) =>
-              dispatch({ type: "SET_FIAT_ACCOUNT", account })
-            }
-            isLoading={isLoadingAccounts}
-            addAccountUrl={
-              state.provider === "etherfuse" ? etherfusePortalUrl : undefined
-            }
-          />
-        )}
-
-        {/* Amount input + get quote button */}
-        {!currentTx && !quote && (
-          <>
-            <AmountInput
-              value={state.amount}
-              onChange={(value) =>
-                dispatch({ type: "SET_AMOUNT", amount: value })
-              }
-              currency={fromCurrency}
-              label={
-                isOnRamp
-                  ? "You send (MXN)"
-                  : `You send (${config.supportedAssets[0]})`
-              }
-              disabled={!address || isLoadingTx}
-            />
-
-            <button
-              onClick={handleGetQuote}
-              disabled={
-                !canGetQuote ||
-                isLoadingQuote ||
-                isEnsuring ||
-                (isKycRequired && !!customerId)
-              }
-              className="w-full py-4 rounded-2xl bg-[#229EDF] hover:bg-[#1a8bc7] text-white font-semibold text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {!address
-                ? "Connect Wallet"
-                : isEnsuring
-                  ? "Setting up..."
-                  : isKycRequired && !!customerId
-                    ? "Complete KYC First"
-                    : isLoadingQuote
-                      ? "Getting quote..."
-                      : "Get Quote"}
-            </button>
-          </>
-        )}
+              <button
+                onClick={handleGetQuote}
+                disabled={
+                  !canGetQuote ||
+                  isLoadingQuote ||
+                  isEnsuring ||
+                  (isKycRequired && !!customerId)
+                }
+                className="w-full py-4 rounded-2xl bg-[#229EDF] hover:bg-[#1a8bc7] text-white font-semibold text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {!address
+                  ? "Connect Wallet"
+                  : isEnsuring
+                    ? "Setting up..."
+                    : isKycRequired && !!customerId
+                      ? "Complete KYC First"
+                      : isLoadingQuote
+                        ? "Getting quote..."
+                        : "Get Quote"}
+              </button>
+            </>
+          )}
         </div>
         <div
           id={isOnRamp ? "off-ramp-panel" : "on-ramp-panel"}

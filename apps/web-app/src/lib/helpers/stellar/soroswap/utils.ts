@@ -1,13 +1,13 @@
 import { SoroswapSDK, SupportedNetworks } from "@soroswap/sdk";
 import type { Token } from "../../../types/soroswapTypes";
 import { getCurrentNetwork, getAvailableTokens, getTokens } from "./tokens";
+import { clientEnv } from "@/lib/env.client";
 
 const SOROSWAP_API_URL = "https://api.soroswap.finance";
 const DEFAULT_TIMEOUT = 50000;
 
 export const getApiKey = (): string | null => {
-  const envKey = process.env.NEXT_PUBLIC_SOROSWAP_API_KEY;
-  const envKeyStr = typeof envKey === "string" ? envKey : "";
+  const envKeyStr = clientEnv.soroswapApiKey;
   if (envKeyStr && envKeyStr.trim() !== "") {
     return envKeyStr.trim();
   }
