@@ -3,6 +3,7 @@
 import type { StellarWalletsKit as StellarWalletsKitClass } from "@creit.tech/stellar-wallets-kit";
 import { Networks } from "@creit.tech/stellar-wallets-kit/types";
 import { getCurrentNetworkPassphrase } from "../network";
+import { clientEnv } from "@/lib/env.client";
 
 type Kit = typeof StellarWalletsKitClass;
 
@@ -56,7 +57,7 @@ export async function getStellarWalletKit(): Promise<Kit> {
           new LedgerModule(),
           new LobstrModule(),
           new WalletConnectModule({
-            projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
+            projectId: clientEnv.walletConnectProjectId,
             metadata: {
               name: "Neko",
               description: "Neko — All-in-one platform for RWAs on Stellar",

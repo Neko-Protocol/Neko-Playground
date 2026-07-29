@@ -10,19 +10,22 @@ import { NavItem } from "./NavItem";
 import { ConnectedCard } from "./ConnectedCard";
 import { SetupCard } from "./SetupCard";
 import { useRiskAlertContext } from "@/features/borrowing/context/RiskAlertContext";
+import { useActivityFeed } from "@/features/activity/hooks/useActivityFeed";
+import { clientEnv } from "@/lib/env.client";
 
 /** Nav item whose danger dot reflects an open borrow position in breach. */
 const BORROW_HREF = "/borrowing";
 
 export const SIDEBAR_WIDTH = "270px";
 
-const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_LENDING_ADMIN_ADDRESS ?? "";
+const ADMIN_ADDRESS = clientEnv.lendingAdminAddress;
 
 export function Sidebar() {
   const pathname = usePathname();
   const { isStellarConnected, stellarAddress } = useWalletType();
   const { disconnect: disconnectStellar } = useStellarWallet();
   const { hasActiveBreach } = useRiskAlertContext();
+  const { unreadCount } = useActivityFeed();
 
   const isConnected = isStellarConnected;
   const activeAddress = stellarAddress ?? "";
@@ -60,6 +63,7 @@ export function Sidebar() {
             icon={icon}
             isActive={isActive(href)}
             showDot={href === BORROW_HREF && hasActiveBreach}
+            badge={label === "Activity" ? unreadCount : undefined}
           />
         ))}
       </nav>

@@ -20,6 +20,7 @@ import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors
 import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { useVaultBalance } from "./useVaultBalance";
 import { useVaultData } from "./useVaultData";
+import { useActivityStore } from "@/stores/activityStore";
 
 const VAULT_CONTRACT_ID =
   "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
@@ -124,6 +125,13 @@ export function useVaultAction() {
 
         await new Promise((r) => setTimeout(r, 3000));
         await Promise.all([refetchBalance(), refetchVaultData()]);
+        useActivityStore.getState().pushEvent({
+          source: "vault",
+          type: "deposit",
+          timestamp: Date.now(),
+          summary: `Deposited ${amount} CETES to vault`,
+          link: "/vaults",
+        });
         showSuccess(`Successfully deposited ${amount} CETES`);
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
@@ -178,6 +186,13 @@ export function useVaultAction() {
 
         await new Promise((r) => setTimeout(r, 3000));
         await Promise.all([refetchBalance(), refetchVaultData()]);
+        useActivityStore.getState().pushEvent({
+          source: "vault",
+          type: "withdraw",
+          timestamp: Date.now(),
+          summary: `Withdrew ${shares} dfTokens from vault`,
+          link: "/vaults",
+        });
         showSuccess(`Successfully withdrew ${shares} dfTokens`);
       } catch (err) {
         const msg = extractContractErrorOrNull(err);

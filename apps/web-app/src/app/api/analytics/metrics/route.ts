@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { Horizon } from "@stellar/stellar-sdk";
-import { hhi, diversificationScore } from "@/features/analytics/utils/concentration";
+import {
+  hhi,
+  diversificationScore,
+} from "@/features/analytics/utils/concentration";
 import { projectEarnings } from "@/features/analytics/utils/apy";
+import { clientEnv } from "@/lib/env.client";
 import type {
   MetricsApiResponse,
   AllocationEntry,
@@ -14,9 +18,7 @@ import type {
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-const HORIZON_URL =
-  process.env.NEXT_PUBLIC_STELLAR_HORIZON_URL ??
-  "https://horizon-testnet.stellar.org";
+const HORIZON_URL = clientEnv.horizonUrl;
 
 interface StellarBalance {
   asset_type: string;
@@ -96,7 +98,6 @@ function buildCorrelationMatrix(assets: string[]): CorrelationMatrix {
   return { assets, matrix };
 }
 
-
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const address = searchParams.get("address");
@@ -135,8 +136,7 @@ export async function GET(req: NextRequest) {
   const corrMatrix = buildCorrelationMatrix(assetCodes);
 
   // Synthetic risk metrics
-  const blendedApy =
-    vaultApy * 0.35 + 8.2 * 0.3 + 12.4 * 0.25 + 4.8 * 0.1;
+  const blendedApy = vaultApy * 0.35 + 8.2 * 0.3 + 12.4 * 0.25 + 4.8 * 0.1;
   const borrowCost = totalValue > 200 ? 5.5 : 0;
   const netApy = blendedApy - borrowCost;
 

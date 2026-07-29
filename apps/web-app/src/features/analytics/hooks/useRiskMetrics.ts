@@ -17,8 +17,12 @@ export function useRiskMetrics(window: TimeWindow): {
   const data = useMemo<RiskMetrics | null>(() => {
     const serverRisk = metrics?.riskMetrics ?? null;
 
+    // Fewer than 2 real snapshots means no return can be computed yet —
+    // surface that honestly instead of falling back to a fabricated ratio.
     if (!nav?.series || nav.series.length < 2) {
-      return serverRisk;
+      return serverRisk
+        ? { ...serverRisk, sharpe: null, sortino: null, maxDrawdown: 0 }
+        : serverRisk;
     }
 
     const navValues = nav.series.map((p) => p.nav);
@@ -26,15 +30,27 @@ export function useRiskMetrics(window: TimeWindow): {
     const { maxDrawdown, maxDrawdownIndex } = computeDrawdown(navValues);
     const lastDrawdown = nav.series[nav.series.length - 1]?.drawdown ?? 0;
 
+    // Same risk-score formula the server used to apply to synthetic
+    // inputs — now fed the real HHI, borrow cost, drawdown and blended APY.
+    const riskScore = Math.min(
+      100,
+      Math.round(
+        (metrics && metrics.borrowCost > 0 ? 20 : 0) +
+          ((metrics?.hhi ?? 0) / 100) * 0.3 +
+          maxDrawdown * 2 +
+          ((metrics?.blendedApy ?? 0) > 15 ? 15 : 0)
+      )
+    );
+
     return {
-      sharpe: sharpeRatio(returns) ?? serverRisk?.sharpe ?? null,
-      sortino: sortinoRatio(returns) ?? serverRisk?.sortino ?? null,
+      sharpe: sharpeRatio(returns),
+      sortino: sortinoRatio(returns),
       maxDrawdown,
       maxDrawdownDate: nav.series[maxDrawdownIndex]?.date ?? "—",
       currentDrawdown: lastDrawdown,
       healthFactor: serverRisk?.healthFactor ?? null,
       distanceToLiquidation: serverRisk?.distanceToLiquidation ?? null,
-      riskScore: serverRisk?.riskScore ?? 50,
+      riskScore,
     };
   }, [nav, metrics]);
 

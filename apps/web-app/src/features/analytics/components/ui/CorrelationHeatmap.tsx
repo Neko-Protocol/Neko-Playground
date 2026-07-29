@@ -18,7 +18,10 @@ function correlationColor(value: number): string {
   return "bg-teal-500/70 text-teal-100";
 }
 
-export function CorrelationHeatmap({ data, isLoading }: CorrelationHeatmapProps) {
+export function CorrelationHeatmap({
+  data,
+  isLoading,
+}: CorrelationHeatmapProps) {
   if (isLoading) {
     return (
       <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] p-6 h-48 flex items-center justify-center">
@@ -45,9 +48,14 @@ export function CorrelationHeatmap({ data, isLoading }: CorrelationHeatmapProps)
   return (
     <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-semibold text-sm">
-          Correlation Matrix
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-white font-semibold text-sm">
+            Correlation Matrix
+          </h3>
+          <span className="text-[10px] font-medium uppercase tracking-wide text-white/30 bg-white/5 px-1.5 py-0.5 rounded">
+            Modeled
+          </span>
+        </div>
         <div className="flex items-center gap-3 text-xs text-white/30">
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded bg-teal-500/70" /> Negative
