@@ -11,6 +11,7 @@ import {
   Layers,
   HeartPulse,
   Lock,
+  Bell,
 } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useUserBorrowPositions } from "../../hooks/useUserBorrowPositions";
@@ -25,6 +26,8 @@ import { RemoveCollateralModal } from "./RemoveCollateralModal";
 import { TokenAvatar } from "./TokenAvatar";
 import { ColHeader } from "./ColHeader";
 import { RepayModal } from "./RepayModal";
+import { RiskAlertsPanel } from "./RiskAlertsPanel";
+import { HealthFactorAlertControl } from "./HealthFactorAlertControl";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { getTokenBalance } from "@/lib/helpers/stellar/lending";
 
@@ -124,6 +127,8 @@ const MyBorrowPositions: React.FC = () => {
 
   return (
     <>
+      <RiskAlertsPanel />
+
       <BorrowQuickActions
         positions={positions}
         selectedPosition={selectedPosition}
@@ -180,13 +185,19 @@ const MyBorrowPositions: React.FC = () => {
                   tooltip="Your current health factor for this pool. Keep above 1.0 to avoid liquidation."
                   centered
                 />
+                <ColHeader
+                  icon={Bell}
+                  label="Alert"
+                  tooltip="Get alerted when this position's health factor drops below your chosen value. Positions below 1.1 always alert."
+                  centered
+                />
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-4 py-12 text-center text-white/40 text-sm"
                   >
                     Loading your positions...
@@ -195,7 +206,7 @@ const MyBorrowPositions: React.FC = () => {
               ) : positions.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-4 py-12 text-center text-white/40 text-sm"
                   >
                     You don&apos;t have any active borrow positions yet.
@@ -245,6 +256,9 @@ const MyBorrowPositions: React.FC = () => {
                           isLoading={isLoadingHF}
                         />
                       </div>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <HealthFactorAlertControl contractId={pos.contractId} />
                     </td>
                   </tr>
                 ))
@@ -301,6 +315,13 @@ const MyBorrowPositions: React.FC = () => {
                       label="APR"
                       value={`${pos.interestRate.toFixed(2)}%`}
                     />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/40 text-[10px] font-semibold uppercase tracking-wide">
+                      Alert
+                    </span>
+                    <HealthFactorAlertControl contractId={pos.contractId} />
                   </div>
                 </li>
               ))}
