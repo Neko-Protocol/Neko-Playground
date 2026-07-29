@@ -23,7 +23,14 @@ if (typeof window !== "undefined") {
 }
 
 const serverSchema = z.object({
-  // Vault manager signing key (server-only)
+  // Cron authentication secret — required, minimum 32 chars.
+  // The app refuses to boot without it. Generate with: openssl rand -base64 32
+  CRON_SECRET: z.string().min(32, "CRON_SECRET must be at least 32 characters"),
+
+  // Vault manager keys (server-only).
+  // VAULT_MANAGER_PUBLIC_KEY is used for read-only GET routes — the secret
+  // is never loaded on a public code path when this is set.
+  VAULT_MANAGER_PUBLIC_KEY: z.string().optional(),
   VAULT_MANAGER_SECRET_KEY: z.string().optional(),
 
   // Faucet (server-only)
@@ -41,6 +48,8 @@ const serverSchema = z.object({
 });
 
 const parsed = serverSchema.safeParse({
+  CRON_SECRET: process.env.CRON_SECRET,
+  VAULT_MANAGER_PUBLIC_KEY: process.env.VAULT_MANAGER_PUBLIC_KEY,
   VAULT_MANAGER_SECRET_KEY: process.env.VAULT_MANAGER_SECRET_KEY,
   FAUCET_SECRET_KEY: process.env.FAUCET_SECRET_KEY,
   FAUCET_CONTRACT_ID: process.env.FAUCET_CONTRACT_ID,

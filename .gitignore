@@ -66,11 +66,5 @@ yarn-error.log*
 **/test_snapshots/
 target/
 
-deploy-full.cjs
-deploy-pools.cjs
-push-prices.cjs
-add-soroswap-liquidity.cjs
-add-ktb-liquidity.cjs
-add-ktb-xlm-pool.cjs
-upgrade-ktb-token.cjs
-scripts/
+# Scripts are tracked in git — secrets are kept out by the pre-commit hook
+# and the CI secret scan. Do NOT add script filenames or the scripts/ directory here.

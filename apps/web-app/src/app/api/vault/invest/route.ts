@@ -11,7 +11,13 @@ import {
 } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { clientEnv } from "@/lib/env.client";
-import { requireServerEnv } from "@/lib/env.server";
+import { requireServerEnv, serverEnv } from "@/lib/env.server";
+import { isAuthorizedCron } from "@/lib/auth/cron";
+import {
+  acquireInvestLock,
+  releaseInvestLock,
+  getInvestLockTtl,
+} from "@/lib/rateLimit/store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -33,9 +39,6 @@ const STRATEGIES = [
   },
 ];
 const MIN_IDLE_THRESHOLD = 10_000_000n; // 1 CETES minimum
-
-let lastInvest = 0;
-const COOLDOWN_MS = 5 * 60 * 1000;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -70,10 +73,8 @@ async function sendTx(
   networkPassphrase: string
 ): Promise<{ hash: string; status: string }> {
   if ((assembledTx.simulation as any)?.error) {
-    return {
-      hash: "",
-      status: `sim_error: ${(assembledTx.simulation as any).error}`,
-    };
+    console.error("[vault/invest] sim_error:", (assembledTx.simulation as any).error);
+    return { hash: "", status: "sim_error" };
   }
   const builtTx = TransactionBuilder.fromXDR(
     assembledTx.toXDR(),
@@ -125,7 +126,8 @@ async function harvestAquarius(
     const finalStatus = await waitForTx(server, sendResult.hash);
     return { hash: sendResult.hash, status: finalStatus };
   } catch (e) {
-    return { hash: "", status: `error: ${e}` };
+    console.error("[vault/invest] harvestAquarius error:", e);
+    return { hash: "", status: "error" };
   }
 }
 
@@ -184,7 +186,8 @@ async function collectFees(
     results.push({ step: "report", ...r });
     if (r.status !== "SUCCESS") return { results, feesCollected: false };
   } catch (e) {
-    results.push({ step: "report", hash: "", status: `error: ${e}` });
+    console.error("[vault/invest] report error:", e);
+    results.push({ step: "report", hash: "", status: "error" });
     return { results, feesCollected: false };
   }
 
@@ -195,7 +198,8 @@ async function collectFees(
     results.push({ step: "lock_fees", ...r });
     if (r.status !== "SUCCESS") return { results, feesCollected: false };
   } catch (e) {
-    results.push({ step: "lock_fees", hash: "", status: `error: ${e}` });
+    console.error("[vault/invest] lock_fees error:", e);
+    results.push({ step: "lock_fees", hash: "", status: "error" });
     return { results, feesCollected: false };
   }
 
@@ -208,23 +212,39 @@ async function collectFees(
     results.push({ step: "distribute_fees", ...r });
     return { results, feesCollected: r.status === "SUCCESS" };
   } catch (e) {
-    results.push({ step: "distribute_fees", hash: "", status: `error: ${e}` });
+    console.error("[vault/invest] distribute_fees error:", e);
+    results.push({ step: "distribute_fees", hash: "", status: "error" });
     return { results, feesCollected: false };
   }
 }
 
 // ─── GET — current vault state ───────────────────────────────────────────────
+// Uses VAULT_MANAGER_PUBLIC_KEY so the secret is never loaded on this public
+// code path. Falls back to deriving the public key from the secret only when
+// VAULT_MANAGER_PUBLIC_KEY is not configured (e.g. local dev without split keys).
+
+function getPublicKey(): string {
+  if (serverEnv.VAULT_MANAGER_PUBLIC_KEY) {
+    return serverEnv.VAULT_MANAGER_PUBLIC_KEY;
+  }
+  // Fallback: derive from secret (requires VAULT_MANAGER_SECRET_KEY to be set)
+  const { VAULT_MANAGER_SECRET_KEY } = requireServerEnv(["VAULT_MANAGER_SECRET_KEY"]);
+  return Keypair.fromSecret(VAULT_MANAGER_SECRET_KEY).publicKey();
+}
 
 export async function GET() {
   try {
-    const { secretKey, rpcUrl, networkPassphrase } = getEnv();
-    const keypair = Keypair.fromSecret(secretKey);
+    const { rpcUrl, networkPassphrase } = {
+      rpcUrl: clientEnv.rpcUrl,
+      networkPassphrase: clientEnv.networkPassphrase,
+    };
+    const publicKey = getPublicKey();
 
     const client = new DefindexVaultClient({
       contractId: VAULT_CONTRACT_ID,
       rpcUrl,
       networkPassphrase,
-      publicKey: keypair.publicKey(),
+      publicKey,
     });
 
     const fundsTx = await client.fetch_total_managed_funds({ simulate: true });
@@ -239,42 +259,40 @@ export async function GET() {
       amount: Number(BigInt(a.amount.toString())) / 1e7,
     }));
 
+    const cooldownRemaining = await getInvestLockTtl();
+
     return NextResponse.json({
       idle: idleAmount,
       total: totalAmount,
       allocations,
       canInvest: BigInt(funds[0].idle_amount.toString()) >= MIN_IDLE_THRESHOLD,
-      cooldownRemaining: Math.max(
-        0,
-        Math.ceil((lastInvest + COOLDOWN_MS - Date.now()) / 1000)
-      ),
+      cooldownRemaining,
     });
   } catch (err) {
+    console.error("[vault/invest GET]", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
 }
 
-// ─── POST — invest idle + collect fees (cron or manual) ──────────────────────
+// ─── POST — invest idle + collect fees (cron only) ───────────────────────────
 
 export async function POST(request: NextRequest) {
+  if (!isAuthorizedCron(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const locked = await acquireInvestLock();
+  if (!locked) {
+    return NextResponse.json(
+      { error: "A vault invest job is already running" },
+      { status: 409 }
+    );
+  }
+
   try {
-    const isCron = request.headers.get("x-vercel-cron") === "1";
-
-    if (!isCron) {
-      const remaining = lastInvest + COOLDOWN_MS - Date.now();
-      if (remaining > 0) {
-        return NextResponse.json(
-          { error: `Please wait ${Math.ceil(remaining / 1000)}s` },
-          { status: 429 }
-        );
-      }
-    }
-
-    lastInvest = Date.now();
-
     const { secretKey, rpcUrl, networkPassphrase } = getEnv();
     const keypair = Keypair.fromSecret(secretKey);
     const server = new rpc.Server(rpcUrl);
@@ -312,7 +330,7 @@ export async function POST(request: NextRequest) {
       (!investResult.invested ||
         investResult.results.every((r) => r.status === "SUCCESS")) &&
       (feesResult.feesCollected ||
-        feesResult.results[0]?.status.startsWith("error"));
+        feesResult.results[0]?.status === "error");
 
     return NextResponse.json(
       {
@@ -324,9 +342,12 @@ export async function POST(request: NextRequest) {
       { status: allOk ? 200 : 207 }
     );
   } catch (err) {
+    console.error("[vault/invest POST]", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
+      { error: "Internal server error" },
       { status: 500 }
     );
+  } finally {
+    await releaseInvestLock();
   }
 }

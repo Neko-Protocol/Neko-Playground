@@ -109,6 +109,12 @@ Before getting started, ensure you have:
 
    # SoroSwap ApiKey
    NEXT_PUBLIC_SOROSWAP_API_KEY=your_api_key_here
+
+   # Cron authentication secret — REQUIRED (minimum 32 characters).
+   # The app refuses to start without this. Generate with: openssl rand -base64 32
+   # In Vercel, set this as a project environment variable so the cron route is
+   # authenticated automatically (Vercel injects Authorization: Bearer <CRON_SECRET>).
+   CRON_SECRET=your_random_32_char_minimum_secret_here
    ```
 
 6. **Start the development server:**
