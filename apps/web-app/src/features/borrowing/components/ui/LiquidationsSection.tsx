@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Gavel, Wallet, RefreshCw, X } from "lucide-react";
 import { useBadDebt, type ActiveBadDebtAuction } from "../../hooks/useBadDebt";
-import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
+import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModalLazy";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 
 // ---------------------------------------------------------------------------

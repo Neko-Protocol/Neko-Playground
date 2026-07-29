@@ -54,11 +54,13 @@ See the [README.md](./README.md) for detailed installation instructions.
 ### Initial Setup
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 2. **Build contract packages**:
+
    ```bash
    npm run build
    ```

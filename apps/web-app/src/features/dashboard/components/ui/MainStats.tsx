@@ -1,13 +1,28 @@
 "use client";
 
 import React from "react";
+import dynamic from "next/dynamic";
 import { DollarSign, Coins, TrendingUp } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { usePortfolioValue } from "@/features/dashboard/hooks/usePortfolioValue";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
 import { useUnifiedPositions } from "@/features/dashboard/hooks/useUnifiedPositions";
-import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
 import { StatCard } from "@/features/stocks/components/ui/StatCard";
+
+// Chart.js is heavy and only needed here — load it in its own chunk,
+// client-side only, with a skeleton while it streams in.
+const HoldingsPieChart = dynamic(
+  () =>
+    import("@/features/dashboard/components/HoldingsPieChart").then(
+      (m) => m.HoldingsPieChart
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[220px] animate-pulse rounded-xl bg-white/5" />
+    ),
+  }
+);
 
 function formatUsd(value: number): string {
   return value.toLocaleString("en-US", {
