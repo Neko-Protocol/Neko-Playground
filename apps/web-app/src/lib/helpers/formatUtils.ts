@@ -20,6 +20,17 @@ export function formatLiquidity(value: number | string): string {
 }
 
 /**
+ * Format a USD value for display. Values are genuinely USD (computed via oracle prices).
+ * `null` means no price source was available for the asset.
+ */
+export function formatUsd(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return "Price unavailable";
+  }
+  return formatLiquidity(value);
+}
+
+/**
  * Format a token amount for display, trimming trailing zeros and adapting
  * decimal places to the magnitude of the value.
  *

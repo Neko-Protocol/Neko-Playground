@@ -19,7 +19,7 @@ import { waitForTransaction } from "@/lib/helpers/stellar/waitForTransaction";
 import { usePools, usePoolAction } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit, toSmallestUnit } from "@/lib/helpers/tokenUtils";
-import { formatLiquidity } from "@/lib/helpers/formatUtils";
+import { formatLiquidity, formatUsd } from "@/lib/helpers/formatUtils";
 import type { PoolData } from "../types/lending";
 
 function toBTokens(tokensAmount: string, bTokenRate: string): string {
@@ -81,11 +81,7 @@ export function useLend() {
 
   const pools: PoolData[] = useMemo(() => {
     const nekoPools: PoolData[] = lendingPools.map((pool, index) => {
-      const balanceNum = parseFloat(pool.poolBalance);
-      const liquidity =
-        balanceNum >= 1000
-          ? `$${(balanceNum / 1000).toFixed(2)}k`
-          : `$${balanceNum.toFixed(2)}`;
+      const liquidity = formatUsd(pool.poolBalanceUSD);
       return {
         id: `pool-${index}`,
         name: `${pool.assetCode} Pool`,
