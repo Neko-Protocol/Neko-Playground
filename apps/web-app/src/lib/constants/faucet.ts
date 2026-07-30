@@ -8,6 +8,8 @@ import {
   Horizon,
 } from "@stellar/stellar-sdk";
 import { clientEnv } from "@/lib/env.client";
+import { getAssetsConfig } from "@/lib/constants/assets.config";
+import { stellarNetwork } from "@/lib/constants/network";
 export interface FaucetToken {
   symbol: string;
   contractId: string;
@@ -15,61 +17,39 @@ export interface FaucetToken {
   mintAmount: bigint;
 }
 
-const TESTNET_FAUCET_TOKENS: {
-  symbol: string;
-  contract: string;
-  decimals: number;
-  amount: number;
-}[] = [
-  {
-    symbol: "USTRY",
-    contract: "CCAYGJWQI5NJN7XRVNSENF47PICNSNTG4FAQHHFOJWZIRTEAC5JPMLGN",
-    decimals: 7,
-    amount: 100,
-  },
-  {
-    symbol: "TESOURO",
-    contract: "CAPFX3QEAHE7JVT6E7PYZQTFSVS5Z7AV4RE7GRJRVCPKXGQHCWSCOMTW",
-    decimals: 7,
-    amount: 100,
-  },
-  {
-    symbol: "CETES",
-    contract: "CAJ4B2ZWU2GA7UYQZ7N7QQCTZAUSSXNKKQ326ADYVH3ALN4FFQ6LPO4U",
-    decimals: 7,
-    amount: 100,
-  },
-  {
-    symbol: "USDY",
-    contract: "CDRQV3D3GLWF73MWTEQWFZWMBQ47KZ3KECYPOBKBDRQBWQQ74KDH5ECT",
-    decimals: 7,
-    amount: 100,
-  },
-  {
-    symbol: "PYUSD",
-    contract: "CBNHH37BJ2G4ZT6PLWDXPOWHKLR75IGNLBRCXZNOS7YPAYS53JPEPSSS",
-    decimals: 7,
-    amount: 100,
-  },
-  {
-    symbol: "KTB",
-    contract: "CCACIMR6I2XR35HSQSPYNTIZSK7IRVLPKAMSZPHW57SSUC44IZGN3TCX",
-    decimals: 7,
-    amount: 100,
-  },
-];
+const FAUCET_RWA_CODES = [
+  "USTRY",
+  "TESOURO",
+  "CETES",
+  "USDY",
+  "PYUSD",
+  "KTB",
+] as const;
+
+const FAUCET_MINT_AMOUNT = 100;
 
 export const FAUCET_CONTRACT_ID = clientEnv.faucetContractId;
 
 export const FAUCET_COOLDOWN_MS = 5 * 60 * 1000;
 
 export function getFaucetTokens(): FaucetToken[] {
-  return TESTNET_FAUCET_TOKENS.map((t) => ({
-    symbol: t.symbol,
-    contractId: t.contract,
-    decimals: t.decimals,
-    mintAmount: BigInt(t.amount) * 10n ** BigInt(t.decimals),
-  }));
+  if (stellarNetwork !== "TESTNET") {
+    return [];
+  }
+
+  const assets = getAssetsConfig();
+  return FAUCET_RWA_CODES
+    .filter((code) => assets[code])
+    .map((code) => {
+      const asset = assets[code];
+      return {
+        symbol: code,
+        contractId: asset.contract,
+        decimals: asset.decimals,
+        mintAmount:
+          BigInt(FAUCET_MINT_AMOUNT) * 10n ** BigInt(asset.decimals),
+      };
+    });
 }
 
 /**

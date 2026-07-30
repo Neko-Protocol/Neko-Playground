@@ -6,11 +6,11 @@ import {
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 import { useWallet } from "@/hooks/useWallet";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 
-const VAULT_CONTRACT_ID =
-  "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
+const { vault: VAULT_CONTRACT_ID } = getContracts();
 
 export function useVaultBalance() {
   const { address } = useWallet();

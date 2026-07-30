@@ -9,6 +9,7 @@ import { NekoLendingAdapter } from "@/lib/orchestrator/adapters/NekoLendingAdapt
 import { BlendPoolAdapter } from "@/lib/orchestrator/adapters/BlendPoolAdapter";
 import { SoroswapPoolAdapter } from "@/lib/orchestrator/adapters/SoroswapPoolAdapter";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
 import { strategyStepRegistry } from "./registry";
 import type {
@@ -32,8 +33,7 @@ function knownAssetCode(assetCode: string): boolean {
 }
 
 /** Mirrors features/vault/hooks/useVaultAction.ts — single deployed DeFindex vault. */
-const DEFINDEX_VAULT_CONTRACT_ID =
-  "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
+const DEFINDEX_VAULT_CONTRACT_ID = getContracts().vault;
 const DEFINDEX_DEPOSIT_SLIPPAGE = 0.01;
 const DEFINDEX_SLIPPAGE_SCALE = 10_000_000n;
 

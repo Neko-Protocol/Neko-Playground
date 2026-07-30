@@ -98,6 +98,8 @@ NEXT_PUBLIC_STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
 NEXT_PUBLIC_SOROSWAP_API_KEY=your_api_key_here
 ```
 
+For mainnet (`PUBLIC`), add a `mainnet` entry to `apps/web-app/src/lib/constants/contractsByNetwork.ts` with deployed contract IDs.
+
 ## Prerequisites
 
 - Node.js v18+, npm v10.2.3+

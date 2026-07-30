@@ -14,7 +14,6 @@ import {
 } from "@stellar/stellar-sdk";
 import {
   Client as RwaLendingClient,
-  networks,
   type PoolState,
   type InterestRateParams,
   type AssetType,
@@ -25,6 +24,10 @@ import {
   horizonUrl,
   allowHttpForSoroban,
 } from "../constants/network";
+import {
+  getContracts,
+  getLendingPoolContractId,
+} from "../constants/contractsByNetwork";
 
 /** Allow HTTP for Horizon when URL is http: (e.g. local dev). */
 const allowHttpForHorizon =
@@ -61,14 +64,19 @@ export class LendingService {
   private sorobanServer: rpc.Server;
   private horizonServer: Horizon.Server;
   private lendingClient: RwaLendingClient;
+  private readonly pool1ContractId: string;
+  private readonly pool2ContractId: string;
 
   constructor() {
+    const contracts = getContracts();
+    this.pool1ContractId = contracts.lendingPool1;
+    this.pool2ContractId = contracts.lendingPool2;
     this.sorobanServer = new rpc.Server(rpcUrl, { allowHttp: true });
     this.horizonServer = new Horizon.Server(horizonUrl, {
       allowHttp: allowHttpForHorizon,
     });
     this.lendingClient = new RwaLendingClient({
-      contractId: networks.testnet.contractId,
+      contractId: this.pool1ContractId,
       rpcUrl: rpcUrl,
       networkPassphrase: networkPassphrase,
       ...(allowHttpForSoroban && { allowHttp: true }),
@@ -85,7 +93,7 @@ export class LendingService {
     walletAddress: string
   ): Promise<LendingOperationResult> {
     try {
-      const lendingContract = new Contract(networks.testnet.contractId);
+      const lendingContract = new Contract(getLendingPoolContractId(assetCode));
 
       // Convert amount to smallest unit (i128)
       const amountInSmallestUnit = toSmallestUnit(amount, decimals);
@@ -155,7 +163,7 @@ export class LendingService {
     walletAddress: string
   ): Promise<LendingOperationResult> {
     try {
-      const lendingContract = new Contract(networks.testnet.contractId);
+      const lendingContract = new Contract(getLendingPoolContractId(assetCode));
 
       // Convert bTokens to smallest unit (i128)
       const bTokensInSmallestUnit = toSmallestUnit(bTokens, decimals);
@@ -225,7 +233,7 @@ export class LendingService {
     walletAddress: string
   ): Promise<LendingOperationResult> {
     try {
-      const lendingContract = new Contract(networks.testnet.contractId);
+      const lendingContract = new Contract(getLendingPoolContractId(assetCode));
 
       // Convert amount to smallest unit (i128)
       const amountInSmallestUnit = toSmallestUnit(amount, decimals);
@@ -292,7 +300,7 @@ export class LendingService {
     assetCode: string,
     dTokens: bigint,
     walletAddress: string,
-    contractId: string = networks.testnet.contractId
+    contractId: string
   ): Promise<LendingOperationResult> {
     try {
       const lendingContract = new Contract(contractId);
@@ -352,7 +360,7 @@ export class LendingService {
     walletAddress: string
   ): Promise<LendingOperationResult> {
     try {
-      const lendingContract = new Contract(networks.testnet.contractId);
+      const lendingContract = new Contract(getLendingPoolContractId(assetCode));
 
       // Convert amount to smallest unit (i128)
       const amountInSmallestUnit = toSmallestUnit(amount, decimals);
@@ -486,18 +494,21 @@ export class LendingService {
     walletAddress: string
   ): Promise<BorrowWithCollateralResult> {
     try {
+      const contractId = getLendingPoolContractId(assetCode);
       const addCollateralXdr = await addCollateralHelper(
         rwaTokenContract,
         collateralAmount,
         collateralDecimals,
-        walletAddress
+        walletAddress,
+        contractId
       );
 
       const borrowXdr = await borrowFromPoolHelper(
         assetCode,
         borrowAmount,
         borrowDecimals,
-        walletAddress
+        walletAddress,
+        contractId
       );
 
       return {
@@ -838,7 +849,7 @@ export class LendingService {
    */
   async hasBadDebt(
     borrower: string,
-    contractId: string = networks.testnet.contractId
+    contractId: string
   ): Promise<boolean> {
     return hasBadDebtHelper(borrower, contractId);
   }
@@ -850,7 +861,7 @@ export class LendingService {
     borrower: string,
     debtAsset: string,
     walletAddress: string,
-    contractId: string = networks.testnet.contractId
+    contractId: string
   ): Promise<LendingOperationResult> {
     try {
       const xdr = await createBadDebtAuctionHelper(
@@ -877,7 +888,7 @@ export class LendingService {
     debtAsset: string,
     decimals: number = 7,
     walletAddress: string,
-    contractId: string = networks.testnet.contractId
+    contractId: string
   ): Promise<FillBadDebtAuctionResult> {
     try {
       const { fillXdr } = await buildFillBadDebtAuctionXdr(
@@ -915,9 +926,7 @@ export class LendingService {
   /**
    * Get pool state (read-only)
    */
-  async getPoolState(
-    contractId: string = networks.testnet.pool1ContractId
-  ): Promise<PoolState | null> {
+  async getPoolState(contractId: string): Promise<PoolState | null> {
     try {
       const client = this.getClient(contractId);
       const tx = await client.get_pool_state({ simulate: true });
@@ -934,7 +943,7 @@ export class LendingService {
   async setPoolState(
     state: PoolState,
     walletAddress: string,
-    contractId: string = networks.testnet.pool1ContractId
+    contractId: string
   ): Promise<LendingOperationResult> {
     try {
       const client = this.getClient(contractId, walletAddress);
@@ -951,10 +960,7 @@ export class LendingService {
   /**
    * Get treasury credit (pending fees) for an asset
    */
-  async getTreasuryCredit(
-    asset: string,
-    contractId: string = networks.testnet.pool1ContractId
-  ): Promise<string> {
+  async getTreasuryCredit(asset: string, contractId: string): Promise<string> {
     try {
       const client = this.getClient(contractId);
       const tx = await client.get_treasury_credit(
@@ -976,7 +982,7 @@ export class LendingService {
   async collectTreasuryFees(
     asset: string,
     walletAddress: string,
-    contractId: string = networks.testnet.pool1ContractId
+    contractId: string
   ): Promise<LendingOperationResult> {
     try {
       const client = this.getClient(contractId, walletAddress);
@@ -995,7 +1001,7 @@ export class LendingService {
    */
   async getCollateralFactor(
     rwaToken: string,
-    contractId: string = networks.testnet.pool1ContractId
+    contractId: string
   ): Promise<number> {
     try {
       const client = this.getClient(contractId);
@@ -1022,7 +1028,7 @@ export class LendingService {
       symbol: string;
     },
     walletAddress: string,
-    contractId: string = networks.testnet.pool1ContractId
+    contractId: string
   ): Promise<LendingOperationResult> {
     try {
       const client = this.getClient(contractId, walletAddress);
@@ -1048,7 +1054,7 @@ export class LendingService {
     asset: string,
     params: InterestRateParams,
     walletAddress: string,
-    contractId: string = networks.testnet.pool1ContractId
+    contractId: string
   ): Promise<LendingOperationResult> {
     try {
       const client = this.getClient(contractId, walletAddress);

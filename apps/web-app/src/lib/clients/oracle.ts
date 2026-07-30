@@ -1,4 +1,5 @@
 import * as Client from "@neko/oracle";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 import {
   rpcUrl,
   networkPassphrase,
@@ -7,7 +8,7 @@ import {
 
 const oracleClient = new Client.Client({
   networkPassphrase: networkPassphrase,
-  contractId: Client.networks.testnet.contractId,
+  contractId: getContracts().oracle,
   rpcUrl,
   publicKey: undefined,
   ...(allowHttpForSoroban && { allowHttp: true }),

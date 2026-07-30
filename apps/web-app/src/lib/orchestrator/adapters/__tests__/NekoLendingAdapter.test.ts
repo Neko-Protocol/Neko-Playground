@@ -14,7 +14,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
   clientMethods,
   ClientMock,
-  networksMock,
   getAvailableTokens,
   depositToPool,
   withdrawFromPool,
@@ -38,9 +37,6 @@ const {
   return {
     clientMethods,
     ClientMock,
-    networksMock: {
-      testnet: { pool1ContractId: "CPOOL1", pool2ContractId: "CPOOL2" },
-    },
     getAvailableTokens: vi.fn(),
     depositToPool: vi.fn(),
     withdrawFromPool: vi.fn(),
@@ -51,9 +47,18 @@ const {
   };
 });
 
+vi.mock("@/lib/constants/contractsByNetwork", () => ({
+  getContracts: () => ({
+    lendingPool1: "CPOOL1",
+    lendingPool2: "CPOOL2",
+  }),
+  getLendingPoolContractId: (assetCode: string) =>
+    ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD", "KTB"].includes(assetCode)
+      ? "CPOOL2"
+      : "CPOOL1",
+}));
 vi.mock("@neko/lending", () => ({
   Client: ClientMock,
-  networks: networksMock,
 }));
 vi.mock("@/lib/helpers/stellar/soroswap", () => ({
   getAvailableTokens,

@@ -19,6 +19,9 @@ import { defineConfig } from "vitest/config";
  * `.tsx` component tests, which this config previously had no need to run.
  */
 export default defineConfig({
+  test: {
+    setupFiles: ["./vitest.setup.ts"],
+  },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

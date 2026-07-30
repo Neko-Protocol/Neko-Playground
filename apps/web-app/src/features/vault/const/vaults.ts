@@ -1,4 +1,7 @@
 import type { VaultAsset, VaultConfig } from "../types/vault";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
+
+const contracts = getContracts();
 
 const USDC: VaultAsset = {
   symbol: "USDC",
@@ -52,17 +55,9 @@ export const VAULT_REGISTRY: Record<string, VaultConfig> = {
         },
       ],
       contracts: {
-        vault: "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S",
-        pools: {
-          neko: "CB4HAFD6ECCOQZXOD6FXUVDM3E773LKR5JHVGA3DBJXIWHZUWX2THEDJ",
-          aquarius: "CBJPT2SCZSUJQGBZHHCHLZJX3GVYLOPVUKF53ESH4NFQZMC2UFPDWHRI",
-          soroswap: "CD2TAYCQZEY7U5CTUOV5QSGWHJNN4ZRPRUSMN2KRM2ZE6ZGX5TNU76H2",
-        },
-        strategies: {
-          neko: "CCCEWBCYSIHTGBJ2TUOAFQY63UJ4SWDYTYNAEGXWPB7FP6PRHHGVZJIR",
-          aquarius: "CCGV5QSAFRT6OGBZNCE72I6BAODXLDMWEUYAOBI5ZBLHOURSEGVGFTTZ",
-          soroswap: "CCY5WW3VXVJDBBXNYXCCH33XTQICHPU6RPFWYJJCT4PTYPN3SXJN2XBJ",
-        },
+        vault: contracts.vault,
+        pools: contracts.vaultPools,
+        strategies: contracts.strategies,
       },
       liquidity:
         "Withdrawals are available at any time, subject to liquidity conditions across underlying protocols.",

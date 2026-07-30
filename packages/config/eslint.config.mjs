@@ -16,6 +16,21 @@ const eslintConfig = [
 		},
 	},
 	{
+		files: ["apps/web-app/src/**/*.{ts,tsx}"],
+		rules: {
+			"no-restricted-syntax": [
+				"error",
+				{
+					selector:
+						"MemberExpression[object.name='networks'][property.name='testnet']",
+					message:
+						"Do not read networks.testnet directly. Use getContracts() from " +
+						"lib/constants/contractsByNetwork.ts so the network is honoured.",
+				},
+			],
+		},
+	},
+	{
 		ignores: [
 			"node_modules/**",
 			".next/**",

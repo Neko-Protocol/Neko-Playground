@@ -11,22 +11,18 @@ import {
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { clientEnv } from "@/lib/env.client";
 import { serverEnv } from "@/lib/env.server";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-const VAULT_CONTRACT_ID =
-  "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
-const NEKO_POOL_CONTRACT =
-  "CB4HAFD6ECCOQZXOD6FXUVDM3E773LKR5JHVGA3DBJXIWHZUWX2THEDJ";
-const AQUARIUS_POOL =
-  "CBJPT2SCZSUJQGBZHHCHLZJX3GVYLOPVUKF53ESH4NFQZMC2UFPDWHRI";
-const AQUARIUS_STRATEGY =
-  "CCGV5QSAFRT6OGBZNCE72I6BAODXLDMWEUYAOBI5ZBLHOURSEGVGFTTZ";
-const SOROSWAP_STRATEGY =
-  "CCY5WW3VXVJDBBXNYXCCH33XTQICHPU6RPFWYJJCT4PTYPN3SXJN2XBJ";
-const NEKO_STRATEGY =
-  "CCCEWBCYSIHTGBJ2TUOAFQY63UJ4SWDYTYNAEGXWPB7FP6PRHHGVZJIR";
+const contracts = getContracts();
+const VAULT_CONTRACT_ID = contracts.vault;
+const NEKO_POOL_CONTRACT = contracts.vaultPools.neko;
+const AQUARIUS_POOL = contracts.vaultPools.aquarius;
+const AQUARIUS_STRATEGY = contracts.strategies.aquarius;
+const SOROSWAP_STRATEGY = contracts.strategies.soroswap;
+const NEKO_STRATEGY = contracts.strategies.neko;
 
 const SCALAR_7 = 10_000_000;
 

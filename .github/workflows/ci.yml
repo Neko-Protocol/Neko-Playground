@@ -39,6 +39,19 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: No hardcoded contract IDs
+        run: |
+          matches=$(grep -rnoE '"C[A-Z2-7]{55}"' apps/web-app/src \
+            | grep -v 'contractsByNetwork.ts' \
+            | grep -v 'assets.config.ts' \
+            | grep -v 'contractsByNetwork.test.ts' \
+            | grep -v 'generated/' || true)
+          if [ -n "$matches" ]; then
+            echo "::error::Hardcoded contract ID outside registry"
+            echo "$matches"
+            exit 1
+          fi
+
       - name: Typecheck
         run: npm run typecheck
 

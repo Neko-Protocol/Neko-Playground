@@ -13,7 +13,7 @@ import {
   getBTokenBalance,
 } from "@/lib/helpers/stellar/lending";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
+import { rpcUrl, stellarNetwork } from "@/lib/constants/network";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { waitForTransaction } from "@/lib/helpers/stellar/waitForTransaction";
 import { usePools, usePoolAction } from "@/lib/orchestrator";

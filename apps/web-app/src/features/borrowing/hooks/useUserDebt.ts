@@ -1,6 +1,14 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
-import { getDTokenBalance, getDTokenRate } from "@/lib/helpers/stellar/lending";
+import {
+  getDTokenBalance,
+  getDTokenRate,
+} from "@/lib/helpers/stellar/lending";
+import {
+  getLendingPoolContractId,
+} from "@/lib/constants/contractsByNetwork";
 
 const SCALAR_12 = 1_000_000_000_000n;
 const STELLAR_DECIMALS = 7;
@@ -16,9 +24,10 @@ async function fetchUserDebt(
   assetCode: string,
   walletAddress: string
 ): Promise<UserDebt> {
+  const contractId = getLendingPoolContractId(assetCode);
   const [dTokens, dRate] = await Promise.all([
-    getDTokenBalance(assetCode, walletAddress),
-    getDTokenRate(assetCode),
+    getDTokenBalance(assetCode, walletAddress, contractId),
+    getDTokenRate(assetCode, contractId),
   ]);
 
   const debtRaw = dRate > 0n ? (dTokens * dRate) / SCALAR_12 : 0n;
