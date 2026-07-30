@@ -38,10 +38,7 @@ export async function waitForTransaction(
     }
 
     if (result.status === "FAILED") {
-      const errorDetails =
-        result.result && typeof result.result === "object"
-          ? JSON.stringify(result.result)
-          : String((result as any).error ?? result.status);
+      const errorDetails = result.status;
 
       throw new TransactionFailedError(
         txHash,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { ChevronDown, Info } from "lucide-react";
 import { AmountInput } from "@/components/AmountInput";
@@ -96,7 +96,7 @@ export const LimitOrderForm: React.FC<LimitOrderFormProps> = ({
   onSubmit,
   disabled,
 }) => {
-  const availableTokens = getAvailableTokens();
+  const availableTokens = useMemo(() => getAvailableTokens(), []);
   const tokenCodes = Object.keys(availableTokens);
 
   const defaultTokenInCode = tokenCodes[0] ?? "XLM";
