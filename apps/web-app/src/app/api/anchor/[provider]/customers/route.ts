@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { getAnchorClient } from "@/lib/anchors";
+import { handleAnchorError } from "@/lib/anchors/handleAnchorError";
+import { bindCustomer, assertOwnsCustomer } from "@/lib/auth/ownership";
+import { requireSession } from "@/lib/auth/requireSession";
+import { assertRateLimit } from "@/lib/rateLimit";
 import { parseJsonBody, parseParam, parseQuery } from "@/lib/validation/parse";
 import {
   CreateCustomerBodySchema,
@@ -14,33 +18,33 @@ export async function POST(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
+    const sessionResult = requireSession(request);
+    if (sessionResult.error) return sessionResult.error;
+    const session = sessionResult.session;
+
     const { provider: providerParam } = await params;
     const providerResult = parseParam(providerParam, ProviderSchema);
     if ("error" in providerResult) return providerResult.error;
     const provider = providerResult.data;
 
+    await assertRateLimit(request, session, "anchor-customers");
+
     const parsed = await parseJsonBody(request, CreateCustomerBodySchema);
     if ("error" in parsed) return parsed.error;
-    const { email, country = "MX", publicKey } = parsed.data;
+    const { email, country = "MX" } = parsed.data;
 
     const client = getAnchorClient(provider);
-    const customer = await client.createCustomer({ email, country, publicKey });
+    const customer = await client.createCustomer({
+      email,
+      country,
+      publicKey: session.publicKey,
+    });
+
+    await bindCustomer(provider, customer.id, session.publicKey);
 
     return NextResponse.json(customer, { status: 201 });
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleAnchorError(error);
   }
 }
 
@@ -49,22 +53,26 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
+    const sessionResult = requireSession(request);
+    if (sessionResult.error) return sessionResult.error;
+    const session = sessionResult.session;
+
     const { provider: providerParam } = await params;
     const providerResult = parseParam(providerParam, ProviderSchema);
     if ("error" in providerResult) return providerResult.error;
     const provider = providerResult.data;
 
+    await assertRateLimit(request, session);
+
     const { searchParams } = new URL(request.url);
     const queryResult = parseQuery(searchParams, GetCustomerQuerySchema);
     if ("error" in queryResult) return queryResult.error;
-    const { email, customerId, country = "MX" } = queryResult.data;
+    const { customerId } = queryResult.data;
+
+    await assertOwnsCustomer(session, provider, customerId);
 
     const client = getAnchorClient(provider);
-    const customer = await client.getCustomer({
-      email: email || undefined,
-      customerId: customerId || undefined,
-      country,
-    });
+    const customer = await client.getCustomer({ customerId });
 
     if (!customer) {
       return NextResponse.json(
@@ -75,18 +83,6 @@ export async function GET(
 
     return NextResponse.json(customer);
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleAnchorError(error);
   }
 }

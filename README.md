@@ -389,7 +389,23 @@ ETHERFUSE_BASE_URL=https://api.sand.etherfuse.com
 ALFREDPAY_API_KEY=
 ALFREDPAY_API_SECRET=
 ALFREDPAY_BASE_URL=https://api-service-co.alfredpay.app/api/v1/third-party-service/penny
+
+# Auth — server-only (required for anchor/automation APIs in production)
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+AUTH_SESSION_SECRET=                    # ≥ 32 chars; signs neko_session cookies
+AUTH_ENFORCEMENT=true                   # set false only for local dev without Redis
 ```
+
+### Wallet session authentication (ramps & automation)
+
+Anchor and automation API routes require a signed-challenge wallet session. See [SECURITY.md](../SECURITY.md) for the full model.
+
+1. Connect a Stellar wallet in the UI (triggers challenge → sign → verify).
+2. The server sets an HttpOnly `neko_session` cookie used by `/api/anchor/**` and `/api/automation/**`.
+3. Customer-scoped ramp calls are authorized against `(provider, customerId) → wallet` bindings created at customer registration.
+
+For local development without Upstash, set `AUTH_ENFORCEMENT=false` (uses in-memory fallbacks; **not for production**).
 
 Available networks:
 

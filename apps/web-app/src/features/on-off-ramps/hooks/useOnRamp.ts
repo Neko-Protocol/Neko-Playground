@@ -20,7 +20,6 @@ export function useOnRamp(provider: AnchorProvider) {
     mutationFn: (data: {
       customerId: string;
       quoteId: string;
-      stellarAddress: string;
       fromCurrency: string;
       toCurrency: string;
       amount: string;

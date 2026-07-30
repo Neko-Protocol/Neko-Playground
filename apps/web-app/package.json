@@ -9,8 +9,9 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "analyze": "ANALYZE=true next build",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run && node scripts/check-anchor-auth.mjs",
+    "test:watch": "vitest",
+    "check:anchor-auth": "node scripts/check-anchor-auth.mjs"
   },
   "dependencies": {
     "@blend-capital/blend-sdk": "^3.2.2",
@@ -31,6 +32,8 @@
     "@stellar/stellar-sdk": "^14.2.0",
     "@stellar/stellar-xdr-json": "^23.0.0",
     "@tanstack/react-query": "^5.62.11",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "animate.css": "^4.1.1",
     "axios": "^1.7.9",
     "chart.js": "^4.4.0",

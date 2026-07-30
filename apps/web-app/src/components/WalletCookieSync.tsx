@@ -6,6 +6,7 @@ import {
   clearWalletAddressCookie,
   setWalletAddressCookie,
 } from "@/lib/wallet-cookie";
+import { setRampWalletPublicKey } from "@/features/on-off-ramps/utils/rampApi";
 
 /**
  * Syncs persisted wallet address to a cookie after zustand rehydrates so
@@ -16,8 +17,10 @@ export function WalletCookieSync() {
     const sync = (address: string | null) => {
       if (address) {
         setWalletAddressCookie(address);
+        setRampWalletPublicKey(address);
       } else {
         clearWalletAddressCookie();
+        setRampWalletPublicKey(null);
       }
     };
 
@@ -32,8 +35,10 @@ export function WalletCookieSync() {
     return useStellarWalletStore.subscribe((state) => {
       if (state.address) {
         setWalletAddressCookie(state.address);
+        setRampWalletPublicKey(state.address);
       } else {
         clearWalletAddressCookie();
+        setRampWalletPublicKey(null);
       }
     });
   }, []);

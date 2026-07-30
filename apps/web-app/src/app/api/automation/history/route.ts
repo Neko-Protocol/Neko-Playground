@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { ActionLogEntry } from "@/features/automation/types/automation";
-
-// In-memory log for demo; swap for a database in production
-declare global {
-  // eslint-disable-next-line no-var
-  var __automationHistory: ActionLogEntry[] | undefined;
-}
-globalThis.__automationHistory ??= [];
-const log = globalThis.__automationHistory;
+import { listHistory } from "@/lib/automation/store";
+import { requireSession } from "@/lib/auth/requireSession";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
+export async function GET(request: NextRequest) {
+  const sessionResult = requireSession(request);
+  if (sessionResult.error) return sessionResult.error;
+
+  const { searchParams } = new URL(request.url);
   const strategyId = searchParams.get("strategyId");
-  const filtered = strategyId
-    ? log.filter((e) => e.strategyId === strategyId)
-    : log;
+  const filtered = await listHistory(
+    sessionResult.session.publicKey,
+    strategyId
+  );
   return NextResponse.json([...filtered].reverse());
 }

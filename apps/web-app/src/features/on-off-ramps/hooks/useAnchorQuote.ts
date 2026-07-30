@@ -20,7 +20,6 @@ export function useAnchorQuote(provider: AnchorProvider) {
       fromAmount?: string;
       toAmount?: string;
       customerId?: string;
-      stellarAddress?: string;
       resourceId?: string;
     }) => {
       const result = await getQuote(provider, params);

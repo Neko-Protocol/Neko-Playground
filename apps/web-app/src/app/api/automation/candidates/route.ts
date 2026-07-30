@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { VenueCandidate } from "@/features/automation/types/automation";
 import { calcNetApyBps } from "@/features/automation/utils/netApy";
+import { requireSession } from "@/lib/auth/requireSession";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -61,7 +62,10 @@ function buildMockCandidates(): VenueCandidate[] {
   return raw.map((r) => ({ ...r, netApyBps: calcNetApyBps(r) }));
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET(request: NextRequest) {
+  const sessionResult = requireSession(request);
+  if (sessionResult.error) return sessionResult.error;
+
   try {
     const candidates = buildMockCandidates();
     return NextResponse.json(candidates);
