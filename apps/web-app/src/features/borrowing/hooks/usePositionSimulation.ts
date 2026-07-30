@@ -115,6 +115,7 @@ export function usePositionSimulation({
   useEffect(() => {
     // Guard: nothing to simulate.
     if (!enabled || !hasInput) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting to the empty state when simulation is disabled/has no input, part of this effect's debounced-simulation lifecycle
       setResult(EMPTY_RESULT);
       setIsStale(false);
       return;

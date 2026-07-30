@@ -87,6 +87,7 @@ export function useLimitOrders(
   // Re-hydrate when wallet address changes (connect / switch).
   useEffect(() => {
     if (!walletAddress) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- re-hydrating from localStorage when walletAddress changes, an external-system sync, not derived state
       setOrders([]);
       return;
     }

@@ -3,29 +3,22 @@ import type { PoolType } from "../types/pool.types";
 import { PoolNotFoundError } from "../types/errors";
 
 export class PoolRegistry {
-  private adapters = new Map<PoolType, BasePoolAdapter>();
-
-  private poolTypeMap = new Map<string, PoolType>();
+  private adapters = new Map<PoolType, BasePoolAdapter[]>();
 
   register(adapter: BasePoolAdapter): void {
-    this.adapters.set(adapter.type, adapter);
-  }
-
-  registerPool(poolId: string, type: PoolType): void {
-    this.poolTypeMap.set(poolId, type);
+    const existing = this.adapters.get(adapter.type);
+    if (existing) {
+      existing.push(adapter);
+    } else {
+      this.adapters.set(adapter.type, [adapter]);
+    }
   }
 
   resolve(poolId: string): BasePoolAdapter {
-    const explicitType = this.poolTypeMap.get(poolId);
-    if (explicitType) {
-      const adapter = this.adapters.get(explicitType);
-      if (adapter) return adapter;
-    }
-
     const prefixMatch = poolId.match(/^(\w+):/);
     if (prefixMatch) {
       const type = prefixMatch[1] as PoolType;
-      const adapter = this.adapters.get(type);
+      const adapter = this.adapters.get(type)?.[0];
       if (adapter) return adapter;
     }
 
@@ -38,15 +31,7 @@ export class PoolRegistry {
   }
 
   getAdapters(): BasePoolAdapter[] {
-    return [...this.adapters.values()];
-  }
-
-  listRegisteredPools(): string[] {
-    return [...this.poolTypeMap.keys()];
-  }
-
-  hasAdapter(type: PoolType): boolean {
-    return this.adapters.has(type);
+    return [...this.adapters.values()].flat();
   }
 }
 

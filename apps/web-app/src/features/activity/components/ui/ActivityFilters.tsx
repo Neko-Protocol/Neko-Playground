@@ -11,13 +11,16 @@ export function ActivityFiltersControl({
   filters,
   onChange,
 }: ActivityFiltersProps) {
-  const sources = [
+  const sources: { value: "swap" | "automation" | "vault"; label: string }[] = [
     { value: "swap", label: "Swap" },
     { value: "automation", label: "Automation" },
     { value: "vault", label: "Vault" },
   ];
 
-  const dateRanges = [
+  const dateRanges: {
+    value: "today" | "7d" | "30d" | "all";
+    label: string;
+  }[] = [
     { value: "today", label: "Today" },
     { value: "7d", label: "Last 7 Days" },
     { value: "30d", label: "Last 30 Days" },
@@ -41,13 +44,11 @@ export function ActivityFiltersControl({
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between mb-6">
       <div className="flex flex-wrap gap-2">
         {sources.map((source) => {
-          const isActive = (filters.sources || []).includes(
-            source.value as any
-          );
+          const isActive = (filters.sources || []).includes(source.value);
           return (
             <button
               key={source.value}
-              onClick={() => toggleSource(source.value as any)}
+              onClick={() => toggleSource(source.value)}
               className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
                 isActive
                   ? "bg-white text-black font-medium"
@@ -66,9 +67,7 @@ export function ActivityFiltersControl({
           return (
             <button
               key={range.value}
-              onClick={() =>
-                onChange({ ...filters, dateRange: range.value as any })
-              }
+              onClick={() => onChange({ ...filters, dateRange: range.value })}
               className={`px-3 py-1 text-sm rounded-md transition-colors ${
                 isActive
                   ? "bg-[#2a2a2a] text-white"
