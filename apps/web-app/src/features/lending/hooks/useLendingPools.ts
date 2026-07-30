@@ -9,12 +9,13 @@ import {
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { parseInterestRateFromContractResult } from "@/lib/helpers/lendingUtils";
+import { fetchUsdPriceMap } from "@/lib/helpers/priceUtils";
 
 export interface LendingPool {
   asset: string;
   assetCode: string;
   poolBalance: string;
-  poolBalanceUSD: string;
+  poolBalanceUSD: number | null;
   interestRate: number;
   bTokenRate: string;
   isActive: boolean;
@@ -23,21 +24,14 @@ export interface LendingPool {
 
 /** Deposit assets for each pool */
 const POOL1_ASSETS = ["USDC", "XLM"];
-const POOL2_ASSETS = [
-  "USTRY",
-  "TESOURO",
-  "CETES",
-  "USDY",
-  "PYUSD",
-  "KTB",
-];
+const POOL2_ASSETS = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD", "KTB"];
 
 async function fetchLendingPools(
   client: RwaLendingClient,
   contractId: string,
   assetCodes: string[],
   availableTokens: ReturnType<typeof getAvailableTokens>
-): Promise<LendingPool[]> {
+): Promise<Omit<LendingPool, "poolBalanceUSD">[]> {
   let poolState;
   try {
     const poolStateTx = await client.get_pool_state({ simulate: true });
@@ -48,7 +42,7 @@ async function fetchLendingPools(
 
   if (poolState?.tag !== "Active") return [];
 
-  const pools: LendingPool[] = [];
+  const pools: Omit<LendingPool, "poolBalanceUSD">[] = [];
 
   for (const assetCode of assetCodes) {
     try {
@@ -106,7 +100,6 @@ async function fetchLendingPools(
         asset: token.contract,
         assetCode,
         poolBalance,
-        poolBalanceUSD: "Calculating...",
         interestRate,
         bTokenRate,
         isActive: true,
@@ -140,7 +133,8 @@ export const useLendingPools = () => {
         ...clientOptions,
       });
 
-      const [pool1Pools, pool2Pools] = await Promise.all([
+      const [priceMap, pool1Pools, pool2Pools] = await Promise.all([
+        fetchUsdPriceMap([...POOL1_ASSETS, ...POOL2_ASSETS]),
         fetchLendingPools(
           pool1Client,
           networks.testnet.pool1ContractId,
@@ -155,7 +149,14 @@ export const useLendingPools = () => {
         ),
       ]);
 
-      return [...pool1Pools, ...pool2Pools];
+      return [...pool1Pools, ...pool2Pools].map((pool) => {
+        const price = priceMap[pool.assetCode] ?? null;
+        return {
+          ...pool,
+          poolBalanceUSD:
+            price !== null ? parseFloat(pool.poolBalance) * price : null,
+        };
+      });
     },
     [availableTokens]
   );

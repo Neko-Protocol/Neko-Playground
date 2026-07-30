@@ -6,7 +6,7 @@ export interface BorrowPool {
   collateralFactor: number;
   interestRate: number;
   poolBalance: string;
-  poolBalanceUSD: string;
+  poolBalanceUSD: number | null;
   isActive: boolean;
   contractId: string;
 }
