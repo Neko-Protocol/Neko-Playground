@@ -1,16 +1,24 @@
 /**
  * Tests for SoroswapPoolAdapter — the orchestrator adapter that maps SoroSwap
- * pools into the unified PoolInfo shape and builds add-liquidity (deposit)
- * transactions (issue #255).
+ * pools into the unified PoolInfo shape and builds add/remove-liquidity
+ * (deposit/withdraw) transactions (issues #255, #283).
  *
- * The SoroSwap helpers (getPool, addLiquidity, getAvailableTokens) are mocked so
- * no network / stellar-sdk code runs. The tests characterize the adapter's own
- * transformation logic: pool-id parsing, token resolution, reserve/TVL/unit
- * normalization, the deposit build args, and the unsupported-action guards.
+ * The SoroSwap helpers (getPool, addLiquidity, removeLiquidity, getUserPositions,
+ * getAvailableTokens) are mocked so no network / stellar-sdk code runs. The tests
+ * characterize the adapter's own transformation logic: pool-id parsing, token
+ * resolution, reserve/TVL/unit normalization, deposit/withdraw build args,
+ * position lookup (including orientation swap), and the unsupported-action guards.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { getPool, addLiquidity, getAvailableTokens, tokens } = vi.hoisted(() => {
+const {
+  getPool,
+  addLiquidity,
+  removeLiquidity,
+  getUserPositions,
+  getAvailableTokens,
+  tokens,
+} = vi.hoisted(() => {
   const tokens = {
     XLM: {
       contract: "CXLMCONTRACT0000000000000000000000000000000000000000000",
@@ -28,6 +36,8 @@ const { getPool, addLiquidity, getAvailableTokens, tokens } = vi.hoisted(() => {
   return {
     getPool: vi.fn(),
     addLiquidity: vi.fn(),
+    removeLiquidity: vi.fn(),
+    getUserPositions: vi.fn(),
     getAvailableTokens: vi.fn(() => tokens),
     tokens,
   };
@@ -36,12 +46,64 @@ const { getPool, addLiquidity, getAvailableTokens, tokens } = vi.hoisted(() => {
 vi.mock("@/lib/helpers/stellar/soroswap", () => ({
   getPool,
   addLiquidity,
+  removeLiquidity,
+  getUserPositions,
   getAvailableTokens,
 }));
 
 import { SoroswapPoolAdapter } from "../SoroswapPoolAdapter";
 import { AdapterError, UnsupportedActionError } from "../../types/errors";
 import { networkPassphrase } from "@/lib/constants/network";
+
+const mockUserPosition = {
+  poolInformation: {
+    protocol: "soroswap" as const,
+    address: "CPOOLADDR",
+    tokenA: {
+      address: tokens.XLM.contract,
+      name: "Stellar Lumens",
+      symbol: "XLM",
+    },
+    tokenB: {
+      address: tokens.USDC.contract,
+      name: "USD Coin",
+      symbol: "USDC",
+    },
+    reserveA: "30000000",
+    reserveB: "5000000",
+    totalSupply: "1000000",
+    ledger: 42,
+  },
+  userPosition: "100000",
+  userShares: 5,
+  tokenAAmountEquivalent: "3000000",
+  tokenBAmountEquivalent: "500000",
+};
+
+const unrelatedPosition = {
+  poolInformation: {
+    protocol: "soroswap" as const,
+    address: "COTHERPOOL",
+    tokenA: {
+      address: "COTHERTOKENA000000000000000000000000000000000000000",
+      name: "Other A",
+      symbol: "OTA",
+    },
+    tokenB: {
+      address: "COTHERTOKENB000000000000000000000000000000000000000",
+      name: "Other B",
+      symbol: "OTB",
+    },
+    reserveA: "1",
+    reserveB: "1",
+    totalSupply: "1",
+    ledger: 1,
+  },
+  userPosition: "999",
+  userShares: 1,
+  tokenAAmountEquivalent: "1",
+  tokenBAmountEquivalent: "1",
+};
 
 let adapter: SoroswapPoolAdapter;
 
@@ -151,31 +213,157 @@ describe("SoroswapPoolAdapter – deposit", () => {
 });
 
 describe("SoroswapPoolAdapter – unsupported actions & guards", () => {
-  it("rejects withdraw as an unsupported action", async () => {
-    await expect(adapter.withdraw()).rejects.toBeInstanceOf(
-      UnsupportedActionError
-    );
-  });
-
   it("rejects claimRewards as an unsupported action", async () => {
     await expect(adapter.claimRewards()).rejects.toBeInstanceOf(
       UnsupportedActionError
     );
   });
 
-  it("reports supportsAction for deposit but not withdraw or claimRewards", () => {
+  it("reports supportsAction for deposit and withdraw but not claimRewards", () => {
     expect(adapter.supportsAction("deposit")).toBe(true);
-    expect(adapter.supportsAction("withdraw")).toBe(false);
+    expect(adapter.supportsAction("withdraw")).toBe(true);
     expect(adapter.supportsAction("claimRewards")).toBe(false);
   });
+});
 
-  it("returns an empty zeroed position for getUserPosition", async () => {
+describe("SoroswapPoolAdapter – getUserPosition", () => {
+  it("returns the matching position with correct orientation (tokenA = XLM)", async () => {
+    getUserPositions.mockResolvedValue([unrelatedPosition, mockUserPosition]);
+
     const position = await adapter.getUserPosition("XLM-USDC", "GUSER_ADDRESS");
+
+    expect(getUserPositions).toHaveBeenCalledWith("GUSER_ADDRESS");
+    expect(position).toMatchObject({
+      poolId: "soroswap:XLM-USDC",
+      deposited: 3000000n,
+      depositedFormatted: "0.3",
+      rewards: 0n,
+    });
+  });
+
+  it("picks the XLM-equivalent amount when pool orientation is reversed", async () => {
+    const reversedPosition = {
+      ...mockUserPosition,
+      poolInformation: {
+        ...mockUserPosition.poolInformation,
+        tokenA: {
+          address: tokens.USDC.contract,
+          name: "USD Coin",
+          symbol: "USDC",
+        },
+        tokenB: {
+          address: tokens.XLM.contract,
+          name: "Stellar Lumens",
+          symbol: "XLM",
+        },
+        // With orientation swapped, tokenBAmountEquivalent is the XLM value
+        reserveA: mockUserPosition.poolInformation.reserveB,
+        reserveB: mockUserPosition.poolInformation.reserveA,
+      },
+      tokenAAmountEquivalent: "500000",
+      tokenBAmountEquivalent: "3000000",
+    };
+    getUserPositions.mockResolvedValue([reversedPosition]);
+
+    const position = await adapter.getUserPosition("XLM-USDC", "GUSER_ADDRESS");
+
+    expect(position).toMatchObject({
+      poolId: "soroswap:XLM-USDC",
+      deposited: 3000000n,
+      depositedFormatted: "0.3",
+      rewards: 0n,
+    });
+  });
+
+  it("returns a zeroed empty position when no matching pool is found", async () => {
+    getUserPositions.mockResolvedValue([unrelatedPosition]);
+
+    const position = await adapter.getUserPosition("XLM-USDC", "GUSER_ADDRESS");
+
     expect(position).toMatchObject({
       poolId: "soroswap:XLM-USDC",
       deposited: 0n,
       depositedFormatted: "0",
       rewards: 0n,
     });
+  });
+
+  it("swallows lookup failures and returns a zeroed empty position", async () => {
+    getUserPositions.mockRejectedValue(new Error("rpc down"));
+
+    await expect(
+      adapter.getUserPosition("XLM-USDC", "GUSER_ADDRESS")
+    ).resolves.toMatchObject({
+      poolId: "soroswap:XLM-USDC",
+      deposited: 0n,
+      depositedFormatted: "0",
+      rewards: 0n,
+    });
+  });
+});
+
+describe("SoroswapPoolAdapter – withdraw", () => {
+  it("builds a partial withdraw with proportional LP shares and 95% min amounts", async () => {
+    getUserPositions.mockResolvedValue([mockUserPosition]);
+    removeLiquidity.mockResolvedValue({ xdr: "REMOVE_LIQ_XDR" });
+
+    const result = await adapter.withdraw(
+      "XLM-USDC",
+      "GUSER_ADDRESS",
+      1500000n
+    );
+
+    expect(removeLiquidity).toHaveBeenCalledWith({
+      assetA: tokens.XLM.contract,
+      assetB: tokens.USDC.contract,
+      liquidity: "50000",
+      amountA: "1425000",
+      amountB: "237500",
+      to: "GUSER_ADDRESS",
+      slippageBps: 500,
+    });
+    expect(result).toEqual({ xdr: "REMOVE_LIQ_XDR", networkPassphrase });
+  });
+
+  it("uses the exact LP balance for a full withdraw", async () => {
+    getUserPositions.mockResolvedValue([mockUserPosition]);
+    removeLiquidity.mockResolvedValue({ xdr: "REMOVE_LIQ_XDR" });
+
+    await adapter.withdraw("XLM-USDC", "GUSER_ADDRESS", 3000000n);
+
+    expect(removeLiquidity).toHaveBeenCalledWith({
+      assetA: tokens.XLM.contract,
+      assetB: tokens.USDC.contract,
+      liquidity: "100000",
+      amountA: "2850000",
+      amountB: "475000",
+      to: "GUSER_ADDRESS",
+      slippageBps: 500,
+    });
+  });
+
+  it("rejects when no position is found", async () => {
+    getUserPositions.mockResolvedValue([]);
+
+    await expect(
+      adapter.withdraw("XLM-USDC", "GUSER_ADDRESS", 1n)
+    ).rejects.toBeInstanceOf(AdapterError);
+  });
+
+  it("rejects when the amount exceeds the deposited balance", async () => {
+    getUserPositions.mockResolvedValue([mockUserPosition]);
+
+    await expect(
+      adapter.withdraw("XLM-USDC", "GUSER_ADDRESS", 4000000n)
+    ).rejects.toBeInstanceOf(AdapterError);
+  });
+
+  it("wraps removeLiquidity failures in an AdapterError", async () => {
+    getUserPositions.mockResolvedValue([mockUserPosition]);
+    removeLiquidity.mockRejectedValue(new Error("simulation failed"));
+
+    await expect(
+      adapter.withdraw("XLM-USDC", "GUSER_ADDRESS", 1500000n)
+    ).rejects.toBeInstanceOf(AdapterError);
   });
 });

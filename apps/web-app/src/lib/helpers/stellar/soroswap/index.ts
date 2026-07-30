@@ -8,6 +8,11 @@ export type {
   SendResponse,
   AddLiquidityRequest,
   AddLiquidityResponse,
+  RemoveLiquidityRequest,
+  RemoveLiquidityResponse,
+  PoolPositionAsset,
+  PoolPositionInfo,
+  UserPositionInfo,
   PoolInfo,
   GetPoolRequest,
 } from "../../../types/soroswapTypes";
@@ -34,4 +39,6 @@ export {
   buildTransaction,
   sendTransaction,
   addLiquidity,
+  removeLiquidity,
+  getUserPositions,
 } from "./quotes";
