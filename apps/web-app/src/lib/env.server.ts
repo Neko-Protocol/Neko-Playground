@@ -38,6 +38,9 @@ const serverSchema = z.object({
   ALFREDPAY_API_KEY: z.string().optional(),
   ALFREDPAY_API_SECRET: z.string().optional(),
   ALFREDPAY_BASE_URL: z.string().url().optional(),
+
+  // Lending admin UI gate (server-only; Stellar public key, not a secret)
+  LENDING_ADMIN_ADDRESS: z.string().optional(),
 });
 
 const parsed = serverSchema.safeParse({
@@ -49,6 +52,7 @@ const parsed = serverSchema.safeParse({
   ALFREDPAY_API_KEY: process.env.ALFREDPAY_API_KEY,
   ALFREDPAY_API_SECRET: process.env.ALFREDPAY_API_SECRET,
   ALFREDPAY_BASE_URL: process.env.ALFREDPAY_BASE_URL,
+  LENDING_ADMIN_ADDRESS: process.env.LENDING_ADMIN_ADDRESS,
 });
 
 if (!parsed.success) {

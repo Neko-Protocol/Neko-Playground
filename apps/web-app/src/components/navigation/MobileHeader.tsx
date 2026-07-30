@@ -9,15 +9,19 @@ import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./sidebarConfig";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
-import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { truncateAddress } from "@/lib/utils";
 import { useActivityFeed } from "@/features/activity/hooks/useActivityFeed";
 import { clientEnv } from "@/lib/env.client";
 
 const IS_TESTNET = clientEnv.stellarNetwork === "TESTNET";
-const ADMIN_ADDRESS = clientEnv.lendingAdminAddress;
 
-export function MobileHeader() {
+interface MobileHeaderProps {
+  lendingAdminAddress?: string;
+}
+
+export function MobileHeader({
+  lendingAdminAddress = "",
+}: MobileHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
   const pathname = usePathname();
@@ -35,11 +39,13 @@ export function MobileHeader() {
       const adminOnly = "adminOnly" in item && item.adminOnly;
       // Admin link: ONLY show when admin is configured AND connected wallet is admin
       if (adminOnly) {
-        return Boolean(ADMIN_ADDRESS && activeAddress === ADMIN_ADDRESS);
+        return Boolean(
+          lendingAdminAddress && activeAddress === lendingAdminAddress
+        );
       }
       return true;
     });
-  }, [activeAddress]);
+  }, [activeAddress, lendingAdminAddress]);
 
   const isActive = (href: string) =>
     href === "/dashboard"

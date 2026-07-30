@@ -3,6 +3,10 @@
 import { getStellarWalletKit } from "@/lib/helpers/stellar/wallet";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  clearWalletAddressCookie,
+  setWalletAddressCookie,
+} from "@/lib/wallet-cookie";
 
 export function useStellarWallet() {
   const { address, walletName, setWallet, clearWallet } =
@@ -15,6 +19,7 @@ export function useStellarWallet() {
     // v2 authModal returns { address } directly — no callback needed.
     const { address: walletAddress } = await Kit.authModal();
     setWallet({ address: walletAddress, walletName: "Stellar Wallet" });
+    setWalletAddressCookie(walletAddress);
   };
 
   const disconnect = async () => {
@@ -48,6 +53,7 @@ export function useStellarWallet() {
     });
 
     clearWallet();
+    clearWalletAddressCookie();
   };
 
   return {
