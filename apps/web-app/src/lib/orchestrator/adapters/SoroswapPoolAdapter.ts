@@ -261,7 +261,7 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
 
     try {
       const match = await findUserPoolPosition(userAddress, tokenA, tokenB);
-      if (!match) {
+      if (!match || BigInt(match.position.userPosition) <= 0n) {
         throw new Error("No SoroSwap liquidity position found for this pool.");
       }
 
@@ -278,7 +278,7 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
           : position.tokenAAmountEquivalent
       );
 
-      if (userLpShares <= 0n || ourTokenEquivalent <= 0n) {
+      if (ourTokenEquivalent <= 0n) {
         throw new Error("No SoroSwap liquidity position found for this pool.");
       }
 

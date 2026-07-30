@@ -178,24 +178,27 @@ const getDirectPoolQuote = async (
   };
 };
 
+function resolveApiNetwork(): string {
+  const network = getCurrentNetwork();
+  return network === "standalone" || network === "local" ? "testnet" : network;
+}
+
+function assertValidContractAddress(address: string, label: string): void {
+  if (!isValidContractAddress(address)) {
+    throw new Error(
+      `Invalid contract address for ${label}: ${address}. Contract addresses must start with 'C' and be 56 characters long.`
+    );
+  }
+}
+
 export const getPool = async (request: GetPoolRequest): Promise<PoolInfo[]> => {
   const tokenA = formatTokenForAPI(request.tokenA);
   const tokenB = formatTokenForAPI(request.tokenB);
 
-  if (!isValidContractAddress(tokenA)) {
-    throw new Error(
-      `Invalid contract address for tokenA: ${tokenA}. Contract addresses must start with 'C' and be 56 characters long.`
-    );
-  }
-  if (!isValidContractAddress(tokenB)) {
-    throw new Error(
-      `Invalid contract address for tokenB: ${tokenB}. Contract addresses must start with 'C' and be 56 characters long.`
-    );
-  }
+  assertValidContractAddress(tokenA, "tokenA");
+  assertValidContractAddress(tokenB, "tokenB");
 
-  const network = getCurrentNetwork();
-  const apiNetwork =
-    network === "standalone" || network === "local" ? "testnet" : network;
+  const apiNetwork = resolveApiNetwork();
 
   const protocols = request.protocols || ["soroswap"];
   const protocolParam = protocols
@@ -534,16 +537,8 @@ export const addLiquidity = async (
   const assetA = formatTokenForAPI(request.assetA);
   const assetB = formatTokenForAPI(request.assetB);
 
-  if (!isValidContractAddress(assetA)) {
-    throw new Error(
-      `Invalid contract address for assetA: ${assetA}. Contract addresses must start with 'C' and be 56 characters long.`
-    );
-  }
-  if (!isValidContractAddress(assetB)) {
-    throw new Error(
-      `Invalid contract address for assetB: ${assetB}. Contract addresses must start with 'C' and be 56 characters long.`
-    );
-  }
+  assertValidContractAddress(assetA, "assetA");
+  assertValidContractAddress(assetB, "assetB");
 
   const amountA = toSmallestUnit(request.amountA, 7);
   const amountB = toSmallestUnit(request.amountB, 7);
@@ -559,9 +554,7 @@ export const addLiquidity = async (
     );
   }
 
-  const network = getCurrentNetwork();
-  const apiNetwork =
-    network === "standalone" || network === "local" ? "testnet" : network;
+  const apiNetwork = resolveApiNetwork();
 
   const queryParams = new URLSearchParams({
     network: apiNetwork,
@@ -643,20 +636,10 @@ export const removeLiquidity = async (
   const assetA = formatTokenForAPI(request.assetA);
   const assetB = formatTokenForAPI(request.assetB);
 
-  if (!isValidContractAddress(assetA)) {
-    throw new Error(
-      `Invalid contract address for assetA: ${assetA}. Contract addresses must start with 'C' and be 56 characters long.`
-    );
-  }
-  if (!isValidContractAddress(assetB)) {
-    throw new Error(
-      `Invalid contract address for assetB: ${assetB}. Contract addresses must start with 'C' and be 56 characters long.`
-    );
-  }
+  assertValidContractAddress(assetA, "assetA");
+  assertValidContractAddress(assetB, "assetB");
 
-  const network = getCurrentNetwork();
-  const apiNetwork =
-    network === "standalone" || network === "local" ? "testnet" : network;
+  const apiNetwork = resolveApiNetwork();
 
   const endpoint = `/liquidity/remove?${new URLSearchParams({ network: apiNetwork }).toString()}`;
 
@@ -714,9 +697,7 @@ export const removeLiquidity = async (
 export const getUserPositions = async (
   userAddress: string
 ): Promise<UserPositionInfo[]> => {
-  const network = getCurrentNetwork();
-  const apiNetwork =
-    network === "standalone" || network === "local" ? "testnet" : network;
+  const apiNetwork = resolveApiNetwork();
 
   const endpoint = `/liquidity/positions/${userAddress}?${new URLSearchParams({ network: apiNetwork }).toString()}`;
 
