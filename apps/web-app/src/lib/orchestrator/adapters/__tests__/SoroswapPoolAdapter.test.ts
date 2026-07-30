@@ -136,7 +136,7 @@ describe("SoroswapPoolAdapter – getPoolInfo", () => {
       type: "soroswap",
       name: "XLM / USDC",
       state: "active",
-      tvl: 35000000n,
+      tvl: 80000000n,
       apy: 0,
       supportedActions: ["deposit", "withdraw"],
     });
@@ -147,6 +147,22 @@ describe("SoroswapPoolAdapter – getPoolInfo", () => {
       reserveBFormatted: "5",
       ledger: 42,
     });
+  });
+
+  it("normalizes reserveB onto tokenA's decimals before summing into tvl, so mismatched-decimal pairs don't produce a meaningless magnitude", async () => {
+    getPool.mockResolvedValue([
+      {
+        address: "CPOOLADDR",
+        protocol: "soroswap",
+        reserveA: "10000000", // 1 XLM (7 decimals)
+        reserveB: "2000000", // 2 USDC (6 decimals)
+        ledger: 42,
+      },
+    ]);
+
+    const info = await adapter.getPoolInfo("XLM-USDC");
+
+    expect(info.tvl).toBe(30000000n);
   });
 
   it("returns an 'unknown' placeholder pool when SoroSwap has no matching pool", async () => {

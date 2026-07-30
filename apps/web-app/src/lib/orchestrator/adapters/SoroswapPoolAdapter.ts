@@ -46,6 +46,18 @@ function resolveToken(code: string): TokenInfo {
   };
 }
 
+function normalizeToDecimals(
+  amount: bigint,
+  fromDecimals: number,
+  toDecimals: number
+): bigint {
+  if (fromDecimals === toDecimals) return amount;
+  if (fromDecimals < toDecimals) {
+    return amount * 10n ** BigInt(toDecimals - fromDecimals);
+  }
+  return amount / 10n ** BigInt(fromDecimals - toDecimals);
+}
+
 async function findUserPoolPosition(
   userAddress: string,
   tokenA: TokenInfo,
@@ -112,13 +124,22 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       const pool = pools[0];
       const reserveA = BigInt(pool.reserveA);
       const reserveB = BigInt(pool.reserveB);
+      // tvl mixes two tokens' raw reserves — normalize reserveB onto tokenA's
+      // decimals first so pairs with different decimals don't produce a
+      // meaningless magnitude (every consumer of `tvl` formats it using
+      // tokens[0].decimals, so that's the basis to normalize onto).
+      const normalizedReserveB = normalizeToDecimals(
+        reserveB,
+        tokenB.decimals,
+        tokenA.decimals
+      );
 
       return {
         id: `soroswap:${poolId}`,
         type: "soroswap",
         name: `${codeA} / ${codeB}`,
         tokens: [tokenA, tokenB],
-        tvl: reserveA + reserveB,
+        tvl: reserveA + normalizedReserveB,
         apy: 0,
         state: "active",
         supportedActions: SUPPORTED_ACTIONS,
