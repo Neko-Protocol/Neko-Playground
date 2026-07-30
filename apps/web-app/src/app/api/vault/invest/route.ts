@@ -69,9 +69,11 @@ async function sendTx(
   server: rpc.Server,
   networkPassphrase: string
 ): Promise<{ hash: string; status: string }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @neko/defindex-vault doesn't currently resolve (separate pre-existing workspace package-naming issue), so the real SDK types can't be verified here
   if ((assembledTx.simulation as any)?.error) {
     return {
       hash: "",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @neko/defindex-vault doesn't currently resolve (separate pre-existing workspace package-naming issue), so the real SDK types can't be verified here
       status: `sim_error: ${(assembledTx.simulation as any).error}`,
     };
   }
@@ -138,6 +140,7 @@ async function investIdle(
   networkPassphrase: string
 ) {
   const fundsTx = await client.fetch_total_managed_funds({ simulate: true });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @neko/defindex-vault doesn't currently resolve (separate pre-existing workspace package-naming issue), so the real SDK types can't be verified here
   let funds = fundsTx.result as any;
   if (funds?.tag === "ok") funds = funds.value;
   else if (typeof funds?.unwrap === "function") funds = funds.unwrap();
@@ -162,6 +165,7 @@ async function investIdle(
       caller: keypair.publicKey(),
       instructions: [{ tag: "Invest", values: [addr, amount] }],
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @neko/defindex-vault doesn't currently resolve (separate pre-existing workspace package-naming issue), so the real SDK types can't be verified here
     const result = await sendTx(tx as any, keypair, server, networkPassphrase);
     results.push({ strategy: name, ...result });
   }
@@ -180,6 +184,7 @@ async function collectFees(
   // 1. report() — track gains/losses per strategy since last call
   try {
     const reportTx = await client.report();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @neko/defindex-vault doesn't currently resolve (separate pre-existing workspace package-naming issue), so the real SDK types can't be verified here
     const r = await sendTx(reportTx as any, keypair, server, networkPassphrase);
     results.push({ step: "report", ...r });
     if (r.status !== "SUCCESS") return { results, feesCollected: false };
@@ -191,6 +196,7 @@ async function collectFees(
   // 2. lock_fees() — separate accrued gains as manager fees
   try {
     const lockTx = await client.lock_fees({ new_fee_bps: undefined });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @neko/defindex-vault doesn't currently resolve (separate pre-existing workspace package-naming issue), so the real SDK types can't be verified here
     const r = await sendTx(lockTx as any, keypair, server, networkPassphrase);
     results.push({ step: "lock_fees", ...r });
     if (r.status !== "SUCCESS") return { results, feesCollected: false };
@@ -204,6 +210,7 @@ async function collectFees(
     const distTx = await client.distribute_fees({
       caller: keypair.publicKey(),
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @neko/defindex-vault doesn't currently resolve (separate pre-existing workspace package-naming issue), so the real SDK types can't be verified here
     const r = await sendTx(distTx as any, keypair, server, networkPassphrase);
     results.push({ step: "distribute_fees", ...r });
     return { results, feesCollected: r.status === "SUCCESS" };
@@ -228,12 +235,14 @@ export async function GET() {
     });
 
     const fundsTx = await client.fetch_total_managed_funds({ simulate: true });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @neko/defindex-vault doesn't currently resolve (separate pre-existing workspace package-naming issue), so the real SDK types can't be verified here
     let funds = fundsTx.result as any;
     if (funds?.tag === "ok") funds = funds.value;
     else if (typeof funds?.unwrap === "function") funds = funds.unwrap();
 
     const idleAmount = Number(BigInt(funds[0].idle_amount.toString())) / 1e7;
     const totalAmount = Number(BigInt(funds[0].total_amount.toString())) / 1e7;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @neko/defindex-vault doesn't currently resolve (separate pre-existing workspace package-naming issue), so the real SDK types can't be verified here
     const allocations = funds[0].strategy_allocations.map((a: any) => ({
       strategy: a.strategy_address,
       amount: Number(BigInt(a.amount.toString())) / 1e7,

@@ -481,6 +481,7 @@ export const buildTransaction = async (
 
     const buildResponse = await soroswapSDK.build(
       {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- sdkQuote is intentionally untyped (see comment above); reconciling it with the SDK's own QuoteResponse shape needs deeper verification than a quick retype
         quote: sdkQuote as any,
         from: request.from,
       },

@@ -43,6 +43,7 @@ export function useSwapQuote(
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads API key config from an external source once on mount, not derived state
     setApiKeyConfigured(hasApiKey());
   }, []);
 
@@ -120,6 +121,7 @@ export function useSwapQuote(
       parsedAmount > 0;
 
     if (!isValid || !address) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting to the empty/no-quote state when inputs become invalid, part of this effect's debounced quote-fetch lifecycle
       setAmountOut("0.0");
       setQuoteError(null);
       return;
