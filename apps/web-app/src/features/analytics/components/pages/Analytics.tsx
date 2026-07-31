@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { useWallet } from "@/hooks/useWallet";
@@ -13,18 +14,28 @@ import { SummaryCards } from "../ui/SummaryCards";
 import { TimeWindowSelector } from "../ui/TimeWindowSelector";
 import { NavChart } from "../ui/NavChart";
 import { EarningsBreakdownTable } from "../ui/EarningsBreakdownTable";
-import { AllocationDonut } from "../ui/AllocationDonut";
 import { CorrelationHeatmap } from "../ui/CorrelationHeatmap";
 import { RiskPanel } from "../ui/RiskPanel";
 import { StressSimulator } from "../ui/StressSimulator";
 import { YieldForecastPanel } from "../ui/YieldForecast";
 import type { TimeWindow } from "../../types/analytics";
 
+// Chart.js is heavy and only needed here — load it in its own chunk,
+// client-side only, with a skeleton while it streams in.
+const AllocationDonut = dynamic(
+  () => import("../ui/AllocationDonut").then((m) => m.AllocationDonut),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[220px] animate-pulse rounded-xl bg-white/5" />
+    ),
+  }
+);
+
 const Analytics: React.FC = () => {
   const { address } = useWallet();
-  const [activeWindow, setActiveWindow] = useState<TimeWindow>(
-    DEFAULT_TIME_WINDOW
-  );
+  const [activeWindow, setActiveWindow] =
+    useState<TimeWindow>(DEFAULT_TIME_WINDOW);
 
   const { data: earnings, isLoading: earningsLoading } =
     useEarnings(activeWindow);
@@ -70,7 +81,9 @@ const Analytics: React.FC = () => {
 
       {/* Time window + summary cards */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h2 className="text-white/60 text-sm font-medium">Portfolio Overview</h2>
+        <h2 className="text-white/60 text-sm font-medium">
+          Portfolio Overview
+        </h2>
         <TimeWindowSelector value={activeWindow} onChange={setActiveWindow} />
       </div>
 
@@ -87,10 +100,7 @@ const Analytics: React.FC = () => {
         <NavChart data={nav?.series ?? []} isLoading={navLoading} />
 
         {/* Earnings breakdown table */}
-        <EarningsBreakdownTable
-          data={earnings}
-          isLoading={earningsLoading}
-        />
+        <EarningsBreakdownTable data={earnings} isLoading={earningsLoading} />
 
         {/* Allocation + Correlation — side by side on wide screens */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

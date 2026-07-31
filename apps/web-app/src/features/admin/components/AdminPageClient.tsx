@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { BannerPage } from "@/components/ui/BannerPage";
-import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
+import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModalLazy";
 import PoolStateToggle from "./PoolStateToggle";
 import TreasuryFeesTable from "./TreasuryFeesTable";
 import CollateralFactorForm from "./CollateralFactorForm";

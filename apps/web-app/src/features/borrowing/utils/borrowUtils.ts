@@ -1,4 +1,4 @@
-import { formatLiquidity } from "@/lib/helpers/formatUtils";
+import { formatUsd } from "@/lib/helpers/formatUtils";
 import type { BorrowPool, BorrowTableAsset } from "../types/borrowing";
 
 export function calculateBorrowLimit(
@@ -13,7 +13,7 @@ export function calculateBorrowLimit(
 
 export function poolsToTableAssets(pools: BorrowPool[]): BorrowTableAsset[] {
   return pools.map((pool, index) => {
-    const liquidity = formatLiquidity(pool.poolBalance);
+    const liquidity = formatUsd(pool.poolBalanceUSD);
     return {
       id: `borrow-${index}`,
       pool: {

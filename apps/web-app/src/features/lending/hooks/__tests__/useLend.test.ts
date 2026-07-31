@@ -34,7 +34,7 @@ const {
         asset: "CASSET",
         assetCode: "USDC",
         poolBalance: "1500",
-        poolBalanceUSD: "Calculating...",
+        poolBalanceUSD: 1500,
         interestRate: 5.5,
         bTokenRate: "1.0",
         isActive: true,

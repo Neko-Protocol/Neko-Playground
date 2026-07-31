@@ -81,10 +81,6 @@ const AssetDetail: React.FC = () => {
     }
   }, [symbol, router]);
 
-  if (!symbol) {
-    return null;
-  }
-
   const stockInfo = React.useMemo(() => {
     const fromOracle = stockInfoFromOracle;
     const fromStatic = STOCK_INFO[symbolUpper];
@@ -96,6 +92,10 @@ const AssetDetail: React.FC = () => {
       buyInfo: fromStatic.buyInfo,
     };
   }, [stockInfoFromOracle, symbolUpper]);
+
+  if (!symbol) {
+    return null;
+  }
 
   if (!stockInfo) {
     return (

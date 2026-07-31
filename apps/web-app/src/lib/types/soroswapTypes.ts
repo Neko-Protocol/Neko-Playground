@@ -66,6 +66,45 @@ export interface PoolInfo {
   ledger: number;
 }
 
+export interface RemoveLiquidityRequest {
+  assetA: Token | string;
+  assetB: Token | string;
+  liquidity: string; // LP tokens to burn, smallest units
+  amountA: string; // minimum amount of tokenA out, smallest units
+  amountB: string; // minimum amount of tokenB out, smallest units
+  to: string;
+  slippageBps?: number;
+}
+
+export interface RemoveLiquidityResponse {
+  xdr: string;
+}
+
+export interface PoolPositionAsset {
+  address: string;
+  name: string;
+  symbol: string;
+}
+
+export interface PoolPositionInfo {
+  protocol: string;
+  address: string;
+  tokenA: PoolPositionAsset;
+  tokenB: PoolPositionAsset;
+  reserveA: string;
+  reserveB: string;
+  totalSupply: string;
+  ledger: number;
+}
+
+export interface UserPositionInfo {
+  poolInformation: PoolPositionInfo;
+  userPosition: string; // LP shares held, smallest units
+  userShares: number; // percentage share of the pool
+  tokenAAmountEquivalent: string; // tokenA smallest units this LP balance is worth
+  tokenBAmountEquivalent: string; // tokenB smallest units this LP balance is worth
+}
+
 export interface GetPoolRequest {
   tokenA: Token | string;
   tokenB: Token | string;

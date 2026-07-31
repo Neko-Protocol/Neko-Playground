@@ -9,18 +9,12 @@ import {
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { parseInterestRateFromContractResult } from "@/lib/helpers/lendingUtils";
+import { fetchUsdPriceMap } from "@/lib/helpers/priceUtils";
 import { RWA_TOKENS } from "@/lib/constants/wallet";
 import type { BorrowPool } from "../types/borrowing";
 
 /** Debt assets borrowable from Pool 2 (collateral = USDC/XLM) */
-const POOL2_DEBT_ASSETS = [
-  "USTRY",
-  "TESOURO",
-  "CETES",
-  "USDY",
-  "PYUSD",
-  "KTB",
-];
+const POOL2_DEBT_ASSETS = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD", "KTB"];
 /** Collateral assets accepted by Pool 2 */
 const POOL2_COLLATERAL_ASSETS = ["USDC", "XLM"];
 
@@ -30,7 +24,7 @@ async function fetchPoolPools(
   collateralCodes: string[],
   debtCodes: string[],
   availableTokens: ReturnType<typeof getAvailableTokens>
-): Promise<BorrowPool[]> {
+): Promise<Omit<BorrowPool, "poolBalanceUSD">[]> {
   let poolState;
   try {
     const poolStateTx = await client.get_pool_state({ simulate: true });
@@ -41,7 +35,7 @@ async function fetchPoolPools(
 
   if (poolState?.tag !== "Active") return [];
 
-  const pools: BorrowPool[] = [];
+  const pools: Omit<BorrowPool, "poolBalanceUSD">[] = [];
 
   for (const collateralCode of collateralCodes) {
     const collateralToken = availableTokens[collateralCode];
@@ -106,7 +100,6 @@ async function fetchPoolPools(
           collateralFactor,
           interestRate,
           poolBalance,
-          poolBalanceUSD: "Calculating...",
           isActive: true,
           contractId,
         });
@@ -159,7 +152,8 @@ export const useBorrowPools = () => {
         ...clientOptions,
       });
 
-      const [pool1Pools, pool2Pools] = await Promise.all([
+      const [priceMap, pool1Pools, pool2Pools] = await Promise.all([
+        fetchUsdPriceMap([...pool1DebtCodes, ...pool2DebtCodes]),
         fetchPoolPools(
           pool1Client,
           networks.testnet.pool1ContractId,
@@ -176,7 +170,14 @@ export const useBorrowPools = () => {
         ),
       ]);
 
-      return [...pool1Pools, ...pool2Pools];
+      return [...pool1Pools, ...pool2Pools].map((pool) => {
+        const price = priceMap[pool.assetCode] ?? null;
+        return {
+          ...pool,
+          poolBalanceUSD:
+            price !== null ? parseFloat(pool.poolBalance) * price : null,
+        };
+      });
     },
     [
       pool1CollateralCodes,

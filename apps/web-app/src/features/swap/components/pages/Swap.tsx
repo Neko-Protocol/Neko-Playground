@@ -189,7 +189,6 @@ const Swap: React.FC = () => {
   const { balance: tokenInBalance, isLoading: isLoadingBalance } =
     useTokenBalance(tokenIn as Token | string | undefined);
 
-  const tokens = getTokens();
   const tokenInAddress = getTokenAddress(
     tokenIn as Parameters<typeof getTokenAddress>[0]
   );
@@ -483,25 +482,17 @@ const Swap: React.FC = () => {
       {orderType === "swap" && (
         <>
           {}
-          <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
-            <span className="text-white/50 text-sm font-medium">From</span>
+          <div className="relative">
+            <div className="grid grid-cols-2 gap-4">
+              {}
+              <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
+                <span className="text-white/50 text-sm font-medium">From</span>
 
-            <TokenSelectorBtn
-              token={tokenIn}
-              getTokenId={getTokenId}
-              getTokenIconUrl={getTokenIconUrl}
-              onClick={() => openTokenSelector("from")}
-              disabled={!address || isLoading}
-            />
-
-            <div>
-              <span className="text-white/50 text-sm font-semibold block mb-2">
-                Amount
-              </span>
-              <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center">
-                <AmountInput
-                  value={amountIn}
-                  onChange={handleAmountChange}
+                <TokenSelectorBtn
+                  token={tokenIn}
+                  getTokenId={getTokenId}
+                  getTokenIconUrl={getTokenIconUrl}
+                  onClick={() => openTokenSelector("from")}
                   disabled={!address || isLoading}
                 />
 
@@ -517,31 +508,25 @@ const Swap: React.FC = () => {
                       className="bg-transparent text-white text-3xl font-bold w-full outline-none placeholder:text-white/30 disabled:opacity-50"
                     />
                   </div>
+                  {isInsufficientBalance && (
+                    <p className="text-red-400 text-xs mt-1.5">
+                      Insufficient balance
+                    </p>
+                  )}
                 </div>
 
                 <BalanceCard
-                  balance={tokenInBalance}
+                  balance={spendableBalance}
                   usdValue={usdValue}
                   isLoadingBalance={isLoadingBalance}
                   isLoadingPrice={isLoadingPrice}
                   onMaxClick={handleMaxClick}
                 />
               </div>
-              {isInsufficientBalance && (
-                <p className="text-red-400 text-xs mt-1.5">
-                  Insufficient balance
-                </p>
-              )}
-            </div>
 
-            <BalanceCard
-              balance={spendableBalance}
-              usdValue={usdValue}
-              isLoadingBalance={isLoadingBalance}
-              isLoadingPrice={isLoadingPrice}
-              onMaxClick={handleMaxClick}
-            />
-          </div>
+              {}
+              <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
+                <span className="text-white/50 text-sm font-medium">To</span>
 
                 <TokenSelectorBtn
                   token={tokenOut}
@@ -630,7 +615,8 @@ const Swap: React.FC = () => {
             onSelectToken={selectToken}
             selectedToken={
               (tokenSelectorType === "from" ? tokenIn : tokenOut) as
-                Token | string
+                | Token
+                | string
             }
           />
         </>

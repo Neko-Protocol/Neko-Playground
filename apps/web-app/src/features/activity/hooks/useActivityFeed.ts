@@ -22,6 +22,7 @@ export function useActivityFeed(filters?: ActivityFilters) {
 
   const filteredEvents = useMemo(() => {
     let result = allEvents;
+    // eslint-disable-next-line react-hooks/purity -- coarse "now" for day/week/month range filtering; render-purity doesn't matter for this UI
     const now = Date.now();
 
     if (filters?.sources && filters.sources.length > 0) {

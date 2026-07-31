@@ -127,6 +127,7 @@ async function getAllocations(
   client: DefindexVaultClient
 ): Promise<Record<string, number>> {
   const fundsTx = await client.fetch_total_managed_funds({ simulate: true });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- @neko/defindex-vault doesn't currently resolve (separate pre-existing workspace package-naming issue), so the real Result type can't be verified here
   let funds = fundsTx.result as any;
   if (funds?.tag === "ok") funds = funds.value;
   else if (typeof funds?.unwrap === "function") funds = funds.unwrap();

@@ -30,6 +30,9 @@ import type {
   SendResponse,
   AddLiquidityRequest,
   AddLiquidityResponse,
+  RemoveLiquidityRequest,
+  RemoveLiquidityResponse,
+  UserPositionInfo,
   PoolInfo,
   GetPoolRequest,
 } from "../../../types/soroswapTypes";
@@ -175,24 +178,27 @@ const getDirectPoolQuote = async (
   };
 };
 
+function resolveApiNetwork(): string {
+  const network = getCurrentNetwork();
+  return network === "standalone" || network === "local" ? "testnet" : network;
+}
+
+function assertValidContractAddress(address: string, label: string): void {
+  if (!isValidContractAddress(address)) {
+    throw new Error(
+      `Invalid contract address for ${label}: ${address}. Contract addresses must start with 'C' and be 56 characters long.`
+    );
+  }
+}
+
 export const getPool = async (request: GetPoolRequest): Promise<PoolInfo[]> => {
   const tokenA = formatTokenForAPI(request.tokenA);
   const tokenB = formatTokenForAPI(request.tokenB);
 
-  if (!isValidContractAddress(tokenA)) {
-    throw new Error(
-      `Invalid contract address for tokenA: ${tokenA}. Contract addresses must start with 'C' and be 56 characters long.`
-    );
-  }
-  if (!isValidContractAddress(tokenB)) {
-    throw new Error(
-      `Invalid contract address for tokenB: ${tokenB}. Contract addresses must start with 'C' and be 56 characters long.`
-    );
-  }
+  assertValidContractAddress(tokenA, "tokenA");
+  assertValidContractAddress(tokenB, "tokenB");
 
-  const network = getCurrentNetwork();
-  const apiNetwork =
-    network === "standalone" || network === "local" ? "testnet" : network;
+  const apiNetwork = resolveApiNetwork();
 
   const protocols = request.protocols || ["soroswap"];
   const protocolParam = protocols
@@ -475,6 +481,7 @@ export const buildTransaction = async (
 
     const buildResponse = await soroswapSDK.build(
       {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- sdkQuote is intentionally untyped (see comment above); reconciling it with the SDK's own QuoteResponse shape needs deeper verification than a quick retype
         quote: sdkQuote as any,
         from: request.from,
       },
@@ -531,16 +538,8 @@ export const addLiquidity = async (
   const assetA = formatTokenForAPI(request.assetA);
   const assetB = formatTokenForAPI(request.assetB);
 
-  if (!isValidContractAddress(assetA)) {
-    throw new Error(
-      `Invalid contract address for assetA: ${assetA}. Contract addresses must start with 'C' and be 56 characters long.`
-    );
-  }
-  if (!isValidContractAddress(assetB)) {
-    throw new Error(
-      `Invalid contract address for assetB: ${assetB}. Contract addresses must start with 'C' and be 56 characters long.`
-    );
-  }
+  assertValidContractAddress(assetA, "assetA");
+  assertValidContractAddress(assetB, "assetB");
 
   const amountA = toSmallestUnit(request.amountA, 7);
   const amountB = toSmallestUnit(request.amountB, 7);
@@ -556,9 +555,7 @@ export const addLiquidity = async (
     );
   }
 
-  const network = getCurrentNetwork();
-  const apiNetwork =
-    network === "standalone" || network === "local" ? "testnet" : network;
+  const apiNetwork = resolveApiNetwork();
 
   const queryParams = new URLSearchParams({
     network: apiNetwork,
@@ -624,6 +621,106 @@ export const addLiquidity = async (
       ) {
         throw new Error(
           `Invalid request to Soroswap API (400): ${errorMessage}`
+        );
+      }
+
+      throw error;
+    }
+
+    throw error;
+  }
+};
+
+export const removeLiquidity = async (
+  request: RemoveLiquidityRequest
+): Promise<RemoveLiquidityResponse> => {
+  const assetA = formatTokenForAPI(request.assetA);
+  const assetB = formatTokenForAPI(request.assetB);
+
+  assertValidContractAddress(assetA, "assetA");
+  assertValidContractAddress(assetB, "assetB");
+
+  const apiNetwork = resolveApiNetwork();
+
+  const endpoint = `/liquidity/remove?${new URLSearchParams({ network: apiNetwork }).toString()}`;
+
+  const requestBody = {
+    assetA,
+    assetB,
+    liquidity: request.liquidity,
+    amountA: request.amountA,
+    amountB: request.amountB,
+    to: request.to,
+    slippageBps: request.slippageBps ?? 500,
+  };
+
+  try {
+    const response = await makeAPIRequest<{ xdr: string }>(endpoint, {
+      method: "POST",
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.xdr) {
+      throw new Error("No XDR returned from remove liquidity API");
+    }
+
+    return { xdr: response.xdr };
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorMessage = error.message;
+
+      if (
+        errorMessage.includes("API key") ||
+        errorMessage.includes("401") ||
+        errorMessage.includes("403")
+      ) {
+        throw new Error(
+          "Soroswap API key is invalid or expired. Please check your API key configuration at https://api.soroswap.finance/login"
+        );
+      }
+
+      if (
+        errorMessage.includes("400") ||
+        errorMessage.includes("Bad Request")
+      ) {
+        throw new Error(
+          `Invalid request to Soroswap API (400): ${errorMessage}`
+        );
+      }
+
+      throw error;
+    }
+
+    throw error;
+  }
+};
+
+export const getUserPositions = async (
+  userAddress: string
+): Promise<UserPositionInfo[]> => {
+  const apiNetwork = resolveApiNetwork();
+
+  const endpoint = `/liquidity/positions/${userAddress}?${new URLSearchParams({ network: apiNetwork }).toString()}`;
+
+  try {
+    return await makeAPIRequest<UserPositionInfo[]>(endpoint, {
+      method: "GET",
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorMessage = error.message;
+
+      if (errorMessage.includes("404") || errorMessage.includes("Not Found")) {
+        return [];
+      }
+
+      if (
+        errorMessage.includes("API key") ||
+        errorMessage.includes("401") ||
+        errorMessage.includes("403")
+      ) {
+        throw new Error(
+          "Soroswap API key is invalid or expired. Please check your API key configuration at https://api.soroswap.finance/login"
         );
       }
 

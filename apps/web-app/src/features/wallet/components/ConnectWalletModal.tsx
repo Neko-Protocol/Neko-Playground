@@ -3,7 +3,7 @@
 import { X } from "lucide-react";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 
-interface ConnectWalletModalProps {
+export interface ConnectWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
