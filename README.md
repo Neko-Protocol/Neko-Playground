@@ -1,11 +1,9 @@
-<p align="center">
-  <img width="2940" height="770" alt="Neko DApp Banner" src="https://github.com/user-attachments/assets/c8adcc67-4f7d-453e-804a-1cf14be0e582" />
-</p>
+<img width="6336" height="1584" alt="image" src="https://github.com/user-attachments/assets/f90f3da0-aee1-4432-9614-35e0ee259abc" />
 
-<h1 align="center">Neko DApp</h1>
+<h1 align="center">Neko Playground (Tests)</h1>
 
 <p align="center">
-  <strong>A multi-chain DeFi protocol for Real-World Assets on Stellar and EVM networks</strong>
+  <strong>Capital Routing Layer for RWA on Stellar</strong>
 </p>
 
 <p align="center">
