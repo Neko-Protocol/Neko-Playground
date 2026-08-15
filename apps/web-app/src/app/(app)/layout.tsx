@@ -2,15 +2,20 @@ import { ReactNode } from "react";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { MobileHeader } from "@/components/navigation/MobileHeader";
 import { WalletAutoConnect } from "@/components/WalletAutoConnect";
+import { WalletCookieSync } from "@/components/WalletCookieSync";
 import { RiskAlertProvider } from "@/features/borrowing/context/RiskAlertContext";
+import { getLendingAdminAddress } from "@/lib/admin-config";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const lendingAdminAddress = getLendingAdminAddress();
+
   return (
     <RiskAlertProvider>
       <div className="flex min-h-screen">
         <WalletAutoConnect />
-        <Sidebar />
-        <MobileHeader />
+        <WalletCookieSync />
+        <Sidebar lendingAdminAddress={lendingAdminAddress} />
+        <MobileHeader lendingAdminAddress={lendingAdminAddress} />
 
         {}
         <main

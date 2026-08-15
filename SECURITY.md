@@ -1,21 +1,46 @@
-# Security Policy
+# Security Model
 
-## Supported Versions
+## Wallet authentication (anchor & automation APIs)
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Ramp and automation endpoints require a server-issued session established through a Stellar signed-challenge flow:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+1. `POST /api/auth/challenge` — issues a single-use nonce and domain-bound message.
+2. The client signs the message with the connected wallet.
+3. `POST /api/auth/verify` — verifies the Ed25519 signature and sets an HttpOnly session cookie (`neko_session`).
 
-## Reporting a Vulnerability
+Cookie flags: `httpOnly`, `secure` (production), `sameSite=strict`, `path=/`, `maxAge=3600`.
 
-Use this section to tell people how to report a vulnerability.
+## Authorization
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Customer-scoped anchor routes enforce ownership via a server-side binding:
+
+```
+(provider, customerId) → publicKey
+```
+
+Bindings are written when a customer is created through `POST /api/anchor/[provider]/customers`. Unknown bindings **fail closed** (403).
+
+On/off-ramp transaction reads require a matching transaction binding created at order creation time.
+
+## Defence in depth
+
+- Next.js middleware returns `401` for `/api/anchor/*` and `/api/automation/*` without a session cookie.
+- Each route also calls `requireSession()` and resource-level checks before upstream anchor calls.
+- Per-IP and per-session rate limits return `429` before anchor quota is consumed.
+
+## Admin UI (separate concern)
+
+`/dashboard/admin` uses the `neko-stellar-address` cookie as a **UX routing hint only**. It is not cryptographic proof of wallet ownership. Privileged on-chain mutations remain the real boundary.
+
+## Required secrets
+
+| Variable | Purpose |
+|----------|---------|
+| `UPSTASH_REDIS_REST_URL` | Nonces, sessions metadata, ownership bindings, rate limits |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash auth |
+| `AUTH_SESSION_SECRET` | HMAC signing key for session cookies (≥ 32 chars) |
+| `AUTH_ENFORCEMENT` | Set `false` only for local dev without Redis |
+
+## Assets endpoint
+
+`GET /api/anchor/[provider]/assets?wallet=` is restricted to the authenticated wallet address to prevent enumeration via our anchor credentials.

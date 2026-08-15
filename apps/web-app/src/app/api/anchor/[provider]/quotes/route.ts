@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { getAnchorClient } from "@/lib/anchors";
+import { handleAnchorError } from "@/lib/anchors/handleAnchorError";
+import { assertOwnsCustomer } from "@/lib/auth/ownership";
+import { requireSession } from "@/lib/auth/requireSession";
+import { assertRateLimit } from "@/lib/rateLimit";
 import { parseJsonBody, parseParam } from "@/lib/validation/parse";
 import { ProviderSchema, QuoteBodySchema } from "@/lib/validation/schemas";
 
@@ -10,10 +14,16 @@ export async function POST(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
+    const sessionResult = requireSession(request);
+    if (sessionResult.error) return sessionResult.error;
+    const session = sessionResult.session;
+
     const { provider: providerParam } = await params;
     const providerResult = parseParam(providerParam, ProviderSchema);
     if ("error" in providerResult) return providerResult.error;
     const provider = providerResult.data;
+
+    await assertRateLimit(request, session, "anchor-quotes");
 
     const parsed = await parseJsonBody(request, QuoteBodySchema);
     if ("error" in parsed) return parsed.error;
@@ -23,9 +33,12 @@ export async function POST(
       fromAmount,
       toAmount,
       customerId,
-      stellarAddress,
       resourceId,
     } = parsed.data;
+
+    if (customerId) {
+      await assertOwnsCustomer(session, provider, customerId);
+    }
 
     const client = getAnchorClient(provider);
     const quote = await client.getQuote({
@@ -34,24 +47,12 @@ export async function POST(
       fromAmount,
       toAmount,
       customerId,
-      stellarAddress,
+      stellarAddress: session.publicKey,
       resourceId,
     });
 
     return NextResponse.json(quote);
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleAnchorError(error);
   }
 }

@@ -2,7 +2,12 @@
 
 import { useState, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { createCustomer, getCustomer } from "../utils/rampApi";
+import {
+  createCustomer,
+  getCustomer,
+  isAuthRequiredError,
+  RampApiError,
+} from "../utils/rampApi";
 import type { AnchorProvider } from "@/lib/anchors/types";
 import {
   CUSTOMER_ID_STORAGE_KEY,
@@ -42,16 +47,12 @@ export function useAnchorCustomer(provider: AnchorProvider) {
   const [onboardingUrl, setOnboardingUrl] = useState<string | null>(() =>
     getStoredId(ONBOARDING_URL_STORAGE_KEY, provider)
   );
+  const [authRequired, setAuthRequired] = useState(false);
 
   const { mutateAsync: ensureCustomer, isPending } = useMutation({
-    mutationFn: async ({
-      email,
-      publicKey,
-    }: {
-      email?: string;
-      publicKey?: string;
-    }) => {
-      // Return stored IDs if already present
+    mutationFn: async ({ email }: { email?: string; publicKey?: string }) => {
+      setAuthRequired(false);
+
       const storedCustomerId = getStoredId(CUSTOMER_ID_STORAGE_KEY, provider);
       const storedBankAccountId = getStoredId(
         BANK_ACCOUNT_ID_STORAGE_KEY,
@@ -61,46 +62,50 @@ export function useAnchorCustomer(provider: AnchorProvider) {
         ONBOARDING_URL_STORAGE_KEY,
         provider
       );
-      if (storedCustomerId && storedBankAccountId) {
-        return {
-          customerId: storedCustomerId,
-          bankAccountId: storedBankAccountId,
-          onboardingUrl: storedOnboardingUrl,
-        };
-      }
 
-      // Try to find existing customer
-      if (email) {
-        const existing = await getCustomer(provider, { email });
-        if (existing) {
-          storeId(CUSTOMER_ID_STORAGE_KEY, provider, existing.id);
-          if (existing.bankAccountId) {
-            storeId(
-              BANK_ACCOUNT_ID_STORAGE_KEY,
-              provider,
-              existing.bankAccountId
-            );
+      if (storedCustomerId) {
+        try {
+          const existing = await getCustomer(provider, {
+            customerId: storedCustomerId,
+          });
+          if (existing) {
+            if (existing.bankAccountId) {
+              storeId(
+                BANK_ACCOUNT_ID_STORAGE_KEY,
+                provider,
+                existing.bankAccountId
+              );
+            }
+            return {
+              customerId: existing.id,
+              bankAccountId: existing.bankAccountId ?? storedBankAccountId,
+              onboardingUrl: storedOnboardingUrl,
+            };
           }
-          return {
-            customerId: existing.id,
-            bankAccountId: existing.bankAccountId,
-            onboardingUrl: null,
-          };
+        } catch (error) {
+          if (isAuthRequiredError(error)) {
+            setAuthRequired(true);
+            throw error;
+          }
+          if (
+            error instanceof RampApiError &&
+            (error.status === 403 || error.status === 404)
+          ) {
+            // Stale or unbound customer — create a new one below.
+          } else {
+            throw error;
+          }
         }
       }
 
-      // Create new customer
       const customer = await createCustomer(provider, {
         email,
-        publicKey,
         country: "MX",
       });
       storeId(CUSTOMER_ID_STORAGE_KEY, provider, customer.id);
       if (customer.bankAccountId) {
         storeId(BANK_ACCOUNT_ID_STORAGE_KEY, provider, customer.bankAccountId);
       }
-      // Store the onboarding URL from initial registration — it cannot
-      // be re-fetched later (Etherfuse returns 409 for existing users).
       if (customer.onboardingUrl) {
         storeId(ONBOARDING_URL_STORAGE_KEY, provider, customer.onboardingUrl);
       }
@@ -118,6 +123,12 @@ export function useAnchorCustomer(provider: AnchorProvider) {
       setCustomerId(cid);
       if (bid) setBankAccountId(bid);
       if (url) setOnboardingUrl(url);
+      setAuthRequired(false);
+    },
+    onError: (error) => {
+      if (isAuthRequiredError(error)) {
+        setAuthRequired(true);
+      }
     },
   });
 
@@ -141,6 +152,7 @@ export function useAnchorCustomer(provider: AnchorProvider) {
     setCustomerId(null);
     setBankAccountId(null);
     setOnboardingUrl(null);
+    setAuthRequired(false);
   }, [provider]);
 
   return {
@@ -149,6 +161,7 @@ export function useAnchorCustomer(provider: AnchorProvider) {
     onboardingUrl,
     ensureCustomer,
     isPending,
+    authRequired,
     resetCustomer,
   };
 }

@@ -10,6 +10,7 @@ import type {
   KycSubmissionResult,
   AnchorProvider,
 } from "@/lib/anchors/types";
+import { authenticateWallet, logoutWalletSession } from "@/lib/auth/walletAuth";
 
 export class RampApiError extends Error {
   code: string;
@@ -23,8 +24,34 @@ export class RampApiError extends Error {
   }
 }
 
-async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, options);
+let walletPublicKey: string | null = null;
+let authRetryEnabled = true;
+
+export function setRampWalletPublicKey(publicKey: string | null): void {
+  walletPublicKey = publicKey;
+}
+
+export function setRampAuthRetryEnabled(enabled: boolean): void {
+  authRetryEnabled = enabled;
+}
+
+export { authenticateWallet, logoutWalletSession };
+
+async function apiFetch<T>(
+  url: string,
+  options?: RequestInit,
+  retried = false
+): Promise<T> {
+  const res = await fetch(url, {
+    ...options,
+    credentials: "include",
+  });
+
+  if (res.status === 401 && !retried && authRetryEnabled && walletPublicKey) {
+    await authenticateWallet(walletPublicKey);
+    return apiFetch<T>(url, options, true);
+  }
+
   if (!res.ok) {
     let body: { error?: string; code?: string } = {};
     try {
@@ -34,10 +61,11 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
     }
     throw new RampApiError(
       body.error || `API error ${res.status}`,
-      body.code || "UNKNOWN_ERROR",
+      body.code || (res.status === 401 ? "AUTH_REQUIRED" : "UNKNOWN_ERROR"),
       res.status
     );
   }
+
   return res.json() as Promise<T>;
 }
 
@@ -46,7 +74,7 @@ const BASE = "/api/anchor";
 // Customers
 export async function createCustomer(
   provider: AnchorProvider,
-  data: { email?: string; country?: string; publicKey?: string }
+  data: { email?: string; country?: string }
 ): Promise<Customer> {
   return apiFetch<Customer>(`${BASE}/${provider}/customers`, {
     method: "POST",
@@ -57,12 +85,9 @@ export async function createCustomer(
 
 export async function getCustomer(
   provider: AnchorProvider,
-  params: { email?: string; customerId?: string; country?: string }
+  params: { customerId: string }
 ): Promise<Customer | null> {
-  const query = new URLSearchParams();
-  if (params.email) query.set("email", params.email);
-  if (params.customerId) query.set("customerId", params.customerId);
-  if (params.country) query.set("country", params.country);
+  const query = new URLSearchParams({ customerId: params.customerId });
   try {
     return await apiFetch<Customer>(`${BASE}/${provider}/customers?${query}`);
   } catch (err) {
@@ -80,7 +105,6 @@ export async function getQuote(
     fromAmount?: string;
     toAmount?: string;
     customerId?: string;
-    stellarAddress?: string;
     resourceId?: string;
   }
 ): Promise<Quote> {
@@ -97,7 +121,6 @@ export async function createOnRamp(
   data: {
     customerId: string;
     quoteId: string;
-    stellarAddress: string;
     fromCurrency: string;
     toCurrency: string;
     amount: string;
@@ -132,7 +155,6 @@ export async function createOffRamp(
   data: {
     customerId: string;
     quoteId: string;
-    stellarAddress: string;
     fromCurrency: string;
     toCurrency: string;
     amount: string;
@@ -180,11 +202,9 @@ export async function submitSignedXdr(
 // KYC
 export async function getKycStatus(
   provider: AnchorProvider,
-  customerId: string,
-  publicKey?: string
+  customerId: string
 ): Promise<KycStatus> {
   const query = new URLSearchParams({ customerId });
-  if (publicKey) query.set("publicKey", publicKey);
   const res = await apiFetch<{ status: KycStatus }>(
     `${BASE}/${provider}/kyc?${query}`
   );
@@ -194,11 +214,9 @@ export async function getKycStatus(
 export async function getKycUrl(
   provider: AnchorProvider,
   customerId: string,
-  publicKey?: string,
   bankAccountId?: string
 ): Promise<string> {
   const query = new URLSearchParams({ customerId, type: "iframe" });
-  if (publicKey) query.set("publicKey", publicKey);
   if (bankAccountId) query.set("bankAccountId", bankAccountId);
   const res = await apiFetch<{ url: string }>(
     `${BASE}/${provider}/kyc?${query}`
@@ -250,7 +268,6 @@ export async function registerFiatAccount(
     clabe: string;
     beneficiary: string;
     bankName?: string;
-    publicKey?: string;
   }
 ): Promise<RegisteredFiatAccount> {
   return apiFetch<RegisteredFiatAccount>(`${BASE}/${provider}/fiat-accounts`, {
@@ -282,4 +299,11 @@ export async function simulateFiatReceived(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "simulateFiatReceived", orderId }),
   });
+}
+
+export function isAuthRequiredError(error: unknown): boolean {
+  return (
+    error instanceof RampApiError &&
+    (error.status === 401 || error.code === "AUTH_REQUIRED")
+  );
 }

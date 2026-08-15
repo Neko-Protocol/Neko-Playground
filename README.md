@@ -373,12 +373,12 @@ NEXT_PUBLIC_STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
 # --- Optional public config (NEXT_PUBLIC_, safe in the browser) ---
 NEXT_PUBLIC_SOROSWAP_API_KEY=your_api_key_here
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
-NEXT_PUBLIC_LENDING_ADMIN_ADDRESS=      # Stellar public key allowed into /dashboard/admin
 NEXT_PUBLIC_FAUCET_CONTRACT_ID=
 NEXT_PUBLIC_VERBOSE_LOGGING=false       # "true" | "false"
 
 # --- Server-only secrets (NO NEXT_PUBLIC_ prefix — never sent to the browser) ---
 # Optional: each integration surfaces a clear error only when its route is used.
+LENDING_ADMIN_ADDRESS=                  # Stellar public key for /dashboard/admin UI gate
 VAULT_MANAGER_SECRET_KEY=
 FAUCET_SECRET_KEY=
 FAUCET_CONTRACT_ID=
@@ -387,7 +387,23 @@ ETHERFUSE_BASE_URL=https://api.sand.etherfuse.com
 ALFREDPAY_API_KEY=
 ALFREDPAY_API_SECRET=
 ALFREDPAY_BASE_URL=https://api-service-co.alfredpay.app/api/v1/third-party-service/penny
+
+# Auth — server-only (required for anchor/automation APIs in production)
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+AUTH_SESSION_SECRET=                    # ≥ 32 chars; signs neko_session cookies
+AUTH_ENFORCEMENT=true                   # set false only for local dev without Redis
 ```
+
+### Wallet session authentication (ramps & automation)
+
+Anchor and automation API routes require a signed-challenge wallet session. See [SECURITY.md](../SECURITY.md) for the full model.
+
+1. Connect a Stellar wallet in the UI (triggers challenge → sign → verify).
+2. The server sets an HttpOnly `neko_session` cookie used by `/api/anchor/**` and `/api/automation/**`.
+3. Customer-scoped ramp calls are authorized against `(provider, customerId) → wallet` bindings created at customer registration.
+
+For local development without Upstash, set `AUTH_ENFORCEMENT=false` (uses in-memory fallbacks; **not for production**).
 
 Available networks:
 
@@ -395,6 +411,19 @@ Available networks:
 - **FUTURENET**: Stellar futurenet
 - **PUBLIC**: Stellar mainnet (production)
 - **LOCAL**: Local Stellar network for development
+
+### Admin UI access control
+
+The lending admin panel at `/dashboard/admin` uses layered gates. None of them replace on-chain contract auth for privileged mutations (pool state, fees, rates) — that remains the real security boundary.
+
+| Layer | Protects | Does NOT protect |
+|-------|----------|------------------|
+| Middleware + cookie | Blocks `/dashboard/admin` HTML/RSC for non-admin wallets before client JS | Cookie spoofing, unsigned wallet proof |
+| Server `page.tsx` | Admin route disabled when `LENDING_ADMIN_ADDRESS` is unset | Wallet identity |
+| Client `AdminGate` | Hydration races, stale cookies; prevents admin component mount and RPC fetches | Determined attacker with a patched client |
+| On-chain contract auth | All privileged mutations | N/A — this is the real boundary |
+
+Setup: set `LENDING_ADMIN_ADDRESS` in `.env.local`, connect the admin wallet (sets the `neko-stellar-address` cookie), then navigate to `/dashboard/admin`.
 
 ## Key Components
 

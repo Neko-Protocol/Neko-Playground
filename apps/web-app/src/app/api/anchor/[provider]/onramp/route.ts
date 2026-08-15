@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { getAnchorClient } from "@/lib/anchors";
+import { handleAnchorError } from "@/lib/anchors/handleAnchorError";
+import {
+  assertOwnsCustomer,
+  assertOwnsTransaction,
+  bindTransaction,
+} from "@/lib/auth/ownership";
+import { requireSession } from "@/lib/auth/requireSession";
+import { assertRateLimit } from "@/lib/rateLimit";
 import { parseJsonBody, parseParam, parseQuery } from "@/lib/validation/parse";
 import {
   OnRampBodySchema,
@@ -14,17 +22,22 @@ export async function POST(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
+    const sessionResult = requireSession(request);
+    if (sessionResult.error) return sessionResult.error;
+    const session = sessionResult.session;
+
     const { provider: providerParam } = await params;
     const providerResult = parseParam(providerParam, ProviderSchema);
     if ("error" in providerResult) return providerResult.error;
     const provider = providerResult.data;
+
+    await assertRateLimit(request, session);
 
     const parsed = await parseJsonBody(request, OnRampBodySchema);
     if ("error" in parsed) return parsed.error;
     const {
       customerId,
       quoteId,
-      stellarAddress,
       fromCurrency,
       toCurrency,
       amount,
@@ -32,11 +45,13 @@ export async function POST(
       bankAccountId,
     } = parsed.data;
 
+    await assertOwnsCustomer(session, provider, customerId);
+
     const client = getAnchorClient(provider);
     const transaction = await client.createOnRamp({
       customerId,
       quoteId,
-      stellarAddress,
+      stellarAddress: session.publicKey,
       fromCurrency,
       toCurrency,
       amount,
@@ -44,21 +59,14 @@ export async function POST(
       bankAccountId,
     });
 
+    await bindTransaction(provider, transaction.id, {
+      customerId,
+      publicKey: session.publicKey,
+    });
+
     return NextResponse.json(transaction, { status: 201 });
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleAnchorError(error);
   }
 }
 
@@ -67,15 +75,23 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
+    const sessionResult = requireSession(request);
+    if (sessionResult.error) return sessionResult.error;
+    const session = sessionResult.session;
+
     const { provider: providerParam } = await params;
     const providerResult = parseParam(providerParam, ProviderSchema);
     if ("error" in providerResult) return providerResult.error;
     const provider = providerResult.data;
 
+    await assertRateLimit(request, session);
+
     const { searchParams } = new URL(request.url);
     const queryResult = parseQuery(searchParams, TransactionIdQuerySchema);
     if ("error" in queryResult) return queryResult.error;
     const { transactionId } = queryResult.data;
+
+    await assertOwnsTransaction(session, provider, transactionId);
 
     const client = getAnchorClient(provider);
     const transaction = await client.getOnRampTransaction(transactionId);
@@ -89,18 +105,6 @@ export async function GET(
 
     return NextResponse.json(transaction);
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleAnchorError(error);
   }
 }

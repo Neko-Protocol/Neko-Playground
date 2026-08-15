@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { getAnchorClient } from "@/lib/anchors";
+import { handleAnchorError } from "@/lib/anchors/handleAnchorError";
 import { AlfredPayClient } from "@/lib/anchors/alfredpay";
+import { EtherfuseClient } from "@/lib/anchors/etherfuse";
+import { BadRequestError } from "@/lib/auth/errors";
+import { assertOwnsCustomer } from "@/lib/auth/ownership";
+import { requireSession } from "@/lib/auth/requireSession";
+import { assertRateLimit } from "@/lib/rateLimit";
 import {
   parseJsonBody,
   parseParam,
@@ -8,6 +14,9 @@ import {
   zodErrorResponse,
 } from "@/lib/validation/parse";
 import {
+  KYC_ALLOWED_MIME_TYPES,
+  KYC_MAX_DOC_COUNT,
+  KYC_MAX_FILE_BYTES,
   KycFileUploadSchema,
   KycGetQuerySchema,
   KycPostTypeSchema,
@@ -19,15 +28,44 @@ import { ZodError } from "zod";
 
 export const dynamic = "force-dynamic";
 
+function validateKycDocuments(documents: Record<string, File | string>): void {
+  const entries = Object.entries(documents);
+  if (entries.length > KYC_MAX_DOC_COUNT) {
+    throw new BadRequestError(`Maximum ${KYC_MAX_DOC_COUNT} documents allowed`);
+  }
+
+  for (const [, value] of entries) {
+    if (value instanceof File) {
+      if (value.size > KYC_MAX_FILE_BYTES) {
+        throw new BadRequestError("Document exceeds maximum file size");
+      }
+      if (
+        value.type &&
+        !KYC_ALLOWED_MIME_TYPES.includes(
+          value.type as (typeof KYC_ALLOWED_MIME_TYPES)[number]
+        )
+      ) {
+        throw new BadRequestError("Document MIME type is not allowed");
+      }
+    }
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
+    const sessionResult = requireSession(request);
+    if (sessionResult.error) return sessionResult.error;
+    const session = sessionResult.session;
+
     const { provider: providerParam } = await params;
     const providerResult = parseParam(providerParam, ProviderSchema);
     if ("error" in providerResult) return providerResult.error;
     const provider = providerResult.data;
+
+    await assertRateLimit(request, session);
 
     const { searchParams } = new URL(request.url);
     const queryResult = parseQuery(searchParams, KycGetQuerySchema);
@@ -36,11 +74,15 @@ export async function GET(
       customerId,
       type = "status",
       country = "MX",
-      publicKey,
       bankAccountId,
     } = queryResult.data;
 
+    if (customerId) {
+      await assertOwnsCustomer(session, provider, customerId);
+    }
+
     const client = getAnchorClient(provider);
+    const publicKey = session.publicKey;
 
     if (type === "requirements") {
       if (!client.getKycRequirements) {
@@ -60,11 +102,20 @@ export async function GET(
           { status: 501 }
         );
       }
-      const kycUrl = await client.getKycUrl(
-        customerId!,
-        publicKey,
-        bankAccountId
-      );
+
+      let kycUrl: string;
+      if (client instanceof AlfredPayClient) {
+        kycUrl = await client.getKycUrl(customerId!, country);
+      } else if (client instanceof EtherfuseClient) {
+        kycUrl = await client.getKycUrl(
+          customerId!,
+          publicKey,
+          bankAccountId
+        );
+      } else {
+        kycUrl = await client.getKycUrl(customerId!, publicKey, bankAccountId);
+      }
+
       return NextResponse.json({ url: kycUrl });
     }
 
@@ -76,19 +127,7 @@ export async function GET(
     const status = await client.getKycStatus(customerId!, publicKey);
     return NextResponse.json({ status });
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleAnchorError(error);
   }
 }
 
@@ -97,6 +136,10 @@ export async function POST(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
+    const sessionResult = requireSession(request);
+    if (sessionResult.error) return sessionResult.error;
+    const session = sessionResult.session;
+
     const { provider: providerParam } = await params;
     const providerResult = parseParam(providerParam, ProviderSchema);
     if ("error" in providerResult) return providerResult.error;
@@ -112,6 +155,9 @@ export async function POST(
       );
     }
     const type = typeResult.data;
+
+    const rateBucket = type === "file" ? "anchor-kyc-upload" : "anchor-default";
+    await assertRateLimit(request, session, rateBucket);
 
     const client = getAnchorClient(provider);
 
@@ -154,12 +200,20 @@ export async function POST(
           return zodErrorResponse(formParsed.error);
         }
 
+        await assertOwnsCustomer(
+          session,
+          provider,
+          formParsed.data.customerId
+        );
+
         const documents: Record<string, File | string> = {};
         for (const [key, value] of formData.entries()) {
           if (key.startsWith("doc_")) {
             documents[key.slice(4)] = value as File | string;
           }
         }
+
+        validateKycDocuments(documents);
 
         const result = await client.submitKyc(formParsed.data.customerId, {
           fields: formParsed.data.fields,
@@ -172,6 +226,9 @@ export async function POST(
       const parsed = await parseJsonBody(request, KycSubmitJsonBodySchema);
       if ("error" in parsed) return parsed.error;
       const { customerId, data } = parsed.data;
+
+      await assertOwnsCustomer(session, provider, customerId);
+
       const result = await client.submitKyc(customerId, {
         fields: data.fields,
         documents: data.documents ?? {},
@@ -202,7 +259,27 @@ export async function POST(
         );
       }
 
+      if (file.size > KYC_MAX_FILE_BYTES) {
+        return NextResponse.json(
+          { error: "File exceeds maximum size" },
+          { status: 400 }
+        );
+      }
+      if (
+        file.type &&
+        !KYC_ALLOWED_MIME_TYPES.includes(
+          file.type as (typeof KYC_ALLOWED_MIME_TYPES)[number]
+        )
+      ) {
+        return NextResponse.json(
+          { error: "File MIME type is not allowed" },
+          { status: 400 }
+        );
+      }
+
       const { customerId, submissionId, fileType } = fileParsed.data;
+      await assertOwnsCustomer(session, provider, customerId);
+
       const result = await client.submitKycFile(
         customerId,
         submissionId,
@@ -221,18 +298,6 @@ export async function POST(
     if (error instanceof ZodError) {
       return zodErrorResponse(error);
     }
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleAnchorError(error);
   }
 }
