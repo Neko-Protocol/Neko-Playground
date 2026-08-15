@@ -1,7 +1,9 @@
-import { networks } from "@neko/lending";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 
-export const POOL1_CONTRACT_ID = networks.testnet.pool1ContractId;
-export const POOL2_CONTRACT_ID = networks.testnet.pool2ContractId;
+const contracts = getContracts();
+
+export const POOL1_CONTRACT_ID = contracts.lendingPool1;
+export const POOL2_CONTRACT_ID = contracts.lendingPool2;
 
 export const POOL1_ASSETS = ["USDC", "XLM"];
 export const POOL2_ASSETS = [

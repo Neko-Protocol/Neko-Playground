@@ -16,7 +16,7 @@ import {
   rpcUrl,
   networkPassphrase,
   horizonUrl,
-} from "@/lib/config/stellar.config";
+} from "@/lib/constants/network";
 import type { SorobanTokenBalance } from "@/lib/helpers/stellar/sorobanBalances";
 
 export interface GetTestTokensModalProps {

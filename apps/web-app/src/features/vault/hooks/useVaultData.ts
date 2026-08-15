@@ -6,11 +6,11 @@ import {
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import type { VaultLiveStats } from "../types/vault";
 
-const VAULT_CONTRACT_ID =
-  "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
+const { vault: VAULT_CONTRACT_ID } = getContracts();
 
 const ONE_SHARE = 1_000_000_000_000n;
 

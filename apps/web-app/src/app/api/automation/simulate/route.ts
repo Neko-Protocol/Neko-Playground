@@ -9,6 +9,7 @@ import { shouldRebalance } from "@/features/automation/utils/rebalanceThreshold"
 import { estimateSlippageBps } from "@/features/automation/utils/slippage";
 import { buildRebalancePlan } from "@/features/automation/utils/planBuilder";
 import { PRESET_RULES } from "@/features/automation/const/automation";
+import { requireSession } from "@/lib/auth/requireSession";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -67,9 +68,12 @@ function buildMockCandidates() {
   return raw.map((r) => ({ ...r, netApyBps: calcNetApyBps(r) }));
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
+  const sessionResult = requireSession(request);
+  if (sessionResult.error) return sessionResult.error;
+
   try {
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const _strategyId = searchParams.get("strategyId");
 
     const portfolioUsd = 10_000;

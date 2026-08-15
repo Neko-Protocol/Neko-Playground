@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueries } from "@tanstack/react-query";
-import { networks } from "@neko/lending";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 import { lendingService } from "@/lib/services/lending.service";
 
 // Re-export from the single source of truth so existing consumers keep working.
@@ -10,15 +10,17 @@ export {
   getHealthFactorLabel,
 } from "../const/riskThresholds";
 
+const contracts = getContracts();
+
 const POOLS = [
   {
     key: "pool1",
-    contractId: networks.testnet.pool1ContractId,
+    contractId: contracts.lendingPool1,
     label: "Pool 1",
   },
   {
     key: "pool2",
-    contractId: networks.testnet.pool2ContractId,
+    contractId: contracts.lendingPool2,
     label: "Pool 2",
   },
 ] as const;

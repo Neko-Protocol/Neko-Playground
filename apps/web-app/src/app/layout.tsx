@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import "@stellar/design-system/build/styles.min.css";
 import "./globals.css";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 import { Providers } from "./providers";
+
+getContracts();
 
 export const metadata: Metadata = {
   title: "Neko Protocol",

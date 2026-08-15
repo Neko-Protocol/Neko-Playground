@@ -10,8 +10,9 @@ import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
 import { useQuery } from "@tanstack/react-query";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 
-const CETES_CONTRACT =
-  "CC72F57YTPX76HAA64JQOEGHQAPSADQWSY5DWVBR66JINPFDLNCQYHIC";
+import { getAssetsConfig } from "@/lib/constants/assets.config";
+
+const CETES_CONTRACT = getAssetsConfig().CETES.contract;
 
 interface VaultActionModalProps {
   isDeposit: boolean;

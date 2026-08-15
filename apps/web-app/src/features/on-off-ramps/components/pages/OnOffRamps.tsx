@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useWallet } from "@/hooks/useWallet";
+import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { BannerPage } from "@/components/ui/BannerPage";
@@ -37,6 +38,7 @@ const etherfusePortalUrl = isSandbox
 
 const OnOffRamps: React.FC = () => {
   const { address, signTransaction } = useWallet();
+  const { reauthenticate } = useStellarWallet();
   const { addNotification } = useToast();
   const { state, dispatch } = useRampState();
   const [isSimulating, setIsSimulating] = useState(false);
@@ -50,6 +52,7 @@ const OnOffRamps: React.FC = () => {
     onboardingUrl,
     ensureCustomer,
     isPending: isEnsuring,
+    authRequired,
   } = useAnchorCustomer(state.provider);
 
   // Quote
@@ -73,7 +76,6 @@ const OnOffRamps: React.FC = () => {
   } = useAnchorKyc(
     state.provider,
     customerId,
-    address,
     bankAccountId ?? undefined,
     onboardingUrl
   );
@@ -140,7 +142,7 @@ const OnOffRamps: React.FC = () => {
 
       if (!cid || !bid) {
         // Reuse stored IDs — never generate new ones per request
-        const result = await ensureCustomer({ publicKey: address });
+        const result = await ensureCustomer({});
         cid = result.customerId;
         bid = result.bankAccountId ?? null;
       }
@@ -174,7 +176,6 @@ const OnOffRamps: React.FC = () => {
         toCurrency,
         fromAmount: state.amount,
         customerId: cid,
-        stellarAddress: address,
         resourceId: bid,
       });
     } catch (err) {
@@ -191,7 +192,6 @@ const OnOffRamps: React.FC = () => {
       await startOnRamp({
         customerId,
         quoteId: quote.id,
-        stellarAddress: address,
         fromCurrency,
         toCurrency,
         amount: state.amount,
@@ -219,7 +219,6 @@ const OnOffRamps: React.FC = () => {
       await startOffRamp({
         customerId,
         quoteId: quote.id,
-        stellarAddress: address,
         fromCurrency,
         toCurrency,
         amount: state.amount,
@@ -269,6 +268,21 @@ const OnOffRamps: React.FC = () => {
       {!address && (
         <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-5 text-center text-white/60 text-sm">
           Connect your wallet to use on/off ramps
+        </div>
+      )}
+
+      {address && authRequired && (
+        <div className="bg-amber-400/10 border border-amber-400/20 rounded-2xl p-5 mb-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-amber-200 text-sm text-center sm:text-left">
+            Authenticate your wallet to access ramp services.
+          </p>
+          <button
+            type="button"
+            onClick={() => void reauthenticate()}
+            className="shrink-0 px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-500 text-black text-sm font-medium transition-colors"
+          >
+            Authenticate wallet
+          </button>
         </div>
       )}
 

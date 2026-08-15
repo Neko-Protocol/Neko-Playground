@@ -35,6 +35,7 @@ export const networks = {
     networkPassphrase: "Test SDF Network ; September 2015",
     contractId: "CDJVAFSJTERWPYEZQJGN2N5N4BMXGMG6A2AWQK4C3V36MRYB4PRSNM2S",
   },
+  // mainnet: add after mainnet deployment — see contractsByNetwork.ts registry
 } as const;
 
 /**

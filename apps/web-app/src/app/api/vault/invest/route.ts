@@ -12,24 +12,25 @@ import {
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { clientEnv } from "@/lib/env.client";
 import { requireServerEnv } from "@/lib/env.server";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const VAULT_CONTRACT_ID =
-  "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
+const contracts = getContracts();
+const VAULT_CONTRACT_ID = contracts.vault;
 const STRATEGIES = [
   {
     name: "Neko",
-    addr: "CCCEWBCYSIHTGBJ2TUOAFQY63UJ4SWDYTYNAEGXWPB7FP6PRHHGVZJIR",
+    addr: contracts.strategies.neko,
   },
   {
     name: "Aquarius",
-    addr: "CCGV5QSAFRT6OGBZNCE72I6BAODXLDMWEUYAOBI5ZBLHOURSEGVGFTTZ",
+    addr: contracts.strategies.aquarius,
   },
   {
     name: "Soroswap",
-    addr: "CCY5WW3VXVJDBBXNYXCCH33XTQICHPU6RPFWYJJCT4PTYPN3SXJN2XBJ",
+    addr: contracts.strategies.soroswap,
   },
 ];
 const MIN_IDLE_THRESHOLD = 10_000_000n; // 1 CETES minimum
@@ -97,8 +98,7 @@ async function harvestAquarius(
   server: rpc.Server,
   networkPassphrase: string
 ): Promise<{ hash: string; status: string }> {
-  const AQUARIUS_STRATEGY =
-    "CCGV5QSAFRT6OGBZNCE72I6BAODXLDMWEUYAOBI5ZBLHOURSEGVGFTTZ";
+  const AQUARIUS_STRATEGY = contracts.strategies.aquarius;
 
   try {
     const account = await server.getAccount(keypair.publicKey());

@@ -37,6 +37,7 @@ export const networks = {
     pool1ContractId: "CCSNXCONDIFZADRJZZRHMRXDGTC6EMI7ZAYAJPJMXSDHBMOPBLBX5XQX",
     pool2ContractId: "CADKADCLXIZTU7Q3WS5M37HUF5BX3WCSTCM2ESN2JCJK5FBBH57FKSAV",
   },
+  // mainnet: add after mainnet deployment — see contractsByNetwork.ts registry
 } as const;
 
 export const Errors = {

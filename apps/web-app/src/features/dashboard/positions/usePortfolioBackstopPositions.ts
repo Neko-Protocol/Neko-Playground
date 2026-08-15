@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { networks as backstopNetworks } from "@neko/backstop";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 import { useWallet } from "@/hooks/useWallet";
 import {
   getBackstopToken,
@@ -19,16 +19,18 @@ const STELLAR_DECIMALS = 7;
  * contract deposited into it, which is only known at runtime via
  * `get_backstop_token`.
  */
+const contracts = getContracts();
+
 const BACKSTOP_POOLS = [
   {
     key: "pool1",
     label: "Crypto Pool",
-    contractId: backstopNetworks.testnet.pool1ContractId,
+    contractId: contracts.backstop,
   },
   {
     key: "pool2",
     label: "RWA Pool",
-    contractId: backstopNetworks.testnet.pool2ContractId,
+    contractId: contracts.backstopPool2,
   },
 ] as const;
 

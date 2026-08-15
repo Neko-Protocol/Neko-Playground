@@ -24,7 +24,6 @@ export function useFiatAccounts(
         clabe: string;
         beneficiary: string;
         bankName?: string;
-        publicKey?: string;
       }) =>
         registerFiatAccount(provider, {
           customerId: customerId!,

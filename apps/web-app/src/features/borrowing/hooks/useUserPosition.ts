@@ -1,13 +1,7 @@
 "use client";
 
 import { useQueries } from "@tanstack/react-query";
-import { networks } from "@neko/lending";
-import { useUserLendingPositions } from "@/features/lending/hooks/useUserLendingPositions";
-import type { LendingPosition } from "@/features/lending/hooks/useUserLendingPositions";
-import { useUserBorrowPositions } from "./useUserBorrowPositions";
-import type { BorrowPosition } from "./useUserBorrowPositions";
-import { useHealthFactor } from "./useHealthFactor";
-import type { PoolHealthFactor } from "./useHealthFactor";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 import { lendingService } from "@/lib/services/lending.service";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 
@@ -15,15 +9,17 @@ export type { LendingPosition, BorrowPosition, PoolHealthFactor };
 
 const STELLAR_DECIMALS = 7;
 
+const contracts = getContracts();
+
 const POOLS = [
   {
     key: "pool1",
-    contractId: networks.testnet.pool1ContractId,
+    contractId: contracts.lendingPool1,
     label: "Pool 1",
   },
   {
     key: "pool2",
-    contractId: networks.testnet.pool2ContractId,
+    contractId: contracts.lendingPool2,
     label: "Pool 2",
   },
 ] as const;
@@ -75,7 +71,7 @@ export function useUserPosition(
         lendingService.getCollateralRaw(
           token.contract,
           borrowerAddress!,
-          networks.testnet.pool1ContractId
+          contracts.lendingPool1
         ),
       enabled: Boolean(borrowerAddress),
       staleTime: 30_000,

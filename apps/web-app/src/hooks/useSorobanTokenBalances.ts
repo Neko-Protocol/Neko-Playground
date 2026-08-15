@@ -10,7 +10,7 @@ import {
   rpcUrl,
   networkPassphrase,
   horizonUrl,
-} from "@/lib/config/stellar.config";
+} from "@/lib/constants/network";
 import { useCallback } from "react";
 
 const QUERY_KEY = "soroban-faucet-balances";

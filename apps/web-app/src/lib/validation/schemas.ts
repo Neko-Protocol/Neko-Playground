@@ -35,18 +35,29 @@ export const FaucetBodySchema = z.object({
 export const CreateCustomerBodySchema = z.object({
   email: EmailSchema.optional(),
   country: CountrySchema.optional(),
-  publicKey: StellarAddressSchema.optional(),
 });
 
-export const GetCustomerQuerySchema = z
-  .object({
-    email: EmailSchema.optional(),
-    customerId: CustomerIdSchema.optional(),
-    country: CountrySchema.optional(),
-  })
-  .refine((data) => data.email || data.customerId, {
-    message: "email or customerId query parameter is required",
-  });
+export const GetCustomerQuerySchema = z.object({
+  customerId: CustomerIdSchema,
+});
+
+export const ChallengeBodySchema = z.object({
+  publicKey: StellarAddressSchema,
+});
+
+export const VerifyBodySchema = z.object({
+  publicKey: StellarAddressSchema,
+  nonce: NonEmptyStringSchema,
+  signature: NonEmptyStringSchema,
+});
+
+export const KYC_MAX_FILE_BYTES = 5 * 1024 * 1024;
+export const KYC_MAX_DOC_COUNT = 10;
+export const KYC_ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "application/pdf",
+] as const;
 
 export const QuoteBodySchema = z
   .object({
@@ -55,7 +66,6 @@ export const QuoteBodySchema = z
     fromAmount: AmountSchema.optional(),
     toAmount: AmountSchema.optional(),
     customerId: CustomerIdSchema.optional(),
-    stellarAddress: StellarAddressSchema.optional(),
     resourceId: NonEmptyStringSchema.optional(),
   })
   .refine((data) => data.fromAmount || data.toAmount, {
@@ -65,7 +75,6 @@ export const QuoteBodySchema = z
 export const OnRampBodySchema = z.object({
   customerId: CustomerIdSchema,
   quoteId: QuoteIdSchema,
-  stellarAddress: StellarAddressSchema,
   fromCurrency: CurrencyCodeSchema,
   toCurrency: CurrencyCodeSchema,
   amount: AmountSchema,
@@ -87,7 +96,6 @@ export const OffRampBodySchema = z
   .object({
     customerId: CustomerIdSchema,
     quoteId: QuoteIdSchema,
-    stellarAddress: StellarAddressSchema,
     fromCurrency: CurrencyCodeSchema,
     toCurrency: CurrencyCodeSchema,
     amount: AmountSchema,
@@ -106,7 +114,6 @@ export const OffRampSignBodySchema = z.object({
 
 export const FiatAccountBodySchema = z.object({
   customerId: CustomerIdSchema,
-  publicKey: StellarAddressSchema.optional(),
   bankName: z.string().optional(),
   clabe: ClabeSchema,
   beneficiary: z.string().min(1),
@@ -142,7 +149,6 @@ export const KycGetQuerySchema = z
       .enum(["status", "requirements", "iframe", "url", "submission"])
       .default("status"),
     country: CountrySchema.optional(),
-    publicKey: StellarAddressSchema.optional(),
     bankAccountId: NonEmptyStringSchema.optional(),
   })
   .superRefine((data, ctx) => {

@@ -11,19 +11,16 @@ import {
   rpcUrl,
   networkPassphrase,
   allowHttpForSoroban,
-} from "@/lib/constants/network";
-import {
-  rpcUrl as configRpcUrl,
   stellarNetwork,
-} from "@/lib/config/stellar.config";
+} from "@/lib/constants/network";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { useVaultBalance } from "./useVaultBalance";
 import { useVaultData } from "./useVaultData";
 import { useActivityStore } from "@/stores/activityStore";
 
-const VAULT_CONTRACT_ID =
-  "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
+const { vault: VAULT_CONTRACT_ID } = getContracts();
 
 const SLIPPAGE = 0.01;
 
@@ -44,7 +41,7 @@ async function signAndSubmit(
   ) => Promise<{ signedTxXdr: string }>,
   address: string
 ) {
-  const server = new rpc.Server(configRpcUrl, {
+  const server = new rpc.Server(rpcUrl, {
     allowHttp: stellarNetwork === "LOCAL",
   });
   const signed = await signFn(xdr, { networkPassphrase: passphrase, address });

@@ -7,11 +7,8 @@ import {
   rpc,
   xdr,
 } from "@stellar/stellar-sdk";
-import { Client as RwaLendingClient, networks } from "@neko/lending";
-import {
-  Client as BackstopClient,
-  networks as backstopNetworks,
-} from "@neko/backstop";
+import { Client as RwaLendingClient } from "@neko/lending";
+import { Client as BackstopClient } from "@neko/backstop";
 import {
   rpcUrl,
   networkPassphrase,
@@ -27,7 +24,7 @@ export const depositToPool = async (
   amount: string,
   decimals: number = 7,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  contractId: string
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
@@ -96,7 +93,7 @@ export const withdrawFromPool = async (
   bTokens: string,
   decimals: number = 7,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  contractId: string
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
@@ -163,7 +160,7 @@ export const addCollateral = async (
   amount: string,
   decimals: number = 7,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  contractId: string
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
@@ -228,7 +225,7 @@ export const removeCollateral = async (
   amount: string,
   decimals: number = 7,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  contractId: string
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
@@ -293,7 +290,7 @@ export const borrowFromPool = async (
   amount: string,
   decimals: number = 7,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  contractId: string
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
@@ -362,7 +359,7 @@ export const repayPool = async (
   assetCode: string,
   dTokens: bigint,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  contractId: string
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
@@ -471,7 +468,7 @@ export const getTokenBalance = async (
 export const getBTokenBalanceRaw = async (
   assetCode: string,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  contractId: string
 ): Promise<bigint> => {
   try {
     const client = new RwaLendingClient({
@@ -501,11 +498,12 @@ export const getBTokenBalanceRaw = async (
  */
 export const getDTokenBalance = async (
   assetCode: string,
-  walletAddress: string
+  walletAddress: string,
+  contractId: string
 ): Promise<bigint> => {
   try {
     const client = new RwaLendingClient({
-      contractId: networks.testnet.contractId,
+      contractId,
       rpcUrl: rpcUrl,
       networkPassphrase: networkPassphrase,
       ...(allowHttpForSoroban && { allowHttp: true }),
@@ -529,10 +527,13 @@ export const getDTokenBalance = async (
 /**
  * Get dToken → underlying conversion rate (12-decimal scalar)
  */
-export const getDTokenRate = async (assetCode: string): Promise<bigint> => {
+export const getDTokenRate = async (
+  assetCode: string,
+  contractId: string
+): Promise<bigint> => {
   try {
     const client = new RwaLendingClient({
-      contractId: networks.testnet.contractId,
+      contractId,
       rpcUrl: rpcUrl,
       networkPassphrase: networkPassphrase,
       ...(allowHttpForSoroban && { allowHttp: true }),
@@ -558,7 +559,7 @@ export const getDTokenRate = async (assetCode: string): Promise<bigint> => {
  * Returns null if no backstop token has been set by the admin.
  */
 export const getBackstopToken = async (
-  backstopContractId: string = backstopNetworks.testnet.contractId
+  backstopContractId: string
 ): Promise<string | null> => {
   try {
     const client = new BackstopClient({
@@ -591,7 +592,7 @@ export interface BackstopDepositInfo {
  */
 export const getBackstopDeposit = async (
   depositorAddress: string,
-  backstopContractId: string = backstopNetworks.testnet.contractId
+  backstopContractId: string
 ): Promise<BackstopDepositInfo> => {
   const empty: BackstopDepositInfo = {
     amount: 0n,
@@ -657,7 +658,7 @@ export const getBackstopDeposit = async (
 export const depositToBackstop = async (
   amount: string,
   walletAddress: string,
-  backstopContractId: string = backstopNetworks.testnet.contractId
+  backstopContractId: string
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
@@ -719,7 +720,7 @@ export const depositToBackstop = async (
 export const initiateBackstopWithdrawal = async (
   amount: string,
   walletAddress: string,
-  backstopContractId: string = backstopNetworks.testnet.contractId
+  backstopContractId: string
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
@@ -781,7 +782,7 @@ export const initiateBackstopWithdrawal = async (
 export const withdrawFromBackstop = async (
   amount: string,
   walletAddress: string,
-  backstopContractId: string = backstopNetworks.testnet.contractId
+  backstopContractId: string
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
@@ -844,7 +845,7 @@ export const getBTokenBalance = async (
   assetCode: string,
   walletAddress: string,
   decimals: number = 7,
-  contractId: string = networks.testnet.contractId
+  contractId: string
 ): Promise<string> => {
   try {
     const client = new RwaLendingClient({
@@ -897,7 +898,7 @@ export const getBTokenBalance = async (
  */
 export const hasBadDebt = async (
   borrower: string,
-  contractId: string = networks.testnet.contractId
+  contractId: string
 ): Promise<boolean> => {
   try {
     const client = new RwaLendingClient({
@@ -923,7 +924,7 @@ export const createBadDebtAuction = async (
   borrower: string,
   debtAsset: string,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  contractId: string
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
@@ -996,7 +997,7 @@ export const buildFillBadDebtAuctionXdr = async (
   debtAsset: string,
   decimals: number = 7,
   walletAddress: string,
-  contractId: string = networks.testnet.contractId
+  contractId: string
 ): Promise<FillBadDebtAuctionResult> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {

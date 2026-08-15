@@ -15,7 +15,7 @@ import {
   rpcUrl,
   networkPassphrase,
   horizonUrl,
-} from "@/lib/config/stellar.config";
+} from "@/lib/constants/network";
 
 const MintTestTokensButton: React.FC = () => {
   const { addNotification } = useToast();

@@ -18,7 +18,7 @@ import {
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { waitForTransaction } from "@/lib/helpers/stellar/waitForTransaction";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
-import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
+import { rpcUrl, stellarNetwork } from "@/lib/constants/network";
 
 const WITHDRAWAL_QUEUE_DAYS = 17;
 

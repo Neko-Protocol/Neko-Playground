@@ -11,16 +11,17 @@ import { ConnectedCard } from "./ConnectedCard";
 import { SetupCard } from "./SetupCard";
 import { useRiskAlertContext } from "@/features/borrowing/context/RiskAlertContext";
 import { useActivityFeed } from "@/features/activity/hooks/useActivityFeed";
-import { clientEnv } from "@/lib/env.client";
 
 /** Nav item whose danger dot reflects an open borrow position in breach. */
 const BORROW_HREF = "/borrowing";
 
 export const SIDEBAR_WIDTH = "270px";
 
-const ADMIN_ADDRESS = clientEnv.lendingAdminAddress;
+interface SidebarProps {
+  lendingAdminAddress?: string;
+}
 
-export function Sidebar() {
+export function Sidebar({ lendingAdminAddress = "" }: SidebarProps) {
   const pathname = usePathname();
   const { isStellarConnected, stellarAddress } = useWalletType();
   const { disconnect: disconnectStellar } = useStellarWallet();
@@ -35,11 +36,13 @@ export function Sidebar() {
       const adminOnly = "adminOnly" in item && item.adminOnly;
       // Admin link: ONLY show when admin is configured AND connected wallet is admin
       if (adminOnly) {
-        return Boolean(ADMIN_ADDRESS && activeAddress === ADMIN_ADDRESS);
+        return Boolean(
+          lendingAdminAddress && activeAddress === lendingAdminAddress
+        );
       }
       return true;
     });
-  }, [activeAddress]);
+  }, [activeAddress, lendingAdminAddress]);
 
   const handleDisconnect = () => {
     void disconnectStellar();

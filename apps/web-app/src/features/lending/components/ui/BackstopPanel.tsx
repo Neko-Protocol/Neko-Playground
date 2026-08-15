@@ -3,20 +3,22 @@
 import { useState } from "react";
 import { Shield, RefreshCw } from "lucide-react";
 import { useBackstop } from "@/features/backstop/hooks/useBackstop";
-import { networks as backstopNetworks } from "@neko/backstop";
 import { BackstopQueueStatus } from "@/features/backstop/components/ui/BackstopQueueStatus";
 import { BackstopActionPanel } from "@/features/backstop/components/ui/BackstopActionPanel";
 import { BackstopInfoAlert } from "@/features/backstop/components/ui/BackstopInfoAlert";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
+
+const contracts = getContracts();
 
 const POOLS = [
   {
     label: "Crypto Pool",
-    contractId: backstopNetworks.testnet.pool1ContractId,
+    contractId: contracts.backstop,
     assets: "USDC · XLM",
   },
   {
     label: "RWA Pool",
-    contractId: backstopNetworks.testnet.pool2ContractId,
+    contractId: contracts.backstopPool2,
     assets: "USTRY · CETES · USDY · PYUSD · KTB",
   },
 ];

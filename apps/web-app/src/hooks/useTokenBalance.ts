@@ -1,9 +1,13 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
-import { XLM_TESTNET_ADDRESS } from "@/lib/config/stellar.config";
+import { getContracts } from "@/lib/constants/contractsByNetwork";
 import { useWallet } from "./useWallet";
 import { getTokens, getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { getTokenAddress } from "@/lib/helpers/stellar/soroswap";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
+
+const { nativeWrapper: NATIVE_WRAPPER_ADDRESS } = getContracts();
 
 const BASE_RESERVE = 0.5;
 
@@ -25,7 +29,7 @@ const getTokenDecimals = (tokenAddress: string): number => {
   const tokens = getTokens();
   const availableTokens = getAvailableTokens();
 
-  if (tokenAddress === tokens.XLM || tokenAddress === XLM_TESTNET_ADDRESS) {
+  if (tokenAddress === tokens.XLM || tokenAddress === NATIVE_WRAPPER_ADDRESS) {
     return 7;
   }
 
@@ -53,7 +57,7 @@ export const useTokenBalance = (
   const isXlm =
     tokenAddress === tokens.XLM ||
     (typeof token !== "string" && token?.type === "native") ||
-    tokenAddress === XLM_TESTNET_ADDRESS;
+    tokenAddress === NATIVE_WRAPPER_ADDRESS;
 
   const {
     data: contractBalance = "0",

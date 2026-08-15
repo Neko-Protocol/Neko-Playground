@@ -17,7 +17,7 @@ import {
   rpcUrl,
   networkPassphrase,
   horizonUrl,
-} from "@/lib/config/stellar.config";
+} from "@/lib/constants/network";
 
 export interface GetTestTokensModalProps {
   isOpen: boolean;

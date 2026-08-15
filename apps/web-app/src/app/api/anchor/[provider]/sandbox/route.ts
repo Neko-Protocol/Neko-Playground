@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { getAnchorClient } from "@/lib/anchors";
+import { handleAnchorError } from "@/lib/anchors/handleAnchorError";
 import { EtherfuseClient } from "@/lib/anchors/etherfuse";
 import { AlfredPayClient } from "@/lib/anchors/alfredpay";
+import { requireSession } from "@/lib/auth/requireSession";
+import { assertRateLimit } from "@/lib/rateLimit";
 import { parseJsonBody, parseParam } from "@/lib/validation/parse";
 import { ProviderSchema, SandboxBodySchema } from "@/lib/validation/schemas";
 import { clientEnv } from "@/lib/env.client";
@@ -24,6 +27,12 @@ export async function POST(
   }
 
   try {
+    const sessionResult = requireSession(request);
+    if (sessionResult.error) return sessionResult.error;
+    const session = sessionResult.session;
+
+    await assertRateLimit(request, session);
+
     const { provider: providerParam } = await params;
     const providerResult = parseParam(providerParam, ProviderSchema);
     if ("error" in providerResult) return providerResult.error;
@@ -62,18 +71,6 @@ export async function POST(
       }
     }
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleAnchorError(error);
   }
 }
