@@ -27,6 +27,27 @@ const ACTION_LABELS: Record<PoolAction, string> = {
   withdrawCollateral: "Withdraw Collateral",
 };
 
+/** What the ceiling for each action represents, for the over-max message. */
+const MAX_SOURCE_LABELS: Record<PoolAction, string> = {
+  deposit: "your wallet balance",
+  supplyCollateral: "your wallet balance",
+  withdraw: "your supplied balance",
+  withdrawCollateral: "your withdrawable collateral",
+  borrow: "your borrow capacity",
+  repay: "your outstanding debt",
+  claimRewards: "",
+};
+
+/** Smallest of the defined operands; `undefined` means "no ceiling here". */
+function minUnits(...values: (bigint | undefined)[]): bigint | undefined {
+  let min: bigint | undefined;
+  for (const value of values) {
+    if (value === undefined) continue;
+    if (min === undefined || value < min) min = value;
+  }
+  return min;
+}
+
 export function PoolActionModal({
   isOpen,
   onClose,
@@ -46,26 +67,47 @@ export function PoolActionModal({
   const tokenCode = token?.code ?? "Token";
   const needsAmount = action !== "claimRewards";
 
-  const maxAmount = (() => {
-    if (!needsAmount) return "";
+  const walletUnits =
+    tokenBalance != null ? toSmallestUnit(tokenBalance, decimals) : undefined;
+
+  /**
+   * Ceiling for this action in smallest units, or `undefined` when no ceiling
+   * is known — the adapter reports a per-action limit because each request
+   * moves one specific balance, so withdraw and withdrawCollateral never share
+   * a max even on the same reserve.
+   */
+  const maxUnits = (() => {
+    if (!needsAmount) return undefined;
     switch (action) {
       case "deposit":
       case "supplyCollateral":
-        return tokenBalance ?? "0";
-      case "withdraw":
-      case "withdrawCollateral":
-        return position?.depositedFormatted ?? "0";
+        return walletUnits;
       case "repay":
-        if (pool.type === "blend" && position?.metadata?.liabilities != null) {
-          const raw = String(position.metadata.liabilities);
-          if (raw === "0") return "0";
-          return fromSmallestUnit(raw, decimals);
-        }
-        return "0";
+        // Bounded by the debt and by what the wallet can actually pay.
+        return minUnits(position?.limits?.repay, walletUnits);
       default:
-        return "";
+        return position?.limits?.[action];
     }
   })();
+
+  const maxAmount =
+    maxUnits !== undefined
+      ? fromSmallestUnit(maxUnits.toString(), decimals)
+      : "";
+
+  const amountUnits = amount.trim() ? toSmallestUnit(amount, decimals) : 0n;
+  const isPositive = amountUnits > 0n;
+  const exceedsMax =
+    isPositive && maxUnits !== undefined && amountUnits > maxUnits;
+
+  // Only the over-max case gets a message. A blank or still-being-typed amount
+  // just leaves the button disabled, so "0." does not flash an error mid-entry.
+  const validationError =
+    needsAmount && exceedsMax
+      ? `Amount exceeds ${MAX_SOURCE_LABELS[action]} (max ${maxAmount} ${tokenCode}).`
+      : null;
+
+  const canSubmit = needsAmount ? isPositive && !exceedsMax : true;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,11 +131,11 @@ export function PoolActionModal({
     };
 
     if (needsAmount) {
-      const num = parseFloat(amount);
-      if (isNaN(num) || num <= 0) return;
-      const amountBigInt = toSmallestUnit(amount, decimals);
+      // Same guard the submit button uses — an over-max amount never reaches
+      // the wallet or a doomed simulation.
+      if (!canSubmit) return;
       mutate.mutate(
-        { poolId, action, amount: amountBigInt, tokenIndex: 0 },
+        { poolId, action, amount: amountUnits, tokenIndex: 0 },
         { onSuccess }
       );
     } else {
@@ -167,7 +209,7 @@ export function PoolActionModal({
                     disabled={mutate.isPending}
                     className="flex-1 px-4 py-3 rounded-xl border border-[#334EAC]/30 bg-[#f8fafc] text-[#081F5C] focus:outline-none focus:ring-2 focus:ring-[#334EAC]/50 focus:border-[#334EAC]"
                   />
-                  {maxAmount !== "" && Number(maxAmount) > 0 && (
+                  {maxUnits !== undefined && maxUnits > 0n && (
                     <button
                       type="button"
                       onClick={() => setAmount(maxAmount)}
@@ -178,6 +220,17 @@ export function PoolActionModal({
                     </button>
                   )}
                 </div>
+                {maxUnits !== undefined && (
+                  <p className="text-xs text-[#7096D1]">
+                    Max {maxAmount} {tokenCode} &middot;{" "}
+                    {MAX_SOURCE_LABELS[action]}
+                  </p>
+                )}
+                {validationError && (
+                  <p role="alert" className="text-xs font-medium text-red-600">
+                    {validationError}
+                  </p>
+                )}
               </div>
             ) : (
               <p className="text-[#7096D1] text-center py-2">
@@ -196,11 +249,7 @@ export function PoolActionModal({
               </button>
               <button
                 type="submit"
-                disabled={
-                  mutate.isPending ||
-                  !address ||
-                  (needsAmount && (!amount || parseFloat(amount) <= 0))
-                }
+                disabled={mutate.isPending || !address || !canSubmit}
                 className="flex-1 px-4 py-3 rounded-xl bg-[#334EAC] text-white font-semibold hover:bg-[#294cab] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {mutate.isPending ? (
