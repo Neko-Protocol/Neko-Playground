@@ -25,6 +25,7 @@ import type {
   KycSubmissionData,
   KycSubmissionResult,
 } from "../types";
+import { anchorRequest } from "../http";
 import { AnchorError } from "../types";
 import type {
   AlfredPayConfig,
@@ -75,18 +76,23 @@ export class AlfredPayClient implements Anchor {
   private async request<T>(
     method: "GET" | "POST" | "PUT" | "DELETE",
     endpoint: string,
-    body?: unknown
+    body?: unknown,
+    signal?: AbortSignal
   ): Promise<T> {
     const url = `${this.config.baseUrl}${endpoint}`;
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        "api-key": this.config.apiKey,
-        "api-secret": this.config.apiSecret,
+    const response = await anchorRequest(
+      url,
+      {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": this.config.apiKey,
+          "api-secret": this.config.apiSecret,
+        },
+        body: body ? JSON.stringify(body) : undefined,
       },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+      { signal }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -243,7 +249,10 @@ export class AlfredPayClient implements Anchor {
     };
   }
 
-  async createCustomer(input: CreateCustomerInput): Promise<Customer> {
+  async createCustomer(
+    input: CreateCustomerInput,
+    signal?: AbortSignal
+  ): Promise<Customer> {
     if (!input.email) {
       throw new AnchorError(
         "email is required for AlfredPay",
@@ -258,7 +267,8 @@ export class AlfredPayClient implements Anchor {
         email: input.email,
         type: "INDIVIDUAL",
         country: input.country || "MX",
-      }
+      },
+      signal
     );
     return {
       id: response.customerId,
@@ -269,7 +279,10 @@ export class AlfredPayClient implements Anchor {
     };
   }
 
-  async getCustomer(input: GetCustomerInput): Promise<Customer | null> {
+  async getCustomer(
+    input: GetCustomerInput,
+    signal?: AbortSignal
+  ): Promise<Customer | null> {
     if (!input.email) {
       throw new AnchorError(
         "email is required for AlfredPay customer lookup",
@@ -281,7 +294,9 @@ export class AlfredPayClient implements Anchor {
     try {
       const response = await this.request<{ customerId: string }>(
         "GET",
-        `/customers/find/${encodeURIComponent(input.email)}/${country}`
+        `/customers/find/${encodeURIComponent(input.email)}/${country}`,
+        undefined,
+        signal
       );
       return {
         id: response.customerId,
@@ -296,7 +311,7 @@ export class AlfredPayClient implements Anchor {
     }
   }
 
-  async getQuote(input: GetQuoteInput): Promise<Quote> {
+  async getQuote(input: GetQuoteInput, signal?: AbortSignal): Promise<Quote> {
     const body: Record<string, unknown> = {
       fromCurrency: input.fromCurrency,
       toCurrency: input.toCurrency,
@@ -312,12 +327,16 @@ export class AlfredPayClient implements Anchor {
     const response = await this.request<AlfredPayQuoteResponse>(
       "POST",
       "/quotes",
-      body
+      body,
+      signal
     );
     return this.mapQuote(response);
   }
 
-  async createOnRamp(input: CreateOnRampInput): Promise<OnRampTransaction> {
+  async createOnRamp(
+    input: CreateOnRampInput,
+    signal?: AbortSignal
+  ): Promise<OnRampTransaction> {
     const response = await this.request<AlfredPayOnRampResponse>(
       "POST",
       "/onramp",
@@ -332,18 +351,22 @@ export class AlfredPayClient implements Anchor {
         depositAddress: input.stellarAddress,
         memo: input.memo || "",
         onrampTransactionRequiredFieldsJson: {},
-      }
+      },
+      signal
     );
     return this.mapOnRampTransaction(response);
   }
 
   async getOnRampTransaction(
-    transactionId: string
+    transactionId: string,
+    signal?: AbortSignal
   ): Promise<OnRampTransaction | null> {
     try {
       const response = await this.request<AlfredPayOnRampFlatResponse>(
         "GET",
-        `/onramp/${transactionId}`
+        `/onramp/${transactionId}`,
+        undefined,
+        signal
       );
       return this.mapOnRampFlatTransaction(response);
     } catch (error) {
@@ -353,7 +376,8 @@ export class AlfredPayClient implements Anchor {
   }
 
   async registerFiatAccount(
-    input: RegisterFiatAccountInput
+    input: RegisterFiatAccountInput,
+    signal?: AbortSignal
   ): Promise<RegisteredFiatAccount> {
     const response = await this.request<AlfredPayFiatAccountResponse>(
       "POST",
@@ -371,7 +395,8 @@ export class AlfredPayClient implements Anchor {
           metadata: { accountHolderName: input.account.beneficiary },
         },
         isExternal: true,
-      }
+      },
+      signal
     );
     return {
       id: response.fiatAccountId,
@@ -382,11 +407,16 @@ export class AlfredPayClient implements Anchor {
     };
   }
 
-  async getFiatAccounts(customerId: string): Promise<SavedFiatAccount[]> {
+  async getFiatAccounts(
+    customerId: string,
+    signal?: AbortSignal
+  ): Promise<SavedFiatAccount[]> {
     try {
       const response = await this.request<AlfredPayFiatAccountListItem[]>(
         "GET",
-        `/fiatAccounts?customerId=${customerId}`
+        `/fiatAccounts?customerId=${customerId}`,
+        undefined,
+        signal
       );
       return response.map((account) => ({
         id: account.fiatAccountId,
@@ -405,7 +435,10 @@ export class AlfredPayClient implements Anchor {
     }
   }
 
-  async createOffRamp(input: CreateOffRampInput): Promise<OffRampTransaction> {
+  async createOffRamp(
+    input: CreateOffRampInput,
+    signal?: AbortSignal
+  ): Promise<OffRampTransaction> {
     const response = await this.request<AlfredPayOffRampResponse>(
       "POST",
       "/offramp",
@@ -419,18 +452,22 @@ export class AlfredPayClient implements Anchor {
         chain: "XLM",
         memo: input.memo || "",
         originAddress: input.stellarAddress,
-      }
+      },
+      signal
     );
     return this.mapOffRampTransaction(response);
   }
 
   async getOffRampTransaction(
-    transactionId: string
+    transactionId: string,
+    signal?: AbortSignal
   ): Promise<OffRampTransaction | null> {
     try {
       const response = await this.request<AlfredPayOffRampResponse>(
         "GET",
-        `/offramp/${transactionId}`
+        `/offramp/${transactionId}`,
+        undefined,
+        signal
       );
       return this.mapOffRampTransaction(response);
     } catch (error) {
@@ -439,18 +476,31 @@ export class AlfredPayClient implements Anchor {
     }
   }
 
-  async getKycUrl(customerId: string, country: string = "MX"): Promise<string> {
+  async getKycUrl(
+    customerId: string,
+    country: string = "MX",
+    _publicKey?: string,
+    signal?: AbortSignal
+  ): Promise<string> {
     const response = await this.request<AlfredPayKycIframeResponse>(
       "GET",
-      `/customers/${customerId}/kyc/${country}/url`
+      `/customers/${customerId}/kyc/${country}/url`,
+      undefined,
+      signal
     );
     return response.verification_url;
   }
 
-  async getKycStatus(customerId: string): Promise<KycStatus> {
+  async getKycStatus(
+    customerId: string,
+    _publicKey?: string,
+    signal?: AbortSignal
+  ): Promise<KycStatus> {
     const response = await this.request<AlfredPayCustomerResponse>(
       "GET",
-      `/customers/${customerId}`
+      `/customers/${customerId}`,
+      undefined,
+      signal
     );
     const raw = response.statusKyc?.toUpperCase();
     const statusMap: Record<string, KycStatus> = {
@@ -465,12 +515,15 @@ export class AlfredPayClient implements Anchor {
   }
 
   async getKycSubmission(
-    customerId: string
+    customerId: string,
+    signal?: AbortSignal
   ): Promise<AlfredPayKycSubmissionResponse | null> {
     try {
       return await this.request<AlfredPayKycSubmissionResponse>(
         "GET",
-        `/customers/kyc/${customerId}`
+        `/customers/kyc/${customerId}`,
+        undefined,
+        signal
       );
     } catch (error) {
       if (error instanceof AnchorError && error.statusCode === 404) return null;
@@ -480,11 +533,14 @@ export class AlfredPayClient implements Anchor {
 
   async getKycSubmissionStatus(
     customerId: string,
-    submissionId: string
+    submissionId: string,
+    signal?: AbortSignal
   ): Promise<AlfredPayKycSubmissionStatusResponse> {
     return this.request<AlfredPayKycSubmissionStatusResponse>(
       "GET",
-      `/customers/${customerId}/kyc/${submissionId}/status`
+      `/customers/${customerId}/kyc/${submissionId}/status`,
+      undefined,
+      signal
     );
   }
 
@@ -497,7 +553,10 @@ export class AlfredPayClient implements Anchor {
     );
   }
 
-  async getKycRequirements(_country?: string): Promise<KycRequirements> {
+  async getKycRequirements(
+    _country?: string,
+    _signal?: AbortSignal
+  ): Promise<KycRequirements> {
     return {
       fields: [
         { key: "firstName", label: "First Name", type: "text", required: true },
@@ -560,7 +619,8 @@ export class AlfredPayClient implements Anchor {
 
   async submitKyc(
     customerId: string,
-    data: KycSubmissionData
+    data: KycSubmissionData,
+    signal?: AbortSignal
   ): Promise<KycSubmissionResult> {
     const kycData = {
       firstName: data.fields.firstName || "",
@@ -576,7 +636,7 @@ export class AlfredPayClient implements Anchor {
       dni: data.fields.dni || "",
     };
 
-    const submission = await this.submitKycData(customerId, kycData);
+    const submission = await this.submitKycData(customerId, kycData, signal);
     const submissionId = submission.submissionId;
 
     const fileTypeMap: Record<string, AlfredPayKycFileType> = {
@@ -594,17 +654,19 @@ export class AlfredPayClient implements Anchor {
           submissionId,
           fileType,
           doc,
-          filename
+          filename,
+          signal
         );
       }
     }
 
     const statusResponse = await this.getKycSubmissionStatus(
       customerId,
-      submissionId
+      submissionId,
+      signal
     );
     if (statusResponse.status === "CREATED") {
-      await this.finalizeKycSubmission(customerId, submissionId);
+      await this.finalizeKycSubmission(customerId, submissionId, signal);
     }
 
     return { customerId, kycStatus: "pending", submissionId };
@@ -612,22 +674,27 @@ export class AlfredPayClient implements Anchor {
 
   async submitKycData(
     customerId: string,
-    data: AlfredPayKycSubmissionRequest["kycSubmission"]
+    data: AlfredPayKycSubmissionRequest["kycSubmission"],
+    signal?: AbortSignal
   ): Promise<AlfredPayKycSubmissionResponse> {
     return this.request<AlfredPayKycSubmissionResponse>(
       "POST",
       `/customers/${customerId}/kyc`,
-      { kycSubmission: data }
+      { kycSubmission: data },
+      signal
     );
   }
 
   async finalizeKycSubmission(
     customerId: string,
-    submissionId: string
+    submissionId: string,
+    signal?: AbortSignal
   ): Promise<void> {
     await this.request<{ message: string }>(
       "POST",
-      `/customers/${customerId}/kyc/${submissionId}/submit`
+      `/customers/${customerId}/kyc/${submissionId}/submit`,
+      undefined,
+      signal
     );
   }
 
@@ -636,21 +703,26 @@ export class AlfredPayClient implements Anchor {
     submissionId: string,
     fileType: AlfredPayKycFileType,
     file: Blob,
-    filename: string
+    filename: string,
+    signal?: AbortSignal
   ): Promise<AlfredPayKycFileResponse> {
     const url = `${this.config.baseUrl}/customers/${customerId}/kyc/${submissionId}/files`;
     const formData = new FormData();
     formData.append("fileBody", file, filename);
     formData.append("fileType", fileType);
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "api-key": this.config.apiKey,
-        "api-secret": this.config.apiSecret,
+    const response = await anchorRequest(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "api-key": this.config.apiKey,
+          "api-secret": this.config.apiSecret,
+        },
+        body: formData,
       },
-      body: formData,
-    });
+      { signal }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -675,17 +747,29 @@ export class AlfredPayClient implements Anchor {
   }
 
   async sendSandboxWebhook(
-    webhook: AlfredPaySandboxWebhookRequest
+    webhook: AlfredPaySandboxWebhookRequest,
+    signal?: AbortSignal
   ): Promise<void> {
-    await this.request<{ message: string }>("POST", "/webhooks", webhook);
+    await this.request<{ message: string }>(
+      "POST",
+      "/webhooks",
+      webhook,
+      signal
+    );
   }
 
-  async completeKycSandbox(submissionId: string): Promise<void> {
-    await this.sendSandboxWebhook({
-      referenceId: submissionId,
-      eventType: "KYC",
-      status: "COMPLETED",
-      metadata: null,
-    });
+  async completeKycSandbox(
+    submissionId: string,
+    signal?: AbortSignal
+  ): Promise<void> {
+    await this.sendSandboxWebhook(
+      {
+        referenceId: submissionId,
+        eventType: "KYC",
+        status: "COMPLETED",
+        metadata: null,
+      },
+      signal
+    );
   }
 }

@@ -22,6 +22,7 @@ import type {
   KycStatus,
   TransactionStatus,
 } from "../types";
+import { anchorRequest } from "../http";
 import { AnchorError } from "../types";
 import type {
   EtherfuseConfig,
@@ -82,12 +83,18 @@ export class EtherfuseClient implements Anchor {
   private async resolveAssetPair(
     fromCurrency: string,
     toCurrency: string,
-    wallet: string
+    wallet: string,
+    signal?: AbortSignal
   ): Promise<[string, string]> {
     if (fromCurrency.includes(":") && toCurrency.includes(":")) {
       return [fromCurrency, toCurrency];
     }
-    const response = await this.getAssets(this.blockchain, "mxn", wallet);
+    const response = await this.getAssets(
+      this.blockchain,
+      "mxn",
+      wallet,
+      signal
+    );
     const identifiers = new Map(
       response.assets.map((a) => [a.symbol, a.identifier])
     );
@@ -100,17 +107,22 @@ export class EtherfuseClient implements Anchor {
   private async request<T>(
     method: "GET" | "POST" | "PUT" | "DELETE",
     endpoint: string,
-    body?: unknown
+    body?: unknown,
+    signal?: AbortSignal
   ): Promise<T> {
     const url = `${this.config.baseUrl}${endpoint}`;
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: this.config.apiKey,
+    const response = await anchorRequest(
+      url,
+      {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: this.config.apiKey,
+        },
+        body: body ? JSON.stringify(body) : undefined,
       },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+      { signal }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -215,7 +227,10 @@ export class EtherfuseClient implements Anchor {
     };
   }
 
-  async createCustomer(input: CreateCustomerInput): Promise<Customer> {
+  async createCustomer(
+    input: CreateCustomerInput,
+    signal?: AbortSignal
+  ): Promise<Customer> {
     if (!input.publicKey) {
       throw new AnchorError(
         "publicKey is required to create an Etherfuse customer",
@@ -239,7 +254,8 @@ export class EtherfuseClient implements Anchor {
           bankAccountId,
           publicKey: input.publicKey,
           blockchain: this.blockchain,
-        }
+        },
+        signal
       );
 
       const now = new Date().toISOString();
@@ -262,7 +278,10 @@ export class EtherfuseClient implements Anchor {
           // Etherfuse binds it on first use, so any valid UUID works.
           let resolvedBankAccountId: string = bankAccountId;
           try {
-            const accounts = await this.getFiatAccounts(existingCustomerId);
+            const accounts = await this.getFiatAccounts(
+              existingCustomerId,
+              signal
+            );
             if (accounts.length > 0) resolvedBankAccountId = accounts[0].id;
           } catch {
             // ignore — keep the generated bankAccountId as fallback
@@ -275,7 +294,8 @@ export class EtherfuseClient implements Anchor {
             onboardingUrl = await this.getKycUrl(
               existingCustomerId,
               input.publicKey,
-              resolvedBankAccountId
+              resolvedBankAccountId,
+              signal
             );
           } catch {
             // If the URL can't be refreshed, the client will use the stored one.
@@ -297,7 +317,10 @@ export class EtherfuseClient implements Anchor {
     }
   }
 
-  async getCustomer(input: GetCustomerInput): Promise<Customer | null> {
+  async getCustomer(
+    input: GetCustomerInput,
+    signal?: AbortSignal
+  ): Promise<Customer | null> {
     if (!input.customerId) {
       throw new AnchorError(
         "customerId is required for Etherfuse customer lookup",
@@ -308,7 +331,9 @@ export class EtherfuseClient implements Anchor {
     try {
       const response = await this.request<EtherfuseCustomerResponse>(
         "GET",
-        `/ramp/customer/${input.customerId}`
+        `/ramp/customer/${input.customerId}`,
+        undefined,
+        signal
       );
       return {
         id: response.customerId,
@@ -323,12 +348,13 @@ export class EtherfuseClient implements Anchor {
     }
   }
 
-  async getQuote(input: GetQuoteInput): Promise<Quote> {
+  async getQuote(input: GetQuoteInput, signal?: AbortSignal): Promise<Quote> {
     const quoteId = crypto.randomUUID();
     const [sourceAsset, targetAsset] = await this.resolveAssetPair(
       input.fromCurrency,
       input.toCurrency,
-      input.stellarAddress || ""
+      input.stellarAddress || "",
+      signal
     );
     const type = sourceAsset.includes(":") ? "offramp" : "onramp";
 
@@ -342,7 +368,8 @@ export class EtherfuseClient implements Anchor {
         blockchain: this.blockchain,
         quoteAssets: { type, sourceAsset, targetAsset },
         sourceAmount: String(input.fromAmount || input.toAmount || ""),
-      }
+      },
+      signal
     );
 
     return {
@@ -359,11 +386,14 @@ export class EtherfuseClient implements Anchor {
     };
   }
 
-  async createOnRamp(input: CreateOnRampInput): Promise<OnRampTransaction> {
+  async createOnRamp(
+    input: CreateOnRampInput,
+    signal?: AbortSignal
+  ): Promise<OnRampTransaction> {
     const orderId = crypto.randomUUID();
     let bankAccountId = input.bankAccountId;
     if (!bankAccountId && input.customerId) {
-      const accounts = await this.getFiatAccounts(input.customerId);
+      const accounts = await this.getFiatAccounts(input.customerId, signal);
       if (accounts.length > 0) bankAccountId = accounts[0].id;
     }
 
@@ -376,7 +406,8 @@ export class EtherfuseClient implements Anchor {
         publicKey: input.stellarAddress,
         quoteId: input.quoteId,
         memo: input.memo || undefined,
-      }
+      },
+      signal
     );
 
     const { onramp } = response;
@@ -403,12 +434,15 @@ export class EtherfuseClient implements Anchor {
   }
 
   async getOnRampTransaction(
-    transactionId: string
+    transactionId: string,
+    signal?: AbortSignal
   ): Promise<OnRampTransaction | null> {
     try {
       const response = await this.request<EtherfuseOrderResponse>(
         "GET",
-        `/ramp/order/${transactionId}`
+        `/ramp/order/${transactionId}`,
+        undefined,
+        signal
       );
       return this.mapOnRampTransaction(response);
     } catch (error) {
@@ -418,7 +452,8 @@ export class EtherfuseClient implements Anchor {
   }
 
   async registerFiatAccount(
-    input: RegisterFiatAccountInput
+    input: RegisterFiatAccountInput,
+    signal?: AbortSignal
   ): Promise<RegisteredFiatAccount> {
     if (!input.publicKey) {
       throw new AnchorError(
@@ -429,7 +464,9 @@ export class EtherfuseClient implements Anchor {
     }
     const presignedUrl = await this.getKycUrl(
       input.customerId,
-      input.publicKey
+      input.publicKey,
+      undefined,
+      signal
     );
     const response = await this.request<EtherfuseBankAccountResponse>(
       "POST",
@@ -441,7 +478,8 @@ export class EtherfuseClient implements Anchor {
           beneficiary: input.account.beneficiary,
           bankName: input.account.bankName || undefined,
         },
-      }
+      },
+      signal
     );
     return {
       id: response.bankAccountId,
@@ -452,12 +490,16 @@ export class EtherfuseClient implements Anchor {
     };
   }
 
-  async getFiatAccounts(customerId: string): Promise<SavedFiatAccount[]> {
+  async getFiatAccounts(
+    customerId: string,
+    signal?: AbortSignal
+  ): Promise<SavedFiatAccount[]> {
     try {
       const response = await this.request<EtherfuseBankAccountListResponse>(
         "POST",
         `/ramp/customer/${customerId}/bank-accounts`,
-        { pageSize: 100, pageNumber: 0 }
+        { pageSize: 100, pageNumber: 0 },
+        signal
       );
       return response.items.map((account) => ({
         id: account.bankAccountId,
@@ -473,11 +515,14 @@ export class EtherfuseClient implements Anchor {
     }
   }
 
-  async createOffRamp(input: CreateOffRampInput): Promise<OffRampTransaction> {
+  async createOffRamp(
+    input: CreateOffRampInput,
+    signal?: AbortSignal
+  ): Promise<OffRampTransaction> {
     const orderId = crypto.randomUUID();
     let bankAccountId = input.fiatAccountId;
     if (!bankAccountId && input.customerId) {
-      const accounts = await this.getFiatAccounts(input.customerId);
+      const accounts = await this.getFiatAccounts(input.customerId, signal);
       if (accounts.length > 0) bankAccountId = accounts[0].id;
     }
 
@@ -490,7 +535,8 @@ export class EtherfuseClient implements Anchor {
         publicKey: input.stellarAddress,
         quoteId: input.quoteId,
         memo: input.memo || undefined,
-      }
+      },
+      signal
     );
 
     return {
@@ -513,12 +559,15 @@ export class EtherfuseClient implements Anchor {
   }
 
   async getOffRampTransaction(
-    transactionId: string
+    transactionId: string,
+    signal?: AbortSignal
   ): Promise<OffRampTransaction | null> {
     try {
       const response = await this.request<EtherfuseOrderResponse>(
         "GET",
-        `/ramp/order/${transactionId}`
+        `/ramp/order/${transactionId}`,
+        undefined,
+        signal
       );
       return this.mapOffRampTransaction(response);
     } catch (error) {
@@ -530,7 +579,8 @@ export class EtherfuseClient implements Anchor {
   async getKycUrl(
     customerId: string,
     publicKey?: string,
-    bankAccountId?: string
+    bankAccountId?: string,
+    signal?: AbortSignal
   ): Promise<string> {
     if (!publicKey) {
       throw new AnchorError(
@@ -550,14 +600,16 @@ export class EtherfuseClient implements Anchor {
         bankAccountId: resolvedBankAccountId,
         publicKey,
         blockchain: this.blockchain,
-      }
+      },
+      signal
     );
     return response.presigned_url;
   }
 
   async getKycStatus(
     customerId: string,
-    publicKey?: string
+    publicKey?: string,
+    signal?: AbortSignal
   ): Promise<KycStatus> {
     if (!publicKey) {
       throw new AnchorError(
@@ -568,7 +620,9 @@ export class EtherfuseClient implements Anchor {
     }
     const response = await this.request<EtherfuseKycStatusResponse>(
       "GET",
-      `/ramp/customer/${customerId}/kyc/${publicKey}`
+      `/ramp/customer/${customerId}/kyc/${publicKey}`,
+      undefined,
+      signal
     );
     return this.mapKycStatus(response.status);
   }
@@ -578,12 +632,15 @@ export class EtherfuseClient implements Anchor {
   async getAssets(
     blockchain: string,
     currency: string,
-    wallet: string
+    wallet: string,
+    signal?: AbortSignal
   ): Promise<EtherfuseAssetsResponse> {
     const params = new URLSearchParams({ blockchain, currency, wallet });
     return this.request<EtherfuseAssetsResponse>(
       "GET",
-      `/ramp/assets?${params.toString()}`
+      `/ramp/assets?${params.toString()}`,
+      undefined,
+      signal
     );
   }
 
@@ -643,16 +700,23 @@ export class EtherfuseClient implements Anchor {
     return this.acceptCustomerAgreement(presignedUrl);
   }
 
-  async simulateFiatReceived(orderId: string): Promise<number> {
+  async simulateFiatReceived(
+    orderId: string,
+    signal?: AbortSignal
+  ): Promise<number> {
     const url = `${this.config.baseUrl}/ramp/order/fiat_received`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: this.config.apiKey,
+    const response = await anchorRequest(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: this.config.apiKey,
+        },
+        body: JSON.stringify({ orderId }),
       },
-      body: JSON.stringify({ orderId }),
-    });
+      { signal }
+    );
     return response.status;
   }
 }
