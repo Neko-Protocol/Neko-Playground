@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { getAnchorClient } from "@/lib/anchors";
+import { handleRouteError } from "@/lib/anchors/http";
 import { parseJsonBody, parseParam, parseQuery } from "@/lib/validation/parse";
 import {
   CreateCustomerBodySchema,
@@ -24,23 +25,14 @@ export async function POST(
     const { email, country = "MX", publicKey } = parsed.data;
 
     const client = getAnchorClient(provider);
-    const customer = await client.createCustomer({ email, country, publicKey });
+    const customer = await client.createCustomer(
+      { email, country, publicKey },
+      request.signal
+    );
 
     return NextResponse.json(customer, { status: 201 });
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }
 
@@ -60,11 +52,14 @@ export async function GET(
     const { email, customerId, country = "MX" } = queryResult.data;
 
     const client = getAnchorClient(provider);
-    const customer = await client.getCustomer({
-      email: email || undefined,
-      customerId: customerId || undefined,
-      country,
-    });
+    const customer = await client.getCustomer(
+      {
+        email: email || undefined,
+        customerId: customerId || undefined,
+        country,
+      },
+      request.signal
+    );
 
     if (!customer) {
       return NextResponse.json(
@@ -75,18 +70,6 @@ export async function GET(
 
     return NextResponse.json(customer);
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }

@@ -2,13 +2,16 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, WifiOff, Clock } from "lucide-react";
 import type { TransactionStatus } from "@/lib/anchors/types";
+import type { PollOutcome } from "../../types/ramp";
 
 interface TransactionStatusProps {
   status: TransactionStatus;
   type: "onramp" | "offramp";
   transactionId: string;
+  pollOutcome?: PollOutcome;
+  onRetry?: () => void;
   onDone: () => void;
 }
 
@@ -26,42 +29,79 @@ export const TransactionStatusDisplay: React.FC<TransactionStatusProps> = ({
   status,
   type,
   transactionId,
+  pollOutcome = "pending",
+  onRetry,
   onDone,
 }) => {
   const router = useRouter();
   const isComplete = status === "completed";
   const isError = ["failed", "expired", "cancelled"].includes(status);
-  const isPending = !isComplete && !isError;
+  const isTimedOut = pollOutcome === "timed-out";
+  const isUnreachable = pollOutcome === "unreachable";
+  const isPollFailure = isTimedOut || isUnreachable;
+  const isPending = !isComplete && !isError && !isPollFailure;
 
   return (
     <div className="bg-[#1C1C1C] rounded-[20px] p-6 flex flex-col items-center gap-4 text-center">
       {isComplete && <CheckCircle className="h-12 w-12 text-green-400" />}
       {isError && <XCircle className="h-12 w-12 text-red-400" />}
+      {isTimedOut && <Clock className="h-12 w-12 text-orange-400" />}
+      {isUnreachable && <WifiOff className="h-12 w-12 text-orange-400" />}
       {isPending && (
         <Loader2 className="h-12 w-12 text-[#229EDF] animate-spin" />
       )}
 
       <div className="flex flex-col gap-1">
-        <p className="text-white font-semibold">{STATUS_LABELS[status]}</p>
-        {isPending && (
-          <p className="text-white/40 text-sm">
-            {type === "onramp"
-              ? "We're waiting for your SPEI transfer to be confirmed."
-              : "Your transaction is being processed on Stellar."}
-          </p>
+        {isTimedOut && (
+          <>
+            <p className="text-white font-semibold">Status check timed out</p>
+            <p className="text-white/40 text-sm">
+              We could not confirm the final status in time. Your transaction
+              may still be processing.
+            </p>
+          </>
         )}
-        {isComplete && (
-          <p className="text-white/40 text-sm">
-            {type === "onramp"
-              ? "Your crypto has been sent to your Stellar wallet."
-              : "Funds will arrive in your bank account shortly."}
-          </p>
+        {isUnreachable && (
+          <>
+            <p className="text-white font-semibold">Unable to reach server</p>
+            <p className="text-white/40 text-sm">
+              Status checks failed repeatedly. Check your connection and retry.
+            </p>
+          </>
+        )}
+        {!isPollFailure && (
+          <>
+            <p className="text-white font-semibold">{STATUS_LABELS[status]}</p>
+            {isPending && (
+              <p className="text-white/40 text-sm">
+                {type === "onramp"
+                  ? "We're waiting for your SPEI transfer to be confirmed."
+                  : "Your transaction is being processed on Stellar."}
+              </p>
+            )}
+            {isComplete && (
+              <p className="text-white/40 text-sm">
+                {type === "onramp"
+                  ? "Your crypto has been sent to your Stellar wallet."
+                  : "Funds will arrive in your bank account shortly."}
+              </p>
+            )}
+          </>
         )}
       </div>
 
       <p className="text-white/20 text-xs font-mono">
         ID: {transactionId.slice(0, 8)}...
       </p>
+
+      {isPollFailure && onRetry && (
+        <button
+          onClick={onRetry}
+          className="w-full py-3 rounded-xl bg-[#229EDF] hover:bg-[#1a8bc7] text-white font-semibold transition-colors"
+        >
+          Retry Status Check
+        </button>
+      )}
 
       {(isComplete || isError) && (
         <button

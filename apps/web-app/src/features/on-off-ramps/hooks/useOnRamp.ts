@@ -1,20 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { createOnRamp, getOnRampTransaction } from "../utils/rampApi";
 import type { AnchorProvider, OnRampTransaction } from "@/lib/anchors/types";
-import {
-  POLL_INTERVAL_MS,
-  MAX_POLL_DURATION_MS,
-} from "../constants/ramp.config";
 import { TERMINAL_STATUSES } from "../types/ramp";
+import type { PollOutcome } from "../types/ramp";
+import { useAnchorPolling } from "./useAnchorPolling";
 
 export function useOnRamp(provider: AnchorProvider) {
   const [transaction, setTransaction] = useState<OnRampTransaction | null>(
     null
   );
-  const [isPolling, setIsPolling] = useState(false);
+
+  const shouldPoll =
+    !!transaction && !TERMINAL_STATUSES.has(transaction.status);
+
+  const { outcome: pollOutcome, retry: retryPoll } = useAnchorPolling({
+    enabled: shouldPoll,
+    queryFn: async (signal) => {
+      if (!transaction?.id) return null;
+      const updated = await getOnRampTransaction(provider, transaction.id, {
+        signal,
+      });
+      if (updated) {
+        setTransaction(updated);
+      }
+      return updated;
+    },
+    isTerminal: (tx) => TERMINAL_STATUSES.has(tx.status),
+  });
 
   const { mutateAsync: startOnRamp, isPending: isCreating } = useMutation({
     mutationFn: (data: {
@@ -29,54 +44,21 @@ export function useOnRamp(provider: AnchorProvider) {
     }) => createOnRamp(provider, data),
     onSuccess: (tx) => {
       setTransaction(tx);
-      if (!TERMINAL_STATUSES.has(tx.status)) {
-        setIsPolling(true);
-      }
     },
   });
 
-  // Polling loop
-  useEffect(() => {
-    if (!isPolling || !transaction?.id) return;
-
-    const startTime = Date.now();
-    let timeoutId: NodeJS.Timeout;
-
-    const poll = async () => {
-      if (Date.now() - startTime > MAX_POLL_DURATION_MS) {
-        setIsPolling(false);
-        return;
-      }
-
-      try {
-        const updated = await getOnRampTransaction(provider, transaction.id);
-        if (updated) {
-          setTransaction(updated);
-          if (TERMINAL_STATUSES.has(updated.status)) {
-            setIsPolling(false);
-            return;
-          }
-        }
-      } catch {
-        // Retry on next interval
-      }
-
-      timeoutId = setTimeout(poll, POLL_INTERVAL_MS);
-    };
-
-    timeoutId = setTimeout(poll, POLL_INTERVAL_MS);
-    return () => clearTimeout(timeoutId);
-  }, [isPolling, transaction?.id, provider]);
-
   const reset = () => {
     setTransaction(null);
-    setIsPolling(false);
   };
+
+  const isPolling = shouldPoll && pollOutcome === "pending";
 
   return {
     transaction,
     isCreating,
     isPolling,
+    pollOutcome: transaction ? pollOutcome : ("pending" as PollOutcome),
+    retryPoll,
     startOnRamp,
     reset,
   };

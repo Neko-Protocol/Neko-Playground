@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { getAnchorClient } from "@/lib/anchors";
+import { handleRouteError } from "@/lib/anchors/http";
 import { parseJsonBody, parseParam } from "@/lib/validation/parse";
 import { ProviderSchema, QuoteBodySchema } from "@/lib/validation/schemas";
 
@@ -28,30 +29,21 @@ export async function POST(
     } = parsed.data;
 
     const client = getAnchorClient(provider);
-    const quote = await client.getQuote({
-      fromCurrency,
-      toCurrency,
-      fromAmount,
-      toAmount,
-      customerId,
-      stellarAddress,
-      resourceId,
-    });
+    const quote = await client.getQuote(
+      {
+        fromCurrency,
+        toCurrency,
+        fromAmount,
+        toAmount,
+        customerId,
+        stellarAddress,
+        resourceId,
+      },
+      request.signal
+    );
 
     return NextResponse.json(quote);
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }

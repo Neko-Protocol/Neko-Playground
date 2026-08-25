@@ -67,8 +67,9 @@ const OnOffRamps: React.FC = () => {
     kycStatus,
     isCheckingKyc,
     isKycRequired,
-    isKycApproved,
+    kycPollOutcome,
     refetchKycStatus,
+    retryKycPoll,
     openKycFlow,
   } = useAnchorKyc(
     state.provider,
@@ -83,11 +84,13 @@ const OnOffRamps: React.FC = () => {
     transaction: onRampTx,
     isCreating: isCreatingOnRamp,
     isPolling: isPollingOnRamp,
+    pollOutcome: onRampPollOutcome,
+    retryPoll: retryOnRampPoll,
     startOnRamp,
   } = useOnRamp(state.provider);
 
   // Trustline check (Etherfuse on-ramp only — after order is created)
-  const { hasTrustline, isAddingTrustline, trustlineError, addTrustline } =
+  const { hasTrustline, isAddingTrustline, addTrustline } =
     useEtherfuseTrustline(
       state.provider,
       address,
@@ -98,12 +101,12 @@ const OnOffRamps: React.FC = () => {
   // Off-Ramp
   const {
     transaction: offRampTx,
-    phase: offRampPhase,
     isCreating: isCreatingOffRamp,
     isWaitingForXdr,
     isSigning,
     isPolling: isPollingOffRamp,
-    isDone: isOffRampDone,
+    pollOutcome: offRampPollOutcome,
+    retryPoll: retryOffRampPoll,
     startOffRamp,
   } = useOffRamp(state.provider, signTransaction);
 
@@ -251,6 +254,10 @@ const OnOffRamps: React.FC = () => {
   };
 
   const currentTx = isOnRamp ? onRampTx : offRampTx;
+  const currentPollOutcome = isOnRamp ? onRampPollOutcome : offRampPollOutcome;
+  const retryCurrentPoll = isOnRamp ? retryOnRampPoll : retryOffRampPoll;
+  const hasPollFailure =
+    currentPollOutcome === "timed-out" || currentPollOutcome === "unreachable";
   const isLoadingTx = isCreatingOnRamp || isCreatingOffRamp;
   const isPollingTx =
     isPollingOnRamp || isPollingOffRamp || isWaitingForXdr || isSigning;
@@ -300,6 +307,8 @@ const OnOffRamps: React.FC = () => {
               status={kycStatus}
               onStartKyc={() => void openKycFlow()}
               isLoading={isCheckingKyc}
+              pollOutcome={kycPollOutcome}
+              onRetryPoll={retryKycPoll}
             />
           )}
 
@@ -337,6 +346,7 @@ const OnOffRamps: React.FC = () => {
           {/* Active transaction status */}
           {currentTx &&
             (isPollingTx ||
+              hasPollFailure ||
               currentTx.status === "completed" ||
               ["failed", "expired", "cancelled"].includes(
                 currentTx.status
@@ -345,6 +355,8 @@ const OnOffRamps: React.FC = () => {
                 status={currentTx.status}
                 type={isOnRamp ? "onramp" : "offramp"}
                 transactionId={currentTx.id}
+                pollOutcome={currentPollOutcome}
+                onRetry={retryCurrentPoll}
                 onDone={() => {
                   dispatch({ type: "RESET" });
                   clearQuote();

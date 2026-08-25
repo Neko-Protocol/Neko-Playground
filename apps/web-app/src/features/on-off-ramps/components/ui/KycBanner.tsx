@@ -1,20 +1,52 @@
 "use client";
 
 import React from "react";
-import { ShieldAlert, ShieldCheck, Clock } from "lucide-react";
+import { ShieldAlert, ShieldCheck, Clock, WifiOff } from "lucide-react";
 import type { KycStatus } from "@/lib/anchors/types";
+import type { PollOutcome } from "../../types/ramp";
 
 interface KycBannerProps {
   status: KycStatus | undefined;
   onStartKyc: () => void;
   isLoading?: boolean;
+  pollOutcome?: PollOutcome;
+  onRetryPoll?: () => void;
 }
 
 export const KycBanner: React.FC<KycBannerProps> = ({
   status,
   onStartKyc,
   isLoading,
+  pollOutcome = "pending",
+  onRetryPoll,
 }) => {
+  if (pollOutcome === "unreachable") {
+    return (
+      <div className="flex items-center justify-between gap-3 bg-orange-400/10 border border-orange-400/20 rounded-xl px-4 py-3">
+        <div className="flex items-center gap-3">
+          <WifiOff className="h-5 w-5 text-orange-400 shrink-0" />
+          <div>
+            <p className="text-orange-400 text-sm font-medium">
+              Could not check KYC status
+            </p>
+            <p className="text-white/40 text-xs">
+              The status check failed. Your verification may still be in
+              progress.
+            </p>
+          </div>
+        </div>
+        {onRetryPoll && (
+          <button
+            onClick={onRetryPoll}
+            className="shrink-0 px-4 py-2 rounded-lg bg-orange-400 hover:bg-orange-500 text-white text-sm font-medium transition-colors"
+          >
+            Retry
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (status === "approved") {
     return (
       <div className="flex items-center gap-3 bg-green-400/10 border border-green-400/20 rounded-xl px-4 py-3">
@@ -35,7 +67,6 @@ export const KycBanner: React.FC<KycBannerProps> = ({
     );
   }
 
-  // While loading and no cached status, render nothing to avoid flash.
   if (isLoading && !status) return null;
 
   if (

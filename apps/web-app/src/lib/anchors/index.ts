@@ -5,6 +5,7 @@ import { AlfredPayClient } from "./alfredpay";
 import { serverEnv } from "@/lib/env.server";
 
 export * from "./types";
+export * from "./http";
 export { EtherfuseClient } from "./etherfuse";
 export { AlfredPayClient } from "./alfredpay";
 

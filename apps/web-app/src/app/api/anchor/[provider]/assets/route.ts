@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { getAnchorClient } from "@/lib/anchors";
+import { handleRouteError } from "@/lib/anchors/http";
 import { EtherfuseClient } from "@/lib/anchors/etherfuse";
 import { parseParam, parseQuery } from "@/lib/validation/parse";
 import { AssetsQuerySchema, ProviderSchema } from "@/lib/validation/schemas";
@@ -33,21 +34,14 @@ export async function GET(
       );
     }
 
-    const result = await client.getAssets("stellar", "mxn", wallet);
+    const result = await client.getAssets(
+      "stellar",
+      "mxn",
+      wallet,
+      request.signal
+    );
     return NextResponse.json(result);
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }

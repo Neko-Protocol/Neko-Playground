@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AnchorError } from "@/lib/anchors";
+import {
+  disconnectedResponse,
+  handleRouteError,
+  raceWithSignal,
+} from "@/lib/anchors/http";
 import { parseJsonBody, parseParam } from "@/lib/validation/parse";
 import {
   OffRampSignBodySchema,
@@ -9,6 +13,13 @@ import { rpc, Horizon, TransactionBuilder } from "@stellar/stellar-sdk";
 import { clientEnv } from "@/lib/env.client";
 
 export const dynamic = "force-dynamic";
+
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === "AbortError") ||
+    (error instanceof Error && error.name === "AbortError")
+  );
+}
 
 /**
  * POST /api/anchor/[provider]/offramp/sign
@@ -35,8 +46,11 @@ export async function POST(
 
     try {
       const tx = TransactionBuilder.fromXDR(signedXdr, networkPassphrase);
-      const response = await sorobanServer.sendTransaction(
-        tx as Parameters<typeof sorobanServer.sendTransaction>[0]
+      const response = await raceWithSignal(
+        sorobanServer.sendTransaction(
+          tx as Parameters<typeof sorobanServer.sendTransaction>[0]
+        ),
+        request.signal
       );
       return NextResponse.json({
         success: true,
@@ -46,11 +60,14 @@ export async function POST(
       });
     } catch {
       try {
-        const response = await horizonServer.submitTransaction(
-          TransactionBuilder.fromXDR(
-            signedXdr,
-            networkPassphrase
-          ) as Parameters<typeof horizonServer.submitTransaction>[0]
+        const response = await raceWithSignal(
+          horizonServer.submitTransaction(
+            TransactionBuilder.fromXDR(
+              signedXdr,
+              networkPassphrase
+            ) as Parameters<typeof horizonServer.submitTransaction>[0]
+          ),
+          request.signal
         );
         return NextResponse.json({
           success: true,
@@ -62,12 +79,15 @@ export async function POST(
       }
     }
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
+    if (isAbortError(error)) {
+      return disconnectedResponse();
     }
+
+    const response = handleRouteError(error);
+    if (response.status !== 500) {
+      return response;
+    }
+
     return NextResponse.json(
       {
         error: "Failed to submit signed transaction",

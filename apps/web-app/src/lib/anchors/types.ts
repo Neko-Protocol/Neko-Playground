@@ -461,31 +461,58 @@ export interface Anchor {
   readonly supportedCurrencies: readonly string[];
   readonly supportedRails: readonly string[];
 
-  createCustomer(input: CreateCustomerInput): Promise<Customer>;
-  getCustomer(input: GetCustomerInput): Promise<Customer | null>;
-  getQuote(input: GetQuoteInput): Promise<Quote>;
-  createOnRamp(input: CreateOnRampInput): Promise<OnRampTransaction>;
+  createCustomer(
+    input: CreateCustomerInput,
+    signal?: AbortSignal
+  ): Promise<Customer>;
+  getCustomer(
+    input: GetCustomerInput,
+    signal?: AbortSignal
+  ): Promise<Customer | null>;
+  getQuote(input: GetQuoteInput, signal?: AbortSignal): Promise<Quote>;
+  createOnRamp(
+    input: CreateOnRampInput,
+    signal?: AbortSignal
+  ): Promise<OnRampTransaction>;
   getOnRampTransaction(
-    transactionId: string
+    transactionId: string,
+    signal?: AbortSignal
   ): Promise<OnRampTransaction | null>;
   registerFiatAccount(
-    input: RegisterFiatAccountInput
+    input: RegisterFiatAccountInput,
+    signal?: AbortSignal
   ): Promise<RegisteredFiatAccount>;
-  getFiatAccounts(customerId: string): Promise<SavedFiatAccount[]>;
-  createOffRamp(input: CreateOffRampInput): Promise<OffRampTransaction>;
+  getFiatAccounts(
+    customerId: string,
+    signal?: AbortSignal
+  ): Promise<SavedFiatAccount[]>;
+  createOffRamp(
+    input: CreateOffRampInput,
+    signal?: AbortSignal
+  ): Promise<OffRampTransaction>;
   getOffRampTransaction(
-    transactionId: string
+    transactionId: string,
+    signal?: AbortSignal
   ): Promise<OffRampTransaction | null>;
   getKycUrl?(
     customerId: string,
     publicKey?: string,
-    bankAccountId?: string
+    bankAccountId?: string,
+    signal?: AbortSignal
   ): Promise<string>;
-  getKycStatus(customerId: string, publicKey?: string): Promise<KycStatus>;
-  getKycRequirements?(country?: string): Promise<KycRequirements>;
+  getKycStatus(
+    customerId: string,
+    publicKey?: string,
+    signal?: AbortSignal
+  ): Promise<KycStatus>;
+  getKycRequirements?(
+    country?: string,
+    signal?: AbortSignal
+  ): Promise<KycRequirements>;
   submitKyc?(
     customerId: string,
-    data: KycSubmissionData
+    data: KycSubmissionData,
+    signal?: AbortSignal
   ): Promise<KycSubmissionResult>;
 }
 
@@ -504,5 +531,21 @@ export class AnchorError extends Error {
     this.name = "AnchorError";
     this.code = code;
     this.statusCode = statusCode;
+  }
+}
+
+/** Thrown when an anchor HTTP request exceeds its deadline. */
+export class AnchorTimeoutError extends AnchorError {
+  constructor(message = "Anchor request timed out") {
+    super(message, "TIMEOUT", 504);
+    this.name = "AnchorTimeoutError";
+  }
+}
+
+/** Thrown when an anchor cannot be reached (network failure). */
+export class AnchorUnreachableError extends AnchorError {
+  constructor(message = "Anchor is unreachable") {
+    super(message, "UNREACHABLE", 503);
+    this.name = "AnchorUnreachableError";
   }
 }
