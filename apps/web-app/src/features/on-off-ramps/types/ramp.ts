@@ -56,3 +56,5 @@ export const TERMINAL_STATUSES = new Set([
   "cancelled",
   "refunded",
 ]);
+
+export type PollOutcome = "pending" | "terminal" | "unreachable" | "timed-out";
