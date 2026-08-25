@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { getAnchorClient } from "@/lib/anchors";
+import { handleRouteError } from "@/lib/anchors/http";
 import { AlfredPayClient } from "@/lib/anchors/alfredpay";
 import {
   parseJsonBody,
@@ -49,7 +50,10 @@ export async function GET(
           { status: 400 }
         );
       }
-      const requirements = await client.getKycRequirements(country);
+      const requirements = await client.getKycRequirements(
+        country,
+        request.signal
+      );
       return NextResponse.json(requirements);
     }
 
@@ -63,32 +67,28 @@ export async function GET(
       const kycUrl = await client.getKycUrl(
         customerId!,
         publicKey,
-        bankAccountId
+        bankAccountId,
+        request.signal
       );
       return NextResponse.json({ url: kycUrl });
     }
 
     if (type === "submission" && client instanceof AlfredPayClient) {
-      const submission = await client.getKycSubmission(customerId!);
+      const submission = await client.getKycSubmission(
+        customerId!,
+        request.signal
+      );
       return NextResponse.json({ submission });
     }
 
-    const status = await client.getKycStatus(customerId!, publicKey);
+    const status = await client.getKycStatus(
+      customerId!,
+      publicKey,
+      request.signal
+    );
     return NextResponse.json({ status });
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }
 
@@ -161,22 +161,30 @@ export async function POST(
           }
         }
 
-        const result = await client.submitKyc(formParsed.data.customerId, {
-          fields: formParsed.data.fields,
-          documents,
-          metadata: formParsed.data.metadata,
-        });
+        const result = await client.submitKyc(
+          formParsed.data.customerId,
+          {
+            fields: formParsed.data.fields,
+            documents,
+            metadata: formParsed.data.metadata,
+          },
+          request.signal
+        );
         return NextResponse.json(result);
       }
 
       const parsed = await parseJsonBody(request, KycSubmitJsonBodySchema);
       if ("error" in parsed) return parsed.error;
       const { customerId, data } = parsed.data;
-      const result = await client.submitKyc(customerId, {
-        fields: data.fields,
-        documents: data.documents ?? {},
-        metadata: data.metadata,
-      });
+      const result = await client.submitKyc(
+        customerId,
+        {
+          fields: data.fields,
+          documents: data.documents ?? {},
+          metadata: data.metadata,
+        },
+        request.signal
+      );
       return NextResponse.json(result);
     }
 
@@ -208,7 +216,8 @@ export async function POST(
         submissionId,
         fileType,
         file,
-        file.name
+        file.name,
+        request.signal
       );
       return NextResponse.json(result);
     }
@@ -221,18 +230,6 @@ export async function POST(
     if (error instanceof ZodError) {
       return zodErrorResponse(error);
     }
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnchorClient, AnchorError } from "@/lib/anchors";
+import { getAnchorClient } from "@/lib/anchors";
+import { handleRouteError } from "@/lib/anchors/http";
 import { EtherfuseClient } from "@/lib/anchors/etherfuse";
 import { AlfredPayClient } from "@/lib/anchors/alfredpay";
 import { parseJsonBody, parseParam } from "@/lib/validation/parse";
@@ -43,7 +44,10 @@ export async function POST(
             { status: 400 }
           );
         }
-        const statusCode = await client.simulateFiatReceived(body.orderId);
+        const statusCode = await client.simulateFiatReceived(
+          body.orderId,
+          request.signal
+        );
         return NextResponse.json({ success: statusCode === 200, statusCode });
       }
 
@@ -54,7 +58,7 @@ export async function POST(
             { status: 400 }
           );
         }
-        await client.completeKycSandbox(body.submissionId);
+        await client.completeKycSandbox(body.submissionId, request.signal);
         return NextResponse.json({
           success: true,
           message: "KYC marked as completed",
@@ -62,18 +66,6 @@ export async function POST(
       }
     }
   } catch (error) {
-    if (error instanceof AnchorError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }
