@@ -178,16 +178,21 @@ export async function GET(req: NextRequest) {
   };
 
   // IL positions (for any LP positions)
-  const ilPositions: ILPosition[] = [
-    {
-      poolId: "xlm-usdc",
-      assets: ["XLM", "USDC"],
-      ilPct: -2.3,
-      ilUsd: totalValue * 0.25 * 0.023,
-      hodlValue: totalValue * 0.25 + totalValue * 0.25 * 0.023,
-      currentValue: totalValue * 0.25,
-    },
-  ].filter(() => totalValue > 0);
+  // `satisfies` restores contextual typing the trailing .filter() would
+  // otherwise swallow, so `assets` stays the [string, string] pair ILPosition
+  // declares instead of widening to string[].
+  const ilPositions: ILPosition[] = (
+    [
+      {
+        poolId: "xlm-usdc",
+        assets: ["XLM", "USDC"],
+        ilPct: -2.3,
+        ilUsd: totalValue * 0.25 * 0.023,
+        hodlValue: totalValue * 0.25 + totalValue * 0.25 * 0.023,
+        currentValue: totalValue * 0.25,
+      },
+    ] satisfies ILPosition[]
+  ).filter(() => totalValue > 0);
 
   // Yield forecast
   const yieldForecast: YieldForecast = {

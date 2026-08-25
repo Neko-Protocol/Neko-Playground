@@ -92,7 +92,12 @@ export interface StrategyStepDefinition<TParams = Record<string, unknown>> {
   readonly protocol: string;
   /** How prepare()'s xdr gets submitted — the engine branches on this once, centrally. */
   readonly submissionMode: "rpc" | "soroswapApi";
-  readonly paramsSchema: z.ZodType<TParams>;
+  /**
+   * Parses untrusted `unknown` input into TParams. The input type is left open
+   * rather than pinned to TParams so schemas that use `.default()` — whose
+   * input type has those keys optional — still satisfy this.
+   */
+  readonly paramsSchema: z.ZodType<TParams, z.ZodTypeDef, unknown>;
 
   /** Declares this step's output ports so downstream steps can bind to them. */
   describeOutputs(params: TParams): StepPort[];

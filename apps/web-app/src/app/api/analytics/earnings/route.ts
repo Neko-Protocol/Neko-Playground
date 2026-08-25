@@ -139,15 +139,20 @@ export async function GET(req: NextRequest) {
     portfolioUsd > 0 ? (totalEarned / portfolioUsd) * 100 : 0;
 
   // Per-asset breakdown (realistic token list)
-  const byAsset: EarningsByAsset[] = [
-    { asset: "USDC", source: "vault", earned: sources[0].earned * 0.6 },
-    { asset: "XLM", source: "vault", earned: sources[0].earned * 0.4 },
-    { asset: "USDC", source: "lending", earned: sources[1].earned * 0.7 },
-    { asset: "EURC", source: "lending", earned: sources[1].earned * 0.3 },
-    { asset: "XLM/USDC", source: "pools", earned: sources[2].earned * 0.55 },
-    { asset: "EURC/USDC", source: "pools", earned: sources[2].earned * 0.45 },
-    { asset: "CETES", source: "rwa", earned: sources[3].earned },
-  ].filter((r) => r.earned > 0.000001);
+  // `satisfies` restores contextual typing the trailing .filter() would
+  // otherwise swallow, so each `source` narrows to EarningsSourceId instead of
+  // widening to string — and a typo in one is caught here.
+  const byAsset: EarningsByAsset[] = (
+    [
+      { asset: "USDC", source: "vault", earned: sources[0].earned * 0.6 },
+      { asset: "XLM", source: "vault", earned: sources[0].earned * 0.4 },
+      { asset: "USDC", source: "lending", earned: sources[1].earned * 0.7 },
+      { asset: "EURC", source: "lending", earned: sources[1].earned * 0.3 },
+      { asset: "XLM/USDC", source: "pools", earned: sources[2].earned * 0.55 },
+      { asset: "EURC/USDC", source: "pools", earned: sources[2].earned * 0.45 },
+      { asset: "CETES", source: "rwa", earned: sources[3].earned },
+    ] satisfies EarningsByAsset[]
+  ).filter((r) => r.earned > 0.000001);
 
   const response: EarningsApiResponse = {
     totalEarned,
