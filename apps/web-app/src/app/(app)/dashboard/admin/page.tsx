@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import AdminPageClient from "@/features/admin/components/AdminPageClient";
+import { redirect } from "next/navigation";
+import { getLendingAdminAddress } from "@/lib/admin-config";
+import AdminGate from "@/features/admin/components/AdminGate";
 
 export const metadata: Metadata = {
   title: "Admin | Neko Protocol",
@@ -8,5 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  return <AdminPageClient />;
+  const adminAddress = getLendingAdminAddress();
+  if (!adminAddress) redirect("/dashboard");
+  return <AdminGate adminAddress={adminAddress} />;
 }
