@@ -52,6 +52,13 @@ vi.mock("@stellar/stellar-sdk", () => ({
   rpc: { Server: ServerMock },
   TransactionBuilder: { fromXDR: vi.fn() },
 }));
+vi.mock("@/lib/helpers/stellar/executeTransaction", () => ({
+  submitSignedTransaction: vi.fn(),
+  confirmTransactionHash: vi.fn(),
+}));
+vi.mock("@/lib/helpers/stellar/sorobanServer", () => ({
+  getSorobanServer: vi.fn(),
+}));
 vi.mock("@/lib/helpers/stellar/soroswap", () => ({
   sendTransaction: vi.fn(),
   getQuote: vi.fn(),
