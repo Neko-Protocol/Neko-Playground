@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
-import { rpc } from "@stellar/stellar-sdk";
+import { Networks } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
@@ -13,9 +12,8 @@ import {
   getBTokenBalance,
 } from "@/lib/helpers/stellar/lending";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
-import { waitForTransaction } from "@/lib/helpers/stellar/waitForTransaction";
+import { executeTransaction } from "@/lib/helpers/stellar/executeTransaction";
 import { usePools, usePoolAction } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit, toSmallestUnit } from "@/lib/helpers/tokenUtils";
@@ -207,10 +205,6 @@ export function useLend() {
 
         const decimals = token.decimals || 7;
         const passphrase = networkPassphrase || Networks.TESTNET;
-        const sorobanServer = new rpc.Server(rpcUrl, {
-          allowHttp: stellarNetwork === "LOCAL",
-        });
-
         const lendingContractId = selectedPool.contractId;
 
         if (isDeposit) {
@@ -222,14 +216,23 @@ export function useLend() {
             lendingContractId
           );
 
-          const signedDeposit = await signTransaction(depositXdr, {
+          const result = await executeTransaction({
+            xdr: depositXdr,
+            signTransaction,
             networkPassphrase: passphrase,
             address,
+            contractName: "rwa-lending",
+            confirmation: "wait",
           });
-          const sendResult = await sorobanServer.sendTransaction(
-            TransactionBuilder.fromXDR(signedDeposit.signedTxXdr, passphrase)
-          );
-          await waitForTransaction(sendResult.hash, sorobanServer);
+          if (result.status !== "success") {
+            throw new Error(
+              result.status === "contract_error"
+                ? result.error.message
+                : result.status === "network_error"
+                  ? result.message
+                  : "Transaction cancelled"
+            );
+          }
         } else {
           if (!selectedPool.bTokenRate)
             throw new Error("Unable to calculate bTokens. Please try again.");
@@ -242,14 +245,23 @@ export function useLend() {
             lendingContractId
           );
 
-          const signedWithdraw = await signTransaction(withdrawXdr, {
+          const result = await executeTransaction({
+            xdr: withdrawXdr,
+            signTransaction,
             networkPassphrase: passphrase,
             address,
+            contractName: "rwa-lending",
+            confirmation: "wait",
           });
-          const sendResult = await sorobanServer.sendTransaction(
-            TransactionBuilder.fromXDR(signedWithdraw.signedTxXdr, passphrase)
-          );
-          await waitForTransaction(sendResult.hash, sorobanServer);
+          if (result.status !== "success") {
+            throw new Error(
+              result.status === "contract_error"
+                ? result.error.message
+                : result.status === "network_error"
+                  ? result.message
+                  : "Transaction cancelled"
+            );
+          }
         }
 
         await loadBTokenBalance();
