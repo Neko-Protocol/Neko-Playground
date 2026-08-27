@@ -1,5 +1,5 @@
-import { TransactionBuilder, rpc } from "@stellar/stellar-sdk";
-import { stellarNetwork } from "@/lib/constants/network";
+import { TransactionBuilder } from "@stellar/stellar-sdk";
+import { getSorobanServer } from "./sorobanServer";
 
 const PENDING_WAIT_MS = 5000;
 
@@ -26,9 +26,7 @@ export async function signAndSendTransaction(
     signed.signedTxXdr,
     options.networkPassphrase
   );
-  const sorobanServer = new rpc.Server(options.rpcUrl, {
-    allowHttp: stellarNetwork === "LOCAL",
-  });
+  const sorobanServer = getSorobanServer(options.rpcUrl);
   const result = await sorobanServer.sendTransaction(tx);
 
   if (options.waitForPending !== false && result.status === "PENDING") {

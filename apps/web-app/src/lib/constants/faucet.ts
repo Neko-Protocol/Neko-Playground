@@ -4,10 +4,10 @@ import {
   nativeToScVal,
   Contract,
   TransactionBuilder,
-  rpc,
   Horizon,
 } from "@stellar/stellar-sdk";
 import { clientEnv } from "@/lib/env.client";
+import { getSorobanServer } from "@/lib/helpers/stellar/sorobanServer";
 export interface FaucetToken {
   symbol: string;
   contractId: string;
@@ -138,7 +138,7 @@ export async function buildFaucetTransaction(
     .setTimeout(300)
     .build();
 
-  const sorobanServer = new rpc.Server(sorobanRpcUrl, { allowHttp: true });
+  const sorobanServer = getSorobanServer(sorobanRpcUrl);
   const prepared = await sorobanServer.prepareTransaction(tx);
 
   return prepared.toXDR();
