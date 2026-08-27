@@ -24,6 +24,9 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  test: {
+    setupFiles: ["./vitest.setup.ts"],
+  },
   oxc: {
     jsx: { runtime: "automatic" },
   },

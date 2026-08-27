@@ -5,7 +5,7 @@ import {
   TokenMetadata,
   type Request,
 } from "@blend-capital/blend-sdk";
-import { TransactionBuilder, rpc, xdr, Horizon } from "@stellar/stellar-sdk";
+import { TransactionBuilder, xdr, Horizon } from "@stellar/stellar-sdk";
 
 import { rpcUrl, networkPassphrase, horizonUrl } from "@/lib/constants/network";
 import { getSorobanServer } from "@/lib/helpers/stellar/sorobanServer";

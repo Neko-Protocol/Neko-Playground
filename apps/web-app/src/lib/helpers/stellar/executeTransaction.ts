@@ -127,7 +127,7 @@ export async function executeTransaction(
       return { status: "contract_error", error: mapped };
     }
 
-    if (mapped?.kind !== "other") {
+    if (mapped && mapped.kind !== "other") {
       return { status: "contract_error", error: mapped };
     }
 

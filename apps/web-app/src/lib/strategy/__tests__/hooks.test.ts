@@ -65,9 +65,6 @@ vi.mock("@/lib/helpers/stellar/soroswap", () => ({
   buildTransaction: vi.fn(),
   getAvailableTokens: vi.fn(() => ({})),
 }));
-vi.mock("@/lib/helpers/stellar/waitForTransaction", () => ({
-  waitForTransaction: vi.fn(),
-}));
 vi.mock("../engine", () => ({
   validateStrategy: vi.fn(),
   simulateStrategy: simulateStrategyMock,
