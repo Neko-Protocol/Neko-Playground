@@ -8,6 +8,7 @@ import {
 import { TransactionBuilder, rpc, xdr, Horizon } from "@stellar/stellar-sdk";
 
 import { rpcUrl, networkPassphrase, horizonUrl } from "@/lib/constants/network";
+import { getSorobanServer } from "@/lib/helpers/stellar/sorobanServer";
 
 import type { BasePoolAdapter } from "../types/adapter.types";
 import type {
@@ -381,7 +382,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       .setTimeout(300)
       .build();
 
-    const server = new rpc.Server(rpcUrl, { allowHttp: true });
+    const server = getSorobanServer(rpcUrl);
     const prepared = await server.prepareTransaction(tx);
 
     return {
