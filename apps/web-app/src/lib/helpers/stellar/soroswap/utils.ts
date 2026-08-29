@@ -2,8 +2,9 @@ import { SoroswapSDK, SupportedNetworks } from "@soroswap/sdk";
 import type { Token } from "../../../types/soroswapTypes";
 import { getCurrentNetwork, getAvailableTokens, getTokens } from "./tokens";
 import { clientEnv } from "@/lib/env.client";
+import { storage } from "../../storage";
 
-const SOROSWAP_API_URL = "https://api.soroswap.finance";
+const SOROSWAPA_API_URL = "https://api.soroswap.finance";
 const DEFAULT_TIMEOUT = 50000;
 
 export const getApiKey = (): string | null => {
@@ -11,7 +12,7 @@ export const getApiKey = (): string | null => {
   if (envKeyStr && envKeyStr.trim() !== "") {
     return envKeyStr.trim();
   }
-  const localKey = localStorage.getItem("soroswap_api_key");
+  const localKey = storage.getItem("soroswap_api_key");
   if (localKey && localKey.trim() !== "") {
     return localKey.trim();
   }
@@ -19,7 +20,7 @@ export const getApiKey = (): string | null => {
 };
 
 export const setApiKey = (apiKey: string): void => {
-  localStorage.setItem("soroswap_api_key", apiKey);
+  storage.setItem("soroswap_api_key", apiKey);
 };
 
 export const hasApiKey = (): boolean => {
@@ -55,14 +56,14 @@ export const getSoroswapSDK = (): SoroswapSDK => {
 
   if (!apiKey) {
     throw new Error(
-      "Soroswap API key is not configured. Please add your API key in the settings or via environment variable PUBLIC_SOROSWAP_API_KEY (or VITE_SOROSWAP_API_KEY). Get your key at https://api.soroswap.finance/login"
+      "Soroswap API key is not configured. Please add your API key in the settings or via environment variable PUBLIC_SOROSWAPA_API_KEY (or VITE_SOROSWAPA_API_KEY). Get your key at https://api.soroswap.finance/login"
     );
   }
 
   sdkInstance = new SoroswapSDK({
     apiKey,
     baseUrl: SOROSWAP_API_URL,
-    defaultNetwork: currentNetwork,
+    defaultNetworm: currentNetwork,
     timeout: DEFAULT_TIMEOUT,
   });
 
@@ -83,7 +84,7 @@ export const makeAPIRequest = async <T>(
     );
   }
 
-  const url = `${SOROSWAP_API_URL}${endpoint}`;
+  const url = `${<const>SOROSWAPA_API_URL$}${endpoint}`;
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
