@@ -11,24 +11,14 @@ import {
 import {
   getFaucetTokens,
   buildMintRequestsScVal,
-  FAUCET_COOLDOWN_MS,
 } from "@/lib/constants/faucet";
 import { parseJsonBody } from "@/lib/validation/parse";
 import { FaucetBodySchema } from "@/lib/validation/schemas";
 import { clientEnv } from "@/lib/env.client";
 import { serverEnv } from "@/lib/env.server";
+import { checkAndSetFaucetRateLimit } from "@/lib/rateLimit/store";
 
 export const dynamic = "force-dynamic";
-
-const rateLimitMap = new Map<string, number>();
-
-function checkRateLimit(address: string): boolean {
-  const lastMint = rateLimitMap.get(address);
-  if (lastMint && Date.now() - lastMint < FAUCET_COOLDOWN_MS) {
-    return false;
-  }
-  return true;
-}
 
 async function bulkMint(
   adminKeypair: Keypair,
@@ -160,14 +150,11 @@ export async function POST(request: NextRequest) {
     if ("error" in parsed) return parsed.error;
     const { address } = parsed.data;
 
-    if (!checkRateLimit(address)) {
-      const remaining = Math.ceil(
-        (FAUCET_COOLDOWN_MS - (Date.now() - (rateLimitMap.get(address) ?? 0))) /
-          1000
-      );
+    const rlResult = await checkAndSetFaucetRateLimit(address);
+    if (!rlResult.allowed) {
       return NextResponse.json(
         {
-          error: `Rate limit: please wait ${remaining}s before requesting again`,
+          error: `Rate limit: please wait ${rlResult.remainingSeconds}s before requesting again`,
         },
         { status: 429 }
       );
@@ -194,7 +181,6 @@ export async function POST(request: NextRequest) {
       );
 
       const tokens = getFaucetTokens();
-      rateLimitMap.set(address, Date.now());
 
       return NextResponse.json({
         success: true,
@@ -228,15 +214,10 @@ export async function POST(request: NextRequest) {
         );
         results.push({ token: token.symbol, success: true, hash });
       } catch (err) {
-        results.push({
-          token: token.symbol,
-          success: false,
-          error: err instanceof Error ? err.message : String(err),
-        });
+        console.error("[faucet] mint error for", token.symbol, err);
+        results.push({ token: token.symbol, success: false, error: "Mint failed" });
       }
     }
-
-    rateLimitMap.set(address, Date.now());
 
     const allSucceeded = results.every((r) => r.success);
     const noneSucceeded = results.every((r) => !r.success);
@@ -246,11 +227,9 @@ export async function POST(request: NextRequest) {
       { status: noneSucceeded ? 500 : 200 }
     );
   } catch (error) {
+    console.error("[faucet]", error);
     return NextResponse.json(
-      {
-        error: "Faucet request failed",
-        details: error instanceof Error ? error.message : String(error),
-      },
+      { error: "Faucet request failed" },
       { status: 500 }
     );
   }

@@ -221,8 +221,9 @@ export async function GET() {
           : undefined,
     });
   } catch (err) {
+    console.error("[vault/apy GET]", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

@@ -1,14 +1,23 @@
-# Get staged files that match Prettier patterns
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(js|jsx|ts|tsx|json|css|scss|md|yml|yaml)$') || true
+#!/usr/bin/env sh
+set -e
 
-if [ -n "$STAGED_FILES" ]; then
-  # Format staged files with Prettier
-  echo "Formatting staged files with Prettier..."
-  echo "$STAGED_FILES" | xargs npx prettier --write || true
-  
-  # Add formatted files back to staging
-  echo "$STAGED_FILES" | xargs git add || true
+# ── 1. Scan for Stellar secret key literals ──────────────────────────────────
+# Fail the commit if any staged file contains a 56-char base32 key (S[A-Z2-7]{55}).
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+if [ -n "$STAGED" ]; then
+  MATCHES=$(echo "$STAGED" | xargs grep -El 'S[A-Z2-7]{55}' 2>/dev/null || true)
+  if [ -n "$MATCHES" ]; then
+    echo "✖ Stellar secret key literal detected in staged files:"
+    echo "$MATCHES"
+    echo "Remove the key before committing."
+    exit 1
+  fi
 fi
 
-# Run linting (skip for initial commit)
-# npm run lint
+# ── 2. Format staged files with Prettier ─────────────────────────────────────
+STAGED_FILES=$(echo "$STAGED" | grep -E '\.(js|jsx|ts|tsx|json|css|scss|md|yml|yaml)$') || true
+if [ -n "$STAGED_FILES" ]; then
+  echo "Formatting staged files with Prettier..."
+  echo "$STAGED_FILES" | xargs npx prettier --write
+  echo "$STAGED_FILES" | xargs git add
+fi

@@ -11,8 +11,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan for Stellar secret key literals
+        run: |
+          if git grep -El 'S[A-Z2-7]{55}' -- ':!*.test.ts' ':!*.test.tsx' ':!*.spec.*' 2>/dev/null; then
+            echo "::error::Stellar secret key literal found in tracked files"
+            exit 1
+          fi
+          echo "No secret key literals detected."
+
   verify:
     name: Lint · Typecheck · Build · Test
+    needs: secret-scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
