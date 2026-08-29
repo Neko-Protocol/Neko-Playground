@@ -1,8 +1,30 @@
-const storage = {
-  get isBrowser() { return typeof window !== "undefined" && !!window.localStorage; },
-  getItem: (k: string) => typeof window !== "undefined" && window.localStorage ? window.localStorage.getItem(k) : null,
-  setItem: (k: string, v: string) => { if (typeof window !== "undefined" && window.localStorage) window.localStorage.setItem(k, v); },
-  removeItem: (k: string) => { if (typeof window !== "undefined" && window.localStorage) window.localStorage.removeItem(k); },
-  clear: () => { if (typeof window !== "undefined" && window.localStorage) window.localStorage.clear(); },
-};
+class TypedStorage {
+  private readonly storage: Storage | null;
+
+  constructor() {
+    this.storage = typeof window !== "undefined" && window.localStorage ? window.localStorage : null;
+  }
+
+  get isBrowser(): boolean {
+    return this.storage !== null;
+  }
+
+  getItem(key: string): string | null {
+    return this.storage ? this.storage.getItem(key) : null;
+  }
+
+  setItem(key: string, value: string): void {
+    if (this.storage) this.storage.setItem(key, value);
+  }
+
+  removeItem(key: string): void {
+    if (this.storage) this.storage.removeItem(key);
+  }
+
+  clear(): void {
+    if (this.storage) this.storage.clear();
+  }
+}
+
+const storage = new TypedStorage();
 export default storage;
