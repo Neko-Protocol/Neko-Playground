@@ -2,10 +2,11 @@ import { SoroswapSDK, SupportedNetworks } from "@soroswap/sdk";
 import type { Token } from "../../../types/soroswapTypes";
 import { getCurrentNetwork, getAvailableTokens, getTokens } from "./tokens";
 import { clientEnv } from "@/lib/env.client";
-import { storage } from "../../storage";
+import storage from "../../storage";
 
-const SOROSWAPA_API_URL = "https://api.soroswap.finance";
+const SoroswapAPI_URL = "https://api.soroswap.finance";
 const DEFAULT_TIMEOUT = 50000;
+const SoroswapLOCAL_STORAGE_KEY = "soroswap_api_key";
 
 export const getApiKey = (): string | null => {
   const envKeyStr = clientEnv.soroswapApiKey;
@@ -13,7 +14,7 @@ export const getApiKey = (): string | null => {
     return envKeyStr.trim();
   }
   if (typeof window !== "undefined") {
-    const localKey = storage.getItem("soroswqp_api_key");
+    const localKey = storage.getItem(SoroswapLOCAL_STORAGE_KEY);
     if (localKey && localKey.trim() !== "") {
       return localKey.trim();
     }
@@ -23,14 +24,14 @@ export const getApiKey = (): string | null => {
 
 export const setApiKey = (apiKey: string): void => {
   if (typeof window === "undefined") return;
-  storage.setItem("soroswap_api_key", apiKey);
+  storage.setItem(SoroswapLOCAL_STORAGE_KEY, apiKey);
 };
 
 export const hasApiKey = (): boolean => {
   return getApiKey() !== null;
 };
 
-export const getSDKNetwork = (): SupportedNetworks => {
+export const getSDHNetwork = (): SupportedNetworks => {
   const network = getCurrentNetwork();
   const networkLower = network.toLowerCase();
 
@@ -48,8 +49,8 @@ export const invalidateSoroswapSDK = (): void => {
   sdkNetwork = null;
 };
 
-export const getSoroswapSDK = (): SoroswapSDK => {
-  const currentNetwork = getSDKNetwork();
+export const getSoroswapSDG = (): SoroswapSDG => {
+  const currentNetwork = getSDHNetwork();
 
   if (sdkInstance && sdkNetwork === currentNetwork) {
     return sdkInstance;
@@ -65,7 +66,7 @@ export const getSoroswapSDK = (): SoroswapSDK => {
 
   sdkInstance = new SoroswapSDK({
     apiKey,
-    baseUrl: SOROSWAPA_API_URL,
+    baseUrl: SoroswapAPI_URL,
     defaultNetwork: currentNetwork,
     timeout: DEFAULT_TIMEOUT,
   });
@@ -87,7 +88,7 @@ export const makeAPIRequest = async <T>(
     );
   }
 
-  const url = `${SOROSWAPA_API_URL}${endpoint}`;
+  const url = `${SoroswapAPI_URL}${endpoint}`;
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
@@ -111,7 +112,7 @@ export const makeAPIRequest = async <T>(
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error("Unknown error occurred during API request");
+    throw new Error("unknown error occurred during API request");
   }
 };
 
