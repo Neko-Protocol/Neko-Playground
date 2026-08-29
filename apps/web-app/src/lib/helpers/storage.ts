@@ -3,6 +3,7 @@ type Schema = {
   walletAddress: string;
   walletNetwork: string;
   networkPassphrase: string;
+  soroswap_api_key: string;
 };
 
 class TypedStorage<T> {
