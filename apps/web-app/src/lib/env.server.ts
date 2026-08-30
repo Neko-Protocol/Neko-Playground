@@ -26,6 +26,10 @@ const serverSchema = z.object({
   // Vault manager signing key (server-only)
   VAULT_MANAGER_SECRET_KEY: z.string().optional(),
 
+  // Job ledger persistence (server-only) — see lib/jobs
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+
   // Faucet (server-only)
   FAUCET_SECRET_KEY: z.string().optional(),
   FAUCET_CONTRACT_ID: z.string().optional(),
@@ -46,6 +50,8 @@ const serverSchema = z.object({
 
 const parsed = serverSchema.safeParse({
   VAULT_MANAGER_SECRET_KEY: process.env.VAULT_MANAGER_SECRET_KEY,
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   FAUCET_SECRET_KEY: process.env.FAUCET_SECRET_KEY,
   FAUCET_CONTRACT_ID: process.env.FAUCET_CONTRACT_ID,
   ETHERFUSE_API_KEY: process.env.ETHERFUSE_API_KEY,

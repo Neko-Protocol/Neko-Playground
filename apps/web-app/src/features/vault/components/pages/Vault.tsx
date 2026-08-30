@@ -8,6 +8,7 @@ import { VaultDetailModal } from "../ui/VaultDetailModal";
 import { VaultTabs, type VaultTabKey } from "../ui/VaultTabs";
 import { VaultActionModal } from "../ui/VaultActionModal";
 import MyVaultPositions from "../ui/MyVaultPositions";
+import { VaultRunHistory } from "../ui/VaultRunHistory";
 import { VAULT_REGISTRY } from "../../const/vaults";
 import { useVaultData } from "../../hooks/useVaultData";
 import { useVaultApy } from "../../hooks/useVaultApy";
@@ -99,8 +100,10 @@ const Vault: React.FC = () => {
             role="tabpanel"
             aria-labelledby="vault-positions-tab"
             tabIndex={0}
+            className="flex flex-col gap-6"
           >
             <MyVaultPositions />
+            <VaultRunHistory />
           </div>
         </>
       )}

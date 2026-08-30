@@ -31,6 +31,7 @@
     "@stellar/freighter-api": "^5.0.0",
     "@stellar/stellar-sdk": "^14.2.0",
     "@stellar/stellar-xdr-json": "^23.0.0",
+    "@supabase/supabase-js": "^2.109.0",
     "@tanstack/react-query": "^5.62.11",
     "animate.css": "^4.1.1",
     "axios": "^1.7.9",

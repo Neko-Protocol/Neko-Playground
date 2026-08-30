@@ -10,7 +10,8 @@ export type StepStatus =
   | "awaiting-signature"
   | "submitted"
   | "confirmed"
-  | "failed";
+  | "failed"
+  | "skipped";
 export type VenueKind = "vault" | "pool" | "lending";
 
 export interface AllocationConstraints {

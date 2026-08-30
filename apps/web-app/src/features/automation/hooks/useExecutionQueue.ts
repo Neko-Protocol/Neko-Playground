@@ -3,17 +3,25 @@ import type { RebalancePlan } from "../types/automation";
 import { STRATEGY_QUERY_KEYS } from "../const/automation";
 import { useActivityStore } from "@/stores/activityStore";
 
-async function fetchQueue(strategyId: string): Promise<RebalancePlan[]> {
-  const res = await fetch(`/api/automation/execute?strategyId=${strategyId}`);
+async function fetchQueue(
+  strategyId: string,
+  walletAddress: string
+): Promise<RebalancePlan[]> {
+  const res = await fetch(
+    `/api/automation/execute?strategyId=${strategyId}&walletAddress=${walletAddress}`
+  );
   if (!res.ok) throw new Error("Failed to fetch execution queue");
   return res.json();
 }
 
-export function useExecutionQueue(strategyId: string | undefined) {
+export function useExecutionQueue(
+  strategyId: string | undefined,
+  walletAddress: string | undefined
+) {
   return useQuery<RebalancePlan[]>({
     queryKey: STRATEGY_QUERY_KEYS.queue(strategyId ?? ""),
-    queryFn: () => fetchQueue(strategyId!),
-    enabled: !!strategyId,
+    queryFn: () => fetchQueue(strategyId!, walletAddress!),
+    enabled: !!strategyId && !!walletAddress,
     staleTime: 10_000,
     refetchInterval: 15_000,
     refetchOnWindowFocus: false,
@@ -26,21 +34,31 @@ export function useConfirmPlan() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      planId,
-      strategyId,
+      plan,
+      walletAddress,
+      strategyName,
     }: {
-      planId: string;
-      strategyId: string;
+      plan: RebalancePlan;
+      walletAddress: string;
+      strategyName?: string;
     }) => {
       const res = await fetch("/api/automation/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, strategyId, action: "confirm" }),
+        body: JSON.stringify({
+          plan,
+          walletAddress,
+          strategyName,
+          action: "confirm",
+        }),
       });
-      if (!res.ok) throw new Error("Failed to confirm plan");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to confirm plan");
+      }
       return res.json() as Promise<RebalancePlan>;
     },
-    onSuccess: (_data, { strategyId }) => {
+    onSuccess: (_data, { plan }) => {
       useActivityStore.getState().pushEvent({
         source: "automation",
         type: "plan-confirmed",
@@ -48,10 +66,13 @@ export function useConfirmPlan() {
         summary: "Strategy execution plan confirmed",
         link: "/automation",
       });
-      qc.invalidateQueries({ queryKey: STRATEGY_QUERY_KEYS.queue(strategyId) });
       qc.invalidateQueries({
-        queryKey: STRATEGY_QUERY_KEYS.simulate(strategyId),
+        queryKey: STRATEGY_QUERY_KEYS.queue(plan.strategyId),
       });
+      qc.invalidateQueries({
+        queryKey: STRATEGY_QUERY_KEYS.simulate(plan.strategyId),
+      });
+      qc.invalidateQueries({ queryKey: STRATEGY_QUERY_KEYS.history });
     },
   });
 }
@@ -61,17 +82,21 @@ export function useCancelPlan() {
   return useMutation({
     mutationFn: async ({
       planId,
-      strategyId,
+      walletAddress,
     }: {
       planId: string;
       strategyId: string;
+      walletAddress: string;
     }) => {
       const res = await fetch("/api/automation/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, strategyId, action: "cancel" }),
+        body: JSON.stringify({ planId, walletAddress, action: "cancel" }),
       });
-      if (!res.ok) throw new Error("Failed to cancel plan");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to cancel plan");
+      }
     },
     onSuccess: (_data, { strategyId }) => {
       useActivityStore.getState().pushEvent({
