@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./sidebarConfig";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
-import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { truncateAddress } from "@/lib/utils";
 import { useActivityFeed } from "@/features/activity/hooks/useActivityFeed";
 import { clientEnv } from "@/lib/env.client";
