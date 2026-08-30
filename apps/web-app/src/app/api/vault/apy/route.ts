@@ -11,6 +11,7 @@ import {
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { clientEnv } from "@/lib/env.client";
 import { serverEnv } from "@/lib/env.server";
+import { getSorobanServer } from "@/lib/helpers/stellar/sorobanServer";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -155,7 +156,7 @@ export async function GET() {
 
     const { rpcUrl, networkPassphrase } = getRpcConfig();
     const keypair = Keypair.fromSecret(secretKey);
-    const server = new rpc.Server(rpcUrl);
+    const server = getSorobanServer(rpcUrl);
 
     const client = new DefindexVaultClient({
       contractId: VAULT_CONTRACT_ID,

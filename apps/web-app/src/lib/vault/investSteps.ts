@@ -10,6 +10,7 @@ import {
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { clientEnv } from "@/lib/env.client";
 import { requireServerEnv } from "@/lib/env.server";
+import { getSorobanServer } from "@/lib/helpers/stellar/sorobanServer";
 
 /**
  * The vault auto-invest sequence (harvest → invest idle → collect fees),
@@ -56,7 +57,7 @@ export function buildVaultClient(
   networkPassphrase: string
 ) {
   const keypair = Keypair.fromSecret(secretKey);
-  const server = new rpc.Server(rpcUrl);
+  const server = getSorobanServer(rpcUrl);
   const client = new DefindexVaultClient({
     contractId: VAULT_CONTRACT_ID,
     rpcUrl,

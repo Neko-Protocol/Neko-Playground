@@ -230,3 +230,102 @@ export function extractContractErrorOrNull(
 
   return extractContractError(error, contractName);
 }
+
+export type MappedContractError =
+  | { kind: "withdrawal_queue_not_expired"; message: string }
+  | { kind: "insufficient_balance"; message: string }
+  | { kind: "unauthorized"; message: string }
+  | { kind: "other"; message: string; code?: number };
+
+const WITHDRAWAL_QUEUE_NOT_EXPIRED_CODE = 72;
+
+const INSUFFICIENT_BALANCE_CODE_NAMES = new Set([
+  "InsufficientBalance",
+  "InsufficientPoolBalance",
+  "InsufficientLiquidity",
+  "InsufficientBTokenBalance",
+  "InsufficientDepositAmount",
+  "InsufficientWithdrawalBalance",
+  "InsufficientCollateral",
+  "InsufficientBorrowLimit",
+  "InsufficientDTokenBalance",
+  "InsufficientDebtToRepay",
+  "InsufficientBackstopDeposit",
+  "InsufficientAllowance",
+]);
+
+function extractNumericErrorCode(error: unknown): number | null {
+  if (!error) return null;
+  const errorString = String(error);
+  const match = errorString.match(/Error\(Contract,\s*#(\d+)\)/);
+  if (!match) return null;
+  return parseInt(match[1], 10);
+}
+
+/**
+ * Classifies a contract error into a typed discriminant for UI handling.
+ */
+export function mapContractError(
+  error: unknown,
+  contractName?: string
+): MappedContractError | null {
+  if (!error || isUserCancellationError(error)) return null;
+
+  const numericCode = extractNumericErrorCode(error);
+  const message = extractContractError(error, contractName);
+
+  if (numericCode === WITHDRAWAL_QUEUE_NOT_EXPIRED_CODE) {
+    return { kind: "withdrawal_queue_not_expired", message };
+  }
+
+  const inferredContract =
+    contractName || extractContractNameFromError(String(error));
+  if (numericCode != null && inferredContract) {
+    const contractError = getContractError(inferredContract, numericCode);
+    if (contractError) {
+      if (contractError.code === "WithdrawalQueueNotExpired") {
+        return { kind: "withdrawal_queue_not_expired", message };
+      }
+      if (
+        contractError.code === "Unauthorized" ||
+        contractError.code === "NotAuthorized"
+      ) {
+        return { kind: "unauthorized", message: contractError.message };
+      }
+      if (INSUFFICIENT_BALANCE_CODE_NAMES.has(contractError.code)) {
+        return { kind: "insufficient_balance", message };
+      }
+    }
+  }
+
+  if (numericCode != null && isValidErrorCode(numericCode)) {
+    const info = CONTRACT_ERRORS[numericCode];
+    if (info.code === "WithdrawalQueueNotExpired") {
+      return { kind: "withdrawal_queue_not_expired", message };
+    }
+    if (info.code === "Unauthorized") {
+      return { kind: "unauthorized", message };
+    }
+    if (INSUFFICIENT_BALANCE_CODE_NAMES.has(info.code)) {
+      return { kind: "insufficient_balance", message };
+    }
+    return { kind: "other", message, code: numericCode };
+  }
+
+  const errorString = String(error);
+  if (errorString.includes("WithdrawalQueueNotExpired")) {
+    return { kind: "withdrawal_queue_not_expired", message };
+  }
+  if (/\b(Unauthorized|NotAuthorized)\b/.test(errorString)) {
+    return { kind: "unauthorized", message };
+  }
+  if (/\bInsufficient\w*\b/.test(errorString)) {
+    return { kind: "insufficient_balance", message };
+  }
+
+  if (numericCode != null) {
+    return { kind: "other", message, code: numericCode };
+  }
+
+  return { kind: "other", message };
+}
