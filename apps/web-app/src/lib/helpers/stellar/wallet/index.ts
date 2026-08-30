@@ -4,6 +4,10 @@ export {
   type SignStellarTransactionParams,
 } from "./signTransaction";
 export {
+  signStellarMessageWithWallet,
+  type SignStellarMessageParams,
+} from "./signMessage";
+export {
   fetchBalances,
   type MappedBalances,
   type FetchBalancesResult,

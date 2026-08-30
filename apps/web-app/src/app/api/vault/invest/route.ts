@@ -10,6 +10,19 @@ import {
 } from "@/lib/vault/investLedger";
 import { LeaseNotAcquiredError } from "@/lib/jobs/errors";
 import type { JobStep } from "@/lib/jobs/types";
+  Keypair,
+  TransactionBuilder,
+  rpc,
+  BASE_FEE,
+  Operation,
+  Address,
+  nativeToScVal,
+  xdr,
+} from "@stellar/stellar-sdk";
+import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { clientEnv } from "@/lib/env.client";
+import { requireServerEnv } from "@/lib/env.server";
+import { reportStageOutcome } from "@/lib/event-platform/vaultStageOutcome";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -94,6 +107,62 @@ export async function POST(request: NextRequest) {
       results: [],
       feesCollected: false,
     };
+    lastInvest = Date.now();
+
+    const { secretKey, rpcUrl, networkPassphrase } = getEnv();
+    const keypair = Keypair.fromSecret(secretKey);
+    const server = new rpc.Server(rpcUrl);
+    const client = new DefindexVaultClient({
+      contractId: VAULT_CONTRACT_ID,
+      rpcUrl,
+      networkPassphrase,
+      publicKey: keypair.publicKey(),
+    });
+
+    // 1. Harvest Aquarius AQUA rewards → sends them to the vault
+    const harvestResult = await harvestAquarius(
+      keypair,
+      server,
+      networkPassphrase
+    );
+    await reportStageOutcome(
+      "harvestAquarius",
+      harvestResult.status !== "SUCCESS",
+      harvestResult
+    );
+
+    // 2. Invest idle funds (includes any AQUA-converted idle if applicable)
+    const investResult = await investIdle(
+      client,
+      keypair,
+      server,
+      networkPassphrase
+    );
+    await reportStageOutcome(
+      "investIdle",
+      investResult.invested &&
+        investResult.results.some((r) => r.status !== "SUCCESS"),
+      investResult
+    );
+
+    // 3. Collect fees (report → lock → distribute)
+    const feesResult = await collectFees(
+      client,
+      keypair,
+      server,
+      networkPassphrase
+    );
+    await reportStageOutcome(
+      "collectFees",
+      !feesResult.feesCollected,
+      feesResult
+    );
+
+    const allOk =
+      (!investResult.invested ||
+        investResult.results.every((r) => r.status === "SUCCESS")) &&
+      (feesResult.feesCollected ||
+        feesResult.results[0]?.status.startsWith("error"));
 
     return NextResponse.json(
       { success: job.status === "completed", harvest, invest, fees },
