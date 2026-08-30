@@ -18,6 +18,8 @@ import type {
 interface Props {
   plans: RebalancePlan[];
   isLoading?: boolean;
+  onCancel?: (planId: string) => void;
+  isCancelling?: boolean;
 }
 
 const STATUS_ICON: Record<StepStatus, React.ReactNode> = {
@@ -29,6 +31,7 @@ const STATUS_ICON: Record<StepStatus, React.ReactNode> = {
   submitted: <Loader2 size={14} className="animate-spin text-blue-400" />,
   confirmed: <CheckCircle size={14} className="text-green-400" />,
   failed: <XCircle size={14} className="text-red-400" />,
+  skipped: <Clock size={14} className="text-white/20" />,
 };
 
 const STATUS_LABEL: Record<StepStatus, string> = {
@@ -38,6 +41,7 @@ const STATUS_LABEL: Record<StepStatus, string> = {
   submitted: "Submitted",
   confirmed: "Confirmed",
   failed: "Failed",
+  skipped: "Skipped",
 };
 
 function StepRow({ step }: { step: ExecutionStep }) {
@@ -74,17 +78,33 @@ function StepRow({ step }: { step: ExecutionStep }) {
           <ExternalLink size={12} />
         </a>
       )}
+      {step.status === "failed" && step.error && (
+        <span
+          className="max-w-[16rem] truncate text-xs text-red-400/80"
+          title={step.error}
+        >
+          {step.error}
+        </span>
+      )}
     </div>
   );
 }
 
-export function ExecutionQueueMonitor({ plans, isLoading }: Props) {
+export function ExecutionQueueMonitor({
+  plans,
+  isLoading,
+  onCancel,
+  isCancelling,
+}: Props) {
   if (isLoading) {
     return <div className="h-24 animate-pulse rounded-xl bg-white/5" />;
   }
 
   const activePlans = plans.filter(
-    (p) => p.status === "executing" || p.status === "confirmed"
+    (p) =>
+      p.status === "executing" ||
+      p.status === "confirmed" ||
+      p.status === "failed"
   );
 
   if (activePlans.length === 0) {
@@ -111,7 +131,9 @@ export function ExecutionQueueMonitor({ plans, isLoading }: Props) {
                 "rounded-full px-2 py-0.5 text-xs",
                 plan.status === "executing"
                   ? "bg-blue-500/20 text-blue-400"
-                  : "bg-green-500/20 text-green-400"
+                  : plan.status === "failed"
+                    ? "bg-red-500/20 text-red-400"
+                    : "bg-green-500/20 text-green-400"
               )}
             >
               {plan.status}
@@ -122,6 +144,23 @@ export function ExecutionQueueMonitor({ plans, isLoading }: Props) {
               <StepRow key={step.id} step={step} />
             ))}
           </div>
+          {plan.status === "failed" && (
+            <div className="mt-3 flex items-center justify-between rounded-lg bg-red-500/10 px-3 py-2">
+              <span className="text-xs text-red-400">
+                {plan.steps.find((s) => s.status === "failed")?.error ??
+                  "A step in this plan failed."}
+              </span>
+              {onCancel && (
+                <button
+                  onClick={() => onCancel(plan.id)}
+                  disabled={isCancelling}
+                  className="ml-3 shrink-0 rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium text-white hover:bg-white/20 disabled:opacity-50"
+                >
+                  Dismiss
+                </button>
+              )}
+            </div>
+          )}
         </div>
       ))}
     </div>
