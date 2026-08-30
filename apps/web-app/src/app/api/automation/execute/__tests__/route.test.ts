@@ -27,10 +27,6 @@ function seedPlan(overrides: Partial<RebalancePlan> = {}): RebalancePlan {
     status: "draft",
     ...overrides,
   };
-  // Never reassign globalThis.__automationPlans here: the route module
-  // captured a const reference to the Map at import time, so a replacement
-  // object would become invisible to it. Mutate the existing map instead.
-  globalThis.__automationPlans!.set(plan.id, plan);
   return plan;
 }
 
@@ -45,8 +41,6 @@ function post(body: Record<string, unknown>) {
 
 describe("POST /api/automation/execute — failure event wiring", () => {
   beforeEach(() => {
-    globalThis.__automationPlans ??= new Map();
-    globalThis.__automationPlans!.clear();
     raiseEventMock.mockReset();
   });
 

@@ -1,5 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { requireServerEnv } from "@/lib/env.server";
 import type { CoordinatorRun, DelegationGrant } from "./types";
 
 /**
@@ -180,10 +182,158 @@ export class InMemoryCoordinatorLedgerStore implements CoordinatorLedgerStore {
   }
 }
 
+// ─── Supabase-backed store (production default) ──────────────────────────────
+
+interface GrantRow {
+  position_id: string;
+  id: string;
+  status: string;
+  payload: DelegationGrant;
+  created_at: string;
+  updated_at: string;
+}
+
+interface RunRow {
+  id: string;
+  position_id: string;
+  status: string;
+  payload: CoordinatorRun;
+  created_at: string;
+  updated_at: string;
+}
+
+function payloadAsGrant(payload: unknown): DelegationGrant {
+  if (typeof payload === "string") {
+    return JSON.parse(payload) as DelegationGrant;
+  }
+  return payload as DelegationGrant;
+}
+
+function payloadAsRun(payload: unknown): CoordinatorRun {
+  if (typeof payload === "string") {
+    return JSON.parse(payload) as CoordinatorRun;
+  }
+  return payload as CoordinatorRun;
+}
+
+let cachedClient: SupabaseClient | null = null;
+
+function getClient(): SupabaseClient {
+  if (cachedClient) return cachedClient;
+  const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = requireServerEnv([
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+  ]);
+  cachedClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  });
+  return cachedClient;
+}
+
+/** Test-only: force a fresh client on next use. */
+export function resetSupabaseCoordinatorClientForTests(): void {
+  cachedClient = null;
+}
+
+/**
+ * Supabase-backed ledger: one row per grant (keyed by position_id) and per
+ * run (keyed by id). Full grant/run objects live in a jsonb `payload` column;
+ * `id`/`position_id`/`status` are denormalized for indexed filters. Saves are
+ * last-write-wins upserts (same atomicity contract as FileCoordinatorLedgerStore's
+ * write-temp-then-rename — no read-modify-write gap).
+ */
+export class SupabaseCoordinatorLedgerStore implements CoordinatorLedgerStore {
+  async getGrant(positionId: string): Promise<DelegationGrant | null> {
+    const { data, error } = await getClient()
+      .from("coordinator_delegation_grants")
+      .select("payload")
+      .eq("position_id", positionId)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? payloadAsGrant((data as GrantRow).payload) : null;
+  }
+
+  async saveGrant(grant: DelegationGrant): Promise<void> {
+    const { error } = await getClient()
+      .from("coordinator_delegation_grants")
+      .upsert(
+        {
+          position_id: grant.positionId,
+          id: grant.id,
+          status: grant.status,
+          payload: grant,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "position_id" }
+      );
+    if (error) throw error;
+  }
+
+  async listActiveGrants(): Promise<DelegationGrant[]> {
+    const { data, error } = await getClient()
+      .from("coordinator_delegation_grants")
+      .select("payload")
+      .eq("status", "active");
+    if (error) throw error;
+    return ((data ?? []) as GrantRow[]).map((row) =>
+      payloadAsGrant(row.payload)
+    );
+  }
+
+  async getRun(runId: string): Promise<CoordinatorRun | null> {
+    const { data, error } = await getClient()
+      .from("coordinator_runs")
+      .select("payload")
+      .eq("id", runId)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? payloadAsRun((data as RunRow).payload) : null;
+  }
+
+  async saveRun(run: CoordinatorRun): Promise<void> {
+    const { error } = await getClient()
+      .from("coordinator_runs")
+      .upsert(
+        {
+          id: run.id,
+          position_id: run.positionId,
+          status: run.status,
+          payload: run,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+    if (error) throw error;
+  }
+
+  async findInProgressRunForPosition(
+    positionId: string
+  ): Promise<CoordinatorRun | null> {
+    const { data, error } = await getClient()
+      .from("coordinator_runs")
+      .select("payload")
+      .eq("position_id", positionId)
+      .eq("status", "in_progress")
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? payloadAsRun((data as RunRow).payload) : null;
+  }
+
+  async listRunsForPosition(positionId: string): Promise<CoordinatorRun[]> {
+    const { data, error } = await getClient()
+      .from("coordinator_runs")
+      .select("payload")
+      .eq("position_id", positionId);
+    if (error) throw error;
+    return ((data ?? []) as RunRow[]).map((row) => payloadAsRun(row.payload));
+  }
+}
+
 let sharedStore: CoordinatorLedgerStore | null = null;
 
-/** Process-wide singleton for API routes — one file-backed store per server process. */
+/** Process-wide singleton for API routes — one Supabase-backed store per server process. */
 export function getCoordinatorLedgerStore(): CoordinatorLedgerStore {
-  sharedStore ??= new FileCoordinatorLedgerStore();
+  sharedStore ??= new SupabaseCoordinatorLedgerStore();
   return sharedStore;
 }
