@@ -26,6 +26,10 @@ const serverSchema = z.object({
   // Vault manager signing key (server-only)
   VAULT_MANAGER_SECRET_KEY: z.string().optional(),
 
+  // Leverage deleveraging coordinator fee-bump key (server-only) — never
+  // authorizes a repay/withdraw itself, only wraps an already user-signed
+  // unwind-tranche transaction with a fresh fee. See lib/coordinator/execute.ts.
+  LEVERAGE_COORDINATOR_SECRET_KEY: z.string().optional(),
   // Job ledger persistence (server-only) — see lib/jobs
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
@@ -50,6 +54,7 @@ const serverSchema = z.object({
 
 const parsed = serverSchema.safeParse({
   VAULT_MANAGER_SECRET_KEY: process.env.VAULT_MANAGER_SECRET_KEY,
+  LEVERAGE_COORDINATOR_SECRET_KEY: process.env.LEVERAGE_COORDINATOR_SECRET_KEY,
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   FAUCET_SECRET_KEY: process.env.FAUCET_SECRET_KEY,

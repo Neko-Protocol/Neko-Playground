@@ -10,7 +10,8 @@ export type ProtocolKind =
   | "lending"
   | "borrowing"
   | "vault"
-  | "backstop";
+  | "backstop"
+  | "leverage";
 
 /** Whether a position adds to or subtracts from net portfolio value. */
 export type PositionDirection = "asset" | "liability";

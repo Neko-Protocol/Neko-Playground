@@ -7,6 +7,7 @@ import {
   TrendingUp,
   TrendingDown,
   ExternalLink,
+  Layers,
 } from "lucide-react";
 import { useOracle } from "../../hooks/useOracle";
 import { useOracleAssetPrice } from "../../hooks/useOracleAssetPrice";
@@ -20,6 +21,7 @@ import { useParams, useRouter } from "next/navigation";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { ROUTES } from "../../constants/oracle";
+import { stellarPriceService } from "@/lib/services/stellar-price.service";
 
 const AssetDetail: React.FC = () => {
   const params = useParams();
@@ -209,6 +211,31 @@ const AssetDetail: React.FC = () => {
           {stockInfo.summary ?? stockInfo.description}
         </p>
       </div>
+
+      {stellarPriceService.isRWAToken(symbolUpper) && (
+        <div className="rounded-2xl bg-[#1C1C1C] border border-[#229EDF]/20 p-6 mb-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="flex items-center gap-1.5 text-base font-semibold text-white">
+                <Layers className="h-4 w-4 text-[#229EDF]" />
+                Open a leveraged position
+              </h3>
+              <p className="mt-1 max-w-xl text-sm text-white/50">
+                Amplify exposure to {symbolUpper} with a recursive
+                deposit→borrow→swap→redeposit loop, routed for the lowest
+                blended cost across every eligible pool — with optional
+                automated deleveraging if health factor drops.
+              </p>
+            </div>
+            <Link
+              href={`/strategies?template=leverage-loop&asset=${encodeURIComponent(symbolUpper)}`}
+              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#229EDF] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1c8bc4]"
+            >
+              Open leverage builder
+            </Link>
+          </div>
+        </div>
+      )}
 
       {}
       {stockInfo.buyInfo && (

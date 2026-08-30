@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { RiskTier } from "@/features/borrowing/const/riskThresholds";
+import type { LeverageLoopStrategyMeta } from "./leverage/types";
 
 // ─── Strategy model ──────────────────────────────────────────────────────────
 
@@ -63,6 +64,12 @@ export interface Strategy {
   steps: StrategyStep[];
   createdAt: number;
   updatedAt: number;
+  /**
+   * Present only for a strategy built by the leverage-loop builder (Scope
+   * §3) — an additive discriminated field, not a replacement of the generic
+   * Strategy shape every other template also uses.
+   */
+  leverageMeta?: LeverageLoopStrategyMeta;
 }
 
 // ─── Step definition plugin interface ───────────────────────────────────────

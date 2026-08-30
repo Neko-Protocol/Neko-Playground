@@ -18,12 +18,17 @@ import {
   normalizeBackstopPositions,
   normalizeBorrowPositions,
   normalizeLendingPositions,
+  normalizeLeveragePositions,
   normalizePoolPositions,
   normalizeVaultPosition,
   normalizeWalletHoldings,
   type PriceLookup,
 } from "../positions/normalize";
 import { usePortfolioBackstopPositions } from "../positions/usePortfolioBackstopPositions";
+import {
+  computeLeveragePositionSummary,
+  useLeverageStrategies,
+} from "../positions/leverage";
 import type { PortfolioSummary } from "../positions/types";
 
 const ONE_SHARE = 1_000_000_000_000n;
@@ -55,6 +60,7 @@ export function useUnifiedPositions(): PortfolioSummary {
   const { data: vaultData, isLoading: vaultDataLoading } = useVaultData();
   const { positions: backstopPositions, isLoading: backstopLoading } =
     usePortfolioBackstopPositions();
+  const { strategies: leverageStrategies } = useLeverageStrategies(address);
 
   const vaultQuantity = useMemo(() => {
     if (!vaultData || userShares <= 0n) return 0;
@@ -81,6 +87,10 @@ export function useUnifiedPositions(): PortfolioSummary {
     backstopPositions.forEach((p) => {
       if (p.assetCode) codes.add(p.assetCode);
     });
+    leverageStrategies.forEach(({ meta }) => {
+      codes.add(meta.assetCode);
+      codes.add(meta.borrowAssetCode);
+    });
     return Array.from(codes);
   }, [
     lendingPositions,
@@ -88,6 +98,7 @@ export function useUnifiedPositions(): PortfolioSummary {
     poolPositions,
     vaultQuantity,
     backstopPositions,
+    leverageStrategies,
   ]);
 
   const assetsConfig = getAssetsConfig();
@@ -129,6 +140,11 @@ export function useUnifiedPositions(): PortfolioSummary {
         getPrice
       ),
       ...normalizeBackstopPositions(backstopPositions, getPrice),
+      ...normalizeLeveragePositions(
+        leverageStrategies.map(({ id, name, meta }) =>
+          computeLeveragePositionSummary(id, name, meta, getPrice)
+        )
+      ),
     ];
   }, [
     holdings,
@@ -137,6 +153,7 @@ export function useUnifiedPositions(): PortfolioSummary {
     borrowPositions,
     vaultQuantity,
     backstopPositions,
+    leverageStrategies,
     getPrice,
   ]);
 
