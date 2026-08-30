@@ -16,14 +16,6 @@ import {
 } from "@/lib/jobs/walletAuth";
 import { raiseEvent } from "@/lib/event-platform/outbox";
 
-// In-memory plan store for demo
-declare global {
-  // eslint-disable-next-line no-var
-  var __automationPlans: Map<string, RebalancePlan> | undefined;
-}
-globalThis.__automationPlans ??= new Map<string, RebalancePlan>();
-const planStore = globalThis.__automationPlans;
-
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
@@ -119,7 +111,6 @@ export async function POST(req: NextRequest) {
 
   if (action === "confirm") {
     plan = { ...plan, status: "executing" };
-    planStore.set(plan.id, plan);
     // In production: kick off step execution via a queue worker
     return NextResponse.json(plan);
   }
