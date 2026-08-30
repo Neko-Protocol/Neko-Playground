@@ -4,7 +4,11 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight, Layers } from "lucide-react";
 import { useUnifiedPositions } from "@/features/dashboard/hooks/useUnifiedPositions";
-import type { ProtocolKind } from "@/features/dashboard/positions/types";
+import { DelegationPanel } from "@/features/strategies/leverage/DelegationPanel";
+import type {
+  ProtocolKind,
+  UnifiedPosition,
+} from "@/features/dashboard/positions/types";
 
 const PROTOCOL_LABELS: Record<ProtocolKind, string> = {
   wallet: "Wallet",
@@ -13,6 +17,7 @@ const PROTOCOL_LABELS: Record<ProtocolKind, string> = {
   borrowing: "Borrowing",
   vault: "Vault",
   backstop: "Backstop",
+  leverage: "Leverage",
 };
 
 function formatUsd(value: number): string {
@@ -29,6 +34,44 @@ function formatQuantity(value: number): string {
   if (value >= 1000)
     return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
   return parseFloat(value.toFixed(4)).toString();
+}
+
+function PositionCardBody({ position }: { position: UnifiedPosition }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-white/30 rounded-full bg-white/5 px-2 py-0.5">
+            {PROTOCOL_LABELS[position.protocol]}
+          </span>
+          {position.direction === "liability" && (
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-[#E4574B]/80 rounded-full bg-[#E4574B]/10 px-2 py-0.5">
+              Debt
+            </span>
+          )}
+        </div>
+        <p className="text-white font-semibold text-sm mt-1.5 truncate">
+          {position.label}
+        </p>
+        <p className="text-white/40 text-xs mt-0.5">
+          {formatQuantity(position.quantity)} {position.assetCode}
+          {typeof position.apy === "number" &&
+            ` · ${position.apy.toFixed(1)}% APY`}
+        </p>
+      </div>
+      <div className="text-right shrink-0">
+        <p
+          className={`font-semibold text-sm ${
+            position.direction === "liability" ? "text-[#E4574B]" : "text-white"
+          }`}
+        >
+          {position.valueUsd !== null
+            ? `${position.direction === "liability" ? "-" : ""}${formatUsd(position.valueUsd)}`
+            : "—"}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 const YourPositions: React.FC = () => {
@@ -84,51 +127,46 @@ const YourPositions: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {activePositions.map((position) => (
-            <Link
-              key={position.id}
-              href={position.href}
-              className="block rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 hover:border-white/10 hover:bg-[#222222] transition-all duration-200"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-white/30 rounded-full bg-white/5 px-2 py-0.5">
-                      {PROTOCOL_LABELS[position.protocol]}
-                    </span>
-                    {position.direction === "liability" && (
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-[#E4574B]/80 rounded-full bg-[#E4574B]/10 px-2 py-0.5">
-                        Debt
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-white font-semibold text-sm mt-1.5 truncate">
-                    {position.label}
-                  </p>
-                  <p className="text-white/40 text-xs mt-0.5">
-                    {formatQuantity(position.quantity)} {position.assetCode}
-                    {typeof position.apy === "number" &&
-                      ` · ${position.apy.toFixed(1)}% APY`}
-                  </p>
+          {activePositions.map((position) => {
+            // Scope §7's delegation panel goes on the leverage position's
+            // OWN card — attached only to the collateral row (id suffix
+            // ":collateral"), not its paired debt row, so it renders once
+            // per position. It needs an interactive revoke control, which
+            // can't nest inside the row's own <Link> (invalid/inaccessible
+            // HTML), so this row alone renders as a <div> with the label
+            // wrapped in its own inner <Link> and the panel as a sibling.
+            const leverageStrategyId =
+              position.protocol === "leverage" &&
+              position.id.endsWith(":collateral")
+                ? position.id.slice("leverage:".length, -":collateral".length)
+                : null;
+
+            const body = <PositionCardBody position={position} />;
+
+            if (leverageStrategyId) {
+              return (
+                <div
+                  key={position.id}
+                  className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 hover:border-white/10 transition-all duration-200"
+                >
+                  <Link href={position.href} className="block">
+                    {body}
+                  </Link>
+                  <DelegationPanel positionId={leverageStrategyId} />
                 </div>
-                <div className="text-right shrink-0">
-                  <p
-                    className={`font-semibold text-sm ${
-                      position.direction === "liability"
-                        ? "text-[#E4574B]"
-                        : "text-white"
-                    }`}
-                  >
-                    {position.valueUsd !== null
-                      ? `${position.direction === "liability" ? "-" : ""}${formatUsd(
-                          position.valueUsd
-                        )}`
-                      : "—"}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          ))}
+              );
+            }
+
+            return (
+              <Link
+                key={position.id}
+                href={position.href}
+                className="block rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 hover:border-white/10 hover:bg-[#222222] transition-all duration-200"
+              >
+                {body}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
