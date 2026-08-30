@@ -12,6 +12,7 @@ import {
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { clientEnv } from "@/lib/env.client";
 import { requireServerEnv } from "@/lib/env.server";
+import { reportStageOutcome } from "@/lib/event-platform/vaultStageOutcome";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -300,6 +301,11 @@ export async function POST(request: NextRequest) {
       server,
       networkPassphrase
     );
+    await reportStageOutcome(
+      "harvestAquarius",
+      harvestResult.status !== "SUCCESS",
+      harvestResult
+    );
 
     // 2. Invest idle funds (includes any AQUA-converted idle if applicable)
     const investResult = await investIdle(
@@ -308,6 +314,12 @@ export async function POST(request: NextRequest) {
       server,
       networkPassphrase
     );
+    await reportStageOutcome(
+      "investIdle",
+      investResult.invested &&
+        investResult.results.some((r) => r.status !== "SUCCESS"),
+      investResult
+    );
 
     // 3. Collect fees (report → lock → distribute)
     const feesResult = await collectFees(
@@ -315,6 +327,11 @@ export async function POST(request: NextRequest) {
       keypair,
       server,
       networkPassphrase
+    );
+    await reportStageOutcome(
+      "collectFees",
+      !feesResult.feesCollected,
+      feesResult
     );
 
     const allOk =
