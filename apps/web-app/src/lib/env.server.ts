@@ -38,6 +38,10 @@ const serverSchema = z.object({
   ALFREDPAY_API_KEY: z.string().optional(),
   ALFREDPAY_API_SECRET: z.string().optional(),
   ALFREDPAY_BASE_URL: z.string().url().optional(),
+
+  // Event platform (outbox/queue/delivery) — server-only
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 });
 
 const parsed = serverSchema.safeParse({
@@ -49,6 +53,8 @@ const parsed = serverSchema.safeParse({
   ALFREDPAY_API_KEY: process.env.ALFREDPAY_API_KEY,
   ALFREDPAY_API_SECRET: process.env.ALFREDPAY_API_SECRET,
   ALFREDPAY_BASE_URL: process.env.ALFREDPAY_BASE_URL,
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 });
 
 if (!parsed.success) {
