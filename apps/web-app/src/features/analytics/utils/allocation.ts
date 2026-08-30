@@ -11,6 +11,7 @@ const PROTOCOL_LABELS: Record<ProtocolKind, string> = {
   borrowing: "Collateral",
   vault: "Vault",
   backstop: "Backstop",
+  leverage: "Leverage",
 };
 
 /**
