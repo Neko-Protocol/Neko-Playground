@@ -1,21 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { ActionLogEntry } from "@/features/automation/types/automation";
-
-// In-memory log for demo; swap for a database in production
-declare global {
-  // eslint-disable-next-line no-var
-  var __automationHistory: ActionLogEntry[] | undefined;
-}
-globalThis.__automationHistory ??= [];
-const log = globalThis.__automationHistory;
+import { listHistoryForWallet } from "@/lib/jobs/automation/ledger";
+import {
+  MissingWalletAddressError,
+  requireWalletAddress,
+} from "@/lib/jobs/walletAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const strategyId = searchParams.get("strategyId");
-  const filtered = strategyId
-    ? log.filter((e) => e.strategyId === strategyId)
-    : log;
-  return NextResponse.json([...filtered].reverse());
+
+  try {
+    const walletAddress = requireWalletAddress(
+      searchParams.get("walletAddress")
+    );
+    const entries = await listHistoryForWallet(walletAddress);
+    const filtered = strategyId
+      ? entries.filter((e) => e.strategyId === strategyId)
+      : entries;
+    return NextResponse.json(filtered);
+  } catch (err) {
+    if (err instanceof MissingWalletAddressError) {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
+  }
 }
