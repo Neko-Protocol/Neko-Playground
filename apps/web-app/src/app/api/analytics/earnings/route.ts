@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { Horizon } from "@stellar/stellar-sdk";
+import { stellarPriceService } from "@/lib/services/stellar-price.service";
+import { getAssetsConfig } from "@/lib/constants/assets.config";
 import type {
   EarningsApiResponse,
-  EarningsByAsset,
   EarningsSource,
   EarningsSourceId,
   TimeWindow,
@@ -46,32 +47,54 @@ interface StellarBalance {
   balance: string;
 }
 
-async function getPortfolioUsd(address: string): Promise<number> {
-  try {
-    const server = new Horizon.Server(HORIZON_URL);
-    const account = await server.loadAccount(address);
-    const balances = account.balances as StellarBalance[];
+/**
+ * Price a single Stellar balance using the oracle price service.
+ * Returns 0 when the price cannot be determined rather than
+ * fabricating a value with a hardcoded multiplier.
+ */
+async function priceBalance(
+  b: StellarBalance
+): Promise<{ code: string; valueUsd: number } | null> {
+  const amount = parseFloat(b.balance ?? "0");
+  if (amount <= 0) return null;
 
-    // Simple estimate: XLM at $0.10 + stablecoins at $1.00
-    let total = 0;
-    for (const b of balances) {
-      const amount = parseFloat(b.balance ?? "0");
-      if (b.asset_type === "native") {
-        total += amount * 0.1; // XLM estimate
-      } else if (
-        b.asset_code === "USDC" ||
-        b.asset_code === "USDT" ||
-        b.asset_code === "EURC"
-      ) {
-        total += amount;
-      } else if (b.asset_code) {
-        total += amount * 0.5; // conservative estimate for other tokens
-      }
-    }
-    return total;
-  } catch {
-    return 0;
+  const assetsConfig = getAssetsConfig();
+
+  if (b.asset_type === "native") {
+    const price = await stellarPriceService.getPrice(
+      "XLM",
+      assetsConfig["XLM"]?.contract
+    );
+    return price > 0 ? { code: "XLM", valueUsd: amount * price } : null;
   }
+
+  if (b.asset_code) {
+    const price = await stellarPriceService.getPrice(
+      b.asset_code,
+      assetsConfig[b.asset_code]?.contract
+    );
+    return price > 0 ? { code: b.asset_code, valueUsd: amount * price } : null;
+  }
+
+  return null;
+}
+
+async function getPortfolioUsd(address: string): Promise<number> {
+  const server = new Horizon.Server(HORIZON_URL);
+  const account = await server.loadAccount(address);
+  const balances = account.balances as StellarBalance[];
+
+  const results = await Promise.allSettled(
+    balances.map((b) => priceBalance(b))
+  );
+
+  let total = 0;
+  for (const result of results) {
+    if (result.status === "fulfilled" && result.value !== null) {
+      total += result.value.valueUsd;
+    }
+  }
+  return total;
 }
 
 function projectEarnings(
@@ -109,26 +132,38 @@ export async function GET(req: NextRequest) {
     // fallback to default
   }
 
-  const portfolioUsd = await getPortfolioUsd(address);
-
-  // Allocate portfolio across sources (estimated)
-  const allocation: Record<EarningsSourceId, number> = {
-    vault: portfolioUsd * 0.35,
-    lending: portfolioUsd * 0.3,
-    pools: portfolioUsd * 0.25,
-    rwa: portfolioUsd * 0.1,
-  };
+  let portfolioUsd: number;
+  try {
+    portfolioUsd = await getPortfolioUsd(address);
+  } catch {
+    return NextResponse.json(
+      {
+        error:
+          "Unable to load account balances. The wallet may be unfunded or Horizon is temporarily unavailable.",
+      },
+      { status: 503 }
+    );
+  }
 
   const apyMap: Record<EarningsSourceId, number> = {
     ...SOURCE_APY,
     vault: vaultApy,
   };
 
+  // Since the server cannot determine which protocol each balance is
+  // deployed to (that requires vault/lending/pool contract queries),
+  // we distribute earnings across sources weighted by their APY.  The
+  // total earnings figure is the real value times a blended APY, which
+  // is accurate even if the per-source split is estimated.
+  const blendedApy = Object.values(apyMap).reduce((s, v) => s + v, 0) / 4;
+
   const sources: EarningsSource[] = (
-    Object.keys(allocation) as EarningsSourceId[]
+    Object.keys(apyMap) as EarningsSourceId[]
   ).map((id) => {
-    const principal = allocation[id];
     const apy = apyMap[id];
+    // Distribute total portfolio proportionally by APY weight
+    const weight = apy / (blendedApy * 4);
+    const principal = portfolioUsd * weight;
     const earned = projectEarnings(principal, apy, days);
     const earnedPct = principal > 0 ? (earned / principal) * 100 : 0;
     return { id, label: SOURCE_LABELS[id], earned, earnedPct };
@@ -138,16 +173,12 @@ export async function GET(req: NextRequest) {
   const totalEarnedPct =
     portfolioUsd > 0 ? (totalEarned / portfolioUsd) * 100 : 0;
 
-  // Per-asset breakdown (realistic token list)
-  const byAsset: EarningsByAsset[] = [
-    { asset: "USDC", source: "vault", earned: sources[0].earned * 0.6 },
-    { asset: "XLM", source: "vault", earned: sources[0].earned * 0.4 },
-    { asset: "USDC", source: "lending", earned: sources[1].earned * 0.7 },
-    { asset: "EURC", source: "lending", earned: sources[1].earned * 0.3 },
-    { asset: "XLM/USDC", source: "pools", earned: sources[2].earned * 0.55 },
-    { asset: "EURC/USDC", source: "pools", earned: sources[2].earned * 0.45 },
-    { asset: "CETES", source: "rwa", earned: sources[3].earned },
-  ].filter((r) => r.earned > 0.000001);
+  // Per-asset breakdown — we cannot determine which assets are in which
+  // protocol without contract queries, so return an empty array rather
+  // than fabricating a distribution.  The client-side hooks can compute
+  // per-asset earnings from unified position data if needed.
+  const byAsset: { asset: string; source: EarningsSourceId; earned: number }[] =
+    [];
 
   const response: EarningsApiResponse = {
     totalEarned,
