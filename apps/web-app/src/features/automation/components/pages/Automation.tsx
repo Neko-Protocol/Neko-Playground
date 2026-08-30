@@ -15,6 +15,7 @@ import { useSimulateRebalance } from "../../hooks/useSimulateRebalance";
 import {
   useExecutionQueue,
   useConfirmPlan,
+  useCancelPlan,
 } from "../../hooks/useExecutionQueue";
 import { useActionLog } from "../../hooks/useActionLog";
 import { StrategyList } from "../ui/StrategyList";
@@ -53,11 +54,14 @@ export function Automation() {
   } = useSimulateRebalance(selectedId ?? undefined, showSim);
 
   const { data: plans = [], isLoading: queueLoading } = useExecutionQueue(
-    selectedId ?? undefined
+    selectedId ?? undefined,
+    address
   );
   const { mutate: confirmPlan, isPending: confirming } = useConfirmPlan();
+  const { mutate: cancelPlan, isPending: cancelling } = useCancelPlan();
 
   const { data: logEntries = [], isLoading: logLoading } = useActionLog(
+    address,
     selectedId ?? undefined
   );
 
@@ -98,12 +102,17 @@ export function Automation() {
   };
 
   const handleConfirm = () => {
-    if (!simResult?.plan) return;
-    confirmPlan({
-      planId: simResult.plan.id,
-      strategyId: simResult.plan.strategyId,
-    });
+    if (!simResult?.plan || !address) return;
+    const strategyName = strategies.find(
+      (s) => s.id === simResult.plan.strategyId
+    )?.name;
+    confirmPlan({ plan: simResult.plan, walletAddress: address, strategyName });
     setShowSim(false);
+  };
+
+  const handleCancelPlan = (planId: string) => {
+    if (!selectedId || !address) return;
+    cancelPlan({ planId, strategyId: selectedId, walletAddress: address });
   };
 
   return (
@@ -188,7 +197,12 @@ export function Automation() {
 
       {/* Queue tab */}
       {tab === "queue" && (
-        <ExecutionQueueMonitor plans={plans} isLoading={queueLoading} />
+        <ExecutionQueueMonitor
+          plans={plans}
+          isLoading={queueLoading}
+          onCancel={handleCancelPlan}
+          isCancelling={cancelling}
+        />
       )}
 
       {/* History tab */}
