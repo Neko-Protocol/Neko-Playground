@@ -6,13 +6,20 @@ import type { ActivityEvent } from "../../types/activityEvent";
 import { useActivityStore } from "@/stores/activityStore";
 import { formatDistanceToNow } from "date-fns";
 
-const SOURCE_ICONS = {
+// Partial: this local feed only ever receives swap/automation/vault events
+// (see activityStore's three call sites) — "borrowing" is a valid
+// ActivityEvent.source now that it's the platform's shared producer union,
+// but never actually pushed here, so the existing `|| fallback` below
+// covers it without needing its own icon/color.
+const SOURCE_ICONS: Partial<
+  Record<ActivityEvent["source"], typeof ArrowLeftRight>
+> = {
   swap: ArrowLeftRight,
   automation: Zap,
   vault: Vault,
 };
 
-const SOURCE_COLORS = {
+const SOURCE_COLORS: Partial<Record<ActivityEvent["source"], string>> = {
   swap: "text-blue-400 border-blue-400",
   automation: "text-amber-400 border-amber-400",
   vault: "text-green-400 border-green-400",
