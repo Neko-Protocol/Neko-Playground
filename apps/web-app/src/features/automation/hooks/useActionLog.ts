@@ -2,19 +2,25 @@ import { useQuery } from "@tanstack/react-query";
 import type { ActionLogEntry } from "../types/automation";
 import { STRATEGY_QUERY_KEYS } from "../const/automation";
 
-async function fetchHistory(strategyId?: string): Promise<ActionLogEntry[]> {
-  const url = strategyId
-    ? `/api/automation/history?strategyId=${strategyId}`
-    : "/api/automation/history";
-  const res = await fetch(url);
+async function fetchHistory(
+  walletAddress: string,
+  strategyId?: string
+): Promise<ActionLogEntry[]> {
+  const params = new URLSearchParams({ walletAddress });
+  if (strategyId) params.set("strategyId", strategyId);
+  const res = await fetch(`/api/automation/history?${params.toString()}`);
   if (!res.ok) throw new Error("Failed to fetch history");
   return res.json();
 }
 
-export function useActionLog(strategyId?: string) {
+export function useActionLog(
+  walletAddress: string | undefined,
+  strategyId?: string
+) {
   return useQuery<ActionLogEntry[]>({
-    queryKey: [...STRATEGY_QUERY_KEYS.history, strategyId],
-    queryFn: () => fetchHistory(strategyId),
+    queryKey: [...STRATEGY_QUERY_KEYS.history, walletAddress, strategyId],
+    queryFn: () => fetchHistory(walletAddress!, strategyId),
+    enabled: !!walletAddress,
     staleTime: 60_000,
     gcTime: 10 * 60_000,
     refetchOnWindowFocus: false,

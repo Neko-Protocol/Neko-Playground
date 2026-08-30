@@ -7,11 +7,17 @@ interface ActivityFiltersProps {
   onChange: (filters: ActivityFilters) => void;
 }
 
+type ActivitySource = NonNullable<ActivityFilters["sources"]>[number];
+
 export function ActivityFiltersControl({
   filters,
   onChange,
 }: ActivityFiltersProps) {
-  const sources: { value: "swap" | "automation" | "vault"; label: string }[] = [
+  // This local feed's filter UI intentionally only offers swap/automation/
+  // vault — the three sources activityStore actually receives — even though
+  // ActivityFilters["sources"] is typed against the platform's full,
+  // extensible source union.
+  const sources: { value: ActivitySource; label: string }[] = [
     { value: "swap", label: "Swap" },
     { value: "automation", label: "Automation" },
     { value: "vault", label: "Vault" },
@@ -27,9 +33,9 @@ export function ActivityFiltersControl({
     { value: "all", label: "All Time" },
   ];
 
-  const toggleSource = (source: "swap" | "automation" | "vault") => {
+  const toggleSource = (source: ActivitySource) => {
     const currentSources = filters.sources || [];
-    let newSources: ("swap" | "automation" | "vault")[];
+    let newSources: ActivitySource[];
 
     if (currentSources.includes(source)) {
       newSources = currentSources.filter((s) => s !== source);

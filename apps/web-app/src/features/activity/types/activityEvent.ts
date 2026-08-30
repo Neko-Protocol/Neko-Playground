@@ -1,6 +1,10 @@
+import type { EventSource } from "@/lib/event-platform/types";
+
 export interface ActivityEvent {
   id: string; // UUID
-  source: "swap" | "automation" | "vault"; // extensible union
+  // The platform's producer-identifier union (see lib/event-platform/types) —
+  // a source added there automatically gets durable delivery with no change here.
+  source: EventSource;
   type: string; // e.g. "limit-order-ready", "limit-order-expired", "plan-confirmed", "plan-cancelled", "deposit", "withdraw"
   timestamp: number; // UTC ms
   summary: string; // Human-readable description

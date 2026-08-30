@@ -26,6 +26,14 @@ const serverSchema = z.object({
   // Vault manager signing key (server-only)
   VAULT_MANAGER_SECRET_KEY: z.string().optional(),
 
+  // Leverage deleveraging coordinator fee-bump key (server-only) — never
+  // authorizes a repay/withdraw itself, only wraps an already user-signed
+  // unwind-tranche transaction with a fresh fee. See lib/coordinator/execute.ts.
+  LEVERAGE_COORDINATOR_SECRET_KEY: z.string().optional(),
+  // Job ledger persistence (server-only) — see lib/jobs
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+
   // Faucet (server-only)
   FAUCET_SECRET_KEY: z.string().optional(),
   FAUCET_CONTRACT_ID: z.string().optional(),
@@ -38,10 +46,17 @@ const serverSchema = z.object({
   ALFREDPAY_API_KEY: z.string().optional(),
   ALFREDPAY_API_SECRET: z.string().optional(),
   ALFREDPAY_BASE_URL: z.string().url().optional(),
+
+  // Event platform (outbox/queue/delivery) — server-only
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 });
 
 const parsed = serverSchema.safeParse({
   VAULT_MANAGER_SECRET_KEY: process.env.VAULT_MANAGER_SECRET_KEY,
+  LEVERAGE_COORDINATOR_SECRET_KEY: process.env.LEVERAGE_COORDINATOR_SECRET_KEY,
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   FAUCET_SECRET_KEY: process.env.FAUCET_SECRET_KEY,
   FAUCET_CONTRACT_ID: process.env.FAUCET_CONTRACT_ID,
   ETHERFUSE_API_KEY: process.env.ETHERFUSE_API_KEY,
@@ -49,6 +64,8 @@ const parsed = serverSchema.safeParse({
   ALFREDPAY_API_KEY: process.env.ALFREDPAY_API_KEY,
   ALFREDPAY_API_SECRET: process.env.ALFREDPAY_API_SECRET,
   ALFREDPAY_BASE_URL: process.env.ALFREDPAY_BASE_URL,
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 });
 
 if (!parsed.success) {

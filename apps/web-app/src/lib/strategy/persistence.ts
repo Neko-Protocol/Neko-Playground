@@ -31,6 +31,45 @@ const strategyStepSchema = z.object({
   dependsOn: z.array(z.string()),
 });
 
+const routeCandidatePoolSchema = z.object({
+  poolType: z.string(),
+  collateralPoolId: z.string(),
+  borrowPoolId: z.string(),
+  maxLtvPct: z.number(),
+  borrowRatePct: z.number(),
+  availableLiquidity: z.string(),
+});
+
+const routeIterationAssignmentSchema = z.object({
+  index: z.number(),
+  poolType: z.string(),
+  collateralPoolId: z.string(),
+  borrowPoolId: z.string(),
+  depositAmount: z.string(),
+  borrowAmount: z.string(),
+  swapAmountOut: z.string(),
+  swapPriceImpactBps: z.number(),
+});
+
+/**
+ * Additive discriminated metadata for a `kind: "leverage-loop"` strategy
+ * (Scope §3) — extends, not replaces, the existing schema. Optional so
+ * every non-leverage strategy (including the four built-in templates)
+ * parses exactly as before.
+ */
+const leverageLoopStrategyMetaSchema = z.object({
+  kind: z.literal("leverage-loop"),
+  assetCode: z.string(),
+  borrowAssetCode: z.string(),
+  targetMultiple: z.number(),
+  achievedMultiple: z.number(),
+  safetyBufferPct: z.number(),
+  route: z.object({
+    poolsUsed: z.array(routeCandidatePoolSchema),
+    iterations: z.array(routeIterationAssignmentSchema),
+  }),
+});
+
 const strategySchema = z.object({
   id: z.string(),
   version: z.number(),
@@ -40,6 +79,7 @@ const strategySchema = z.object({
   steps: z.array(strategyStepSchema),
   createdAt: z.number(),
   updatedAt: z.number(),
+  leverageMeta: leverageLoopStrategyMetaSchema.optional(),
 });
 
 export const strategyStorageSchema = z.object({
