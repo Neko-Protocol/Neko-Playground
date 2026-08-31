@@ -1,72 +1,30 @@
-type Schema = {
-  walletId: string;
-  walletAddress: string;
-  walletNetwork: string;
-  networkPassphrase: string;
-};
-
-class TypedStorage<T> {
-  private readonly storage: Storage;
+class TypedStorage {
+  private readonly storage: Storage | null;
 
   constructor() {
-    if (typeof window !== "undefined" && window.localStorage) {
-      this.storage = localStorage;
-    } else {
-      this.storage = {
-        getItem: () => null,
-        setItem: () => {},
-        removeItem: () => {},
-        clear: () => {},
-        key: () => null,
-        length: 0,
-      } as Storage;
-    }
+    this.storage = typeof window !== "undefined" && window.localStorage ? window.localStorage : null;
   }
 
-  public get length(): number {
-    return this.storage?.length;
+  get isBrowser(): boolean {
+    return this.storage !== null;
   }
 
-  public key<U extends keyof T>(index: number): U {
-    return this.storage?.key(index) as U;
+  getItem(key: string): string | null {
+    return this.storage ? this.storage.getItem(key) : null;
   }
 
-  public getItem<U extends keyof T>(
-    key: U,
-    retrievalMode: "fail" | "raw" | "safe" = "raw"
-  ): T[U] | null {
-    const item = this.storage?.getItem(key.toString());
-
-    if (item == null) {
-      return item;
-    }
-
-    try {
-      return JSON.parse(item) as T[U];
-    } catch (error) {
-      switch (retrievalMode) {
-        case "safe":
-          return null;
-        case "raw":
-          return item as unknown as T[U];
-        default:
-          throw error;
-      }
-    }
+  setItem(key: string, value: string): void {
+    if (this.storage) this.storage.setItem(key, value);
   }
 
-  public setItem<U extends keyof T>(key: U, value: T[U]): void {
-    this.storage?.setItem(key.toString(), JSON.stringify(value));
+  removeItem(key: string): void {
+    if (this.storage) this.storage.removeItem(key);
   }
 
-  public removeItem<U extends keyof T>(key: U): void {
-    this.storage?.removeItem(key.toString());
-  }
-
-  public clear(): void {
-    this.storage?.clear();
+  clear(): void {
+    if (this.storage) this.storage.clear();
   }
 }
 
-const storage = new TypedStorage<Schema>();
+const storage = new TypedStorage();
 export default storage;
