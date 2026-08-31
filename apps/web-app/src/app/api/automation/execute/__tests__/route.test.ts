@@ -1,16 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import type { RebalancePlan } from "@/features/automation/types/automation";
+import {
+  JobNotFoundError,
+  JobOwnershipError,
+  LeaseNotAcquiredError,
+} from "@/lib/jobs/errors";
 
-const raiseEventMock = vi.fn();
-vi.mock("@/lib/event-platform/outbox", () => ({
-  raiseEvent: (...args: unknown[]) => raiseEventMock(...args),
+const { confirmPlanMock, cancelPlanMock, listPlansForWalletMock } = vi.hoisted(
+  () => ({
+    confirmPlanMock: vi.fn(),
+    cancelPlanMock: vi.fn(),
+    listPlansForWalletMock: vi.fn(),
+  })
+);
+
+vi.mock("@/lib/jobs/automation/ledger", () => ({
+  confirmPlan: confirmPlanMock,
+  cancelPlan: cancelPlanMock,
+  listPlansForWallet: listPlansForWalletMock,
 }));
 
-const { POST } = await import("../route");
+import { GET, POST } from "../route";
 
-function seedPlan(overrides: Partial<RebalancePlan> = {}): RebalancePlan {
-  const plan: RebalancePlan = {
+const TEST_WALLET = "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
+
+function makePlan(overrides: Partial<RebalancePlan> = {}): RebalancePlan {
+  return {
     id: "plan-1",
     strategyId: "strategy-1",
     createdAt: Date.now(),
@@ -27,85 +43,177 @@ function seedPlan(overrides: Partial<RebalancePlan> = {}): RebalancePlan {
     status: "draft",
     ...overrides,
   };
-  // Never reassign globalThis.__automationPlans here: the route module
-  // captured a const reference to the Map at import time, so a replacement
-  // object would become invisible to it. Mutate the existing map instead.
-  globalThis.__automationPlans!.set(plan.id, plan);
-  return plan;
 }
 
-function post(body: Record<string, unknown>) {
-  return POST(
-    new NextRequest("http://localhost/api/automation/execute", {
-      method: "POST",
-      body: JSON.stringify(body),
-    })
-  );
-}
-
-describe("POST /api/automation/execute — failure event wiring", () => {
+describe("GET /api/automation/execute", () => {
   beforeEach(() => {
-    globalThis.__automationPlans ??= new Map();
-    globalThis.__automationPlans!.clear();
-    raiseEventMock.mockReset();
+    vi.clearAllMocks();
   });
 
-  it("does not raise an event on a normal confirm (no failure occurred)", async () => {
-    seedPlan();
-    const res = await post({
-      planId: "plan-1",
-      strategyId: "strategy-1",
-      action: "confirm",
-    });
+  it("returns 400 when walletAddress query param is missing", async () => {
+    const req = new NextRequest("http://localhost/api/automation/execute");
+    const res = await GET(req);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe("walletAddress is required");
+  });
+
+  it("returns 200 with list of plans when walletAddress is provided", async () => {
+    const plans = [makePlan()];
+    listPlansForWalletMock.mockResolvedValue(plans);
+    const req = new NextRequest(
+      `http://localhost/api/automation/execute?walletAddress=${TEST_WALLET}&strategyId=strategy-1`
+    );
+    const res = await GET(req);
     expect(res.status).toBe(200);
-    expect(raiseEventMock).not.toHaveBeenCalled();
+    const json = await res.json();
+    expect(json).toEqual(plans);
+    expect(listPlansForWalletMock).toHaveBeenCalledWith(
+      "strategy-1",
+      TEST_WALLET
+    );
+  });
+});
+
+describe("POST /api/automation/execute", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it("does not raise an event on cancel", async () => {
-    seedPlan();
-    await post({
-      planId: "plan-1",
-      strategyId: "strategy-1",
-      action: "cancel",
+  it("returns 400 when walletAddress is missing", async () => {
+    const req = new NextRequest("http://localhost/api/automation/execute", {
+      method: "POST",
+      body: JSON.stringify({ action: "confirm" }),
     });
-    expect(raiseEventMock).not.toHaveBeenCalled();
+    const res = await POST(req);
+    expect(res.status).toBe(400);
   });
 
-  it("raises exactly one platform event, attributed to the plan and wallet, when a plan is already failed", async () => {
-    // Simulates the future step-execution worker (see the route's own TODO)
-    // having already marked this plan failed before confirm/cancel runs.
-    seedPlan({ status: "failed" });
-
-    await post({
-      planId: "plan-1",
-      strategyId: "strategy-1",
-      action: "cancel",
-      walletAddress: "GWALLET1",
+  it("returns 400 on confirm if plan is missing", async () => {
+    const req = new NextRequest("http://localhost/api/automation/execute", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "confirm",
+        walletAddress: TEST_WALLET,
+      }),
     });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe("plan is required");
+  });
 
-    expect(raiseEventMock).toHaveBeenCalledTimes(1);
-    expect(raiseEventMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        source: "automation",
-        walletAddress: "GWALLET1",
-        dedupeKey: "plan-failed:plan-1",
-        eventType: "plan-failed",
-        severity: "critical",
-        payload: expect.objectContaining({
-          planId: "plan-1",
-          strategyId: "strategy-1",
-        }),
-      })
+  it("successfully confirms a plan", async () => {
+    const plan = makePlan();
+    const confirmedPlan = { ...plan, status: "confirmed" };
+    confirmPlanMock.mockResolvedValue(confirmedPlan);
+
+    const req = new NextRequest("http://localhost/api/automation/execute", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "confirm",
+        plan,
+        walletAddress: TEST_WALLET,
+        strategyName: "My Strategy",
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.status).toBe("confirmed");
+    expect(confirmPlanMock).toHaveBeenCalledWith(
+      plan,
+      TEST_WALLET,
+      "My Strategy"
     );
   });
 
-  it("skips raising when no walletAddress is supplied (plan has no owner concept today)", async () => {
-    seedPlan({ status: "failed" });
-    await post({
-      planId: "plan-1",
-      strategyId: "strategy-1",
-      action: "cancel",
+  it("returns 400 on cancel if planId is missing", async () => {
+    const req = new NextRequest("http://localhost/api/automation/execute", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "cancel",
+        walletAddress: TEST_WALLET,
+      }),
     });
-    expect(raiseEventMock).not.toHaveBeenCalled();
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe("planId is required");
+  });
+
+  it("successfully cancels a plan", async () => {
+    const plan = makePlan({ status: "aborted" });
+    cancelPlanMock.mockResolvedValue(plan);
+
+    const req = new NextRequest("http://localhost/api/automation/execute", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "cancel",
+        planId: "plan-1",
+        walletAddress: TEST_WALLET,
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.status).toBe("aborted");
+    expect(cancelPlanMock).toHaveBeenCalledWith("plan-1", TEST_WALLET);
+  });
+
+  it("returns 403 when JobOwnershipError is thrown", async () => {
+    cancelPlanMock.mockRejectedValue(new JobOwnershipError());
+    const req = new NextRequest("http://localhost/api/automation/execute", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "cancel",
+        planId: "plan-1",
+        walletAddress: TEST_WALLET,
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 404 when JobNotFoundError is thrown", async () => {
+    cancelPlanMock.mockRejectedValue(new JobNotFoundError("plan-1"));
+    const req = new NextRequest("http://localhost/api/automation/execute", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "cancel",
+        planId: "plan-1",
+        walletAddress: TEST_WALLET,
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 409 when LeaseNotAcquiredError is thrown", async () => {
+    confirmPlanMock.mockRejectedValue(
+      new LeaseNotAcquiredError("automation-rebalance", "plan-1")
+    );
+    const req = new NextRequest("http://localhost/api/automation/execute", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "confirm",
+        plan: makePlan(),
+        walletAddress: TEST_WALLET,
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(409);
+  });
+
+  it("returns 400 on unknown action", async () => {
+    const req = new NextRequest("http://localhost/api/automation/execute", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "unknown",
+        walletAddress: TEST_WALLET,
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
   });
 });

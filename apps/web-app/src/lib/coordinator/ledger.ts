@@ -1,21 +1,15 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { requireServerEnv } from "@/lib/env.server";
 import type { CoordinatorRun, DelegationGrant } from "./types";
 
 /**
  * The durable job-ledger primitive the coordinator is built on (Scope §5).
  *
- * This repo doesn't have a real database — app/api/automation/* (the
- * closest existing "durable job" precedent) is an explicitly-labeled
- * in-memory demo store ("swap for a real DB in production"), and
- * app/api/vault/invest/route.ts persists nothing at all between
- * invocations beyond an in-memory cooldown timestamp. Since the
- * coordinator's crash-resumption requirement is meaningless against a
- * store that doesn't survive a process restart, this is a real
- * file-backed store (atomic write-temp-then-rename per record) rather
- * than another in-memory Map — the interface below is the swap-in point for
- * a real database in production, and InMemoryCoordinatorLedgerStore below
- * is what tests use to exercise the same contract without touching disk.
+ * Backed by Supabase tables (coordinator_grants and coordinator_runs) with
+ * FileCoordinatorLedgerStore available for local fallback and
+ * InMemoryCoordinatorLedgerStore for tests.
  */
 export interface CoordinatorLedgerStore {
   getGrant(positionId: string): Promise<DelegationGrant | null>;
@@ -29,6 +23,206 @@ export interface CoordinatorLedgerStore {
     positionId: string
   ): Promise<CoordinatorRun | null>;
   listRunsForPosition(positionId: string): Promise<CoordinatorRun[]>;
+}
+
+export interface CoordinatorGrantRow {
+  id: string;
+  position_id: string;
+  wallet_address: string;
+  asset_code: string;
+  borrow_asset_code: string;
+  status: "active" | "revoked";
+  expires_at: string;
+  revoked_at: string | null;
+  tranches: Record<string, unknown>[];
+  consumed_tranche_ids: string[];
+  guard_config: Record<string, unknown>;
+  breached: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CoordinatorRunRow {
+  id: string;
+  position_id: string;
+  grant_id: string;
+  reason: "deleverage-guard";
+  status: "in_progress" | "completed" | "failed" | "stopped";
+  health_factor_at_trigger: number | null;
+  health_factor_target: number;
+  tranche_ids_planned: string[];
+  steps: Record<string, unknown>[];
+  triggered_at: string;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapGrantRowToDomain(row: CoordinatorGrantRow): DelegationGrant {
+  return {
+    id: row.id,
+    positionId: row.position_id,
+    walletAddress: row.wallet_address,
+    assetCode: row.asset_code,
+    borrowAssetCode: row.borrow_asset_code,
+    status: row.status,
+    createdAt: new Date(row.created_at).getTime(),
+    expiresAt: new Date(row.expires_at).getTime(),
+    revokedAt: row.revoked_at ? new Date(row.revoked_at).getTime() : undefined,
+    tranches: row.tranches as unknown as DelegationGrant["tranches"],
+    consumedTrancheIds: row.consumed_tranche_ids ?? [],
+    guardConfig: row.guard_config as unknown as DelegationGrant["guardConfig"],
+    breached: row.breached,
+  };
+}
+
+function mapRunRowToDomain(row: CoordinatorRunRow): CoordinatorRun {
+  return {
+    id: row.id,
+    positionId: row.position_id,
+    grantId: row.grant_id,
+    reason: row.reason,
+    status: row.status,
+    healthFactorAtTrigger: row.health_factor_at_trigger,
+    healthFactorTarget: row.health_factor_target,
+    trancheIdsPlanned: row.tranche_ids_planned ?? [],
+    steps: row.steps as unknown as CoordinatorRun["steps"],
+    triggeredAt: new Date(row.triggered_at).getTime(),
+    updatedAt: new Date(row.updated_at).getTime(),
+    completedAt: row.completed_at
+      ? new Date(row.completed_at).getTime()
+      : undefined,
+  };
+}
+
+let cachedSupabaseClient: SupabaseClient | null = null;
+
+function getSupabaseClient(): SupabaseClient {
+  if (cachedSupabaseClient) return cachedSupabaseClient;
+  const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = requireServerEnv([
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+  ]);
+  cachedSupabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  });
+  return cachedSupabaseClient;
+}
+
+export class SupabaseCoordinatorLedgerStore implements CoordinatorLedgerStore {
+  constructor(private readonly client?: SupabaseClient) {}
+
+  private getClient(): SupabaseClient {
+    return this.client ?? getSupabaseClient();
+  }
+
+  async getGrant(positionId: string): Promise<DelegationGrant | null> {
+    const { data, error } = await this.getClient()
+      .from("coordinator_grants")
+      .select("*")
+      .eq("position_id", positionId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ? mapGrantRowToDomain(data as CoordinatorGrantRow) : null;
+  }
+
+  async saveGrant(grant: DelegationGrant): Promise<void> {
+    const { error } = await this.getClient()
+      .from("coordinator_grants")
+      .upsert({
+        id: grant.id,
+        position_id: grant.positionId,
+        wallet_address: grant.walletAddress,
+        asset_code: grant.assetCode,
+        borrow_asset_code: grant.borrowAssetCode,
+        status: grant.status,
+        expires_at: new Date(grant.expiresAt).toISOString(),
+        revoked_at: grant.revokedAt
+          ? new Date(grant.revokedAt).toISOString()
+          : null,
+        tranches: grant.tranches as unknown as Record<string, unknown>[],
+        consumed_tranche_ids: grant.consumedTrancheIds,
+        guard_config: grant.guardConfig as unknown as Record<string, unknown>,
+        breached: grant.breached,
+        updated_at: new Date().toISOString(),
+      });
+
+    if (error) throw error;
+  }
+
+  async listActiveGrants(): Promise<DelegationGrant[]> {
+    const nowIso = new Date().toISOString();
+    const { data, error } = await this.getClient()
+      .from("coordinator_grants")
+      .select("*")
+      .eq("status", "active")
+      .gt("expires_at", nowIso);
+
+    if (error) throw error;
+    return ((data ?? []) as CoordinatorGrantRow[]).map(mapGrantRowToDomain);
+  }
+
+  async getRun(runId: string): Promise<CoordinatorRun | null> {
+    const { data, error } = await this.getClient()
+      .from("coordinator_runs")
+      .select("*")
+      .eq("id", runId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ? mapRunRowToDomain(data as CoordinatorRunRow) : null;
+  }
+
+  async saveRun(run: CoordinatorRun): Promise<void> {
+    const { error } = await this.getClient()
+      .from("coordinator_runs")
+      .upsert({
+        id: run.id,
+        position_id: run.positionId,
+        grant_id: run.grantId,
+        reason: run.reason,
+        status: run.status,
+        health_factor_at_trigger: run.healthFactorAtTrigger,
+        health_factor_target: run.healthFactorTarget,
+        tranche_ids_planned: run.trancheIdsPlanned,
+        steps: run.steps as unknown as Record<string, unknown>[],
+        triggered_at: new Date(run.triggeredAt).toISOString(),
+        completed_at: run.completedAt
+          ? new Date(run.completedAt).toISOString()
+          : null,
+        updated_at: new Date().toISOString(),
+      });
+
+    if (error) throw error;
+  }
+
+  async findInProgressRunForPosition(
+    positionId: string
+  ): Promise<CoordinatorRun | null> {
+    const { data, error } = await this.getClient()
+      .from("coordinator_runs")
+      .select("*")
+      .eq("position_id", positionId)
+      .eq("status", "in_progress")
+      .order("triggered_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ? mapRunRowToDomain(data as CoordinatorRunRow) : null;
+  }
+
+  async listRunsForPosition(positionId: string): Promise<CoordinatorRun[]> {
+    const { data, error } = await this.getClient()
+      .from("coordinator_runs")
+      .select("*")
+      .eq("position_id", positionId)
+      .order("triggered_at", { ascending: false });
+
+    if (error) throw error;
+    return ((data ?? []) as CoordinatorRunRow[]).map(mapRunRowToDomain);
+  }
 }
 
 function safeFileName(id: string): string {
@@ -107,8 +301,10 @@ export class FileCoordinatorLedgerStore implements CoordinatorLedgerStore {
         .filter((f) => f.endsWith(".json"))
         .map((f) => readJsonIfExists<DelegationGrant>(path.join(dir, f)))
     );
+    const now = Date.now();
     return grants.filter(
-      (g): g is DelegationGrant => g != null && g.status === "active"
+      (g): g is DelegationGrant =>
+        g != null && g.status === "active" && g.expiresAt > now
     );
   }
 
@@ -138,7 +334,9 @@ export class FileCoordinatorLedgerStore implements CoordinatorLedgerStore {
     const index =
       (await readJsonIfExists<string[]>(this.runIndexPath(positionId))) ?? [];
     const runs = await Promise.all(index.map((id) => this.getRun(id)));
-    return runs.filter((r): r is CoordinatorRun => r != null);
+    return runs
+      .filter((r): r is CoordinatorRun => r != null)
+      .sort((a, b) => b.triggeredAt - a.triggeredAt);
   }
 }
 
@@ -156,7 +354,10 @@ export class InMemoryCoordinatorLedgerStore implements CoordinatorLedgerStore {
   }
 
   async listActiveGrants(): Promise<DelegationGrant[]> {
-    return [...this.grants.values()].filter((g) => g.status === "active");
+    const now = Date.now();
+    return [...this.grants.values()].filter(
+      (g) => g.status === "active" && g.expiresAt > now
+    );
   }
 
   async getRun(runId: string): Promise<CoordinatorRun | null> {
@@ -176,14 +377,22 @@ export class InMemoryCoordinatorLedgerStore implements CoordinatorLedgerStore {
   }
 
   async listRunsForPosition(positionId: string): Promise<CoordinatorRun[]> {
-    return [...this.runs.values()].filter((r) => r.positionId === positionId);
+    return [...this.runs.values()]
+      .filter((r) => r.positionId === positionId)
+      .sort((a, b) => b.triggeredAt - a.triggeredAt);
   }
 }
 
 let sharedStore: CoordinatorLedgerStore | null = null;
 
-/** Process-wide singleton for API routes — one file-backed store per server process. */
+/** Process-wide singleton for API routes — defaults to Supabase durable store. */
 export function getCoordinatorLedgerStore(): CoordinatorLedgerStore {
-  sharedStore ??= new FileCoordinatorLedgerStore();
+  sharedStore ??= new SupabaseCoordinatorLedgerStore();
   return sharedStore;
+}
+
+export function setCoordinatorLedgerStoreForTests(
+  store: CoordinatorLedgerStore | null
+): void {
+  sharedStore = store;
 }
