@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AmountInput } from "@/components/AmountInput";
 import { BackstopInfoAlert } from "./BackstopInfoAlert";
 import { QueueCountdown } from "./QueueCountdown";
 import { BackstopAmountInput } from "./BackstopAmountInput";
