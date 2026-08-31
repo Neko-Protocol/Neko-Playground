@@ -6,8 +6,8 @@ import {
   ArrowLeftRight,
   Droplets,
   Compass,
-  ArrowRight,
   Gavel,
+  ArrowRight,
 } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModalLazy";
@@ -32,6 +32,10 @@ const actions = [
     icon: Compass,
   },
   {
+    label: "Backstop",
+    description: "Interest auctions",
+    href: "/dashboard/backstop",
+  },
     label: "Liquidations",
     description: "Bad debt auctions",
     href: "/borrowing?tab=liquidations",

@@ -600,10 +600,7 @@ export function isValidErrorCode(code: number): code is ContractErrorCode {
  * Errors grouped by contract name, then by error code.
  * Use this for contract-specific lookups when multiple contracts share the same code.
  */
-export const CONTRACT_ERRORS_BY_CONTRACT: Record<
-  string,
-  Record<number, ContractErrorInfo>
-> = (() => {
+export const CONTRACT_ERRORS_BY_CONTRACT: Record<string, Record<number, ContractErrorInfo>> = (() => {
   const byContract: Record<string, Record<number, ContractErrorInfo>> = {};
   for (const [code, info] of Object.entries(CONTRACT_ERRORS)) {
     const n = Number(code);

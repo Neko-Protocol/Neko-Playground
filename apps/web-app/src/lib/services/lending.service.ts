@@ -36,7 +36,13 @@ import {
   depositToBackstop,
   withdrawFromBackstop,
   borrowFromPool as borrowFromPoolHelper,
+  removeCollateral,
   hasBadDebt as hasBadDebtHelper,
+  canCreateInterestAuction as canCreateInterestAuctionHelper,
+  getAccumulatedInterest as getAccumulatedInterestHelper,
+  createInterestAuctionXdr as buildCreateInterestAuctionXdr,
+  fillInterestAuctionXdr as buildFillInterestAuctionXdr,
+  type FillInterestAuctionParams,
   createBadDebtAuction as createBadDebtAuctionHelper,
   buildFillBadDebtAuctionXdr,
 } from "../helpers/stellar/lending";
@@ -783,6 +789,74 @@ export class LendingService {
   }
 
   /**
+   * Check if an interest auction can be created for an asset
+   */
+  async canCreateInterestAuction(
+    asset: string,
+    contractId?: string
+  ): Promise<boolean> {
+    return canCreateInterestAuctionHelper(
+      asset,
+      contractId ?? this.lendingClient.options.contractId
+    );
+  }
+
+  /**
+   * Get accumulated backstop_credit (interest) for an asset
+   */
+  async getAccumulatedInterest(
+    asset: string,
+    contractId?: string
+  ): Promise<bigint> {
+    return getAccumulatedInterestHelper(
+      asset,
+      contractId ?? this.lendingClient.options.contractId
+    );
+  }
+
+  /**
+   * Build create_interest_auction transaction XDR for signing
+   */
+  async createInterestAuctionXdr(
+    asset: string,
+    walletAddress: string,
+    contractId?: string
+  ): Promise<LendingOperationResult> {
+    try {
+      const xdr = await buildCreateInterestAuctionXdr(
+        asset,
+        walletAddress,
+        contractId ?? this.lendingClient.options.contractId
+      );
+      return { xdr };
+    } catch (error) {
+      console.error("Error building create_interest_auction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return { xdr: "", error: friendlyError };
+    }
+  }
+
+  /**
+   * Build fill_interest_auction transaction XDR for signing
+   */
+  async fillInterestAuctionXdr(
+    params: FillInterestAuctionParams,
+    contractId?: string
+  ): Promise<LendingOperationResult> {
+    try {
+      const xdr = await buildFillInterestAuctionXdr(
+        params,
+        contractId ?? this.lendingClient.options.contractId
+      );
+      return { xdr };
+    } catch (error) {
+      console.error("Error building fill_interest_auction:", error);
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return { xdr: "", error: friendlyError };
+    }
+  }
+
+  /**
    * Get collateral balance for a user and RWA token
    */
   async getCollateral(
@@ -832,7 +906,7 @@ export class LendingService {
     }
   }
 
-  // ========== Liquidations (feat/liquidatios-ui) ==========
+  // ========== Liquidations / Bad Debt ==========
 
   /**
    * Check if a borrower has bad debt (debt > 0 and collateral = 0)
