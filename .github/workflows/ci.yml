@@ -14,6 +14,15 @@ jobs:
   verify:
     name: Lint · Typecheck · Build · Test
     runs-on: ubuntu-latest
+    # `src/lib/env.client.ts` validates these at import time and throws when
+    # they are missing, which the production build hits while prerendering.
+    # They are public testnet endpoints, not secrets — CI only needs the build
+    # to resolve, never to reach the network.
+    env:
+      NEXT_PUBLIC_STELLAR_NETWORK: TESTNET
+      NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015"
+      NEXT_PUBLIC_STELLAR_RPC_URL: https://soroban-testnet.stellar.org
+      NEXT_PUBLIC_STELLAR_HORIZON_URL: https://horizon-testnet.stellar.org
     steps:
       - name: Checkout
         uses: actions/checkout@v4

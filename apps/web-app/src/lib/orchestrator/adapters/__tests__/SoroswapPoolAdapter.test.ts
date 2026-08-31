@@ -302,6 +302,12 @@ describe("SoroswapPoolAdapter – getUserPosition", () => {
       depositedFormatted: "0",
       rewards: 0n,
     });
+    // No lending buckets and no derivable ceilings — an absent limit means
+    // "unknown", which callers must not render as a zero max.
+    expect(position.supplied).toBe(0n);
+    expect(position.collateral).toBe(0n);
+    expect(position.liabilities).toBe(0n);
+    expect(position.limits).toEqual({});
   });
 
   it("swallows lookup failures and returns a zeroed empty position", async () => {

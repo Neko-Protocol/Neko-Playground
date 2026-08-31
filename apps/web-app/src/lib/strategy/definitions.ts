@@ -47,7 +47,7 @@ type ParseResult<T> =
  * this instead of calling paramsSchema.parse() directly.
  */
 function safeParseParams<T>(
-  schema: z.ZodType<T>,
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
   input: unknown
 ): ParseResult<T> {
   const result = schema.safeParse(input);
