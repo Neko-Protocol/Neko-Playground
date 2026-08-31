@@ -32,12 +32,6 @@ Object.defineProperty(globalThis, "localStorage", {
   configurable: true,
 });
 
-Object.defineProperty(globalThis, "window", {
-  value: globalThis,
-  writable: true,
-  configurable: true,
-});
-
 process.env.NEXT_PUBLIC_STELLAR_NETWORK ??= "TESTNET";
 process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE ??=
   "Test SDF Network ; September 2015";

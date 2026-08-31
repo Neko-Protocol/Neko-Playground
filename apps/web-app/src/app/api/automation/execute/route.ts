@@ -44,7 +44,6 @@ export async function POST(req: NextRequest) {
     plan,
     action,
     walletAddress: rawWalletAddress,
-    walletAddress,
   } = body as {
     planId?: string;
     plan?: RebalancePlan;

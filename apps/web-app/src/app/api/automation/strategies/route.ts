@@ -2,19 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import type { Strategy } from "@/features/automation/types/automation";
 import { PRESET_RULES } from "@/features/automation/const/automation";
-
-// In-memory store for demo; swap for a real DB in production
-declare global {
-  // eslint-disable-next-line no-var
-  var __automationStrategies: Map<string, Strategy> | undefined;
-}
-globalThis.__automationStrategies ??= new Map<string, Strategy>();
-const store = globalThis.__automationStrategies;
+import { getAutomationStrategiesStore } from "@/lib/automation/strategiesStore";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json([...store.values()]);
+  const store = getAutomationStrategiesStore();
+  const list = await store.listStrategies();
+  return NextResponse.json(list);
 }
 
 export async function POST(req: NextRequest) {
@@ -29,6 +24,7 @@ export async function POST(req: NextRequest) {
     createdAt: now,
     updatedAt: now,
   };
-  store.set(strategy.id, strategy);
-  return NextResponse.json(strategy, { status: 201 });
+  const store = getAutomationStrategiesStore();
+  const created = await store.createStrategy(strategy);
+  return NextResponse.json(created, { status: 201 });
 }
