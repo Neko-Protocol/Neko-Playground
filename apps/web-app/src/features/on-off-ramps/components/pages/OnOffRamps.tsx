@@ -50,7 +50,7 @@ const OnOffRamps: React.FC = () => {
     onboardingUrl,
     ensureCustomer,
     isPending: isEnsuring,
-  } = useAnchorCustomer(state.provider);
+  } = useAnchorCustomer(state.provider, address);
 
   // Quote
   const {
