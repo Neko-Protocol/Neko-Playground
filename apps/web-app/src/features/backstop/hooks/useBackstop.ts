@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
-import { rpc } from "@stellar/stellar-sdk";
+import { Networks } from "@stellar/stellar-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
+import { useCountdown } from "@/hooks/useCountdown";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import {
   depositToBackstop,
@@ -15,12 +15,13 @@ import {
   getBackstopDeposit,
   getTokenBalance,
 } from "@/lib/helpers/stellar/lending";
-import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
-import { waitForTransaction } from "@/lib/helpers/stellar/waitForTransaction";
+import { executeTransaction } from "@/lib/helpers/stellar/executeTransaction";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
-import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
-
-const WITHDRAWAL_QUEUE_DAYS = 17;
+import {
+  BACKSTOP_TOKEN_DECIMALS,
+  BACKSTOP_WITHDRAWAL_QUEUE_DAYS,
+} from "../const/backstop";
+import { validateBackstopAmount } from "../utils/validateBackstopAmount";
 
 export function useBackstop(contractId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +47,6 @@ export function useBackstop(contractId: string) {
     [addNotification]
   );
 
-  // Fetch the backstop token address from the contract
   const { data: backstopTokenAddress } = useQuery({
     queryKey: ["backstopToken", contractId],
     queryFn: () => getBackstopToken(contractId),
@@ -55,7 +55,6 @@ export function useBackstop(contractId: string) {
     refetchOnWindowFocus: false,
   });
 
-  // Fetch the user's wallet balance of the backstop token
   const {
     data: walletBalance,
     isLoading: isLoadingWalletBalance,
@@ -65,7 +64,7 @@ export function useBackstop(contractId: string) {
     queryFn: async () => {
       if (!address || !backstopTokenAddress) return "0";
       const raw = await getTokenBalance(backstopTokenAddress, address);
-      return fromSmallestUnit(raw.toString(), 7);
+      return fromSmallestUnit(raw.toString(), BACKSTOP_TOKEN_DECIMALS);
     },
     enabled: !!address && !!backstopTokenAddress,
     staleTime: 30_000,
@@ -74,7 +73,6 @@ export function useBackstop(contractId: string) {
     placeholderData: (prev) => prev,
   });
 
-  // Fetch the user's deposited backstop balance and queue status
   const {
     data: depositInfo,
     isLoading: isLoadingDeposit,
@@ -96,171 +94,150 @@ export function useBackstop(contractId: string) {
     await Promise.all([refetchWalletBalance(), refetchDepositInfo()]);
   }, [refetchWalletBalance, refetchDepositInfo]);
 
-  // Deposit to backstop — Soroban auth propagation bundles token transfer
-  // authorization into the prepared tx, so no separate approve is needed.
-  const handleDeposit = useCallback(
-    async (amount: string) => {
-      if (!address || !amount || parseFloat(amount) <= 0) return;
-      setIsLoading(true);
-      try {
-        const passphrase = networkPassphrase || Networks.TESTNET;
-        const sorobanServer = new rpc.Server(rpcUrl, {
-          allowHttp: stellarNetwork === "LOCAL",
-        });
+  const walletBalanceValue = walletBalance ?? "0";
+  const depositedAmount = depositInfo
+    ? fromSmallestUnit(depositInfo.amount.toString(), BACKSTOP_TOKEN_DECIMALS)
+    : "0";
+  const activeDepositAmount = depositInfo
+    ? fromSmallestUnit(
+        depositInfo.activeAmount.toString(),
+        BACKSTOP_TOKEN_DECIMALS
+      )
+    : "0";
+  const queuedDepositAmount = depositInfo
+    ? fromSmallestUnit(
+        depositInfo.queuedAmount.toString(),
+        BACKSTOP_TOKEN_DECIMALS
+      )
+    : "0";
 
-        const depositXdr = await depositToBackstop(amount, address, contractId);
-        const signedDeposit = await signTransaction(depositXdr, {
-          networkPassphrase: passphrase,
-          address,
-        });
-        const sendResult = await sorobanServer.sendTransaction(
-          TransactionBuilder.fromXDR(signedDeposit.signedTxXdr, passphrase)
-        );
-
-        await waitForTransaction(sendResult.hash, sorobanServer);
-        await refetchAll();
-        showSuccess(`Successfully deposited ${amount} tokens to backstop`);
-      } catch (err) {
-        const msg = extractContractErrorOrNull(err);
-        showError(
-          typeof msg === "string" ? msg : "An unexpected error occurred."
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [
-      address,
-      networkPassphrase,
-      signTransaction,
-      refetchAll,
-      showError,
-      showSuccess,
-    ]
-  );
-
-  // Enter the 17-day withdrawal queue
-  const handleInitiateWithdrawal = useCallback(
-    async (amount: string) => {
-      if (!address || !amount || parseFloat(amount) <= 0) return;
-      setIsLoading(true);
-      try {
-        const passphrase = networkPassphrase || Networks.TESTNET;
-        const sorobanServer = new rpc.Server(rpcUrl, {
-          allowHttp: stellarNetwork === "LOCAL",
-        });
-
-        const xdr = await initiateBackstopWithdrawal(
-          amount,
-          address,
-          contractId
-        );
-        const signed = await signTransaction(xdr, {
-          networkPassphrase: passphrase,
-          address,
-        });
-        const sendResult = await sorobanServer.sendTransaction(
-          TransactionBuilder.fromXDR(signed.signedTxXdr, passphrase)
-        );
-
-        await waitForTransaction(sendResult.hash, sorobanServer);
-        await refetchAll();
-        showSuccess(
-          `Withdrawal queued. You can withdraw after ${WITHDRAWAL_QUEUE_DAYS} days.`
-        );
-      } catch (err) {
-        const msg = extractContractErrorOrNull(err);
-        showError(
-          typeof msg === "string" ? msg : "An unexpected error occurred."
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [
-      address,
-      networkPassphrase,
-      signTransaction,
-      refetchAll,
-      showError,
-      showSuccess,
-    ]
-  );
-
-  // Execute withdrawal after queue period
-  const handleWithdraw = useCallback(
-    async (amount: string) => {
-      if (!address || !amount || parseFloat(amount) <= 0) return;
-      setIsLoading(true);
-      try {
-        const passphrase = networkPassphrase || Networks.TESTNET;
-        const sorobanServer = new rpc.Server(rpcUrl, {
-          allowHttp: stellarNetwork === "LOCAL",
-        });
-
-        const xdr = await withdrawFromBackstop(amount, address, contractId);
-        const signed = await signTransaction(xdr, {
-          networkPassphrase: passphrase,
-          address,
-        });
-        const sendResult = await sorobanServer.sendTransaction(
-          TransactionBuilder.fromXDR(signed.signedTxXdr, passphrase)
-        );
-
-        await waitForTransaction(sendResult.hash, sorobanServer);
-        await refetchAll();
-        showSuccess(`Successfully withdrew ${amount} tokens from backstop`);
-      } catch (err) {
-        const errStr = String(err);
-        if (
-          errStr.includes("WithdrawalQueueNotExpired") ||
-          errStr.includes("#72")
-        ) {
-          showError(
-            `Your withdrawal queue period has not yet expired. Please wait ${WITHDRAWAL_QUEUE_DAYS} days after queuing before withdrawing.`
-          );
-          return;
-        }
-        const msg = extractContractErrorOrNull(err);
-        showError(
-          typeof msg === "string" ? msg : "An unexpected error occurred."
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [
-      address,
-      networkPassphrase,
-      signTransaction,
-      refetchAll,
-      showError,
-      showSuccess,
-    ]
-  );
-
-  // Derive queue expiry info — queuedAt now holds the expiration timestamp
-  // directly from the backstop contract's Q4W.exp field.
   const queueExpiresAt: Date | null =
     depositInfo?.inWithdrawalQueue && depositInfo.queuedAt
       ? new Date(Number(depositInfo.queuedAt) * 1000)
       : null;
 
-  const queueExpired = queueExpiresAt !== null && new Date() >= queueExpiresAt;
+  const { expired: countdownExpired } = useCountdown(queueExpiresAt);
+  const queueExpired = queueExpiresAt !== null && countdownExpired;
 
-  const depositedAmount = depositInfo
-    ? fromSmallestUnit(depositInfo.amount.toString(), 7)
-    : "0";
-  const activeDepositAmount = depositInfo
-    ? fromSmallestUnit(depositInfo.activeAmount.toString(), 7)
-    : "0";
-  const queuedDepositAmount = depositInfo
-    ? fromSmallestUnit(depositInfo.queuedAmount.toString(), 7)
-    : "0";
+  const resolveTxErrorMessage = useCallback(
+    (
+      result: Exclude<
+        Awaited<ReturnType<typeof executeTransaction>>,
+        { status: "success" }
+      >
+    ) => {
+      if (result.status === "user_rejected") return null;
+      if (result.status === "contract_error") {
+        if (result.error.kind === "withdrawal_queue_not_expired") {
+          return `Your withdrawal queue period has not yet expired. Please wait ${BACKSTOP_WITHDRAWAL_QUEUE_DAYS} days after queuing before withdrawing.`;
+        }
+        return result.error.message;
+      }
+      return result.message;
+    },
+    []
+  );
+
+  const runBackstopTransaction = useCallback(
+    async (
+      amount: string,
+      action: "deposit" | "queue" | "withdraw",
+      buildXdr: () => Promise<string>,
+      successMessage: string
+    ): Promise<boolean> => {
+      if (!address) return false;
+
+      const validation = validateBackstopAmount({
+        action,
+        amount,
+        walletBalance: walletBalanceValue,
+        activeDepositAmount,
+        queuedDepositAmount,
+      });
+      if (!validation.valid) {
+        showError(validation.message);
+        return false;
+      }
+
+      setIsLoading(true);
+      try {
+        const passphrase = networkPassphrase || Networks.TESTNET;
+        const xdr = await buildXdr();
+        const result = await executeTransaction({
+          xdr,
+          signTransaction,
+          networkPassphrase: passphrase,
+          address,
+          contractName: "rwa-lending",
+          confirmation: "wait",
+        });
+
+        if (result.status !== "success") {
+          const msg = resolveTxErrorMessage(result);
+          if (msg) showError(msg);
+          return false;
+        }
+
+        await refetchAll();
+        showSuccess(successMessage);
+        return true;
+      } catch (err) {
+        showError("An unexpected error occurred.");
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      address,
+      walletBalanceValue,
+      activeDepositAmount,
+      queuedDepositAmount,
+      networkPassphrase,
+      signTransaction,
+      refetchAll,
+      showError,
+      showSuccess,
+      resolveTxErrorMessage,
+    ]
+  );
+
+  const handleDeposit = useCallback(
+    (amount: string) =>
+      runBackstopTransaction(
+        amount,
+        "deposit",
+        () => depositToBackstop(amount, address!, contractId),
+        `Successfully deposited ${amount} tokens to backstop`
+      ),
+    [runBackstopTransaction, address, contractId]
+  );
+
+  const handleInitiateWithdrawal = useCallback(
+    (amount: string) =>
+      runBackstopTransaction(
+        amount,
+        "queue",
+        () => initiateBackstopWithdrawal(amount, address!, contractId),
+        `Withdrawal queued. You can withdraw after ${BACKSTOP_WITHDRAWAL_QUEUE_DAYS} days.`
+      ),
+    [runBackstopTransaction, address, contractId]
+  );
+
+  const handleWithdraw = useCallback(
+    (amount: string) =>
+      runBackstopTransaction(
+        amount,
+        "withdraw",
+        () => withdrawFromBackstop(amount, address!, contractId),
+        `Successfully withdrew ${amount} tokens from backstop`
+      ),
+    [runBackstopTransaction, address, contractId]
+  );
 
   return {
     isLoading,
-    walletBalance: walletBalance ?? "0",
+    walletBalance: walletBalanceValue,
     isLoadingWalletBalance,
     depositedAmount,
     activeDepositAmount,

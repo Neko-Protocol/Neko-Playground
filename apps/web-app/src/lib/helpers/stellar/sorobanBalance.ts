@@ -8,6 +8,7 @@ import {
 } from "@stellar/stellar-sdk";
 import { rpcUrl, networkPassphrase, horizonUrl } from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { getSorobanServer } from "./sorobanServer";
 
 export async function getTokenBalanceFromContract(
   contractAddress: string,
@@ -15,7 +16,7 @@ export async function getTokenBalanceFromContract(
   decimals: number = 7
 ): Promise<string> {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, { allowHttp: true });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const contract = new Contract(contractAddress);
 

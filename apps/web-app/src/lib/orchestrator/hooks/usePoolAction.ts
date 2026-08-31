@@ -1,11 +1,10 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
-import { rpcUrl } from "@/lib/constants/network";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
+import { executeTransaction } from "@/lib/helpers/stellar/executeTransaction";
 import { orchestrator } from "../core/Orchestrator";
 import { POOLS_QUERY_KEY } from "./usePools";
 import type { PoolAction, TransactionResult } from "../types/pool.types";
@@ -70,36 +69,25 @@ export function usePoolAction() {
           throw new Error(`Unsupported action: ${action}`);
       }
 
-      const signed = await signTransaction(result.xdr, {
+      const txResult = await executeTransaction({
+        xdr: result.xdr,
+        signTransaction,
         networkPassphrase: result.networkPassphrase,
+        address,
+        confirmation: "poll",
+        pollOptions: { attempts: 30 },
       });
 
-      const signedXdr =
-        typeof signed === "string"
-          ? signed
-          : ((signed as { signedTxXdr?: string }).signedTxXdr ?? "");
-
-      const server = new rpc.Server(rpcUrl, { allowHttp: true });
-      const tx = TransactionBuilder.fromXDR(
-        signedXdr,
-        result.networkPassphrase
-      );
-      const txResult = await server.sendTransaction(tx);
-
-      if (txResult.status === "ERROR") {
-        throw new Error(`Transaction failed: ${txResult.status}`);
+      if (txResult.status === "user_rejected") {
+        throw new Error("Transaction cancelled");
+      }
+      if (txResult.status === "contract_error") {
+        throw new Error(txResult.error.message);
+      }
+      if (txResult.status === "network_error") {
+        throw new Error(txResult.message);
       }
 
-      const confirmed = await server.pollTransaction(txResult.hash, {
-        attempts: 30,
-      });
-      if (confirmed.status !== "SUCCESS") {
-        throw new Error(
-          confirmed.status === "FAILED"
-            ? "Transaction failed on-chain"
-            : "Transaction confirmation timeout"
-        );
-      }
       return txResult.hash;
     },
 

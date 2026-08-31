@@ -4,8 +4,10 @@ import { useMemo } from "react";
 import { useActivityStore } from "@/stores/activityStore";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 
+import type { ActivityEvent } from "../types/activityEvent";
+
 export interface ActivityFilters {
-  sources?: ("swap" | "automation" | "vault")[];
+  sources?: ActivityEvent["source"][];
   dateRange?: "today" | "7d" | "30d" | "all";
 }
 

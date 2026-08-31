@@ -1,11 +1,13 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import {
   Layers,
   Pencil,
   Play,
   RotateCcw,
+  TrendingUp,
   Trash2,
   Workflow,
   X,
@@ -23,6 +25,8 @@ import type { ExecutionRecord, Strategy } from "@/lib/strategy/types";
 import { STRATEGIES_TABS, type StrategiesTab } from "../utils";
 import { createEmptyStrategy, cloneAsEditable } from "../hooks";
 import { StrategyComposer } from "./StrategyComposer";
+import { LeverageBuilder } from "../leverage/LeverageBuilder";
+import { DelegationPanel } from "../leverage/DelegationPanel";
 
 // ─── Strategy list ───────────────────────────────────────────────────────────
 
@@ -78,13 +82,24 @@ export function StrategyList({
                 onClick={() => onOpen(strategy)}
                 className="text-left"
               >
-                <h4 className="text-sm font-semibold text-white">
-                  {strategy.name}
-                </h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-sm font-semibold text-white">
+                    {strategy.name}
+                  </h4>
+                  {strategy.leverageMeta && (
+                    <span className="flex items-center gap-1 rounded-full bg-[#229EDF]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#229EDF]">
+                      <TrendingUp size={10} />
+                      {strategy.leverageMeta.targetMultiple.toFixed(1)}x
+                    </span>
+                  )}
+                </div>
                 <p className="mt-1 text-xs text-white/40">
                   {strategy.steps.length} steps
                 </p>
               </button>
+              {strategy.leverageMeta && (
+                <DelegationPanel positionId={strategy.id} />
+              )}
               <div className="mt-3 flex items-center gap-2">
                 <button
                   type="button"
@@ -123,12 +138,42 @@ export function StrategyList({
 
 export interface TemplatePickerProps {
   onUseTemplate: (template: Strategy) => void;
+  onUseLeverageBuilder: () => void;
 }
 
-/** The 4 built-in templates, presented as selectable cards. "Use Template" clones the data, no separate code path. */
-export function TemplatePicker({ onUseTemplate }: TemplatePickerProps) {
+/**
+ * The 4 built-in templates, presented as selectable cards, plus the
+ * leverage-loop builder (Scope §7) as a distinct entry point — it isn't a
+ * fixed Strategy the composer's generic step editor can render, since its
+ * step count/parameters are computed by the loop-sizing calculator from a
+ * target multiple, not authored by hand.
+ */
+export function TemplatePicker({
+  onUseTemplate,
+  onUseLeverageBuilder,
+}: TemplatePickerProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="flex flex-col justify-between rounded-2xl border border-[#229EDF]/30 bg-[#229EDF]/5 p-5">
+        <div>
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-white">
+            <TrendingUp size={14} className="text-[#229EDF]" />
+            Leverage Loop
+          </h3>
+          <p className="mt-1 text-xs text-white/50">
+            Recursive deposit→borrow→swap→redeposit leverage on an RWA asset,
+            routed for the lowest blended cost across every eligible pool, with
+            optional automated deleveraging.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onUseLeverageBuilder}
+          className="mt-4 self-start rounded-full bg-[#229EDF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1c8bc4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+        >
+          Open builder
+        </button>
+      </div>
       {STRATEGY_TEMPLATES.map((template) => (
         <div
           key={template.id}
@@ -291,8 +336,15 @@ export function ResumeExecutionBanner({
 
 export function Strategies() {
   const { address } = useWallet();
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState<StrategiesTab>("my-strategies");
   const [composing, setComposing] = useState<Strategy | null>(null);
+  // AssetDetail.tsx links here with ?template=leverage-loop&asset=SYMBOL —
+  // Scope §7's "leverage builder surfaced from AssetDetail.tsx".
+  const [buildingLeverage, setBuildingLeverage] = useState(
+    searchParams.get("template") === "leverage-loop"
+  );
+  const leverageAssetParam = searchParams.get("asset") ?? undefined;
 
   const { strategies, isLoading, saveStrategy, deleteStrategy } =
     useStrategyPersistence();
@@ -313,6 +365,17 @@ export function Strategies() {
             Connect your wallet to build and run strategies.
           </p>
         </div>
+      </PageContainer>
+    );
+  }
+
+  if (buildingLeverage) {
+    return (
+      <PageContainer maxWidth="6xl">
+        <LeverageBuilder
+          initialAssetCode={leverageAssetParam}
+          onClose={() => setBuildingLeverage(false)}
+        />
       </PageContainer>
     );
   }
@@ -389,6 +452,7 @@ export function Strategies() {
             saveStrategy(draft);
             setComposing(draft);
           }}
+          onUseLeverageBuilder={() => setBuildingLeverage(true)}
         />
       )}
 

@@ -8,6 +8,7 @@ import {
 } from "@stellar/stellar-sdk";
 import { getFaucetTokens } from "@/lib/constants/faucet";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { getSorobanServer } from "./sorobanServer";
 
 export interface SorobanTokenBalance {
   contractId: string;
@@ -64,7 +65,7 @@ export async function fetchSorobanTokenBalances(
   passphrase: string
 ): Promise<SorobanTokenBalance[]> {
   const tokens = getFaucetTokens();
-  const sorobanServer = new rpc.Server(sorobanRpcUrl, { allowHttp: true });
+  const sorobanServer = getSorobanServer(sorobanRpcUrl);
   const horizonServer = new Horizon.Server(stellarHorizonUrl);
 
   const results = await Promise.allSettled(

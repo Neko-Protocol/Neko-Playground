@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { AmountInput } from "@/components/AmountInput";
 import { BackstopInfoAlert } from "./BackstopInfoAlert";
 import { QueueCountdown } from "./QueueCountdown";
+import { BackstopAmountInput } from "./BackstopAmountInput";
+import { BACKSTOP_WITHDRAWAL_QUEUE_DAYS } from "../../const/backstop";
 
 type ActionTab = "deposit" | "withdraw";
 
@@ -18,9 +19,9 @@ interface BackstopActionPanelProps {
   inWithdrawalQueue: boolean;
   queueExpired: boolean;
   queueExpiresAt: Date | null;
-  onDeposit: (amount: string) => Promise<void>;
-  onInitiateWithdrawal: (amount: string) => Promise<void>;
-  onWithdraw: (amount: string) => Promise<void>;
+  onDeposit: (amount: string) => Promise<boolean>;
+  onInitiateWithdrawal: (amount: string) => Promise<boolean>;
+  onWithdraw: (amount: string) => Promise<boolean>;
 }
 
 export function BackstopActionPanel({
@@ -68,7 +69,6 @@ export function BackstopActionPanel({
         Actions
       </p>
 
-      {/* Tabs */}
       <div className="flex items-center gap-1 rounded-xl bg-[#242424] p-1">
         <button
           onClick={() => setActiveTab("deposit")}
@@ -93,31 +93,15 @@ export function BackstopActionPanel({
         </button>
       </div>
 
-      {/* Deposit */}
       {activeTab === "deposit" && (
         <div className="flex flex-col gap-4">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-white/50 text-sm font-medium">Amount</span>
-              {parseFloat(walletBalance) > 0 && (
-                <button
-                  onClick={() => setDepositAmount(walletBalance)}
-                  disabled={isLoading}
-                  className="text-[#229EDF] text-xs font-semibold hover:text-[#229EDF]/70 transition-colors disabled:opacity-40 shrink-0 ml-2"
-                >
-                  Max: {parseFloat(walletBalance).toFixed(4)}
-                </button>
-              )}
-            </div>
-            <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center">
-              <AmountInput
-                value={depositAmount}
-                onChange={setDepositAmount}
-                disabled={isLoading || !backstopTokenConfigured}
-                className="bg-transparent text-white text-2xl font-bold w-full outline-none placeholder:text-white/30 disabled:opacity-50"
-              />
-            </div>
-          </div>
+          <BackstopAmountInput
+            label="Amount"
+            value={depositAmount}
+            onChange={setDepositAmount}
+            disabled={isLoading || !backstopTokenConfigured}
+            max={walletBalance}
+          />
 
           <div className="bg-[#252525] rounded-xl p-3.5">
             <p className="text-white/40 text-xs">Available in wallet</p>
@@ -134,7 +118,9 @@ export function BackstopActionPanel({
 
           <button
             onClick={() =>
-              void onDeposit(depositAmount).then(() => setDepositAmount(""))
+              void onDeposit(depositAmount).then((ok) => {
+                if (ok) setDepositAmount("");
+              })
             }
             disabled={!canDeposit}
             className="w-full rounded-xl bg-[#229EDF] py-3 text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -148,7 +134,6 @@ export function BackstopActionPanel({
         </div>
       )}
 
-      {/* Withdraw */}
       {activeTab === "withdraw" && (
         <div className="flex flex-col gap-4">
           {hasActiveDeposit && (
@@ -158,35 +143,20 @@ export function BackstopActionPanel({
                 {inWithdrawalQueue && queueExpiresAt ? (
                   <QueueCountdown expiresAt={queueExpiresAt} />
                 ) : (
-                  <span className="font-semibold text-amber-400">17 days</span>
+                  <span className="font-semibold text-amber-400">
+                    {BACKSTOP_WITHDRAWAL_QUEUE_DAYS} days
+                  </span>
                 )}
                 .
               </BackstopInfoAlert>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-white/50 text-sm font-medium">
-                    Amount to queue
-                  </span>
-                  {parseFloat(activeDepositAmount) > 0 && (
-                    <button
-                      onClick={() => setWithdrawAmount(activeDepositAmount)}
-                      disabled={isLoading}
-                      className="text-[#229EDF] text-xs font-semibold hover:text-[#229EDF]/70 transition-colors disabled:opacity-40"
-                    >
-                      Max: {parseFloat(activeDepositAmount).toFixed(4)}
-                    </button>
-                  )}
-                </div>
-                <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center">
-                  <AmountInput
-                    value={withdrawAmount}
-                    onChange={setWithdrawAmount}
-                    disabled={isLoading}
-                    className="bg-transparent text-white text-2xl font-bold w-full outline-none placeholder:text-white/30 disabled:opacity-50"
-                  />
-                </div>
-              </div>
+              <BackstopAmountInput
+                label="Amount to queue"
+                value={withdrawAmount}
+                onChange={setWithdrawAmount}
+                disabled={isLoading}
+                max={activeDepositAmount}
+              />
 
               <div className="bg-[#252525] rounded-xl p-3.5">
                 <p className="text-white/40 text-xs">Available to queue</p>
@@ -197,14 +167,16 @@ export function BackstopActionPanel({
 
               <button
                 onClick={() =>
-                  void onInitiateWithdrawal(withdrawAmount).then(() =>
-                    setWithdrawAmount("")
-                  )
+                  void onInitiateWithdrawal(withdrawAmount).then((ok) => {
+                    if (ok) setWithdrawAmount("");
+                  })
                 }
                 disabled={!canQueue}
                 className="w-full rounded-xl border border-amber-500/40 py-3 text-amber-400 font-semibold text-sm hover:bg-amber-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? "Processing…" : "Queue Withdrawal (17-day wait)"}
+                {isLoading
+                  ? "Processing…"
+                  : `Queue Withdrawal (${BACKSTOP_WITHDRAWAL_QUEUE_DAYS}-day wait)`}
               </button>
             </>
           )}
@@ -224,9 +196,9 @@ export function BackstopActionPanel({
 
               <button
                 onClick={() =>
-                  void onWithdraw(queuedDepositAmount).then(() =>
-                    setWithdrawAmount("")
-                  )
+                  void onWithdraw(queuedDepositAmount).then((ok) => {
+                    if (ok) setWithdrawAmount("");
+                  })
                 }
                 disabled={!canWithdraw}
                 className="w-full rounded-xl bg-[#229EDF] py-3 text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

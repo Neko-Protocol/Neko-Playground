@@ -9,8 +9,9 @@ import {
   OffRampSignBodySchema,
   ProviderSchema,
 } from "@/lib/validation/schemas";
-import { rpc, Horizon, TransactionBuilder } from "@stellar/stellar-sdk";
+import { Horizon, TransactionBuilder } from "@stellar/stellar-sdk";
 import { clientEnv } from "@/lib/env.client";
+import { getSorobanServer } from "@/lib/helpers/stellar/sorobanServer";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ export async function POST(
 
     const { rpcUrl, networkPassphrase, horizonUrl } = clientEnv;
 
-    const sorobanServer = new rpc.Server(rpcUrl);
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
 
     try {

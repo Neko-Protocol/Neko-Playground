@@ -16,11 +16,11 @@ import {
   rpcUrl,
   networkPassphrase,
   horizonUrl,
-  stellarNetwork,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
 import { toSmallestUnit } from "../tokenUtils";
 import { extractContractError } from "./contractErrors";
+import { getSorobanServer } from "./sorobanServer";
 
 export const depositToPool = async (
   assetCode: string,
@@ -30,9 +30,7 @@ export const depositToPool = async (
   contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
@@ -99,9 +97,7 @@ export const withdrawFromPool = async (
   contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
@@ -166,9 +162,7 @@ export const addCollateral = async (
   contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
@@ -231,9 +225,7 @@ export const removeCollateral = async (
   contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
@@ -296,9 +288,7 @@ export const borrowFromPool = async (
   contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
@@ -365,9 +355,7 @@ export const repayPool = async (
   contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
@@ -431,9 +419,7 @@ export const getTokenBalance = async (
   walletAddress: string
 ): Promise<bigint> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const tokenContract = new Contract(tokenContractAddress);
 
@@ -660,9 +646,7 @@ export const depositToBackstop = async (
   backstopContractId: string = backstopNetworks.testnet.contractId
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const backstopContract = new Contract(backstopContractId);
 
@@ -722,9 +706,7 @@ export const initiateBackstopWithdrawal = async (
   backstopContractId: string = backstopNetworks.testnet.contractId
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const backstopContract = new Contract(backstopContractId);
 
@@ -784,9 +766,7 @@ export const withdrawFromBackstop = async (
   backstopContractId: string = backstopNetworks.testnet.contractId
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const backstopContract = new Contract(backstopContractId);
 
@@ -926,9 +906,7 @@ export const createBadDebtAuction = async (
   contractId: string = networks.testnet.contractId
 ): Promise<string> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
@@ -999,9 +977,7 @@ export const buildFillBadDebtAuctionXdr = async (
   contractId: string = networks.testnet.contractId
 ): Promise<FillBadDebtAuctionResult> => {
   try {
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: stellarNetwork === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
     const lendingContract = new Contract(contractId);
 
@@ -1082,9 +1058,7 @@ export interface ActiveBadDebtAuction {
 export async function getActiveBadDebtAuctions(
   contractId: string
 ): Promise<ActiveBadDebtAuction[]> {
-  const sorobanServer = new rpc.Server(rpcUrl, {
-    allowHttp: stellarNetwork === "LOCAL",
-  });
+  const sorobanServer = getSorobanServer(rpcUrl);
 
   const { sequence: currentLedger } = await sorobanServer.getLatestLedger();
   // Look back enough to cover the full auction duration plus some buffer

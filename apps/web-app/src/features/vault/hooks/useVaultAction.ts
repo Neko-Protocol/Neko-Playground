@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
-import { rpc } from "@stellar/stellar-sdk";
+import { Networks } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
@@ -12,11 +11,8 @@ import {
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
-import {
-  rpcUrl as configRpcUrl,
-  stellarNetwork,
-} from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { executeTransaction } from "@/lib/helpers/stellar/executeTransaction";
 import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { useVaultBalance } from "./useVaultBalance";
 import { useVaultData } from "./useVaultData";
@@ -26,32 +22,6 @@ const VAULT_CONTRACT_ID =
   "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
 
 const SLIPPAGE = 0.01;
-
-/**
- * Signs and submits a simulated AssembledTransaction by:
- * 1. Getting the XDR (already includes simulation auth entries)
- * 2. Signing with the user's wallet (Freighter handles Soroban auth in the XDR)
- * 3. Submitting via rpc.Server
- *
- * Bypasses SDK's signAndSend() which crashes on .switch() in some v14 builds.
- */
-async function signAndSubmit(
-  xdr: string,
-  passphrase: string,
-  signFn: (
-    xdr: string,
-    opts: { networkPassphrase: string; address?: string }
-  ) => Promise<{ signedTxXdr: string }>,
-  address: string
-) {
-  const server = new rpc.Server(configRpcUrl, {
-    allowHttp: stellarNetwork === "LOCAL",
-  });
-  const signed = await signFn(xdr, { networkPassphrase: passphrase, address });
-  return server.sendTransaction(
-    TransactionBuilder.fromXDR(signed.signedTxXdr, passphrase)
-  );
-}
 
 export function useVaultAction() {
   const [isLoading, setIsLoading] = useState(false);
@@ -82,6 +52,29 @@ export function useVaultAction() {
     [addNotification]
   );
 
+  const submitVaultTransaction = useCallback(
+    async (xdr: string, passphrase: string): Promise<boolean> => {
+      const result = await executeTransaction({
+        xdr,
+        signTransaction,
+        networkPassphrase: passphrase,
+        address: address!,
+        confirmation: "none",
+      });
+
+      if (result.status === "success") return true;
+      if (result.status === "user_rejected") return false;
+
+      const msg =
+        result.status === "contract_error"
+          ? result.error.message
+          : result.message;
+      showError(msg);
+      return false;
+    },
+    [address, signTransaction, showError]
+  );
+
   const handleDeposit = useCallback(
     async (amount: string) => {
       if (!address || !amount || parseFloat(amount) <= 0) return;
@@ -90,7 +83,6 @@ export function useVaultAction() {
       try {
         const passphrase = walletPassphrase || Networks.TESTNET;
 
-        // Client needs publicKey so simulation uses the real user account
         const client = new DefindexVaultClient({
           contractId: VAULT_CONTRACT_ID,
           rpcUrl,
@@ -100,14 +92,11 @@ export function useVaultAction() {
         });
 
         const amountBigInt = toSmallestUnit(amount, 7);
-        // SLIPPAGE is a decimal fraction (0.01 = 1%). Scale it string-safely (7 decimals)
-        // so there is no float multiplication.
         const SLIPPAGE_SCALE = 10_000_000n;
-        const slippageScaled = toSmallestUnit(String(SLIPPAGE), 7); // 0.01 -> 100000n
+        const slippageScaled = toSmallestUnit(String(SLIPPAGE), 7);
         const minAmount =
           amountBigInt - (amountBigInt * slippageScaled) / SLIPPAGE_SCALE;
 
-        // Simulate — the resulting XDR already includes Soroban auth entries
         const depositTx = await client.deposit({
           amounts_desired: [amountBigInt],
           amounts_min: [minAmount],
@@ -115,13 +104,11 @@ export function useVaultAction() {
           invest: false,
         });
 
-        // Sign + submit the simulated XDR directly (Freighter handles auth entries)
-        await signAndSubmit(
+        const submitted = await submitVaultTransaction(
           depositTx.toXDR(),
-          passphrase,
-          signTransaction,
-          address
+          passphrase
         );
+        if (!submitted) return;
 
         await new Promise((r) => setTimeout(r, 3000));
         await Promise.all([refetchBalance(), refetchVaultData()]);
@@ -145,7 +132,7 @@ export function useVaultAction() {
     [
       address,
       walletPassphrase,
-      signTransaction,
+      submitVaultTransaction,
       refetchBalance,
       refetchVaultData,
       showError,
@@ -177,12 +164,11 @@ export function useVaultAction() {
           from: address,
         });
 
-        await signAndSubmit(
+        const submitted = await submitVaultTransaction(
           withdrawTx.toXDR(),
-          passphrase,
-          signTransaction,
-          address
+          passphrase
         );
+        if (!submitted) return;
 
         await new Promise((r) => setTimeout(r, 3000));
         await Promise.all([refetchBalance(), refetchVaultData()]);
@@ -206,7 +192,7 @@ export function useVaultAction() {
     [
       address,
       walletPassphrase,
-      signTransaction,
+      submitVaultTransaction,
       refetchBalance,
       refetchVaultData,
       showError,

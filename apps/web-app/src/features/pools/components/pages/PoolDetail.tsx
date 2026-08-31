@@ -7,7 +7,6 @@ import Image from "next/image";
 import { orchestrator, useUserPosition } from "@/lib/orchestrator";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 import type { PoolAction, TokenInfo } from "@/lib/orchestrator";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { useWallet } from "@/hooks/useWallet";
 import { usePoolDetail } from "@/features/pools/hooks/usePoolDetail";
 import { PageContainer } from "@/components/ui/PageContainer";
@@ -70,6 +69,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   }
 
   const { token1, token2, tvlFormatted, apyFormatted, typeLabel } = pool;
+  const tokenCode = pool.tokens[0]?.code ?? "";
 
   return (
     <PageContainer maxWidth="3xl" className="min-h-screen">
@@ -178,17 +178,37 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
               Tu posición
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-white/40 text-xs mb-1">
-                  {pool.type === "blend"
-                    ? "Total (incl. intereses)"
-                    : "Depositado"}
-                </p>
-                <p className="text-white text-lg font-bold">
-                  {position?.depositedFormatted ?? "0"}{" "}
-                  {pool.tokens[0]?.code ?? ""}
-                </p>
-              </div>
+              {/* Supply and collateral are separate on-chain balances — each is
+                  withdrawn by its own action, so they are never summed here. */}
+              {pool.type === "blend" ? (
+                <>
+                  <div>
+                    <p className="text-white/40 text-xs mb-1">Suministrado</p>
+                    <p className="text-white text-lg font-bold">
+                      {position?.suppliedFormatted ?? "0"} {tokenCode}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-white/40 text-xs mb-1">Colateral</p>
+                    <p className="text-white text-lg font-bold">
+                      {position?.collateralFormatted ?? "0"} {tokenCode}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-white/40 text-xs mb-1">Prestado</p>
+                    <p className="text-white text-lg font-bold">
+                      {position?.liabilitiesFormatted ?? "0"} {tokenCode}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <p className="text-white/40 text-xs mb-1">Depositado</p>
+                  <p className="text-white text-lg font-bold">
+                    {position?.depositedFormatted ?? "0"} {tokenCode}
+                  </p>
+                </div>
+              )}
               {pool.type !== "blend" &&
                 position?.rewardsFormatted != null &&
                 position.rewardsFormatted !== "0" && (
@@ -196,20 +216,6 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
                     <p className="text-white/40 text-xs mb-1">Recompensas</p>
                     <p className="text-white text-lg font-bold">
                       {position.rewardsFormatted}
-                    </p>
-                  </div>
-                )}
-              {pool.type === "blend" &&
-                position?.metadata?.liabilities != null &&
-                String(position.metadata.liabilities) !== "0" && (
-                  <div>
-                    <p className="text-white/40 text-xs mb-1">Prestado</p>
-                    <p className="text-white text-lg font-bold">
-                      {fromSmallestUnit(
-                        String(position.metadata.liabilities),
-                        pool.tokens[0]?.decimals ?? 7
-                      )}{" "}
-                      {pool.tokens[0]?.code ?? ""}
                     </p>
                   </div>
                 )}

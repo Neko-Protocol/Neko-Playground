@@ -13,6 +13,9 @@ export const getApiKey = (): string | null => {
   if (envKeyStr && envKeyStr.trim() !== "") {
     return envKeyStr.trim();
   }
+  // Callers reach this during render (see useLimitOrderMonitor), which also
+  // runs on the server during static prerendering — where localStorage does
+  // not exist. Fall back to "no key configured" instead of throwing.
   if (typeof window !== "undefined") {
     const localKey = storage.getItem(SoroswapLOCAL_STORAGE_KEY);
     if (localKey && localKey.trim() !== "") {

@@ -3,6 +3,7 @@ import type { UserPositionWithPool } from "../hooks/useUserPositions";
 import type { LendingPosition } from "@/features/lending/hooks/useUserLendingPositions";
 import type { BorrowPosition } from "@/features/borrowing/hooks/useUserBorrowPositions";
 import type { BackstopPositionRaw } from "./usePortfolioBackstopPositions";
+import type { LeveragePositionSummary } from "./leverage";
 import type {
   PortfolioSummary,
   ProtocolAllocation,
@@ -182,6 +183,49 @@ export function normalizeBackstopPositions(
       href: "/lending",
     };
   });
+}
+
+/**
+ * Turns an aggregated leverage-loop position (features/dashboard/positions/
+ * leverage.ts's reducer) into two UnifiedPosition rows — a collateral asset
+ * row and a debt liability row — mirroring normalizeBorrowPositions's
+ * pattern so aggregatePortfolio's net-worth math (assets minus liabilities)
+ * falls out for free instead of needing a leverage-specific case.
+ */
+export function normalizeLeveragePositions(
+  positions: LeveragePositionSummary[]
+): UnifiedPosition[] {
+  const result: UnifiedPosition[] = [];
+
+  for (const p of positions) {
+    const multipleLabel =
+      p.effectiveLeverage != null ? ` ${p.effectiveLeverage.toFixed(2)}x` : "";
+    result.push({
+      id: `leverage:${p.strategyId}:collateral`,
+      protocol: "leverage",
+      label: `${p.assetCode} leveraged position${multipleLabel}`,
+      assetCode: p.assetCode,
+      quantity: p.totalCollateralUnits,
+      valueUsd: p.collateralValueUsd,
+      direction: "asset",
+      href: "/strategies",
+    });
+
+    if (p.totalDebtUnits > 0) {
+      result.push({
+        id: `leverage:${p.strategyId}:debt`,
+        protocol: "leverage",
+        label: `${p.borrowAssetCode} borrowed (leverage loop)`,
+        assetCode: p.borrowAssetCode,
+        quantity: p.totalDebtUnits,
+        valueUsd: p.debtValueUsd,
+        direction: "liability",
+        href: "/strategies",
+      });
+    }
+  }
+
+  return result;
 }
 
 export function aggregatePortfolio(

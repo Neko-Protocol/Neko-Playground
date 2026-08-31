@@ -83,8 +83,15 @@ function emptyPosition(poolId: string): PoolPosition {
     poolId,
     deposited: 0n,
     depositedFormatted: "0",
+    supplied: 0n,
+    suppliedFormatted: "0",
+    collateral: 0n,
+    collateralFormatted: "0",
+    liabilities: 0n,
+    liabilitiesFormatted: "0",
     rewards: 0n,
     rewardsFormatted: "0",
+    limits: {},
     metadata: {},
   };
 }
@@ -219,16 +226,26 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
         ? position.tokenBAmountEquivalent
         : position.tokenAAmountEquivalent;
       const deposited = BigInt(depositedRaw);
+      const depositedFormatted = fromSmallestUnit(
+        deposited.toString(),
+        tokenA.decimals
+      );
 
       return {
         poolId: fullId,
         deposited,
-        depositedFormatted: fromSmallestUnit(
-          deposited.toString(),
-          tokenA.decimals
-        ),
+        depositedFormatted,
+        // An AMM pool has no lending buckets: the LP position is a plain
+        // supply, and `withdraw` is the only action that moves it.
+        supplied: deposited,
+        suppliedFormatted: depositedFormatted,
+        collateral: 0n,
+        collateralFormatted: "0",
+        liabilities: 0n,
+        liabilitiesFormatted: "0",
         rewards: 0n,
         rewardsFormatted: "0",
+        limits: { withdraw: deposited },
         metadata: {
           lpShares: position.userPosition,
           userSharesPct: position.userShares,

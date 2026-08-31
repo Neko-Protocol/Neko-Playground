@@ -17,6 +17,7 @@ import { parseJsonBody } from "@/lib/validation/parse";
 import { FaucetBodySchema } from "@/lib/validation/schemas";
 import { clientEnv } from "@/lib/env.client";
 import { serverEnv } from "@/lib/env.server";
+import { getSorobanServer } from "@/lib/helpers/stellar/sorobanServer";
 
 export const dynamic = "force-dynamic";
 
@@ -176,9 +177,7 @@ export async function POST(request: NextRequest) {
     const { rpcUrl, horizonUrl, networkPassphrase: passphrase } = clientEnv;
 
     const adminKeypair = Keypair.fromSecret(secretKey);
-    const sorobanServer = new rpc.Server(rpcUrl, {
-      allowHttp: network === "LOCAL",
-    });
+    const sorobanServer = getSorobanServer(rpcUrl);
     const horizonServer = new Horizon.Server(horizonUrl);
 
     const faucetContractId = serverEnv.FAUCET_CONTRACT_ID;

@@ -75,17 +75,11 @@ vi.mock("@/lib/helpers/stellar/lending", () => ({
 vi.mock("@/lib/helpers/stellar/soroswap", () => ({
   getAvailableTokens: () => ({ USDC: { contract: "CUSDC", decimals: 7 } }),
 }));
-vi.mock("@/lib/helpers/stellar/waitForTransaction", () => ({
-  waitForTransaction: vi.fn(),
+vi.mock("@/lib/helpers/stellar/executeTransaction", () => ({
+  executeTransaction: vi.fn(),
 }));
 vi.mock("@stellar/stellar-sdk", () => ({
   Networks: { TESTNET: "Test SDF Network ; September 2015" },
-  TransactionBuilder: { fromXDR: vi.fn(() => ({})) },
-  rpc: {
-    Server: class {
-      sendTransaction = vi.fn().mockResolvedValue({ hash: "HASH" });
-    },
-  },
 }));
 
 import { useLend } from "../useLend";
@@ -94,12 +88,12 @@ import {
   withdrawFromPool,
   getBTokenBalance,
 } from "@/lib/helpers/stellar/lending";
-import { waitForTransaction } from "@/lib/helpers/stellar/waitForTransaction";
+import { executeTransaction } from "@/lib/helpers/stellar/executeTransaction";
 
 const depositToPoolMock = vi.mocked(depositToPool);
 const withdrawFromPoolMock = vi.mocked(withdrawFromPool);
 const getBTokenBalanceMock = vi.mocked(getBTokenBalance);
-const waitForTransactionMock = vi.mocked(waitForTransaction);
+const executeTransactionMock = vi.mocked(executeTransaction);
 
 const nekoPool: PoolData = {
   id: "pool-0",
@@ -131,7 +125,10 @@ beforeEach(() => {
   depositToPoolMock.mockResolvedValue("DEPOSIT_XDR");
   withdrawFromPoolMock.mockResolvedValue("WITHDRAW_XDR");
   getBTokenBalanceMock.mockResolvedValue("0");
-  waitForTransactionMock.mockResolvedValue(undefined as never);
+  executeTransactionMock.mockResolvedValue({
+    status: "success",
+    hash: "HASH",
+  });
   signTransaction.mockResolvedValue({ signedTxXdr: "SIGNED_XDR" });
   executePoolActionMock.mockResolvedValue(undefined);
   refetchPoolsMock.mockResolvedValue(undefined);
@@ -241,13 +238,12 @@ describe("useLend – Neko deposit path", () => {
       "GTEST_ADDRESS",
       "CPOOL"
     );
-    expect(signTransaction).toHaveBeenCalledWith(
-      "DEPOSIT_XDR",
-      expect.objectContaining({ address: "GTEST_ADDRESS" })
-    );
-    expect(waitForTransactionMock).toHaveBeenCalledWith(
-      "HASH",
-      expect.anything()
+    expect(executeTransactionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        xdr: "DEPOSIT_XDR",
+        confirmation: "wait",
+        contractName: "rwa-lending",
+      })
     );
     expect(addNotification).toHaveBeenCalledWith(
       "Success",
@@ -277,9 +273,12 @@ describe("useLend – Neko withdraw path", () => {
       "GTEST_ADDRESS",
       "CPOOL"
     );
-    expect(waitForTransactionMock).toHaveBeenCalledWith(
-      "HASH",
-      expect.anything()
+    expect(executeTransactionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        xdr: "WITHDRAW_XDR",
+        confirmation: "wait",
+        contractName: "rwa-lending",
+      })
     );
     expect(addNotification).toHaveBeenCalledWith(
       "Success",
