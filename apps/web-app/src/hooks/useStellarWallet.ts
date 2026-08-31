@@ -1,6 +1,7 @@
 "use client";
 
 import { getStellarWalletKit } from "@/lib/helpers/stellar/wallet";
+import { clearUserScopedQueries } from "@/lib/query/userScopedQueries";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearAnchorState } from "@/features/on-off-ramps/constants/ramp.config";
@@ -29,31 +30,11 @@ export function useStellarWallet() {
       clearAnchorState(address);
     }
 
-    // Clear all address-scoped query cache entries to prevent data bleeding
-    // ["backstopWalletBalance"], ["backstopDeposit"], ["balances"], ["orchestrator"], ["userLendingBTokens"], ["portfolio-value"], ["health-factor"], ["userCollateral"], ["borrowLimit"], ["userBorrowPosition"], ["userDebt"], ["repayWalletBalance"], ["tokenBalance"], ["stellar-balances"], ["vaultBalance"], ["cetesBalance"], ["soroban-faucet-balances"]
-    const addressScopedPrefixes = [
-      "backstopWalletBalance",
-      "backstopDeposit",
-      "balances",
-      "orchestrator",
-      "userLendingBTokens",
-      "portfolio-value",
-      "health-factor",
-      "userCollateral",
-      "borrowLimit",
-      "userBorrowPosition",
-      "userDebt",
-      "repayWalletBalance",
-      "tokenBalance",
-      "stellar-balances",
-      "vaultBalance",
-      "cetesBalance",
-      "soroban-faucet-balances",
-    ];
-
-    addressScopedPrefixes.forEach((prefix) => {
-      queryClient.removeQueries({ queryKey: [prefix] });
-    });
+    // Drop everything user-scoped from the query cache so nothing from this
+    // wallet (balances, positions, KYC status, fiat accounts) can render from
+    // cache for whoever connects next. Global market data survives; see
+    // lib/query/userScopedQueries.ts for the invariant.
+    clearUserScopedQueries(queryClient);
 
     clearWallet();
   };
