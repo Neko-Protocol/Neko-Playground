@@ -54,8 +54,8 @@ Uses a **feature-based architecture**:
 - **features/**: Self-contained modules (borrowing, lending, stocks, swap, pools, wallet, dashboard) each with components/, hooks/, utils/
 - **components/**: Shared UI components
 - **lib/**: Shared utilities, constants, helpers, services
-- **stores/**: Zustand stores (user.store.ts, wallet.store.ts, session.store.ts)
-- **providers/**: Context providers (WalletProvider for Stellar + EVM, NotificationProvider)
+- **stores/**: Zustand stores (stellarWalletStore.ts, activityStore.ts)
+- **providers/**: Context providers (ToastProvider)
 
 ### Data Flow
 
@@ -67,7 +67,8 @@ Feature Components → Feature Hooks → Services/Helpers → Contract Clients (
 
 - **Global state**: Zustand stores
 - **Server state**: React Query (TanStack Query)
-- **Provider chain**: QueryClientProvider → WagmiProvider → RainbowKitProvider → WalletProvider → NotificationProvider
+- **Provider chain**: `app/layout.tsx` mounts `app/providers.tsx` (QueryClientProvider → ToastProvider); the `(app)` route group adds RiskAlertProvider and mounts WalletAutoConnect (`app/(app)/layout.tsx`)
+- **Wallet state**: single source of truth is the Zustand store `stores/stellarWalletStore.ts` — written by `hooks/useStellarWallet.ts` (connect/disconnect), read via `hooks/useWallet.ts` (balances, signing) and directly by `stores/activityStore.ts` and the activity feed
 
 ### Smart Contract Dependencies
 
