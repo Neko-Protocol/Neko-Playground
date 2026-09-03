@@ -420,9 +420,7 @@ export const buildTransaction = async (
 
   try {
     const sdkQuote = request.quote._sdkQuote as
-      | Record<string, unknown>
-      | null
-      | undefined;
+      Record<string, unknown> | null | undefined;
 
     if (!sdkQuote) {
       throw new Error("No SDK quote found. Please get a new quote first.");

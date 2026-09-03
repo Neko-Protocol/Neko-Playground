@@ -9,8 +9,7 @@ export interface ValidateBackstopAmountInput {
 }
 
 export type ValidateBackstopAmountResult =
-  | { valid: true }
-  | { valid: false; message: string };
+  { valid: true } | { valid: false; message: string };
 
 function parsePositiveAmount(amount: string): number | null {
   const trimmed = amount.trim();

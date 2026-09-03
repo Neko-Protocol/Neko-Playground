@@ -46,9 +46,7 @@ export async function getTokenBalanceFromContract(
 
     const simulated = await sorobanServer.simulateTransaction(transaction);
     const simulatedResult = simulated as
-      | { result?: { retval?: unknown } }
-      | null
-      | undefined;
+      { result?: { retval?: unknown } } | null | undefined;
     const retval = simulatedResult?.result?.retval;
     if (!retval) return "0";
 

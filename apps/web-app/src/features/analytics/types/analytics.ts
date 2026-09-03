@@ -53,12 +53,20 @@ export interface PortfolioMetrics {
   cumulativeNetworkCosts: number;
 }
 
+/**
+ * Risk metrics derivable from on-chain data.
+ *
+ * `sharpe`, `sortino`, `maxDrawdown`, and `currentDrawdown` require a
+ * historical return series and cannot be computed from a single
+ * point-in-time Horizon snapshot.  They are `null` when insufficient
+ * history exists, instead of being fabricated with constant values.
+ */
 export interface RiskMetrics {
   sharpe: number | null;
   sortino: number | null;
-  maxDrawdown: number;
-  maxDrawdownDate: string;
-  currentDrawdown: number;
+  maxDrawdown: number | null;
+  maxDrawdownDate: string | null;
+  currentDrawdown: number | null;
   healthFactor: number | null;
   distanceToLiquidation: number | null;
   riskScore: number;

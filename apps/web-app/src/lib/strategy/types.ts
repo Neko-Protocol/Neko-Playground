@@ -17,11 +17,7 @@ export type StepType =
 export type StepDirection = "deposit" | "withdraw";
 
 export type PortKind =
-  | "asset"
-  | "shares"
-  | "debtPosition"
-  | "collateralPosition"
-  | "lpPosition";
+  "asset" | "shares" | "debtPosition" | "collateralPosition" | "lpPosition";
 
 /** A typed output port produced by a step, consumable by a later step's input binding. */
 export interface StepPort {
@@ -227,11 +223,7 @@ export interface ExecutionStepRecord {
 }
 
 export type ExecutionStatus =
-  | "in_progress"
-  | "completed"
-  | "failed"
-  | "paused-deviation"
-  | "abandoned";
+  "in_progress" | "completed" | "failed" | "paused-deviation" | "abandoned";
 
 export interface ExecutionRecord {
   id: string;
