@@ -36,6 +36,7 @@ import type {
   PoolInfo,
   GetPoolRequest,
 } from "../../../types/soroswapTypes";
+import { getSorobanServer } from "../sorobanServer";
 
 const SOROSWAP_API_URL = "https://api.soroswap.finance";
 
@@ -81,7 +82,7 @@ const getDirectPoolQuote = async (
     throw new Error("Soroswap router or factory not found for this network");
   }
 
-  const server = new rpc.Server(rpcUrl);
+  const server = getSorobanServer(rpcUrl);
   const dummyAccount = new Account(Keypair.random().publicKey(), "0");
 
   const factory = new Contract(factoryAddress);
@@ -419,9 +420,7 @@ export const buildTransaction = async (
 
   try {
     const sdkQuote = request.quote._sdkQuote as
-      | Record<string, unknown>
-      | null
-      | undefined;
+      Record<string, unknown> | null | undefined;
 
     if (!sdkQuote) {
       throw new Error("No SDK quote found. Please get a new quote first.");
@@ -443,7 +442,7 @@ export const buildTransaction = async (
         );
       }
 
-      const server = new rpc.Server(rpcUrl);
+      const server = getSorobanServer(rpcUrl);
       const account = await server.getAccount(request.from);
       const router = new Contract(routerAddress);
       const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);

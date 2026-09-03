@@ -38,8 +38,7 @@ const DEFINDEX_DEPOSIT_SLIPPAGE = 0.01;
 const DEFINDEX_SLIPPAGE_SCALE = 10_000_000n;
 
 type ParseResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; issues: ValidationIssue[] };
+  { ok: true; data: T } | { ok: false; issues: ValidationIssue[] };
 
 /**
  * validate() must never throw — a malformed/unresolved param is itself a
@@ -47,7 +46,7 @@ type ParseResult<T> =
  * this instead of calling paramsSchema.parse() directly.
  */
 function safeParseParams<T>(
-  schema: z.ZodType<T>,
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
   input: unknown
 ): ParseResult<T> {
   const result = schema.safeParse(input);

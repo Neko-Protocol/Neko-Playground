@@ -11,6 +11,7 @@ import {
   PieChart,
   Zap,
   Bell,
+  Workflow,
 } from "lucide-react";
 
 export const NAV_ITEMS = [

@@ -233,23 +233,27 @@ export class NekoLendingAdapter implements BasePoolAdapter {
       const raw =
         balanceTx.result != null ? BigInt(String(balanceTx.result)) : 0n;
 
+      const formatted = fromSmallestUnit(raw.toString(), decimals);
+
       return {
         poolId: `neko:${assetCode}`,
         deposited: raw,
-        depositedFormatted: fromSmallestUnit(raw.toString(), decimals),
+        depositedFormatted: formatted,
+        // Neko lending has no collateral bucket: the whole b-token balance is
+        // a plain supply, and `withdraw` is the only action that moves it.
+        supplied: raw,
+        suppliedFormatted: formatted,
+        collateral: 0n,
+        collateralFormatted: "0",
+        liabilities: 0n,
+        liabilitiesFormatted: "0",
         rewards: 0n,
         rewardsFormatted: "0",
+        limits: { withdraw: raw },
         metadata: { bTokenBalance: raw.toString() },
       };
     } catch {
-      return {
-        poolId: `neko:${assetCode}`,
-        deposited: 0n,
-        depositedFormatted: "0",
-        rewards: 0n,
-        rewardsFormatted: "0",
-        metadata: {},
-      };
+      return emptyPosition(`neko:${assetCode}`);
     }
   }
 
@@ -414,4 +418,22 @@ export class NekoLendingAdapter implements BasePoolAdapter {
   supportsAction(action: PoolAction): boolean {
     return SUPPORTED_ACTIONS.includes(action);
   }
+}
+
+function emptyPosition(poolId: string): PoolPosition {
+  return {
+    poolId,
+    deposited: 0n,
+    depositedFormatted: "0",
+    supplied: 0n,
+    suppliedFormatted: "0",
+    collateral: 0n,
+    collateralFormatted: "0",
+    liabilities: 0n,
+    liabilitiesFormatted: "0",
+    rewards: 0n,
+    rewardsFormatted: "0",
+    limits: {},
+    metadata: {},
+  };
 }

@@ -17,11 +17,7 @@ export type StepType =
 export type StepDirection = "deposit" | "withdraw";
 
 export type PortKind =
-  | "asset"
-  | "shares"
-  | "debtPosition"
-  | "collateralPosition"
-  | "lpPosition";
+  "asset" | "shares" | "debtPosition" | "collateralPosition" | "lpPosition";
 
 /** A typed output port produced by a step, consumable by a later step's input binding. */
 export interface StepPort {
@@ -99,7 +95,12 @@ export interface StrategyStepDefinition<TParams = Record<string, unknown>> {
   readonly protocol: string;
   /** How prepare()'s xdr gets submitted — the engine branches on this once, centrally. */
   readonly submissionMode: "rpc" | "soroswapApi";
-  readonly paramsSchema: z.ZodType<TParams>;
+  /**
+   * Parses untrusted `unknown` input into TParams. The input type is left open
+   * rather than pinned to TParams so schemas that use `.default()` — whose
+   * input type has those keys optional — still satisfy this.
+   */
+  readonly paramsSchema: z.ZodType<TParams, z.ZodTypeDef, unknown>;
 
   /** Declares this step's output ports so downstream steps can bind to them. */
   describeOutputs(params: TParams): StepPort[];
@@ -222,11 +223,7 @@ export interface ExecutionStepRecord {
 }
 
 export type ExecutionStatus =
-  | "in_progress"
-  | "completed"
-  | "failed"
-  | "paused-deviation"
-  | "abandoned";
+  "in_progress" | "completed" | "failed" | "paused-deviation" | "abandoned";
 
 export interface ExecutionRecord {
   id: string;

@@ -1,6 +1,6 @@
 {
   "version": "0.0.0",
-  "name": "backstop",
+  "name": "@neko/backstop",
   "type": "module",
   "exports": "./dist/index.js",
   "typings": "dist/index.d.ts",

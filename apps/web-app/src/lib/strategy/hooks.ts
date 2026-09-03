@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
+import { rpc } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
-import { rpcUrl, stellarNetwork } from "@/lib/constants/network";
 import { sendTransaction as soroswapSendTransaction } from "@/lib/helpers/stellar/soroswap";
-import { waitForTransaction } from "@/lib/helpers/stellar/waitForTransaction";
+import {
+  confirmTransactionHash,
+  submitSignedTransaction,
+} from "@/lib/helpers/stellar/executeTransaction";
+import { getSorobanServer } from "@/lib/helpers/stellar/sorobanServer";
 import type { MappedBalances } from "@/lib/helpers/stellar/wallet";
 import { strategyStepRegistry } from "./registry";
 import "./definitions";
@@ -167,18 +170,10 @@ export function useStrategyPersistence() {
 function makeRpcTransport(): TransportAdapter {
   return {
     async submit(signedXdr, networkPassphrase) {
-      const server = new rpc.Server(rpcUrl, {
-        allowHttp: stellarNetwork === "LOCAL",
-      });
-      const tx = TransactionBuilder.fromXDR(signedXdr, networkPassphrase);
-      const result = await server.sendTransaction(tx);
-      return { hash: result.hash };
+      return submitSignedTransaction(signedXdr, networkPassphrase);
     },
     async confirm(hash) {
-      const server = new rpc.Server(rpcUrl, {
-        allowHttp: stellarNetwork === "LOCAL",
-      });
-      return waitForTransaction(hash, server);
+      return confirmTransactionHash(hash);
     },
   };
 }
@@ -193,10 +188,7 @@ function makeSoroswapTransport(): TransportAdapter {
       return { hash: result.txHash };
     },
     async confirm(hash) {
-      const server = new rpc.Server(rpcUrl, {
-        allowHttp: stellarNetwork === "LOCAL",
-      });
-      return waitForTransaction(hash, server);
+      return confirmTransactionHash(hash);
     },
   };
 }
@@ -284,9 +276,7 @@ export function useExecutionRecovery() {
     setIsChecking(true);
     try {
       const unfinished = findResumableExecutions(address);
-      const server = new rpc.Server(rpcUrl, {
-        allowHttp: stellarNetwork === "LOCAL",
-      });
+      const server = getSorobanServer();
       const reconciled = await Promise.all(
         unfinished.map((record) =>
           reconcileExecution(record, {

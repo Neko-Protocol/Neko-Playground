@@ -226,6 +226,19 @@ describe("NekoLendingAdapter – getUserPosition", () => {
     });
   });
 
+  it("reports the balance as plain supply with no collateral or debt", async () => {
+    const adapter = new NekoLendingAdapter();
+    const position = await adapter.getUserPosition("USDC", "GUSER");
+
+    // Neko has no collateral bucket, so the shape degrades to supply-only and
+    // `withdraw` keeps the exact ceiling it had before issue #296.
+    expect(position.supplied).toBe(15_000_000n);
+    expect(position.suppliedFormatted).toBe("1.5");
+    expect(position.collateral).toBe(0n);
+    expect(position.liabilities).toBe(0n);
+    expect(position.limits).toEqual({ withdraw: 15_000_000n });
+  });
+
   it("falls back to an empty position when the balance call fails", async () => {
     clientMethods.get_b_token_balance.mockRejectedValue(new Error("boom"));
     const adapter = new NekoLendingAdapter();
@@ -235,6 +248,10 @@ describe("NekoLendingAdapter – getUserPosition", () => {
       poolId: "neko:USDC",
       deposited: 0n,
       depositedFormatted: "0",
+      supplied: 0n,
+      collateral: 0n,
+      liabilities: 0n,
+      limits: {},
       metadata: {},
     });
   });

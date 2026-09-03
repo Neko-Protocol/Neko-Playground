@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./sidebarConfig";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
-import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { truncateAddress } from "@/lib/utils";
 import { useActivityFeed } from "@/features/activity/hooks/useActivityFeed";
 import { clientEnv } from "@/lib/env.client";
@@ -26,6 +25,16 @@ export function MobileHeader() {
   const { unreadCount } = useActivityFeed();
   const menuRef = useRef<HTMLDivElement>(null);
   const walletButtonRef = useRef<HTMLDivElement>(null);
+
+  // Close the menu on navigation. Adjusting state during render is React's
+  // documented pattern for resetting state when a value changes; doing it in
+  // an effect renders the menu open first and then immediately re-renders it
+  // closed, which is the cascading render the lint rule flags.
+  const [menuPathname, setMenuPathname] = useState(pathname);
+  if (pathname !== menuPathname) {
+    setMenuPathname(pathname);
+    setIsOpen(false);
+  }
 
   const isConnected = isStellarConnected;
   const activeAddress = stellarAddress ?? "";
@@ -62,10 +71,6 @@ export function MobileHeader() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen, walletDropdownOpen]);
-
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";

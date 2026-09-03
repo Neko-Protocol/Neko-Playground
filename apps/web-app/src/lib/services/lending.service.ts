@@ -41,6 +41,7 @@ import {
   buildFillBadDebtAuctionXdr,
 } from "../helpers/stellar/lending";
 import { extractContractError } from "../helpers/stellar/contractErrors";
+import { getSorobanServer } from "../helpers/stellar/sorobanServer";
 
 type LendingOperationResult = { xdr: string; error?: string };
 type CollateralOperationResult = {
@@ -63,7 +64,7 @@ export class LendingService {
   private lendingClient: RwaLendingClient;
 
   constructor() {
-    this.sorobanServer = new rpc.Server(rpcUrl, { allowHttp: true });
+    this.sorobanServer = getSorobanServer(rpcUrl);
     this.horizonServer = new Horizon.Server(horizonUrl, {
       allowHttp: allowHttpForHorizon,
     });

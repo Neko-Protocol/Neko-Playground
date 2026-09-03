@@ -1,6 +1,6 @@
 {
   "version": "0.0.0",
-  "name": "defindex-vault",
+  "name": "@neko/defindex-vault",
   "type": "module",
   "exports": "./dist/index.js",
   "typings": "dist/index.d.ts",
