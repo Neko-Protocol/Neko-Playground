@@ -1,69 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { VenueCandidate } from "@/features/automation/types/automation";
-import { calcNetApyBps } from "@/features/automation/utils/netApy";
+import { buildCandidates } from "@/lib/services/candidates.service";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-// Mock candidate data — replace with real contract calls to @neko/* clients
-function buildMockCandidates(): VenueCandidate[] {
-  const raw: Omit<VenueCandidate, "netApyBps">[] = [
-    {
-      id: "neko-vault",
-      kind: "vault",
-      name: "Neko Vault",
-      asset: "USDC",
-      grossApyBps: 850,
-      borrowCostBps: 0,
-      protocolFeeBps: 30,
-      amortizedGasBps: 5,
-      availableLiquidityUsd: 500_000,
-      currentAllocationPct: 40,
-    },
-    {
-      id: "neko-lending",
-      kind: "lending",
-      name: "Neko Lending",
-      asset: "USDC",
-      grossApyBps: 600,
-      borrowCostBps: 0,
-      protocolFeeBps: 20,
-      amortizedGasBps: 5,
-      availableLiquidityUsd: 300_000,
-      currentAllocationPct: 30,
-    },
-    {
-      id: "neko-xlm-pool",
-      kind: "pool",
-      name: "XLM/USDC Pool",
-      asset: "XLM",
-      grossApyBps: 1200,
-      borrowCostBps: 0,
-      protocolFeeBps: 60,
-      amortizedGasBps: 10,
-      availableLiquidityUsd: 200_000,
-      currentAllocationPct: 20,
-    },
-    {
-      id: "neko-btc-pool",
-      kind: "pool",
-      name: "BTC/USDC Pool",
-      asset: "BTC",
-      grossApyBps: 400,
-      borrowCostBps: 0,
-      protocolFeeBps: 40,
-      amortizedGasBps: 10,
-      availableLiquidityUsd: 100_000,
-      currentAllocationPct: 10,
-    },
-  ];
+/**
+ * GET /api/automation/candidates?walletAddress=G...
+ *
+ * Returns the current VenueCandidate list for the caller's wallet, read
+ * from live contract / service sources. Every venue the protocol supports
+ * is returned; venues whose reads failed are marked `availability:
+ * "unavailable"` with a reason rather than being dropped.
+ */
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const walletAddress = searchParams.get("walletAddress");
 
-  return raw.map((r) => ({ ...r, netApyBps: calcNetApyBps(r) }));
-}
+  if (!walletAddress) {
+    return NextResponse.json(
+      { error: "walletAddress query parameter is required" },
+      { status: 400 }
+    );
+  }
 
-export async function GET(_req: NextRequest) {
   try {
-    const candidates = buildMockCandidates();
+    const candidates: VenueCandidate[] = await buildCandidates(walletAddress);
     return NextResponse.json(candidates);
   } catch (err) {
     return NextResponse.json(

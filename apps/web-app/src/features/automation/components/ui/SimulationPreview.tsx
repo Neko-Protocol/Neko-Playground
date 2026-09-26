@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AllocationDiff } from "./AllocationDiff";
 import type { SimulationResult } from "../../types/automation";
@@ -57,7 +57,13 @@ export function SimulationPreview({
 
   if (!result) return null;
 
-  if (result.skippedReason) {
+  const warnings = result.dataWarnings ?? [];
+  const hasWarnings = warnings.length > 0;
+  const hasUnavailable = result.candidates.some(
+    (c) => c.availability === "unavailable"
+  );
+
+  if (result.skippedReason && !hasWarnings) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/5 py-10 text-center">
         <XCircle size={28} className="text-yellow-400" />
@@ -74,8 +80,44 @@ export function SimulationPreview({
 
   const { plan, candidates } = result;
 
+  // Disable the confirm button if any candidate is fully unavailable —
+  // the recommendation cannot be trusted on missing inputs.
+  const confirmDisabled = isConfirming || hasUnavailable;
+
   return (
     <div className="space-y-5">
+      {hasWarnings && (
+        <div className="flex items-start gap-3 rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4">
+          <AlertTriangle
+            size={18}
+            className="mt-0.5 flex-none text-yellow-400"
+          />
+          <div className="space-y-1 text-sm">
+            <div className="font-semibold text-yellow-300">
+              Some venue data is incomplete
+            </div>
+            <ul className="list-disc pl-4 text-yellow-200/80">
+              {warnings.map((w, i) => (
+                <li key={i}>{w}</li>
+              ))}
+            </ul>
+            {hasUnavailable && (
+              <div className="pt-1 text-xs text-yellow-200/70">
+                Execution is disabled while any venue is unavailable. Refresh
+                the simulation once the upstream data source recovers.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {result.skippedReason && (
+        <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+          <XCircle size={18} className="mt-0.5 flex-none text-yellow-400" />
+          <p className="text-sm text-white/70">{result.skippedReason}</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat
           label="Current net APY"
@@ -126,10 +168,15 @@ export function SimulationPreview({
         </button>
         <button
           onClick={onConfirm}
-          disabled={isConfirming}
+          disabled={confirmDisabled}
+          title={
+            hasUnavailable
+              ? "Cannot execute while a venue's data is unavailable"
+              : undefined
+          }
           className={cn(
             "flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-semibold text-white",
-            isConfirming
+            confirmDisabled
               ? "bg-blue-500/50 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-500"
           )}
