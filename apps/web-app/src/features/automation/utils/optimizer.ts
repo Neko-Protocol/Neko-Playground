@@ -27,12 +27,15 @@ export function optimizeAllocation({
 
   const deployablePct = 100 - reserveBufferPct;
 
-  // Filter candidates by asset allow/deny lists
+  // Only venues whose net APY is known and positive, and whose data is at
+  // least partial, participate in ranking. Unavailable venues are excluded
+  // by the caller (they carry netApyBps === null).
   let eligible = candidates.filter((c) => {
+    if (c.netApyBps === null || c.netApyBps <= 0) return false;
     if (deniedAssets.length > 0 && deniedAssets.includes(c.asset)) return false;
     if (allowedAssets.length > 0 && !allowedAssets.includes(c.asset))
       return false;
-    return c.netApyBps > 0;
+    return true;
   });
 
   eligible = sortByNetApy(eligible).slice(0, maxVenueCount);

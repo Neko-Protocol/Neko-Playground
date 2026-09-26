@@ -14,6 +14,18 @@ export type StepStatus =
   | "skipped";
 export type VenueKind = "vault" | "pool" | "lending";
 
+/**
+ * Whether every input needed to rank and act on a venue was successfully read.
+ * - `available`   — all fields populated from live sources.
+ * - `partial`     — the venue exists and APY is known, but a secondary input
+ *                   (e.g. USD price for liquidity) could not be resolved.
+ *                   `availableLiquidityUsd` is `null`; still ranked.
+ * - `unavailable` — a required read (APY or existence) failed. `netApyBps`
+ *                   is `null`, the venue is returned to the caller for
+ *                   visibility, and it is excluded from optimisation.
+ */
+export type VenueAvailability = "available" | "partial" | "unavailable";
+
 export interface AllocationConstraints {
   minPositionUsd: number;
   maxVenueCount: number;
@@ -55,13 +67,19 @@ export interface VenueCandidate {
   kind: VenueKind;
   name: string;
   asset: string;
-  grossApyBps: number;
+  grossApyBps: number | null;
   borrowCostBps: number;
   protocolFeeBps: number;
   amortizedGasBps: number;
-  netApyBps: number; // derived: gross - borrowCost - fees - gas
-  availableLiquidityUsd: number;
+  /** Null when the venue is `unavailable` (APY read failed). */
+  netApyBps: number | null;
+  /** Null when the venue is `unavailable` or `partial` (price unresolved). */
+  availableLiquidityUsd: number | null;
+  /** Fraction of the caller's portfolio currently in this venue, 0-100. */
   currentAllocationPct: number;
+  availability: VenueAvailability;
+  /** Human-readable reason when `availability` is not `available`. */
+  unavailableReason?: string;
 }
 
 export interface AllocationTarget {
@@ -132,4 +150,9 @@ export interface SimulationResult {
   plan: RebalancePlan;
   candidates: VenueCandidate[];
   skippedReason?: string;
+  /**
+   * Non-empty when at least one returned candidate is not `available`.
+   * The UI is expected to surface this before offering an execute action.
+   */
+  dataWarnings?: string[];
 }

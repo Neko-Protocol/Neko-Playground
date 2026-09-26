@@ -1,80 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { SimulationResult } from "@/features/automation/types/automation";
-import {
-  calcNetApyBps,
-  blendedNetApyBps,
-} from "@/features/automation/utils/netApy";
+import type {
+  SimulationResult,
+  VenueCandidate,
+} from "@/features/automation/types/automation";
+import { blendedNetApyBps } from "@/features/automation/utils/netApy";
 import { optimizeAllocation } from "@/features/automation/utils/optimizer";
 import { shouldRebalance } from "@/features/automation/utils/rebalanceThreshold";
 import { estimateSlippageBps } from "@/features/automation/utils/slippage";
 import { buildRebalancePlan } from "@/features/automation/utils/planBuilder";
 import { PRESET_RULES } from "@/features/automation/const/automation";
+import { buildCandidates } from "@/lib/services/candidates.service";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-function buildMockCandidates() {
-  const raw = [
-    {
-      id: "neko-vault",
-      kind: "vault" as const,
-      name: "Neko Vault",
-      asset: "USDC",
-      grossApyBps: 850,
-      borrowCostBps: 0,
-      protocolFeeBps: 30,
-      amortizedGasBps: 5,
-      availableLiquidityUsd: 500_000,
-      currentAllocationPct: 40,
-    },
-    {
-      id: "neko-lending",
-      kind: "lending" as const,
-      name: "Neko Lending",
-      asset: "USDC",
-      grossApyBps: 600,
-      borrowCostBps: 0,
-      protocolFeeBps: 20,
-      amortizedGasBps: 5,
-      availableLiquidityUsd: 300_000,
-      currentAllocationPct: 30,
-    },
-    {
-      id: "neko-xlm-pool",
-      kind: "pool" as const,
-      name: "XLM/USDC Pool",
-      asset: "XLM",
-      grossApyBps: 1200,
-      borrowCostBps: 0,
-      protocolFeeBps: 60,
-      amortizedGasBps: 10,
-      availableLiquidityUsd: 200_000,
-      currentAllocationPct: 20,
-    },
-    {
-      id: "neko-btc-pool",
-      kind: "pool" as const,
-      name: "BTC/USDC Pool",
-      asset: "BTC",
-      grossApyBps: 400,
-      borrowCostBps: 0,
-      protocolFeeBps: 40,
-      amortizedGasBps: 10,
-      availableLiquidityUsd: 100_000,
-      currentAllocationPct: 10,
-    },
-  ];
-  return raw.map((r) => ({ ...r, netApyBps: calcNetApyBps(r) }));
+function collectWarnings(candidates: VenueCandidate[]): string[] {
+  const warnings: string[] = [];
+  for (const c of candidates) {
+    if (c.availability === "unavailable") {
+      warnings.push(
+        `${c.name} excluded from ranking — ${c.unavailableReason ?? "data unavailable"}`
+      );
+    } else if (c.availability === "partial") {
+      warnings.push(
+        `${c.name} ranked on partial data — ${c.unavailableReason ?? "liquidity unknown"}`
+      );
+    }
+  }
+  return warnings;
 }
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const _strategyId = searchParams.get("strategyId");
+    const strategyId = searchParams.get("strategyId");
+    const walletAddress = searchParams.get("walletAddress");
+
+    if (!walletAddress) {
+      return NextResponse.json(
+        { error: "walletAddress query parameter is required" },
+        { status: 400 }
+      );
+    }
 
     const portfolioUsd = 10_000;
     const rule = PRESET_RULES.balanced;
-    const candidates = buildMockCandidates();
+    const candidates = await buildCandidates(walletAddress);
+    const warnings = collectWarnings(candidates);
+
+    // Optimizer filters unavailable venues and treats null netApyBps as
+    // ineligible; the returned list keeps them for transparency.
+    const rankable = candidates.filter(
+      (c) => c.availability !== "unavailable" && c.netApyBps !== null
+    );
 
     const currentAllocs = Object.fromEntries(
       candidates.map((c) => [c.id, c.currentAllocationPct])
@@ -82,7 +60,7 @@ export async function GET(req: NextRequest) {
     const currentBlendedNetApyBps = blendedNetApyBps(candidates, currentAllocs);
 
     const targets = optimizeAllocation({
-      candidates,
+      candidates: rankable,
       portfolioUsd,
       constraints: rule.constraints,
     });
@@ -113,28 +91,9 @@ export async function GET(req: NextRequest) {
       portfolioValueUsd: portfolioUsd,
     });
 
-    if (!rebalance) {
-      const result: SimulationResult = {
-        plan: buildRebalancePlan({
-          strategyId: _strategyId ?? "unknown",
-          triggerReason: reason,
-          candidates,
-          targets,
-          currentAllocs,
-          portfolioUsd,
-          estimatedSlippageBps,
-          estimatedFeeUsd,
-          estimatedGasUsd,
-        }),
-        candidates,
-        skippedReason: reason,
-      };
-      return NextResponse.json(result);
-    }
-
     const plan = buildRebalancePlan({
-      strategyId: _strategyId ?? "unknown",
-      triggerReason: "Net-APY threshold exceeded",
+      strategyId: strategyId ?? "unknown",
+      triggerReason: rebalance ? "Net-APY threshold exceeded" : reason,
       candidates,
       targets,
       currentAllocs,
@@ -144,7 +103,14 @@ export async function GET(req: NextRequest) {
       estimatedGasUsd,
     });
 
-    return NextResponse.json({ plan, candidates } satisfies SimulationResult);
+    const result: SimulationResult = {
+      plan,
+      candidates,
+      dataWarnings: warnings.length > 0 ? warnings : undefined,
+    };
+    if (!rebalance) result.skippedReason = reason;
+
+    return NextResponse.json(result);
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },
