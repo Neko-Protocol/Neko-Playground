@@ -1,3 +1,4 @@
+import { AmountInput } from "@/components/AmountInput";
 "use client";
 
 import { useState } from "react";
