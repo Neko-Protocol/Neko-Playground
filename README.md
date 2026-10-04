@@ -380,6 +380,8 @@ NEXT_PUBLIC_VERBOSE_LOGGING=false       # "true" | "false"
 # --- Server-only secrets (NO NEXT_PUBLIC_ prefix — never sent to the browser) ---
 # Optional: each integration surfaces a clear error only when its route is used.
 VAULT_MANAGER_SECRET_KEY=
+# Vercel Cron auth for POST /api/vault/invest (auto-injected as Bearer by Vercel when set)
+CRON_SECRET=
 FAUCET_SECRET_KEY=
 FAUCET_CONTRACT_ID=
 ETHERFUSE_API_KEY=

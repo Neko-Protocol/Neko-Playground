@@ -4,7 +4,7 @@
   "outputDirectory": "apps/web-app/.next",
   "crons": [
     {
-      "path": "/api/vault/invest",
+      "path": "/api/vault/invest/cron",
       "schedule": "0 2 * * *"
     }
   ]

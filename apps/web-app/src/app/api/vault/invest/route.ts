@@ -9,6 +9,7 @@ import {
   getVaultInvestLedgerStatus,
 } from "@/lib/vault/investLedger";
 import { LeaseNotAcquiredError } from "@/lib/jobs/errors";
+import { verifyCronBearer } from "@/lib/cronAuth";
 import type { JobStep } from "@/lib/jobs/types";
 
 export const dynamic = "force-dynamic";
@@ -65,18 +66,22 @@ export async function GET() {
 // ─── POST — invest idle + collect fees (cron or manual) ──────────────────────
 
 export async function POST(request: NextRequest) {
-  try {
-    const isCron = request.headers.get("x-vercel-cron") === "1";
+  // Authenticate every call. Vercel Cron sends Authorization: Bearer
+  // <CRON_SECRET> automatically when CRON_SECRET is configured. The former
+  // x-vercel-cron header was client-spoofable and is no longer consulted.
+  if (!verifyCronBearer(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    if (!isCron) {
-      const { canInvest, cooldownRemaining } =
-        await getVaultInvestLedgerStatus();
-      if (!canInvest) {
-        return NextResponse.json(
-          { error: `Please wait ${cooldownRemaining}s` },
-          { status: 429 }
-        );
-      }
+  try {
+    // Soft guard: ledger-backed cooldown still applies to authenticated
+    // callers (cron and manual). No header grants a bypass.
+    const { canInvest, cooldownRemaining } = await getVaultInvestLedgerStatus();
+    if (!canInvest) {
+      return NextResponse.json(
+        { error: `Please wait ${cooldownRemaining}s` },
+        { status: 429 }
+      );
     }
 
     const { job, steps } = await runOrResumeVaultInvest();

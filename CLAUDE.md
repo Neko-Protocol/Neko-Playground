@@ -96,6 +96,9 @@ NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
 NEXT_PUBLIC_STELLAR_RPC_URL=https://soroban-testnet.stellar.org
 NEXT_PUBLIC_STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
 NEXT_PUBLIC_SOROSWAP_API_KEY=your_api_key_here
+
+# Server-only: Vercel Cron auth for POST /api/vault/invest
+CRON_SECRET=
 ```
 
 ## Prerequisites

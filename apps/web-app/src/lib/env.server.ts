@@ -26,6 +26,11 @@ const serverSchema = z.object({
   // Vault manager signing key (server-only)
   VAULT_MANAGER_SECRET_KEY: z.string().optional(),
 
+  // Vercel Cron shared secret (server-only). When set, Vercel sends
+  // Authorization: Bearer <CRON_SECRET> on cron invocations. Required by
+  // POST /api/vault/invest — see lib/cronAuth.ts.
+  CRON_SECRET: z.string().optional(),
+
   // Leverage deleveraging coordinator fee-bump key (server-only) — never
   // authorizes a repay/withdraw itself, only wraps an already user-signed
   // unwind-tranche transaction with a fresh fee. See lib/coordinator/execute.ts.
@@ -52,6 +57,7 @@ const serverSchema = z.object({
 
 const parsed = serverSchema.safeParse({
   VAULT_MANAGER_SECRET_KEY: process.env.VAULT_MANAGER_SECRET_KEY,
+  CRON_SECRET: process.env.CRON_SECRET,
   LEVERAGE_COORDINATOR_SECRET_KEY: process.env.LEVERAGE_COORDINATOR_SECRET_KEY,
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
