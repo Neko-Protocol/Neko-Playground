@@ -1,3 +1,4 @@
+import { logger } from "@/lib/observability";
 import { PoolRegistry, poolRegistry } from "./PoolRegistry";
 import { NekoLendingAdapter } from "../adapters/NekoLendingAdapter";
 import { BlendPoolAdapter } from "../adapters/BlendPoolAdapter";
@@ -140,7 +141,11 @@ export class Orchestrator {
       return adapter.supportsAction(
         action as import("../types/pool.types").PoolAction
       );
-    } catch {
+    } catch (err) {
+      logger.warn("orchestrator_swallowed_error", {
+        route: "orchestrator/core",
+        err,
+      });
       return false;
     }
   }

@@ -14,6 +14,9 @@ import {
   MissingWalletAddressError,
   requireWalletAddress,
 } from "@/lib/jobs/walletAuth";
+import { errorResponse } from "@/lib/observability";
+
+const ROUTE = "/api/automation/execute";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +31,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(plans);
   } catch (err) {
     if (err instanceof MissingWalletAddressError) {
-      return NextResponse.json({ error: err.message }, { status: 400 });
+      return errorResponse(err, { req, route: ROUTE, status: 400 });
     }
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return errorResponse(err, { req, route: ROUTE, status: 500 });
   }
 }
 
@@ -82,20 +82,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (err) {
     if (err instanceof MissingWalletAddressError) {
-      return NextResponse.json({ error: err.message }, { status: 400 });
+      return errorResponse(err, { req, route: ROUTE, status: 400 });
     }
     if (err instanceof JobOwnershipError) {
-      return NextResponse.json({ error: err.message }, { status: 403 });
+      return errorResponse(err, { req, route: ROUTE, status: 403 });
     }
     if (err instanceof JobNotFoundError) {
-      return NextResponse.json({ error: err.message }, { status: 404 });
+      return errorResponse(err, { req, route: ROUTE, status: 404 });
     }
     if (err instanceof LeaseNotAcquiredError) {
-      return NextResponse.json({ error: err.message }, { status: 409 });
+      return errorResponse(err, { req, route: ROUTE, status: 409 });
     }
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return errorResponse(err, { req, route: ROUTE, status: 500 });
   }
 }

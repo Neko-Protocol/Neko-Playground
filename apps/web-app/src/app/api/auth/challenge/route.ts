@@ -3,6 +3,9 @@ import { z } from "zod";
 import { parseJsonBody } from "@/lib/validation/parse";
 import { StellarAddressSchema } from "@/lib/validation/schemas";
 import { createChallenge } from "@/lib/event-platform/auth/challenge";
+import { errorResponse } from "@/lib/observability";
+
+const ROUTE = "/api/auth/challenge";
 
 export const dynamic = "force-dynamic";
 
@@ -16,9 +19,6 @@ export async function POST(request: NextRequest) {
     const challenge = await createChallenge(parsed.data.walletAddress);
     return NextResponse.json(challenge);
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return errorResponse(err, { req: request, route: ROUTE, status: 500 });
   }
 }

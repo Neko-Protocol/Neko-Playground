@@ -7,13 +7,6 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("@/lib/env.client", () => ({
-  clientEnv: {
-    rpcUrl: "http://rpc.local",
-    networkPassphrase: "Test SDF Network ; September 2015",
-  },
-}));
-
 const {
   fromXDRMock,
   prepareTransactionMock,

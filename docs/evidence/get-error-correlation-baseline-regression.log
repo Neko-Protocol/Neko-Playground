@@ -1,0 +1,134 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.9 /dev/shm/neko328-get-errors-work/apps/web-app
+
+ ❯ src/lib/observability/__tests__/errorResponse.test.ts (11 tests | 8 failed) 28ms
+       × keeps /api/vault/invest correlated with the safe response and server log 3ms
+       × keeps /api/vault/history correlated with the safe response and server log 4ms
+       × keeps /api/vault/apy correlated with the safe response and server log 4ms
+       × keeps /api/automation/candidates correlated with the safe response and server log 3ms
+       × keeps /api/vault/invest correlated with the safe response and server log 1ms
+       × keeps /api/vault/history correlated with the safe response and server log 2ms
+       × keeps /api/vault/apy correlated with the safe response and server log 1ms
+       × keeps /api/automation/candidates correlated with the safe response and server log 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/observability/__tests__/errorResponse.test.ts > errorResponse > GET failures with request id client-id > keeps /api/vault/invest correlated with the safe response and server log
+ FAIL  src/lib/observability/__tests__/errorResponse.test.ts > errorResponse > GET failures with request id undefined > keeps /api/vault/invest correlated with the safe response and server log
+ReferenceError: request is not defined
+ ❯ GET src/app/api/vault/invest/route.ts:61:38
+     59|     });
+     60|   } catch (err) {
+     61|     return errorResponse(err, { req: request, route: ROUTE, status: 50…
+       |                                      ^
+     62|   }
+     63| }
+ ❯ src/lib/observability/__tests__/errorResponse.test.ts:123:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/lib/observability/__tests__/errorResponse.test.ts > errorResponse > GET failures with request id client-id > keeps /api/vault/history correlated with the safe response and server log
+AssertionError: expected 'ba06b6d6-5a52-4789-894f-5ffe3dab699e' to be 'client-id' // Object.is equality
+
+Expected: "client-id"
+Received: "ba06b6d6-5a52-4789-894f-5ffe3dab699e"
+
+ ❯ src/lib/observability/__tests__/errorResponse.test.ts:127:55
+    125|
+    126|       expect(response.status).toBe(500);
+    127|       expect(response.headers.get(REQUEST_ID_HEADER)).toBe(requestId);
+       |                                                       ^
+    128|       expect(body.requestId).toBe(requestId);
+    129|       expect(body.error).toMatch(/unexpected error/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/lib/observability/__tests__/errorResponse.test.ts > errorResponse > GET failures with request id client-id > keeps /api/vault/apy correlated with the safe response and server log
+AssertionError: expected '7e889397-78bc-4ba7-994b-7192e1418c1e' to be 'client-id' // Object.is equality
+
+Expected: "client-id"
+Received: "7e889397-78bc-4ba7-994b-7192e1418c1e"
+
+ ❯ src/lib/observability/__tests__/errorResponse.test.ts:127:55
+    125|
+    126|       expect(response.status).toBe(500);
+    127|       expect(response.headers.get(REQUEST_ID_HEADER)).toBe(requestId);
+       |                                                       ^
+    128|       expect(body.requestId).toBe(requestId);
+    129|       expect(body.error).toMatch(/unexpected error/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/lib/observability/__tests__/errorResponse.test.ts > errorResponse > GET failures with request id client-id > keeps /api/automation/candidates correlated with the safe response and server log
+AssertionError: expected '6c738448-1d77-4016-bf6b-16d748f59c04' to be 'client-id' // Object.is equality
+
+Expected: "client-id"
+Received: "6c738448-1d77-4016-bf6b-16d748f59c04"
+
+ ❯ src/lib/observability/__tests__/errorResponse.test.ts:127:55
+    125|
+    126|       expect(response.status).toBe(500);
+    127|       expect(response.headers.get(REQUEST_ID_HEADER)).toBe(requestId);
+       |                                                       ^
+    128|       expect(body.requestId).toBe(requestId);
+    129|       expect(body.error).toMatch(/unexpected error/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/lib/observability/__tests__/errorResponse.test.ts > errorResponse > GET failures with request id undefined > keeps /api/vault/history correlated with the safe response and server log
+AssertionError: expected '920ef639-33b8-4533-8152-d858b9cc8d0f' to be 'c03d9838-b4cb-4deb-a84c-dcfeb8ce3e37' // Object.is equality
+
+Expected: "c03d9838-b4cb-4deb-a84c-dcfeb8ce3e37"
+Received: "920ef639-33b8-4533-8152-d858b9cc8d0f"
+
+ ❯ src/lib/observability/__tests__/errorResponse.test.ts:127:55
+    125|
+    126|       expect(response.status).toBe(500);
+    127|       expect(response.headers.get(REQUEST_ID_HEADER)).toBe(requestId);
+       |                                                       ^
+    128|       expect(body.requestId).toBe(requestId);
+    129|       expect(body.error).toMatch(/unexpected error/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/lib/observability/__tests__/errorResponse.test.ts > errorResponse > GET failures with request id undefined > keeps /api/vault/apy correlated with the safe response and server log
+AssertionError: expected '9165ea33-5dfd-4740-b443-2800306408e7' to be '6df399b2-5df1-4720-a4f3-0e5d4002319d' // Object.is equality
+
+Expected: "6df399b2-5df1-4720-a4f3-0e5d4002319d"
+Received: "9165ea33-5dfd-4740-b443-2800306408e7"
+
+ ❯ src/lib/observability/__tests__/errorResponse.test.ts:127:55
+    125|
+    126|       expect(response.status).toBe(500);
+    127|       expect(response.headers.get(REQUEST_ID_HEADER)).toBe(requestId);
+       |                                                       ^
+    128|       expect(body.requestId).toBe(requestId);
+    129|       expect(body.error).toMatch(/unexpected error/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/lib/observability/__tests__/errorResponse.test.ts > errorResponse > GET failures with request id undefined > keeps /api/automation/candidates correlated with the safe response and server log
+AssertionError: expected '3e45f228-6982-45ca-94f3-8fefbd4b34c5' to be 'c2c577f3-d5cc-4798-95b8-e57fe395429c' // Object.is equality
+
+Expected: "c2c577f3-d5cc-4798-95b8-e57fe395429c"
+Received: "3e45f228-6982-45ca-94f3-8fefbd4b34c5"
+
+ ❯ src/lib/observability/__tests__/errorResponse.test.ts:127:55
+    125|
+    126|       expect(response.status).toBe(500);
+    127|       expect(response.headers.get(REQUEST_ID_HEADER)).toBe(requestId);
+       |                                                       ^
+    128|       expect(body.requestId).toBe(requestId);
+    129|       expect(body.error).toMatch(/unexpected error/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 3 passed (11)
+   Start at  09:57:19
+   Duration  674ms (transform 273ms, setup 0ms, import 496ms, tests 28ms, environment 0ms)
+

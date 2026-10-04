@@ -6,7 +6,14 @@ const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export const SESSION_COOKIE_NAME = "neko_wallet_session";
 export const SESSION_COOKIE_MAX_AGE_SECONDS = SESSION_TTL_MS / 1000;
 
-export class UnauthorizedError extends Error {}
+export class UnauthorizedError extends Error {
+  readonly clientSafe = true as const;
+  readonly status = 401;
+  constructor(message = "Unauthorized") {
+    super(message);
+    this.name = "UnauthorizedError";
+  }
+}
 
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");

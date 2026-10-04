@@ -12,6 +12,9 @@ import {
 import { Horizon, TransactionBuilder } from "@stellar/stellar-sdk";
 import { clientEnv } from "@/lib/env.client";
 import { getSorobanServer } from "@/lib/helpers/stellar/sorobanServer";
+import { errorResponse } from "@/lib/observability";
+
+const ROUTE = "/api/anchor/[provider]/offramp/sign";
 
 export const dynamic = "force-dynamic";
 
@@ -89,12 +92,6 @@ export async function POST(
       return response;
     }
 
-    return NextResponse.json(
-      {
-        error: "Failed to submit signed transaction",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return errorResponse(error, { req: request, route: ROUTE, status: 500 });
   }
 }

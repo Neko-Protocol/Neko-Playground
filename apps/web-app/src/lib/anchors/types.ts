@@ -525,6 +525,11 @@ export type AnchorProvider = "etherfuse" | "alfredpay";
 export class AnchorError extends Error {
   code: string;
   statusCode: number;
+  readonly clientSafe = true as const;
+  /** Alias used by the shared errorResponse helper. */
+  get status(): number {
+    return this.statusCode;
+  }
 
   constructor(message: string, code: string, statusCode: number = 500) {
     super(message);

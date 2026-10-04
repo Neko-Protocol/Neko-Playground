@@ -9,6 +9,9 @@
 const STELLAR_PUBLIC_KEY_RE = /^G[A-Z2-7]{55}$/;
 
 export class MissingWalletAddressError extends Error {
+  readonly clientSafe = true as const;
+  readonly status = 400;
+
   constructor() {
     super("walletAddress is required");
     this.name = "MissingWalletAddressError";

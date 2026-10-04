@@ -1,3 +1,4 @@
+import { logger } from "@/lib/observability";
 import { JobStore } from "./store";
 import type { JobRun, JobStep, RunJobResult, StepExecutor } from "./types";
 
@@ -74,6 +75,12 @@ export async function runJob(
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
+        logger.error("job_step_failed", {
+          route: "jobs/runner",
+          jobId,
+          step: claimed.kind,
+          err,
+        });
         await store.failStep(jobId, claimed.index, { error: message });
         await store.skipStepsAfter(jobId, claimed.index);
         await store.setStatus(jobId, "failed", message);

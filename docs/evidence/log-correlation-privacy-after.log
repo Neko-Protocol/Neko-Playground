@@ -1,0 +1,17 @@
+cwd: /workspace/scratch/dbed016667b3/neko328/apps/web-app
+command: node --max-old-space-size=192 /workspace/scratch/dbed016667b3/neko328-cached-runtime/node_modules/vitest/vitest.mjs run src/lib/observability/__tests__/correlationPrivacy.test.ts src/lib/observability/__tests__/redact.test.ts --maxWorkers=1 --pool=threads --no-file-parallelism
+
+STDOUT
+
+ RUN  v4.1.9 /workspace/scratch/dbed016667b3/neko328/apps/web-app
+
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  10:30:02
+   Duration  522ms (transform 144ms, setup 0ms, import 195ms, tests 32ms, environment 0ms)
+
+
+STDERR
+
+exit: 0

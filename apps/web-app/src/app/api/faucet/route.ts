@@ -18,6 +18,9 @@ import { FaucetBodySchema } from "@/lib/validation/schemas";
 import { clientEnv } from "@/lib/env.client";
 import { serverEnv } from "@/lib/env.server";
 import { getSorobanServer } from "@/lib/helpers/stellar/sorobanServer";
+import { errorResponse, logger } from "@/lib/observability";
+
+const ROUTE = "/api/faucet";
 
 export const dynamic = "force-dynamic";
 
@@ -227,10 +230,15 @@ export async function POST(request: NextRequest) {
         );
         results.push({ token: token.symbol, success: true, hash });
       } catch (err) {
+        logger.error("faucet_token_mint_failed", {
+          route: ROUTE,
+          token: token.symbol,
+          err,
+        });
         results.push({
           token: token.symbol,
           success: false,
-          error: err instanceof Error ? err.message : String(err),
+          error: "mint_failed",
         });
       }
     }
@@ -245,12 +253,6 @@ export async function POST(request: NextRequest) {
       { status: noneSucceeded ? 500 : 200 }
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: "Faucet request failed",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    return errorResponse(error, { req: request, route: ROUTE, status: 500 });
   }
 }

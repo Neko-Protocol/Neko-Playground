@@ -6,6 +6,9 @@ import {
   requireWalletSession,
   UnauthorizedError,
 } from "@/lib/event-platform/auth/session";
+import { errorResponse } from "@/lib/observability";
+
+const ROUTE = "/api/events/ingest";
 
 export const dynamic = "force-dynamic";
 
@@ -48,11 +51,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (err) {
     if (err instanceof UnauthorizedError) {
-      return NextResponse.json({ error: err.message }, { status: 401 });
+      return errorResponse(err, { req: request, route: ROUTE, status: 401 });
     }
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return errorResponse(err, { req: request, route: ROUTE, status: 500 });
   }
 }

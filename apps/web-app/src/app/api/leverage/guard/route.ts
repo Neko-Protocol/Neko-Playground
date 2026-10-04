@@ -26,6 +26,10 @@ import {
   type PoolPositionReader,
 } from "@/lib/coordinator/deleverageGuard";
 import type { DelegationGrant } from "@/lib/coordinator/types";
+import { errorResponse } from "@/lib/observability";
+
+const ROUTE = "/api/leverage/guard";
+
 
 /**
  * Automated deleveraging guard (Scope §6), cron-triggered like
@@ -327,9 +331,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, results });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return errorResponse(err, { req: request, route: ROUTE, status: 500 });
   }
 }

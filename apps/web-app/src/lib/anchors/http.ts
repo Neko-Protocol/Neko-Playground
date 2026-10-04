@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/observability";
 import {
   AnchorError,
   AnchorTimeoutError,
@@ -122,10 +123,10 @@ export function anchorErrorResponse(error: unknown): NextResponse | null {
     );
   }
 
+  logger.error("anchor_route_error", { route: "anchor", err: error });
   return NextResponse.json(
     {
       error: "Internal server error",
-      details: error instanceof Error ? error.message : String(error),
     },
     { status: 500 }
   );

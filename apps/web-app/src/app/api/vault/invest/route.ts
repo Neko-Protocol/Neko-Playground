@@ -10,6 +10,9 @@ import {
 } from "@/lib/vault/investLedger";
 import { LeaseNotAcquiredError } from "@/lib/jobs/errors";
 import type { JobStep } from "@/lib/jobs/types";
+import { errorResponse } from "@/lib/observability";
+
+const ROUTE = "/api/vault/invest";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -24,7 +27,7 @@ function stepResult(
 
 // ─── GET — current vault state ───────────────────────────────────────────────
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { secretKey, rpcUrl, networkPassphrase } = getVaultManagerEnv();
     const { client } = buildVaultClient(secretKey, rpcUrl, networkPassphrase);
@@ -55,10 +58,7 @@ export async function GET() {
       cooldownRemaining: ledgerStatus.cooldownRemaining,
     });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return errorResponse(err, { req: request, route: ROUTE, status: 500 });
   }
 }
 
@@ -101,14 +101,8 @@ export async function POST(request: NextRequest) {
     );
   } catch (err) {
     if (err instanceof LeaseNotAcquiredError) {
-      return NextResponse.json(
-        { error: "An invest cycle is already running" },
-        { status: 409 }
-      );
+      return errorResponse(err, { req: request, route: ROUTE, status: 409 });
     }
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return errorResponse(err, { req: request, route: ROUTE, status: 500 });
   }
 }

@@ -1,0 +1,240 @@
+{
+  "schema": "neko-pr328-required-gates/v1",
+  "pull_request": "https://github.com/Neko-Protocol/Neko-Playground/pull/328",
+  "repository": "woahwhattheheck/Neko-Playground",
+  "source_branch": "quill/api-observability",
+  "tested_source": {
+    "commit": "cb37d07e4ecc6231d9186040bd1494e93ade59da",
+    "tree": "9195b1a5facc927a643403263f7439fad513fbb7"
+  },
+  "workflow": {
+    "branch": "test/neko328-required-gates-beacon-20261004",
+    "controller": "829a6308b1b3464cc388e6f1bba9ec3aa96ea04a",
+    "path": ".github/workflows/neko328-required-gates.yml",
+    "runner": "ubuntu-24.04",
+    "node": "22.23.3",
+    "npm": "10.9.9",
+    "working_directory": "source (repository root)",
+    "commands": [
+      "npm ci",
+      "npm run lint",
+      "npm run typecheck",
+      "npm run test"
+    ],
+    "production_build_executed": false
+  },
+  "public_environment": {
+    "NEXT_PUBLIC_STELLAR_NETWORK": "TESTNET",
+    "NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE": "Test SDF Network ; September 2015",
+    "NEXT_PUBLIC_STELLAR_RPC_URL": "https://soroban-testnet.stellar.org",
+    "NEXT_PUBLIC_STELLAR_HORIZON_URL": "https://horizon-testnet.stellar.org"
+  },
+  "preserved_inputs": {
+    "package.json": "eeb2cbec622dbb7d729f116fc4be97c339d97c33",
+    "package-lock.json": "57d0358cf1a7dbb047f8d4557912eb5a2c28a128",
+    "apps/web-app/package.json": "4a2090dcc2daa08967a0ea0556b8da76863e77bc",
+    "apps/web-app/tsconfig.json": "10984f4e0710785811bfcebb6cf1df87d44b36ee",
+    ".github/workflows/ci.yml": "c78e605d7c079c904a733902a21dd382ba50ff7e"
+  },
+  "changed_test_configuration": {
+    "apps/web-app/vitest.config.ts": {
+      "blob": "2cf81f80d56c9e3c6f11bae45263ea8b5bcc90d4",
+      "change": "Consolidate duplicate test properties; preserve env values and activate existing setupFiles."
+    },
+    "apps/web-app/vitest.setup.ts": {
+      "blob": "b2172e8cf06bb1786d5b1305750fba2c2f427c3d",
+      "change": "Remove only unconditional window definition; preserve localStorage and all public env defaults."
+    }
+  },
+  "runs": [
+    {
+      "run_id": 37200945987,
+      "job_id": 111432325324,
+      "source": "cd9dcbb10bb4c1e3d8b2d4865d58f5143c57b670",
+      "controller": "f76569f685754692a93b530c8cf5b5ed6181a78f",
+      "conclusion": "failure",
+      "exit_codes": {
+        "install": null,
+        "lint": null,
+        "typecheck": null,
+        "test": null
+      },
+      "failure": "Checkout failed with Git exit 128: orphan gitlink .claude/worktrees/elastic-khorana had no .gitmodules URL. Required commands did not execute.",
+      "artifact": {
+        "id": 11302459937,
+        "name": "neko328-required-gates-cd9dcbb",
+        "bytes": 409,
+        "sha256": "b9b8c42f51b036cfbffc1d47b67951b93da4a025ae7f49bc74fb0c53884ac5cd",
+        "download_api": "https://api.github.com/repos/woahwhattheheck/Neko-Playground/actions/artifacts/11302459937/zip",
+        "digest_provenance": "GitHub Actions artifact metadata; initial two artifact ZIP digests were also independently checked after download."
+      },
+      "url": "https://github.com/woahwhattheheck/Neko-Playground/actions/runs/37200945987",
+      "job_url": "https://github.com/woahwhattheheck/Neko-Playground/actions/runs/37200945987/job/111432325324"
+    },
+    {
+      "run_id": 37201269207,
+      "job_id": 111433282129,
+      "source": "7552a02439299f356fd1961247c3c952229206bd",
+      "controller": "9935056ecf50ebcaebb15d093f117d4fe0d484fb",
+      "conclusion": "failure",
+      "exit_codes": {
+        "install": 0,
+        "lint": 0,
+        "typecheck": 2,
+        "test": 1
+      },
+      "lint_warnings": 18,
+      "failure": "One TS1117 diagnostic in vitest.config.ts; two vault suites could not import through incomplete clientEnv mocks; two automation execute assertions exposed missing failure-event integration and fixture contract drift.",
+      "artifact": {
+        "id": 11303415541,
+        "name": "neko328-required-gates-7552a024",
+        "bytes": 10932,
+        "sha256": "0bf8f983366b2a38fbee36d88e1aeb73bcbf03c2a92c9f33230b85cba7854f99",
+        "download_api": "https://api.github.com/repos/woahwhattheheck/Neko-Playground/actions/artifacts/11303415541/zip",
+        "digest_provenance": "GitHub Actions artifact metadata; initial two artifact ZIP digests were also independently checked after download."
+      },
+      "url": "https://github.com/woahwhattheheck/Neko-Playground/actions/runs/37201269207",
+      "job_url": "https://github.com/woahwhattheheck/Neko-Playground/actions/runs/37201269207/job/111433282129"
+    },
+    {
+      "run_id": 37202121591,
+      "job_id": 111435788088,
+      "source": "28af81e4817f44ca05dd55063a1c78eb59a94faa",
+      "controller": "87ec78dd6bac7216a1f585d506954c2907acb16a",
+      "conclusion": "failure",
+      "exit_codes": {
+        "install": 0,
+        "lint": 0,
+        "typecheck": 0,
+        "test": 1
+      },
+      "lint_warnings": 16,
+      "failure": "Activated shared setup defined window globally. Ten server suites hit the env.server.ts browser guard during imports; no assertion failure was reported.",
+      "artifact": {
+        "id": 11303805302,
+        "name": "neko328-required-gates-28af81e4",
+        "bytes": 9664,
+        "sha256": "8aecd1e3a0412fce62e7d386947efe0cdab0ac0402203c455719aa02dd52531c",
+        "download_api": "https://api.github.com/repos/woahwhattheheck/Neko-Playground/actions/artifacts/11303805302/zip",
+        "digest_provenance": "GitHub Actions artifact metadata; initial two artifact ZIP digests were also independently checked after download."
+      },
+      "url": "https://github.com/woahwhattheheck/Neko-Playground/actions/runs/37202121591",
+      "job_url": "https://github.com/woahwhattheheck/Neko-Playground/actions/runs/37202121591/job/111435788088"
+    },
+    {
+      "run_id": 37202788075,
+      "job_id": 111437712291,
+      "source": "cb37d07e4ecc6231d9186040bd1494e93ade59da",
+      "controller": "829a6308b1b3464cc388e6f1bba9ec3aa96ea04a",
+      "conclusion": "success",
+      "exit_codes": {
+        "install": 0,
+        "lint": 0,
+        "typecheck": 0,
+        "test": 0
+      },
+      "lint_warnings": 16,
+      "artifact": {
+        "id": 11303178794,
+        "name": "neko328-required-gates-cb37d07e",
+        "bytes": 9840,
+        "sha256": "35ee0b694fa76800c1386f7cfd16d5fe8ed6c18067b9d04abc4354cdad05e1c2",
+        "expires_at": "2026-10-18T12:40:02Z",
+        "download_api": "https://api.github.com/repos/woahwhattheheck/Neko-Playground/actions/artifacts/11303178794/zip",
+        "digest_provenance": "GitHub Actions artifact metadata; initial two artifact ZIP digests were also independently checked after download."
+      },
+      "url": "https://github.com/woahwhattheheck/Neko-Playground/actions/runs/37202788075",
+      "job_url": "https://github.com/woahwhattheheck/Neko-Playground/actions/runs/37202788075/job/111437712291"
+    }
+  ],
+  "donor_provenance": {
+    "pull_request": "https://github.com/Neko-Protocol/Neko-Playground/pull/327",
+    "source_commit": "516275a9515c713d82b13c89a050a7240fd7e4c9",
+    "fixtures_and_configuration_commit": "79845f236c246bcd10d1d4b2baf4cfa866f33ede",
+    "files": [
+      {
+        "path": "apps/web-app/src/lib/jobs/automation/ledger.ts",
+        "mode": "100644",
+        "base_blob": "3179fe06204ea25b38c1361231309014b4cc2d4c",
+        "donor_commit": "516275a9515c713d82b13c89a050a7240fd7e4c9",
+        "donor_blob": "fb6288cb225768c269d9a7fccd854171e1a63ad0",
+        "candidate_blob": "b4e876b829870a46b0e2fe3453a72277bf355e41",
+        "sha256": "654fb18c28dd6410a133efceaa4a81931f1042c92e993ca43d6179a760c676bc",
+        "bytes": 9469,
+        "identical_to_donor": false
+      },
+      {
+        "path": "apps/web-app/src/app/api/automation/execute/__tests__/route.test.ts",
+        "mode": "100644",
+        "base_blob": "e80e1fc71ed82bb5cd75631d58da172dcf366dcf",
+        "donor_commit": "79845f236c246bcd10d1d4b2baf4cfa866f33ede",
+        "donor_blob": "fadb1e291ce06a2a275e96aabaf5ddb10342c05f",
+        "candidate_blob": "78e3d5fffb7c31d5b2b8f7739f4d342b10c7bbda",
+        "sha256": "41d2458cecb1f9de67e813a49247eb9099c55fa82101bdf92d304f04e7ea86bf",
+        "bytes": 8253,
+        "identical_to_donor": false
+      },
+      {
+        "path": "apps/web-app/src/app/api/vault/__tests__/invest.route.test.ts",
+        "mode": "100644",
+        "base_blob": "cd5f20f58bf1261aa16c38681aad2bb12d0b3d3b",
+        "donor_commit": "79845f236c246bcd10d1d4b2baf4cfa866f33ede",
+        "donor_blob": "dc5eb06a22acfad2cfc712728d7b4e6ec7eafa43",
+        "candidate_blob": "dc5eb06a22acfad2cfc712728d7b4e6ec7eafa43",
+        "sha256": "f8f6aaf30db7ef6926fdab10eedb3eeb369c1338433699bea127a355848808d8",
+        "bytes": 2851,
+        "identical_to_donor": true
+      },
+      {
+        "path": "apps/web-app/src/lib/vault/__tests__/investSteps.test.ts",
+        "mode": "100644",
+        "base_blob": "9c37c5a34418309045d37409a3ccba68480a4094",
+        "donor_commit": "79845f236c246bcd10d1d4b2baf4cfa866f33ede",
+        "donor_blob": "7e1bfdd7d3dec27bc81ea3078538d8d719234e8b",
+        "candidate_blob": "7e1bfdd7d3dec27bc81ea3078538d8d719234e8b",
+        "sha256": "df942bea63c6800492890c0ad9bc0541098b4f1eb1c234d0bd518f46e1a6ca8f",
+        "bytes": 5756,
+        "identical_to_donor": true
+      }
+    ],
+    "integration_delta": [
+      "ledger.ts: add existing shared logger import and replace only the donor delivery-failure console.error with logger.error(automation_failure_event_delivery_failed, {route: jobs/automation/ledger, planId: job.externalRef, err}).",
+      "automation route fixture: replace only global console-error call count with exactly one matching delivery-failure JSON diagnostic; assert error level, route, plan identity and original outbox error. Preserve all donor event, owner, retry and no-reexecution assertions.",
+      "Both Vault fixture postimages are byte-identical to the donor; they remove incomplete clientEnv mocks."
+    ]
+  },
+  "lint": {
+    "warnings": 16,
+    "errors": 0,
+    "comparison_base": "d2cd669e0d22df05bafd9568ad859ed74eb211b1",
+    "comparison": "Thirteen warning-bearing files equal sponsor-base blobs; automation execute walletAddress binding is unchanged in PR diff.",
+    "baseline_lint_run_performed": false
+  },
+  "log_archive": {
+    "file": "job-logs.zip",
+    "git_blob": "795477c32aa732f8d6d790c7e767d951b31499e3",
+    "bytes": 299210,
+    "format": "ZIP; STORE method (0); UTF-8 entries",
+    "entry_count": 5,
+    "job_log_count": 4,
+    "embedded_manifest": true,
+    "origin": "Exact complete decoded native GitHub job-log text; separate from the original Actions artifact ZIP bytes.",
+    "validation": "Entry byte lengths, CRC32 values and central directory were checked in memory."
+  },
+  "publication": {
+    "evidence_only": true,
+    "rerun_after_evidence_commit": false,
+    "tested_source_unchanged": true
+  },
+  "final_summary_confirmation": {
+    "provider_job_conclusion": "success",
+    "printed_exit_codes": {
+      "install": 0,
+      "lint": 0,
+      "typecheck": 0,
+      "test": 0
+    },
+    "printed_all_passed": true,
+    "warning_count": 16
+  }
+}

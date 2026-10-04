@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { VenueCandidate } from "@/features/automation/types/automation";
 import { calcNetApyBps } from "@/features/automation/utils/netApy";
+import { errorResponse } from "@/lib/observability";
+
+const ROUTE = "/api/automation/candidates";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -61,14 +64,11 @@ function buildMockCandidates(): VenueCandidate[] {
   return raw.map((r) => ({ ...r, netApyBps: calcNetApyBps(r) }));
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     const candidates = buildMockCandidates();
     return NextResponse.json(candidates);
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return errorResponse(err, { req, route: ROUTE, status: 500 });
   }
 }

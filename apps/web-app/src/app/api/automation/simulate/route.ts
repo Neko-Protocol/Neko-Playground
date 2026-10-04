@@ -9,6 +9,9 @@ import { shouldRebalance } from "@/features/automation/utils/rebalanceThreshold"
 import { estimateSlippageBps } from "@/features/automation/utils/slippage";
 import { buildRebalancePlan } from "@/features/automation/utils/planBuilder";
 import { PRESET_RULES } from "@/features/automation/const/automation";
+import { errorResponse } from "@/lib/observability";
+
+const ROUTE = "/api/automation/simulate";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -146,9 +149,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ plan, candidates } satisfies SimulationResult);
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return errorResponse(err, { req, route: ROUTE, status: 500 });
   }
 }

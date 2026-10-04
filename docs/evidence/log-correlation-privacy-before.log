@@ -1,0 +1,167 @@
+cwd: /workspace/scratch/dbed016667b3/neko328-before/apps/web-app
+command: node --max-old-space-size=192 /workspace/scratch/dbed016667b3/neko328-cached-runtime/node_modules/vitest/vitest.mjs run src/lib/observability/__tests__/correlationPrivacy.test.ts src/lib/observability/__tests__/redact.test.ts --maxWorkers=1 --pool=threads --no-file-parallelism
+
+STDOUT
+
+ RUN  v4.1.9 /workspace/scratch/dbed016667b3/neko328-before/apps/web-app
+
+ ❯ src/lib/observability/__tests__/correlationPrivacy.test.ts (11 tests | 10 failed) 23ms
+     × replaces a Stellar wallet once and keeps request, response, and log correlated 8ms
+     × replaces a EVM wallet once and keeps request, response, and log correlated 1ms
+     × replaces a bearer token once and keeps request, response, and log correlated 1ms
+     × replaces a JWT once and keeps request, response, and log correlated 1ms
+     × replaces a signed XDR once and keeps request, response, and log correlated 1ms
+     × normalizes an explicit error-helper request ID before logging 3ms
+     × preserves an ordinary incoming ID from x-correlation-id 4ms
+     × applies the existing redaction policy to top-level requestId 1ms
+     × applies the existing redaction policy to top-level route 1ms
+     × applies the existing redaction policy to top-level msg 1ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  10 failed | 5 passed (15)
+   Start at  10:29:52
+   Duration  416ms (transform 48ms, setup 0ms, import 104ms, tests 28ms, environment 0ms)
+
+
+STDERR
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/observability/__tests__/correlationPrivacy.test.ts > correlation metadata privacy > replaces a Stellar wallet once and keeps request, response, and log correlated
+AssertionError: expected 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…' not to be 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…' // Object.is equality
+ ❯ src/lib/observability/__tests__/correlationPrivacy.test.ts:38:29
+     36|       const requestId = forwarded.headers.get(REQUEST_ID_HEADER);
+     37|       expect(requestId).toBeTruthy();
+     38|       expect(requestId).not.toBe(incomingId);
+       |                             ^
+     39|       expect(
+     40|         forwarded.headers.get(`x-middleware-request-${REQUEST_ID_HEADE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/lib/observability/__tests__/correlationPrivacy.test.ts > correlation metadata privacy > replaces a EVM wallet once and keeps request, response, and log correlated
+AssertionError: expected '0xabababababababababababababababababa…' not to be '0xabababababababababababababababababa…' // Object.is equality
+ ❯ src/lib/observability/__tests__/correlationPrivacy.test.ts:38:29
+     36|       const requestId = forwarded.headers.get(REQUEST_ID_HEADER);
+     37|       expect(requestId).toBeTruthy();
+     38|       expect(requestId).not.toBe(incomingId);
+       |                             ^
+     39|       expect(
+     40|         forwarded.headers.get(`x-middleware-request-${REQUEST_ID_HEADE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/lib/observability/__tests__/correlationPrivacy.test.ts > correlation metadata privacy > replaces a bearer token once and keeps request, response, and log correlated
+AssertionError: expected 'Bearer synthetic-token-for-local-vali…' not to be 'Bearer synthetic-token-for-local-vali…' // Object.is equality
+ ❯ src/lib/observability/__tests__/correlationPrivacy.test.ts:38:29
+     36|       const requestId = forwarded.headers.get(REQUEST_ID_HEADER);
+     37|       expect(requestId).toBeTruthy();
+     38|       expect(requestId).not.toBe(incomingId);
+       |                             ^
+     39|       expect(
+     40|         forwarded.headers.get(`x-middleware-request-${REQUEST_ID_HEADE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/lib/observability/__tests__/correlationPrivacy.test.ts > correlation metadata privacy > replaces a JWT once and keeps request, response, and log correlated
+AssertionError: expected 'eyJhbGciOiJIUzI1NiJ9.syntheticPayload…' not to be 'eyJhbGciOiJIUzI1NiJ9.syntheticPayload…' // Object.is equality
+ ❯ src/lib/observability/__tests__/correlationPrivacy.test.ts:38:29
+     36|       const requestId = forwarded.headers.get(REQUEST_ID_HEADER);
+     37|       expect(requestId).toBeTruthy();
+     38|       expect(requestId).not.toBe(incomingId);
+       |                             ^
+     39|       expect(
+     40|         forwarded.headers.get(`x-middleware-request-${REQUEST_ID_HEADE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/lib/observability/__tests__/correlationPrivacy.test.ts > correlation metadata privacy > replaces a signed XDR once and keeps request, response, and log correlated
+AssertionError: expected 'AAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB…' not to be 'AAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB…' // Object.is equality
+ ❯ src/lib/observability/__tests__/correlationPrivacy.test.ts:38:29
+     36|       const requestId = forwarded.headers.get(REQUEST_ID_HEADER);
+     37|       expect(requestId).toBeTruthy();
+     38|       expect(requestId).not.toBe(incomingId);
+       |                             ^
+     39|       expect(
+     40|         forwarded.headers.get(`x-middleware-request-${REQUEST_ID_HEADE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/lib/observability/__tests__/correlationPrivacy.test.ts > correlation metadata privacy > normalizes an explicit error-helper request ID before logging
+AssertionError: expected 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…' not to be 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…' // Object.is equality
+ ❯ src/lib/observability/__tests__/correlationPrivacy.test.ts:67:32
+     65|     });
+     66|     const body = await response.json();
+     67|     expect(body.requestId).not.toBe(incomingId);
+       |                                ^
+     68|     expect(response.headers.get(REQUEST_ID_HEADER)).toBe(body.requestI…
+     69|     expect(JSON.parse(lines[0]).requestId).toBe(body.requestId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/lib/observability/__tests__/correlationPrivacy.test.ts > correlation metadata privacy > preserves an ordinary incoming ID from x-correlation-id
+AssertionError: expected '6e4b350c-fed6-4227-92d3-56629a45bab1' to be 'ordinary-client-42' // Object.is equality
+
+Expected: "ordinary-client-42"
+Received: "6e4b350c-fed6-4227-92d3-56629a45bab1"
+
+ ❯ src/lib/observability/__tests__/correlationPrivacy.test.ts:81:56
+     79|       expect(resolveRequestId(request)).toBe("ordinary-client-42");
+     80|       const forwarded = middleware(request);
+     81|       expect(forwarded.headers.get(REQUEST_ID_HEADER)).toBe(
+       |                                                        ^
+     82|         "ordinary-client-42"
+     83|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/lib/observability/__tests__/correlationPrivacy.test.ts > correlation metadata privacy > applies the existing redaction policy to top-level requestId
+AssertionError: expected '{"level":"error","time":"2026-10-03T0…' not to contain 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…'
+
+Expected: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+Received: "{"level":"error","time":"2026-10-03T08:29:52.856Z","msg":"local_failure","requestId":"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}"
+
+ ❯ src/lib/observability/__tests__/correlationPrivacy.test.ts:107:30
+    105|         }
+    106|         expect(lines).toHaveLength(1);
+    107|         expect(lines[0]).not.toContain(value);
+       |                              ^
+    108|       }
+    109|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/lib/observability/__tests__/correlationPrivacy.test.ts > correlation metadata privacy > applies the existing redaction policy to top-level route
+AssertionError: expected '{"level":"error","time":"2026-10-03T0…' not to contain 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…'
+
+Expected: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+Received: "{"level":"error","time":"2026-10-03T08:29:52.857Z","msg":"local_failure","route":"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}"
+
+ ❯ src/lib/observability/__tests__/correlationPrivacy.test.ts:107:30
+    105|         }
+    106|         expect(lines).toHaveLength(1);
+    107|         expect(lines[0]).not.toContain(value);
+       |                              ^
+    108|       }
+    109|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/lib/observability/__tests__/correlationPrivacy.test.ts > correlation metadata privacy > applies the existing redaction policy to top-level msg
+AssertionError: expected '{"level":"error","time":"2026-10-03T0…' not to contain 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…'
+
+Expected: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+Received: "{"level":"error","time":"2026-10-03T08:29:52.857Z","msg":"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","requestId":"ordinary-client-42","route":"/api/local"}"
+
+ ❯ src/lib/observability/__tests__/correlationPrivacy.test.ts:107:30
+    105|         }
+    106|         expect(lines).toHaveLength(1);
+    107|         expect(lines[0]).not.toContain(value);
+       |                              ^
+    108|       }
+    109|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+exit: 1

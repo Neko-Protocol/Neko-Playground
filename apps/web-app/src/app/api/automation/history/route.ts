@@ -4,6 +4,9 @@ import {
   MissingWalletAddressError,
   requireWalletAddress,
 } from "@/lib/jobs/walletAuth";
+import { errorResponse } from "@/lib/observability";
+
+const ROUTE = "/api/automation/history";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +25,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(filtered);
   } catch (err) {
     if (err instanceof MissingWalletAddressError) {
-      return NextResponse.json({ error: err.message }, { status: 400 });
+      return errorResponse(err, { req, route: ROUTE, status: 400 });
     }
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return errorResponse(err, { req, route: ROUTE, status: 500 });
   }
 }

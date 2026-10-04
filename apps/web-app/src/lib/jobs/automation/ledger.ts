@@ -1,6 +1,8 @@
 import { jobStore } from "@/lib/jobs/store";
 import { runJob } from "@/lib/jobs/runner";
 import { JobNotFoundError, JobOwnershipError } from "@/lib/jobs/errors";
+import { raiseEvent } from "@/lib/event-platform/outbox";
+import { logger } from "@/lib/observability";
 import type {
   ActionLogEntryRow,
   JobRun,
@@ -30,6 +32,30 @@ interface AutomationJobPayload {
   estimatedGasUsd: number;
   projectedEarningsDeltaUsd: { d30: number; d90: number; d365: number };
   targets: RebalancePlan["targets"];
+}
+
+async function reportFailureEvent(job: JobRun): Promise<void> {
+  if (job.status !== "failed" || !job.walletAddress) return;
+  const payload = job.payload as unknown as AutomationJobPayload;
+  try {
+    await raiseEvent({
+      source: "automation",
+      walletAddress: job.walletAddress,
+      // Replays and cancellation reuse the same outbox condition, which
+      // deduplicates an already-active critical failure atomically.
+      dedupeKey: `plan-failed:${job.externalRef}`,
+      eventType: "plan-failed",
+      severity: "critical",
+      payload: { planId: job.externalRef, strategyId: payload.strategyId },
+    });
+  } catch (err) {
+    // The persisted execution outcome must survive an outbox outage.
+    logger.error("automation_failure_event_delivery_failed", {
+      route: "jobs/automation/ledger",
+      planId: job.externalRef,
+      err,
+    });
+  }
 }
 
 function jobStatusToPlanStatus(job: JobRun): RebalancePlan["status"] {
@@ -194,6 +220,7 @@ export async function confirmPlan(
   });
 
   await appendOutcomeLog(finalJob, finalSteps);
+  await reportFailureEvent(finalJob);
   return toRebalancePlan(finalJob, finalSteps);
 }
 
@@ -206,6 +233,8 @@ export async function cancelPlan(
   if (job.walletAddress !== walletAddress) {
     throw new JobOwnershipError();
   }
+
+  await reportFailureEvent(job);
 
   // A failed run is still cancellable — that's the documented recovery path
   // for dismissing it out of the active queue. Only an already

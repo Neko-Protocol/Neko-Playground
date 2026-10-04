@@ -14,6 +14,7 @@ import type {
   ILPosition,
   YieldForecast,
 } from "@/features/analytics/types/analytics";
+import { logger } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -56,7 +57,8 @@ async function getHoldings(
         (h): h is { code: string; balanceUsd: number } =>
           h !== null && h.balanceUsd > 0
       );
-  } catch {
+  } catch (err) {
+    logger.warn("analytics_fallback", { route: "apps/web-app/src/app/api/analytics/metrics/route.ts", err });
     return [
       { code: "XLM", balanceUsd: 50 },
       { code: "USDC", balanceUsd: 100 },
@@ -117,7 +119,8 @@ export async function GET(req: NextRequest) {
       const d = await apyRes.json();
       if (d.vaultApy != null) vaultApy = d.vaultApy;
     }
-  } catch {
+  } catch (err) {
+    logger.warn("analytics_fallback", { route: "apps/web-app/src/app/api/analytics/metrics/route.ts", err });
     // fallback
   }
 

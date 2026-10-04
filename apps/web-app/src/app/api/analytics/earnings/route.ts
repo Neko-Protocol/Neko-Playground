@@ -8,6 +8,7 @@ import type {
   TimeWindow,
 } from "@/features/analytics/types/analytics";
 import { clientEnv } from "@/lib/env.client";
+import { logger } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -69,7 +70,8 @@ async function getPortfolioUsd(address: string): Promise<number> {
       }
     }
     return total;
-  } catch {
+  } catch (err) {
+    logger.warn("analytics_fallback", { route: "apps/web-app/src/app/api/analytics/earnings/route.ts", err });
     return 0;
   }
 }
@@ -105,7 +107,8 @@ export async function GET(req: NextRequest) {
       const apyData = await apyRes.json();
       if (apyData.vaultApy != null) vaultApy = apyData.vaultApy;
     }
-  } catch {
+  } catch (err) {
+    logger.warn("analytics_fallback", { route: "apps/web-app/src/app/api/analytics/earnings/route.ts", err });
     // fallback to default
   }
 

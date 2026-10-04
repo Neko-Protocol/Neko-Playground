@@ -1,13 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-vi.mock("@/lib/env.client", () => ({
-  clientEnv: {
-    rpcUrl: "http://rpc.local",
-    networkPassphrase: "Test SDF Network ; September 2015",
-  },
-}));
-
 const {
   runOrResumeMock,
   ledgerStatusMock,

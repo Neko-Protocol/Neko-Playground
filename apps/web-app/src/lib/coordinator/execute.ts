@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import type { CoordinatorLedgerStore } from "./ledger";
 import { DelegationScopeViolationError } from "./types";
 import type { TrancheSelection } from "./delegation";
+import { logger } from "@/lib/observability";
 import type {
   CoordinatorRun,
   CoordinatorStepRecord,
@@ -203,6 +204,10 @@ export async function runCoordinatorUnwind(
       run.updatedAt = Date.now();
       await deps.store.saveRun(run);
     } catch (error) {
+      logger.error("coordinator_step_failed", {
+        route: "coordinator/execute",
+        err: error,
+      });
       stepRecord.status = "failed";
       stepRecord.errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -276,8 +281,12 @@ export async function reconcileCoordinatorRun(
         step.errorMessage =
           "Transaction failed on-chain while the coordinator was not running.";
       }
-    } catch {
-      // Reconciliation network error — leave the step's recorded status as-is; retried on a future resume.
+    } catch (err) {
+      logger.warn("coordinator_reconcile_network_error", {
+        route: "coordinator/execute",
+        err,
+      });
+      // Leave the step's recorded status as-is; retried on a future resume.
     }
   }
 
