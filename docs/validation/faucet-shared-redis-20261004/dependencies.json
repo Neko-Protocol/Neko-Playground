@@ -1,0 +1,15 @@
+{
+  "name": ".ci-neko-deps",
+  "dependencies": {
+    "@upstash/redis": {
+      "version": "1.39.0",
+      "resolved": "https://registry.npmjs.org/@upstash/redis/-/redis-1.39.0.tgz",
+      "overridden": false
+    },
+    "typescript": {
+      "version": "5.8.3",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-5.8.3.tgz",
+      "overridden": false
+    }
+  }
+}

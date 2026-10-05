@@ -1,0 +1,45 @@
+{
+  "sourceRevision": "848d0faec281bea69411cef965f97b36acf8186d",
+  "node": "v22.23.3",
+  "typescript": "5.8.3",
+  "fixture": "Real Redis 7.2.5 through Serverless Redis HTTP; @upstash/redis 1.39.0",
+  "sourceBlobs": {
+    "lib/faucetRateLimit.ts": "7ac9d580b14063e11804739fd7175a397faf9f3d",
+    "lib/constants/faucet.ts": "2a1109e8d432a9c7508bf5ad1df66fecb02cb489",
+    "app/api/faucet/route.ts": "e7e584f0c820328907fa8445dc36561ba197fe25",
+    "lib/faucetSubmission.ts": "28cbeb81c63d644238c9a0b8dee33c88e199b338"
+  },
+  "observations": {
+    "parallel": {
+      "processes": [
+        2722,
+        2723
+      ],
+      "admitted": 1,
+      "blocked": 1
+    },
+    "coldStart": {
+      "pid": 2738,
+      "blocked": true
+    },
+    "cooldown": {
+      "configuredMs": 300000,
+      "observedRemainingMs": 299675
+    },
+    "route": {
+      "status": 429,
+      "secondsRemaining": 299,
+      "error": "Rate limit: please wait 299s before requesting again"
+    },
+    "ownedRelease": {
+      "ownReleaseFreed": true,
+      "staleReleaseKeptSuccessor": true
+    },
+    "localFallback": {
+      "admitted": 1,
+      "blocked": 1,
+      "warnings": 1
+    }
+  },
+  "status": "PASS"
+}
