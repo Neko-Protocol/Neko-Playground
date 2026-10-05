@@ -31,13 +31,11 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
-  test: {
-    setupFiles: ["./vitest.setup.ts"],
-  },
   oxc: {
     jsx: { runtime: "automatic" },
   },
   test: {
+    setupFiles: ["./vitest.setup.ts"],
     env: {
       NEXT_PUBLIC_STELLAR_NETWORK: "TESTNET",
       NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE:

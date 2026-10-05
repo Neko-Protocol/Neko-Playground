@@ -32,11 +32,8 @@ Object.defineProperty(globalThis, "localStorage", {
   configurable: true,
 });
 
-Object.defineProperty(globalThis, "window", {
-  value: globalThis,
-  writable: true,
-  configurable: true,
-});
+// Let Vitest provide window only for suites that opt into a DOM environment.
+// A global window shim makes server-only modules fail in the default Node pool.
 
 process.env.NEXT_PUBLIC_STELLAR_NETWORK ??= "TESTNET";
 process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE ??=

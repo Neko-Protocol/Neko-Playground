@@ -1068,6 +1068,50 @@ export class LendingService {
       return { xdr: "", error: friendlyError };
     }
   }
+
+  /**
+   * Build apply_queued_reserve_params transaction. Returns XDR for signing.
+   */
+  async applyQueuedReserveParams(
+    asset: string,
+    walletAddress: string,
+    contractId: string = networks.testnet.pool1ContractId
+  ): Promise<LendingOperationResult> {
+    try {
+      const client = this.getClient(contractId, walletAddress);
+      const assembled = await client.apply_queued_reserve_params({ asset });
+      return { xdr: assembled.toXDR() };
+    } catch (error) {
+      console.error(
+        "Error building apply_queued_reserve_params transaction:",
+        error
+      );
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return { xdr: "", error: friendlyError };
+    }
+  }
+
+  /**
+   * Build cancel_queued_reserve_params transaction. Returns XDR for signing.
+   */
+  async cancelQueuedReserveParams(
+    asset: string,
+    walletAddress: string,
+    contractId: string = networks.testnet.pool1ContractId
+  ): Promise<LendingOperationResult> {
+    try {
+      const client = this.getClient(contractId, walletAddress);
+      const assembled = await client.cancel_queued_reserve_params({ asset });
+      return { xdr: assembled.toXDR() };
+    } catch (error) {
+      console.error(
+        "Error building cancel_queued_reserve_params transaction:",
+        error
+      );
+      const friendlyError = extractContractError(error, "rwa-lending");
+      return { xdr: "", error: friendlyError };
+    }
+  }
 }
 
 // Export singleton instance

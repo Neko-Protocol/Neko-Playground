@@ -1,38 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
-import type { RebalancePlan } from "@/features/automation/types/automation";
 
-const raiseEventMock = vi.fn();
-vi.mock("@/lib/event-platform/outbox", () => ({
-  raiseEvent: (...args: unknown[]) => raiseEventMock(...args),
+const { confirmPlanMock, cancelPlanMock } = vi.hoisted(() => ({
+  confirmPlanMock: vi.fn(),
+  cancelPlanMock: vi.fn(),
 }));
 
-const { POST } = await import("../route");
+vi.mock("@/lib/jobs/automation/ledger", () => ({
+  confirmPlan: confirmPlanMock,
+  cancelPlan: cancelPlanMock,
+  listPlansForWallet: vi.fn(),
+}));
 
-function seedPlan(overrides: Partial<RebalancePlan> = {}): RebalancePlan {
-  const plan: RebalancePlan = {
-    id: "plan-1",
-    strategyId: "strategy-1",
-    createdAt: Date.now(),
-    triggerReason: "test",
-    currentBlendedNetApyBps: 0,
-    proposedBlendedNetApyBps: 0,
-    improvementBps: 0,
-    estimatedSlippageBps: 0,
-    estimatedFeeUsd: 0,
-    estimatedGasUsd: 0,
-    projectedEarningsDeltaUsd: { d30: 0, d90: 0, d365: 0 },
-    targets: [],
-    steps: [],
-    status: "draft",
-    ...overrides,
-  };
-  // Never reassign globalThis.__automationPlans here: the route module
-  // captured a const reference to the Map at import time, so a replacement
-  // object would become invisible to it. Mutate the existing map instead.
-  globalThis.__automationPlans!.set(plan.id, plan);
-  return plan;
-}
+import { POST } from "../route";
+import { LeaseNotAcquiredError } from "@/lib/jobs/errors";
+
+const WALLET = "G".padEnd(56, "A");
+
+beforeEach(() => vi.clearAllMocks());
 
 function post(body: Record<string, unknown>) {
   return POST(
@@ -43,69 +28,41 @@ function post(body: Record<string, unknown>) {
   );
 }
 
-describe("POST /api/automation/execute — failure event wiring", () => {
-  beforeEach(() => {
-    globalThis.__automationPlans ??= new Map();
-    globalThis.__automationPlans!.clear();
-    raiseEventMock.mockReset();
+describe("POST /api/automation/execute — request validation and conflicts", () => {
+  it("requires a plan when confirming", async () => {
+    const res = await post({ action: "confirm", walletAddress: WALLET });
+
+    expect(res.status).toBe(400);
+    expect(confirmPlanMock).not.toHaveBeenCalled();
   });
 
-  it("does not raise an event on a normal confirm (no failure occurred)", async () => {
-    seedPlan();
-    const res = await post({
-      planId: "plan-1",
-      strategyId: "strategy-1",
-      action: "confirm",
-    });
-    expect(res.status).toBe(200);
-    expect(raiseEventMock).not.toHaveBeenCalled();
+  it("requires a planId when cancelling", async () => {
+    const res = await post({ action: "cancel", walletAddress: WALLET });
+
+    expect(res.status).toBe(400);
+    expect(cancelPlanMock).not.toHaveBeenCalled();
   });
 
-  it("does not raise an event on cancel", async () => {
-    seedPlan();
-    await post({
-      planId: "plan-1",
-      strategyId: "strategy-1",
-      action: "cancel",
-    });
-    expect(raiseEventMock).not.toHaveBeenCalled();
+  it("rejects an unknown action without dispatching to the ledger", async () => {
+    const res = await post({ action: "retry", walletAddress: WALLET });
+
+    expect(res.status).toBe(400);
+    expect(confirmPlanMock).not.toHaveBeenCalled();
+    expect(cancelPlanMock).not.toHaveBeenCalled();
   });
 
-  it("raises exactly one platform event, attributed to the plan and wallet, when a plan is already failed", async () => {
-    // Simulates the future step-execution worker (see the route's own TODO)
-    // having already marked this plan failed before confirm/cancel runs.
-    seedPlan({ status: "failed" });
-
-    await post({
-      planId: "plan-1",
-      strategyId: "strategy-1",
-      action: "cancel",
-      walletAddress: "GWALLET1",
-    });
-
-    expect(raiseEventMock).toHaveBeenCalledTimes(1);
-    expect(raiseEventMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        source: "automation",
-        walletAddress: "GWALLET1",
-        dedupeKey: "plan-failed:plan-1",
-        eventType: "plan-failed",
-        severity: "critical",
-        payload: expect.objectContaining({
-          planId: "plan-1",
-          strategyId: "strategy-1",
-        }),
-      })
+  it("maps a ledger lease conflict to HTTP 409", async () => {
+    cancelPlanMock.mockRejectedValue(
+      new LeaseNotAcquiredError("automation-rebalance", "plan-1")
     );
-  });
 
-  it("skips raising when no walletAddress is supplied (plan has no owner concept today)", async () => {
-    seedPlan({ status: "failed" });
-    await post({
-      planId: "plan-1",
-      strategyId: "strategy-1",
+    const res = await post({
       action: "cancel",
+      planId: "plan-1",
+      walletAddress: WALLET,
     });
-    expect(raiseEventMock).not.toHaveBeenCalled();
+
+    expect(res.status).toBe(409);
+    expect(cancelPlanMock).toHaveBeenCalledWith("plan-1", WALLET);
   });
 });

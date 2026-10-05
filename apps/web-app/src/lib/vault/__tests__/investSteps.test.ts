@@ -9,8 +9,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/env.client", () => ({
   clientEnv: {
-    rpcUrl: "http://rpc.local",
+    stellarNetwork: "TESTNET",
     networkPassphrase: "Test SDF Network ; September 2015",
+    rpcUrl: "http://rpc.local",
+    horizonUrl: "http://horizon.local",
   },
 }));
 

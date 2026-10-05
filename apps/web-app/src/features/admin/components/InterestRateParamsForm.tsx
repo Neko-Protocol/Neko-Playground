@@ -14,6 +14,7 @@ import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { Networks } from "@stellar/stellar-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import type { InterestRateParams } from "@neko/lending";
+import { useQueuedReserveParams } from "../hooks/useQueuedReserveParams";
 
 const SCALAR_7 = 10_000_000;
 
@@ -22,11 +23,26 @@ function pctTo7(pctStr: string): number {
   return Number(toSmallestUnit(pctStr, 7) / 100n);
 }
 
+function formatRemaining(seconds: number): string {
+  const days = Math.floor(seconds / 86_400);
+  const hours = Math.floor((seconds % 86_400) / 3_600);
+  const minutes = Math.floor((seconds % 3_600) / 60);
+  const secs = seconds % 60;
+
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
+  return `${minutes}m ${secs}s`;
+}
+
 export default function InterestRateParamsForm() {
   const { address, signTransaction, networkPassphrase } = useWallet();
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{
+    action: "apply" | "cancel";
+    asset: string;
+  } | null>(null);
   const [poolId, setPoolId] = useState<"pool1" | "pool2">("pool1");
   const [asset, setAsset] = useState("USDC");
   const [targetUtil, setTargetUtil] = useState("75");
@@ -42,6 +58,7 @@ export default function InterestRateParamsForm() {
 
   const pool = POOLS.find((p) => p.id === poolId) ?? POOLS[0];
   const assets = pool.assets;
+  const queuedReserveParams = useQueuedReserveParams(pool.contractId, assets);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +115,10 @@ export default function InterestRateParamsForm() {
       });
       addNotification("Success", "success", {
         ...TOAST_CONFIG.defaultOpts,
-        description: `Interest rate params for ${asset} updated`,
+        description: `Interest rate params for ${asset} queued`,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["queued-reserve-params", pool.contractId],
       });
       void invalidateProtocolQueries(queryClient, [
         "pools",
@@ -114,6 +134,72 @@ export default function InterestRateParamsForm() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePendingAction = async (
+    action: "apply" | "cancel",
+    targetAsset: string
+  ) => {
+    if (!address) return;
+
+    setPendingAction({ action, asset: targetAsset });
+    try {
+      const result =
+        action === "apply"
+          ? await lendingService.applyQueuedReserveParams(
+              targetAsset,
+              address,
+              pool.contractId
+            )
+          : await lendingService.cancelQueuedReserveParams(
+              targetAsset,
+              address,
+              pool.contractId
+            );
+
+      if (result.error) {
+        addNotification("Error", "error", {
+          ...TOAST_CONFIG.defaultOpts,
+          description: result.error,
+        });
+        return;
+      }
+
+      await signAndSendTransaction(result.xdr, signTransaction, {
+        networkPassphrase: networkPassphrase || Networks.TESTNET,
+        rpcUrl,
+        address,
+        waitForPending: true,
+      });
+
+      addNotification("Success", "success", {
+        ...TOAST_CONFIG.defaultOpts,
+        description:
+          action === "apply"
+            ? `Queued interest rate params for ${targetAsset} applied`
+            : `Queued interest rate params for ${targetAsset} cancelled`,
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["queued-reserve-params", pool.contractId],
+      });
+      void invalidateProtocolQueries(queryClient, [
+        "pools",
+        "rates",
+        "positions",
+      ]);
+    } catch (err) {
+      const msg = extractContractErrorOrNull(err);
+      addNotification("Error", "error", {
+        ...TOAST_CONFIG.defaultOpts,
+        description:
+          typeof msg === "string"
+            ? msg
+            : `Failed to ${action} queued interest rate params`,
+      });
+    } finally {
+      setPendingAction(null);
     }
   };
 
@@ -312,9 +398,123 @@ export default function InterestRateParamsForm() {
             disabled={loading}
             className="px-6 py-2.5 rounded-xl bg-[#229EDF] hover:bg-[#1e8bc9] text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? "Updating..." : "Update"}
+            {loading ? "Queuing..." : "Queue change"}
           </button>
         </form>
+
+        <div className="mt-8 border-t border-white/10 pt-6">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-base font-semibold text-white">
+                Pending reserve changes
+              </h3>
+              <p className="text-sm text-white/50 mt-1">
+                Apply after the timelock unlocks, or cancel while it is still
+                locked.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => queuedReserveParams.refetch()}
+              disabled={queuedReserveParams.isFetching}
+              className="px-3 py-1.5 rounded-lg border border-white/10 text-sm text-white/70 hover:text-white hover:border-white/20 disabled:opacity-50"
+            >
+              {queuedReserveParams.isFetching ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
+
+          {queuedReserveParams.isError ? (
+            <div className="rounded-xl border border-red-400/20 bg-red-400/5 px-4 py-3 text-sm text-red-200">
+              Pending state could not be loaded from contract storage. Refresh
+              before applying or cancelling a change.
+            </div>
+          ) : queuedReserveParams.isLoading ? (
+            <div className="text-sm text-white/50">Loading pending changes...</div>
+          ) : queuedReserveParams.data.length === 0 ? (
+            <div className="rounded-xl border border-white/10 bg-[#242424] px-4 py-3 text-sm text-white/60">
+              No reserve parameter change is currently queued for this pool.
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-white/10">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead className="bg-white/[0.03] text-left text-white/50">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Asset</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Unlocks</th>
+                    <th className="px-4 py-3 font-medium text-right">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {queuedReserveParams.data.map((pending) => {
+                    const busy =
+                      pendingAction?.asset === pending.asset &&
+                      pendingAction !== null;
+                    return (
+                      <tr key={pending.asset} className="text-white/80">
+                        <td className="px-4 py-3 font-medium text-white">
+                          {pending.asset}
+                        </td>
+                        <td className="px-4 py-3">
+                          {pending.status === "ready" ? (
+                            <span className="text-emerald-300">
+                              Ready to apply
+                            </span>
+                          ) : (
+                            <span className="text-amber-200">
+                              Locked · {formatRemaining(pending.remainingSeconds)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-white/60">
+                          {new Date(
+                            pending.unlockTime * 1_000
+                          ).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handlePendingAction("cancel", pending.asset)
+                              }
+                              disabled={
+                                pending.status !== "locked" ||
+                                pendingAction !== null
+                              }
+                              className="px-3 py-1.5 rounded-lg border border-white/10 text-white/70 hover:text-white hover:border-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              {busy && pendingAction?.action === "cancel"
+                                ? "Cancelling..."
+                                : "Cancel"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handlePendingAction("apply", pending.asset)
+                              }
+                              disabled={
+                                pending.status !== "ready" ||
+                                pendingAction !== null
+                              }
+                              className="px-3 py-1.5 rounded-lg bg-[#229EDF] hover:bg-[#1e8bc9] text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              {busy && pendingAction?.action === "apply"
+                                ? "Applying..."
+                                : "Apply"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
