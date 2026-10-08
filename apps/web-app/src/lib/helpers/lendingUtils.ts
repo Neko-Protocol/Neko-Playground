@@ -1,3 +1,5 @@
+import { reportAppError } from "@/lib/errors/normalizeAppError";
+
 type InterestRateResult =
   | { tag?: string; values?: unknown[]; unwrap?: () => bigint }
   | bigint
@@ -24,7 +26,9 @@ export function parseInterestRateFromContractResult(
     try {
       const unwrapped = result.unwrap();
       rateValue = Number(unwrapped);
-    } catch {}
+    } catch (error) {
+      reportAppError("lendingUtils.parseInterestRate", error);
+    }
   } else if (
     result.tag === "Ok" &&
     Array.isArray(result.values) &&

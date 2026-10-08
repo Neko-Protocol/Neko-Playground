@@ -5,6 +5,7 @@ import {
 } from "@/lib/helpers/stellar/soroswap";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { stellarPriceService } from "@/lib/services/stellar-price.service";
+import { reportAppError } from "@/lib/errors/normalizeAppError";
 
 export const useTokenPrice = (token: Token | string | undefined) => {
   const getTokenCode = (): string | null => {
@@ -28,7 +29,7 @@ export const useTokenPrice = (token: Token | string | undefined) => {
 
       return null;
     } catch (error) {
-      console.error("Error in getTokenCode:", error);
+      reportAppError("useTokenPrice.getTokenCode", error);
       return null;
     }
   };

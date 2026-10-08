@@ -6,6 +6,7 @@ import {
 } from "@/lib/constants/network";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { reportAppError } from "@/lib/errors/normalizeAppError";
 import {
   depositToPool,
   withdrawFromPool,
@@ -92,7 +93,9 @@ function unwrapResult(value: unknown): bigint {
   if (typeof obj.unwrap === "function") {
     try {
       return BigInt(obj.unwrap());
-    } catch {}
+    } catch (error) {
+      reportAppError("NekoLendingAdapter.unwrapResult", error);
+    }
   }
 
   if (obj.tag === "Ok" && Array.isArray(obj.values) && obj.values.length > 0) {
@@ -149,8 +152,20 @@ export class NekoLendingAdapter implements BasePoolAdapter {
         client.get_pool_balance({ asset: assetCode }, { simulate: true }),
         client
           .get_interest_rate({ asset: assetCode }, { simulate: true })
-          .catch(() => null),
-        client.get_pool_state({ simulate: true }).catch(() => null),
+          .catch((error) => {
+            reportAppError(
+              `NekoLendingAdapter.getPoolInfo.${assetCode}.interestRate`,
+              error
+            );
+            return null;
+          }),
+        client.get_pool_state({ simulate: true }).catch((error) => {
+          reportAppError(
+            `NekoLendingAdapter.getPoolInfo.${assetCode}.poolState`,
+            error
+          );
+          return null;
+        }),
       ]);
 
       const balance =
@@ -209,7 +224,8 @@ export class NekoLendingAdapter implements BasePoolAdapter {
       try {
         const info = await this.getPoolInfo(code);
         pools.push(info);
-      } catch {
+      } catch (error) {
+        reportAppError(`NekoLendingAdapter.listPools.${code}`, error);
         continue;
       }
     }
@@ -252,7 +268,11 @@ export class NekoLendingAdapter implements BasePoolAdapter {
         limits: { withdraw: raw },
         metadata: { bTokenBalance: raw.toString() },
       };
-    } catch {
+    } catch (error) {
+      reportAppError(
+        `NekoLendingAdapter.getUserPosition.${assetCode}`,
+        error
+      );
       return emptyPosition(`neko:${assetCode}`);
     }
   }

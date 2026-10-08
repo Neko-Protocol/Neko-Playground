@@ -22,6 +22,8 @@ import {
 import storage from "@/lib/helpers/storage";
 import { useBalances } from "@/hooks/useBalances";
 import { POLL_INTERVAL, STORAGE_KEYS } from "@/lib/constants/wallet";
+import { notify } from "@/lib/toast";
+import { reportAppError } from "@/lib/errors/normalizeAppError";
 
 const getWalletInstance = async () => {
   if (typeof window === "undefined") {
@@ -128,9 +130,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           setNetworkPassphrase(n.networkPassphrase);
         }
       } catch (e) {
+        const message = reportAppError(
+          "WalletProvider.updateCurrentWalletState",
+          e,
+          "Unable to refresh the wallet connection. Reconnect and try again."
+        );
+        notify(message, "error");
         nullify();
-
-        console.error(e);
       } finally {
         popupLock.current = false;
       }

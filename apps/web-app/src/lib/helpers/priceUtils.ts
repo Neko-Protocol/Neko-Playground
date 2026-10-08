@@ -1,5 +1,6 @@
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { stellarPriceService } from "@/lib/services/stellar-price.service";
+import { reportAppError } from "@/lib/errors/normalizeAppError";
 
 /**
  * Fetches USD prices for the given asset codes in parallel.
@@ -21,7 +22,8 @@ export async function fetchUsdPriceMap(
           asset?.priceSource === "oracle" ? asset.contract : undefined;
         const price = await stellarPriceService.getPrice(code, contract);
         return [code, price > 0 ? price : null] as const;
-      } catch {
+      } catch (error) {
+        reportAppError(`fetchUsdPriceMap.${code}`, error);
         return [code, null] as const;
       }
     })

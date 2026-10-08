@@ -114,6 +114,19 @@ describe("BlendPoolAdapter – raw id parsing / guards", () => {
   });
 });
 
+describe("BlendPoolAdapter – listPools error reporting", () => {
+  it("reports a failed pool read and preserves the empty-list fallback", async () => {
+    const error = new Error("pool rpc down");
+    poolLoadMock.mockRejectedValue(error);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const adapter = new BlendPoolAdapter(POOL);
+
+    await expect(adapter.listPools()).resolves.toEqual([]);
+    expect(errorSpy).toHaveBeenCalledWith("[BlendPoolAdapter.listPools]", error);
+    errorSpy.mockRestore();
+  });
+});
+
 describe("BlendPoolAdapter – buildSubmitTx fund-moving flow", () => {
   it("builds a deposit submit request and returns the prepared xdr", async () => {
     const adapter = new BlendPoolAdapter(POOL);

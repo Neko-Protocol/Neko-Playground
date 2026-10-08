@@ -2,6 +2,7 @@
 
 import { Component, type ReactNode } from "react";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { getUserFacingErrorMessage } from "@/lib/errors/normalizeAppError";
 
 /**
  * Props and State types
@@ -54,6 +55,8 @@ class ErrorBoundaryClass extends Component<
         return this.props.fallback(this.state.error, this.handleReset);
       }
 
+      const userMessage = getUserFacingErrorMessage(this.state.error);
+
       // Default error UI
       return (
         <div className="bg-[#1a1a1a] border border-[#334eac] rounded p-6 m-4">
@@ -61,14 +64,16 @@ class ErrorBoundaryClass extends Component<
             <span className="text-3xl mb-3">⚠️</span>
             <h2 className="text-white text-lg font-semibold">Something went wrong</h2>
             <p className="text-[#bad6eb] mt-2 text-sm max-w-md">
-              {this.state.error.message || "An unexpected error occurred."}
+              {userMessage}
             </p>
-            <details className="w-full text-left mt-4 text-[#bad6eb] text-xs">
-              <summary className="cursor-pointer mb-2">Technical details</summary>
-              <div className="p-3 bg-black/20 rounded overflow-x-auto border border-[#334eac]/30">
-                {this.state.error.stack}
-              </div>
-            </details>
+            {process.env.NODE_ENV !== "production" && (
+              <details className="w-full text-left mt-4 text-[#bad6eb] text-xs">
+                <summary className="cursor-pointer mb-2">Technical details</summary>
+                <div className="p-3 bg-black/20 rounded overflow-x-auto border border-[#334eac]/30">
+                  {this.state.error.stack}
+                </div>
+              </details>
+            )}
             <button
               onClick={this.handleReset}
               className="mt-5 px-4 py-2 bg-[#294cab] hover:bg-[#7096d1] text-white rounded text-sm transition-colors"

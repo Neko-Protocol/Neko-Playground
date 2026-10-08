@@ -201,6 +201,29 @@ describe("NekoLendingAdapter – getPoolInfo", () => {
     expect((await adapter.getPoolInfo("USDC")).apy).toBe(3); // 300 / 100
   });
 
+  it("reports optional pool RPC failures while preserving fallback values", async () => {
+    const rateError = new Error("rate rpc down");
+    const stateError = new Error("state rpc down");
+    clientMethods.get_interest_rate.mockRejectedValue(rateError);
+    clientMethods.get_pool_state.mockRejectedValue(stateError);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const adapter = new NekoLendingAdapter();
+
+    const info = await adapter.getPoolInfo("USDC");
+
+    expect(info.apy).toBe(0);
+    expect(info.state).toBe("unknown");
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[NekoLendingAdapter.getPoolInfo.USDC.interestRate]",
+      rateError
+    );
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[NekoLendingAdapter.getPoolInfo.USDC.poolState]",
+      stateError
+    );
+    errorSpy.mockRestore();
+  });
+
   it("throws an AdapterError for an unknown asset", async () => {
     getAvailableTokens.mockReturnValue({});
     const adapter = new NekoLendingAdapter();
