@@ -226,6 +226,9 @@ neko-dapp/
 - `cd apps/web-app && npm run build` - Build Next.js app for production
 - `cd apps/web-app && npm run start` - Start Next.js production server
 - `cd apps/web-app && npm run lint` - Run ESLint
+- `cd apps/web-app && npm run test` - Run Vitest unit tests (headless)
+- `cd apps/web-app && npm run test:watch` - Run Vitest in watch mode
+- `npm run test` (root) - Run tests across all packages via Turborepo
 
 ## Technology Stack
 
