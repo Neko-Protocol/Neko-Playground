@@ -102,7 +102,6 @@ export function useLimitOrderMonitor({
   } = actions;
   const prevAddressRef = useRef<string | undefined>(walletAddress);
   const apiKeyConfigured = hasApiKey();
-  const inFlightRef = useRef(false);
 
   // Detect wallet disconnect and clear in-memory orders.
   useEffect(() => {
@@ -125,85 +124,89 @@ export function useLimitOrderMonitor({
     onOrderReadyRef.current = onOrderReady;
   }, [onOrderReady]);
 
-  // Keep a stable ref to the latest actions so the interval callback
-  // always uses the freshest mutation helpers.
-  const actionsRef = useRef(actions);
-  useEffect(() => {
-    actionsRef.current = actions;
-  }, [actions]);
+  // Re-entrancy guard: prevents overlapping poll() runs when a previous
+  // run is still awaiting quotes (SDK timeout can exceed the poll interval).
+  const inFlightRef = useRef(false);
 
   const poll = useCallback(async () => {
     if (!walletAddress || !apiKeyConfigured) return;
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
 
-    const now = Date.now();
-    const activeOrders = ordersRef.current.filter(
-      (o) => o.status === "open" || o.status === "ready"
-    );
-
-    for (const order of activeOrders) {
-      // ── Expiry check ────────────────────────────────────────────────────
-      if (order.expiresAt !== null && now >= order.expiresAt) {
-        markExpired(order.id);
-        useActivityStore.getState().pushEvent({
-          source: "swap",
-          type: "limit-order-expired",
-          timestamp: Date.now(),
-          summary: `Limit order expired: Sell ${order.amountIn} ${order.tokenInSymbol} for ${order.tokenOutSymbol}`,
-          link: "/swap",
-        });
-        continue;
-      }
-
-      // Only monitor "open" orders for price crossing.
-      if (order.status !== "open") continue;
-
-      // ── Price fetch ──────────────────────────────────────────────────────
-      const currentPrice = await fetchCurrentPrice(
-        order.amountIn,
-        order.tokenIn,
-        order.tokenOut
+    try {
+      const now = Date.now();
+      const activeOrders = ordersRef.current.filter(
+        (o) => o.status === "open" || o.status === "ready"
       );
 
-      if (currentPrice === null || !isFinite(currentPrice)) {
-        // Stale quote — reset confirmations to avoid false positives.
-        resetConfirmation(order.id);
-        continue;
-      }
-
-      // ── Matching ─────────────────────────────────────────────────────────
-      const { shouldTrigger } = matchLimitOrder({
-        side: order.side,
-        limitPrice: parseFloat(order.limitPrice),
-        currentPrice,
-        slippageBps: order.slippageBps,
-      });
-
-      if (shouldTrigger) {
-        // incrementConfirmation returns the new count synchronously from
-        // inside the setState updater, so we never infer it from a stale ref.
-        const confirmations = incrementConfirmation(order.id);
-
-        if (confirmations >= LIMIT_ORDER_CONFIRM_POLLS) {
-          // markReady returns true only on the first transition to "ready",
-          // making the activity event and callback fire exactly once.
-          const transitioned = markReady(order.id);
-          if (!transitioned) continue;
-
-          const fresh =
-            ordersRef.current.find((o) => o.id === order.id) ?? order;
+      for (const order of activeOrders) {
+        // ── Expiry check ──────────────────────────────────────────────────
+        if (order.expiresAt !== null && now >= order.expiresAt) {
+          markExpired(order.id);
           useActivityStore.getState().pushEvent({
             source: "swap",
-            type: "limit-order-ready",
+            type: "limit-order-expired",
             timestamp: Date.now(),
-            summary: `Limit order ready: Sell ${fresh.amountIn} ${fresh.tokenInSymbol} for ${fresh.tokenOutSymbol}`,
+            summary: `Limit order expired: Sell ${order.amountIn} ${order.tokenInSymbol} for ${order.tokenOutSymbol}`,
             link: "/swap",
           });
-          onOrderReadyRef.current?.(fresh);
+          continue;
         }
-      } else {
-        resetConfirmation(order.id);
+
+        // Only monitor "open" orders for price crossing.
+        if (order.status !== "open") continue;
+
+        // ── Price fetch ────────────────────────────────────────────────────
+        const currentPrice = await fetchCurrentPrice(
+          order.amountIn,
+          order.tokenIn,
+          order.tokenOut
+        );
+
+        if (currentPrice === null || !isFinite(currentPrice)) {
+          // Stale quote — reset confirmations to avoid false positives.
+          resetConfirmation(order.id);
+          continue;
+        }
+
+        // ── Matching ───────────────────────────────────────────────────────
+        const { shouldTrigger } = matchLimitOrder({
+          side: order.side,
+          limitPrice: parseFloat(order.limitPrice),
+          currentPrice,
+          slippageBps: order.slippageBps,
+        });
+
+        if (shouldTrigger) {
+          // incrementConfirmation returns the new count computed inside the
+          // setState updater, so it is deterministic regardless of React's
+          // commit timing relative to this async poll loop.
+          const confirmations = incrementConfirmation(order.id);
+
+          if (confirmations >= LIMIT_ORDER_CONFIRM_POLLS) {
+            // markReady returns the current order if it actually transitioned
+            // to "ready" (i.e. was still "open"), or null otherwise. This
+            // guarantees the activity event and callback fire exactly once.
+            const readyOrder = markReady(order.id);
+            if (readyOrder) {
+              useActivityStore.getState().pushEvent({
+                source: "swap",
+                type: "limit-order-ready",
+                timestamp: Date.now(),
+                summary: `Limit order ready: Sell ${readyOrder.amountIn} ${readyOrder.tokenInSymbol} for ${readyOrder.tokenOutSymbol}`,
+                link: "/swap",
+              });
+              onOrderReadyRef.current?.(readyOrder);
+            }
+          }
+        } else {
+          resetConfirmation(order.id);
+        }
       }
+    } finally {
+      inFlightRef.current = false;
     }
+
   }, [
     walletAddress,
     apiKeyConfigured,
@@ -213,27 +216,17 @@ export function useLimitOrderMonitor({
     resetConfirmation,
   ]);
 
-  const guardedPoll = useCallback(async () => {
-    if (inFlightRef.current) return;
-    inFlightRef.current = true;
-    try {
-      await poll();
-    } finally {
-      inFlightRef.current = false;
-    }
-  }, [poll]);
-
   useEffect(() => {
     if (!walletAddress || !apiKeyConfigured) return;
 
     // Run once immediately, then on interval.
-    void guardedPoll();
+    void poll();
     const intervalId = setInterval(() => {
-      void guardedPoll();
+      void poll();
     }, LIMIT_ORDER_POLL_INTERVAL_MS);
 
     return () => {
       clearInterval(intervalId);
     };
-  }, [walletAddress, apiKeyConfigured, guardedPoll]);
+  }, [walletAddress, apiKeyConfigured, poll]);
 }
