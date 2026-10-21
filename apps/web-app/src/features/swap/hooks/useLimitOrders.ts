@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type {
   LimitOrder,
   LimitOrderSide,
@@ -66,6 +66,7 @@ export interface UseLimitOrdersReturn {
   markFilled: (id: string) => void;
   markExpired: (id: string) => void;
   markReady: (id: string) => void;
+  confirmPoll: (id: string, threshold: number) => boolean;
   incrementConfirmation: (id: string) => void;
   resetConfirmation: (id: string) => void;
   clearOrders: () => void;
@@ -84,6 +85,10 @@ export function useLimitOrders(
     return loadFromStorage(walletAddress);
   });
 
+  // Mirror of `orders` kept in sync synchronously so callers can read the
+  // freshest committed state without waiting for a React re-render.
+  const ordersRef = useRef<LimitOrder[]>(orders);
+
   // Re-hydrate when wallet address changes (connect / switch).
   useEffect(() => {
     if (!walletAddress) {
@@ -93,6 +98,10 @@ export function useLimitOrders(
     }
     setOrders(loadFromStorage(walletAddress));
   }, [walletAddress]);
+
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
 
   // Persist to localStorage whenever orders change.
   useEffect(() => {
@@ -104,7 +113,11 @@ export function useLimitOrders(
 
   const mutate = useCallback(
     (updater: (prev: LimitOrder[]) => LimitOrder[]) => {
-      setOrders((prev) => updater(prev));
+      setOrders((prev) => {
+        const next = updater(prev);
+        ordersRef.current = next;
+        return next;
+      });
     },
     []
   );
@@ -176,6 +189,38 @@ export function useLimitOrders(
     [mutate]
   );
 
+  /**
+   * Atomically increments the consecutive-confirmation counter for an order
+   * and, if the new count reaches `threshold`, transitions it to `ready` in
+   * the same state update. Returns `true` iff the order transitioned to
+   * `ready` on this call (i.e. exactly once per transition).
+   *
+   * Only orders currently in `open` status are considered; a non-open order
+   * is a no-op and returns `false`.
+   */
+  const confirmPoll = useCallback(
+    (id: string, threshold: number): boolean => {
+      let transitioned = false;
+      mutate((prev) =>
+        prev.map((o) => {
+          if (o.id !== id || o.status !== "open") return o;
+          const nextCount = o.consecutiveConfirmations + 1;
+          if (nextCount >= threshold) {
+            transitioned = true;
+            return {
+              ...o,
+              consecutiveConfirmations: nextCount,
+              status: "ready",
+            };
+          }
+          return { ...o, consecutiveConfirmations: nextCount };
+        })
+      );
+      return transitioned;
+    },
+    [mutate]
+  );
+
   const incrementConfirmation = useCallback(
     (id: string) => {
       mutate((prev) =>
@@ -211,6 +256,7 @@ export function useLimitOrders(
     markFilled,
     markExpired,
     markReady,
+    confirmPoll,
     incrementConfirmation,
     resetConfirmation,
     clearOrders,

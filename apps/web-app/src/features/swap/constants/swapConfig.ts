@@ -24,5 +24,12 @@ export const LIMIT_ORDER_POLL_INTERVAL_MS = 15_000;
  */
 export const LIMIT_ORDER_CONFIRM_POLLS = 2;
 
+/**
+ * Minimum time (ms) that must elapse between the start of one monitor poll
+ * and the next. Acts as a re-entrancy guard so overlapping async polls
+ * cannot double-count confirmations or multiply quote requests.
+ */
+export const LIMIT_ORDER_POLL_MIN_GAP_MS = 1_000;
+
 /** localStorage schema version; bump when the LimitOrder shape changes. */
 export const LIMIT_ORDER_STORAGE_VERSION = 1;
