@@ -40,7 +40,26 @@ body {
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  /* Neko semantic colors (pools, dashboard) */
+
+  /* ── Neko Brand Colors ─────────────────────────────────────────────────── */
+  --color-neko-primary: #229edf;
+  --color-neko-primary-hover: #1a8bc7;
+  --color-neko-primary-light: rgba(34, 158, 223, 0.1);
+  --color-neko-success: #4ade80;
+  --color-neko-success-light: rgba(74, 222, 128, 0.1);
+  --color-neko-warning: #fbbf24;
+  --color-neko-warning-light: rgba(251, 191, 36, 0.1);
+  --color-neko-danger: #ef4444;
+  --color-neko-danger-light: rgba(239, 68, 68, 0.1);
+
+  /* ── Surface Colors ────────────────────────────────────────────────────── */
+  --color-neko-surface-1: #121212;
+  --color-neko-surface-2: #1a1a1a;
+  --color-neko-surface-3: #1c1c1c;
+  --color-neko-surface-4: #242424;
+  --color-neko-surface-5: #2a2a2a;
+
+  /* ── Legacy colors (preserved for compatibility) ───────────────────────── */
   --color-neko-navy: #081f5c;
   --color-neko-blue: #7096d1;
   --color-neko-accent: #294cab;
@@ -51,7 +70,8 @@ body {
   --color-neko-navy-hover: #12328a;
   --color-neko-cream: #fff9f0;
   --color-neko-gray: #f3f4f6;
-  /* Wallet UI (pill, modals) */
+
+  /* ── Wallet UI (pill, modals) ──────────────────────────────────────────── */
   --color-wallet-neutral-bg: #f0f2f5;
   --color-wallet-neutral-text: #4a5362;
   --color-wallet-success: #2ed06e;
