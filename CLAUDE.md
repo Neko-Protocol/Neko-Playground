@@ -55,7 +55,7 @@ Uses a **feature-based architecture**:
 - **components/**: Shared UI components
 - **lib/**: Shared utilities, constants, helpers, services
 - **stores/**: Zustand stores (user.store.ts, wallet.store.ts, session.store.ts)
-- **providers/**: Context providers (WalletProvider for Stellar + EVM, NotificationProvider)
+- **providers/**: Context providers (ToastProvider for notifications)
 
 ### Data Flow
 
@@ -65,9 +65,10 @@ Feature Components → Feature Hooks → Services/Helpers → Contract Clients (
 
 ### State Management
 
-- **Global state**: Zustand stores
+- **Global state**: Zustand stores (`stellarWalletStore.ts` for wallet state)
 - **Server state**: React Query (TanStack Query)
-- **Provider chain**: QueryClientProvider → WagmiProvider → RainbowKitProvider → WalletProvider → NotificationProvider
+- **Provider chain**: `QueryClientProvider` → `ToastProvider` → `RiskAlertProvider` (in app/(app) layout)
+- **Wallet hooks**: `useStellarWallet` (connect/disconnect), `useWallet` (read state, sign transactions)
 
 ### Smart Contract Dependencies
 
@@ -75,10 +76,11 @@ Feature Components → Feature Hooks → Services/Helpers → Contract Clients (
 - rwa-lending depends on both rwa-oracle and rwa-token
 - Build contracts in dependency order when compiling WASM
 
-### Multi-Chain Support
+### Stellar Integration
 
-- **Stellar**: @stellar/stellar-sdk, Stellar Wallets Kit, SoroSwap SDK
-- **EVM**: viem, wagmi, RainbowKit, CoW Swap SDK, Uniswap SDK
+- **Stellar SDK**: @stellar/stellar-sdk for blockchain interactions
+- **Wallet**: Stellar Wallets Kit for wallet connection (Freighter, etc.)
+- **DEX**: SoroSwap SDK for token swaps
 
 ## Code Style
 
