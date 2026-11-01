@@ -3,15 +3,17 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
+  Globe,
+  Building2,
+} from "lucide-react";
 import type { Asset } from "@neko/oracle";
 import { useOracleAssetPrice } from "../../hooks/useOracleAssetPrice";
 import { formatPrice, calculatePriceChange } from "../../utils/oracleUtils";
-import {
-  ROUTES,
-  MAX_RECENT_PRICES_IN_CARD,
-  TIMESTAMP_MS_PER_SECOND,
-} from "../../constants/oracle";
+import { ROUTES, TIMESTAMP_MS_PER_SECOND } from "../../constants/oracle";
 import { STOCK_INFO } from "../../utils/stockInfo";
 import type { StockInfo } from "../../types/stocks";
 import { useStockInfo } from "../../hooks/useStockInfo";
@@ -23,6 +25,18 @@ function formatPctChange(value: number): string {
   if (abs >= 1_000) return `${(value / 1_000).toFixed(3)}K`;
   return `${value.toFixed(3)}`;
 }
+
+const ASSET_TYPE_MAP: Record<
+  string,
+  { label: string; icon: React.ElementType }
+> = {
+  USTRY: { label: "US Treasury", icon: Building2 },
+  TESOURO: { label: "Brazil Treasury", icon: Building2 },
+  CETES: { label: "Mexico Treasury", icon: Building2 },
+  USDY: { label: "Yield Token", icon: TrendingUp },
+  PYUSD: { label: "Stablecoin", icon: Globe },
+  KTB: { label: "Korea Treasury", icon: Building2 },
+};
 
 export interface AssetPriceCardProps {
   asset: Asset;
@@ -52,109 +66,112 @@ export function AssetPriceCard({
 
   const displayDecimals = decimals ?? 14;
 
+  const assetType = ASSET_TYPE_MAP[assetStr.toUpperCase()] || {
+    label: "RWA Token",
+    icon: Globe,
+  };
+  const TypeIcon = assetType.icon;
+
   return (
     <Link href={ROUTES.stockDetail(assetStr)} className="block h-full group">
-      <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 h-full flex flex-col transition-all duration-200 hover:border-white/10 hover:bg-[#222222] cursor-pointer">
-        {}
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-3">
-            {stockInfo && (
-              <div className="relative w-10 h-10 rounded-xl bg-[#2A2A2A] overflow-hidden shrink-0">
-                <Image
-                  src={stockInfo.logo || "/assets/xlm-logo.png"}
-                  alt={stockInfo.name}
-                  fill
-                  unoptimized
-                  className="object-contain p-1.5"
-                />
+      <div className="relative rounded-2xl bg-[#1A1A1A] border border-white/5 overflow-hidden h-full flex flex-col transition-all duration-300 hover:border-[#229EDF]/30 hover:shadow-xl hover:shadow-[#229EDF]/5">
+        {/* Gradient overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#229EDF]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+        <div className="relative z-10 p-5 flex-1 flex flex-col">
+          {/* Header */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="relative w-12 h-12 rounded-xl bg-[#242424] overflow-hidden shrink-0 border border-white/5 flex items-center justify-center">
+                {stockInfo?.logo ? (
+                  <Image
+                    src={stockInfo.logo}
+                    alt={stockInfo.name}
+                    fill
+                    unoptimized
+                    className="object-contain p-2"
+                  />
+                ) : (
+                  <TypeIcon className="h-6 w-6 text-white/40" />
+                )}
               </div>
-            )}
-            <div>
-              <h3 className="text-white font-semibold text-sm leading-tight">
-                {stockInfo ? stockInfo.name : assetStr}
-              </h3>
-              <span
-                className="inline-flex items-center mt-1 px-2 py-0.5 rounded-md text-[10px] font-semibold"
-                style={{
-                  color: "#229EDF",
-                  backgroundColor: "rgba(34,158,223,0.10)",
-                }}
-              >
-                {assetStr}
-              </span>
+              <div>
+                <h3 className="text-white font-bold text-base leading-tight mb-1">
+                  {stockInfo ? stockInfo.name : assetStr}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#229EDF]/10 text-[#229EDF]">
+                    {assetStr}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/5 text-white/50">
+                    <TypeIcon className="h-2.5 w-2.5" />
+                    {assetType.label}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {priceChange !== null && (
-            <div
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold ${
-                priceChange >= 0
-                  ? "bg-green-500/10 text-green-400"
-                  : "bg-red-500/10 text-red-400"
-              }`}
-            >
-              {priceChange >= 0 ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              {formatPctChange(Math.abs(priceChange))}%
-            </div>
-          )}
-        </div>
-
-        {}
-        <div className="flex-1 flex flex-col">
-          {isLoadingPrice ? (
-            <div className="flex items-center gap-2">
-              <LoadingSpinner variant="dots" size="sm" />
-              <span className="text-white/40 text-xs">Loading price…</span>
-            </div>
-          ) : lastPrice ? (
-            <div>
-              <p className="text-white/40 text-[10px] font-semibold uppercase tracking-widest mb-1">
-                Last Price
-              </p>
-              <p className="text-white text-3xl font-bold">
-                {formatPrice(lastPrice.price, displayDecimals)}
-              </p>
-              <p className="text-white/30 text-xs mt-1">
-                {new Date(
-                  Number(lastPrice.timestamp) * TIMESTAMP_MS_PER_SECOND
-                ).toLocaleDateString()}
-              </p>
-            </div>
-          ) : (
-            <p className="text-white/30 text-sm">No price data</p>
-          )}
-
-          {}
-          {priceHistory && priceHistory.length > 0 && (
-            <div className="mt-5 pt-4 border-t border-white/5">
-              <p className="text-white/40 text-[10px] font-semibold uppercase tracking-widest mb-3">
-                Recent Prices ({priceHistory.length})
-              </p>
-              <div className="space-y-2">
-                {priceHistory
-                  .slice(0, MAX_RECENT_PRICES_IN_CARD)
-                  .map((price, idx) => (
-                    <div
-                      key={`${Number(price.timestamp)}-${idx}`}
-                      className="flex justify-between items-center"
-                    >
-                      <span className="text-white text-sm font-medium">
-                        {formatPrice(price.price, displayDecimals)}
-                      </span>
-                      <span className="text-white/30 text-xs">
-                        {new Date(
-                          Number(price.timestamp) * TIMESTAMP_MS_PER_SECOND
-                        ).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  ))}
+          {/* Price Section */}
+          <div className="flex-1">
+            {isLoadingPrice ? (
+              <div className="flex items-center gap-2 py-4">
+                <LoadingSpinner variant="dots" size="sm" />
+                <span className="text-white/40 text-sm">Loading price…</span>
               </div>
+            ) : lastPrice ? (
+              <div className="bg-[#242424] rounded-xl p-4 border border-white/5">
+                <div className="flex items-end justify-between mb-2">
+                  <div>
+                    <p className="text-white/40 text-[10px] font-medium uppercase tracking-wider mb-1">
+                      Current Price
+                    </p>
+                    <p className="text-white text-3xl font-bold">
+                      ${formatPrice(lastPrice.price, displayDecimals)}
+                    </p>
+                  </div>
+                  {priceChange !== null && (
+                    <div
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                        priceChange >= 0
+                          ? "bg-[#4ADE80]/10 text-[#4ADE80]"
+                          : "bg-[#EF4444]/10 text-[#EF4444]"
+                      }`}
+                    >
+                      {priceChange >= 0 ? (
+                        <TrendingUp className="h-4 w-4" />
+                      ) : (
+                        <TrendingDown className="h-4 w-4" />
+                      )}
+                      {formatPctChange(Math.abs(priceChange))}%
+                    </div>
+                  )}
+                </div>
+                <p className="text-white/30 text-xs">
+                  Updated{" "}
+                  {new Date(
+                    Number(lastPrice.timestamp) * TIMESTAMP_MS_PER_SECOND
+                  ).toLocaleString()}
+                </p>
+              </div>
+            ) : (
+              <div className="bg-[#242424] rounded-xl p-4 border border-white/5 text-center">
+                <p className="text-white/30 text-sm">No price data available</p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
+            <div className="flex items-center gap-2">
+              <span className="text-white/40 text-xs">On-chain oracle</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-pulse" />
             </div>
-          )}
+            <div className="flex items-center gap-1 text-[#229EDF] text-sm font-medium group-hover:gap-2 transition-all">
+              View Details
+              <ArrowRight className="h-4 w-4" />
+            </div>
+          </div>
         </div>
       </div>
     </Link>

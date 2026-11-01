@@ -62,28 +62,28 @@ const TokenSelectorBtn: React.FC<TokenSelectorBtnProps> = ({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="flex items-center gap-2.5 bg-[#2A2A2A] hover:bg-[#333] rounded-xl px-3.5 py-2.5 w-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="flex items-center gap-3 bg-[#242424] hover:bg-[#2A2A2A] rounded-xl px-4 py-3 w-full transition-all duration-200 border border-white/5 hover:border-[#229EDF]/30 disabled:opacity-50 disabled:cursor-not-allowed group"
     >
       <div className="relative shrink-0">
         {iconUrl ? (
           <Image
             src={iconUrl}
             alt={tokenId}
-            width={22}
-            height={22}
+            width={28}
+            height={28}
             unoptimized
             className="rounded-full object-contain"
           />
         ) : (
-          <div className="w-[22px] h-[22px] rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold text-white">
+          <div className="w-7 h-7 rounded-full bg-[#229EDF]/20 flex items-center justify-center text-xs font-bold text-[#229EDF]">
             {tokenId[0] || "?"}
           </div>
         )}
       </div>
-      <span className="text-white font-medium text-sm truncate">
+      <span className="text-white font-semibold text-base truncate">
         {tokenId || "Select token"}
       </span>
-      <ChevronDown className="ml-auto h-4 w-4 text-white/40 shrink-0" />
+      <ChevronDown className="ml-auto h-5 w-5 text-white/30 group-hover:text-[#229EDF] shrink-0 transition-colors" />
     </button>
   );
 };
@@ -105,34 +105,33 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
   onMaxClick,
   isReadOnly,
 }) => (
-  <div className="bg-[#252525] rounded-xl p-3.5">
-    <div className="text-white font-bold text-xl">
+  <div className="bg-[#242424] rounded-xl p-4 border border-white/5">
+    <div className="flex items-center justify-between">
+      <span className="text-white/40 text-xs font-medium uppercase tracking-wider">
+        Value
+      </span>
+      {!isReadOnly && (
+        <button
+          onClick={onMaxClick}
+          disabled={!balance || parseFloat(balance) <= 0 || isLoadingBalance}
+          className="text-xs font-semibold text-[#229EDF] hover:text-[#4ADE80] transition-colors disabled:text-white/30 disabled:cursor-not-allowed"
+        >
+          {isLoadingBalance ? "..." : "MAX"}
+        </button>
+      )}
+    </div>
+    <div className="text-white font-bold text-2xl mt-1">
       {isLoadingPrice ? (
         <span className="text-white/40 text-sm animate-pulse">Loading…</span>
       ) : (
-        <>
-          {usdValue || "0.00"}{" "}
-          <span className="text-white/40 text-xs font-normal">USD</span>
-        </>
+        <>${usdValue || "0.00"}</>
       )}
     </div>
-    <div className="flex items-center justify-between mt-1">
-      <span className="text-white/40 text-xs">Your balance</span>
-      <button
-        onClick={isReadOnly ? undefined : onMaxClick}
-        disabled={
-          isReadOnly || !balance || parseFloat(balance) <= 0 || isLoadingBalance
-        }
-        className={`text-xs transition-colors ${
-          isReadOnly
-            ? "invisible"
-            : "text-white/40 hover:text-white/70 disabled:cursor-not-allowed"
-        }`}
-      >
-        {isLoadingBalance
-          ? "..."
-          : `${formatSwapAmount(balance || "0", 6)} Max`}
-      </button>
+    <div className="flex items-center gap-1 mt-1">
+      <span className="text-white/30 text-xs">Balance:</span>
+      <span className="text-white/50 text-xs font-medium">
+        {isLoadingBalance ? "..." : formatSwapAmount(balance || "0", 6)}
+      </span>
     </div>
   </div>
 );
@@ -481,12 +480,16 @@ const Swap: React.FC = () => {
       {/* ── Market Swap UI ─────────────────────────────────────────────────── */}
       {orderType === "swap" && (
         <>
-          {}
           <div className="relative">
-            <div className="grid grid-cols-2 gap-4">
-              {}
-              <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
-                <span className="text-white/50 text-sm font-medium">From</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* From Card */}
+              <div className="bg-[#1A1A1A] rounded-2xl p-5 flex flex-col gap-4 border border-white/5">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/40 text-xs font-medium uppercase tracking-wider">
+                    From
+                  </span>
+                  <div className="w-2 h-2 rounded-full bg-[#229EDF] animate-pulse" />
+                </div>
 
                 <TokenSelectorBtn
                   token={tokenIn}
@@ -497,10 +500,10 @@ const Swap: React.FC = () => {
                 />
 
                 <div>
-                  <span className="text-white/50 text-sm font-semibold block mb-2">
+                  <span className="text-white/40 text-xs font-medium uppercase tracking-wider block mb-2">
                     Amount
                   </span>
-                  <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center">
+                  <div className="bg-[#242424] rounded-xl px-4 h-16 flex items-center border border-white/5 focus-within:border-[#229EDF]/50 transition-colors">
                     <AmountInput
                       value={amountIn}
                       onChange={handleAmountChange}
@@ -509,7 +512,8 @@ const Swap: React.FC = () => {
                     />
                   </div>
                   {isInsufficientBalance && (
-                    <p className="text-red-400 text-xs mt-1.5">
+                    <p className="text-[#EF4444] text-xs mt-2 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
                       Insufficient balance
                     </p>
                   )}
@@ -524,9 +528,14 @@ const Swap: React.FC = () => {
                 />
               </div>
 
-              {}
-              <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
-                <span className="text-white/50 text-sm font-medium">To</span>
+              {/* To Card */}
+              <div className="bg-[#1A1A1A] rounded-2xl p-5 flex flex-col gap-4 border border-white/5">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/40 text-xs font-medium uppercase tracking-wider">
+                    To
+                  </span>
+                  <div className="w-2 h-2 rounded-full bg-[#4ADE80]" />
+                </div>
 
                 <TokenSelectorBtn
                   token={tokenOut}
@@ -537,13 +546,13 @@ const Swap: React.FC = () => {
                 />
 
                 <div>
-                  <span className="text-white/50 text-sm font-semibold block mb-2">
-                    Amount
+                  <span className="text-white/40 text-xs font-medium uppercase tracking-wider block mb-2">
+                    You Receive
                   </span>
-                  <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center gap-2">
+                  <div className="bg-[#242424] rounded-xl px-4 h-16 flex items-center gap-2 border border-white/5">
                     {isLoadingQuote ? (
                       <span className="text-white/40 text-sm animate-pulse">
-                        Loading…
+                        Calculating...
                       </span>
                     ) : (
                       <span className="text-white text-3xl font-bold">
@@ -560,7 +569,7 @@ const Swap: React.FC = () => {
                     )}
                   </div>
                   {quoteError && !isLoadingQuote && (
-                    <p className="text-red-400 text-xs mt-1.5">{quoteError}</p>
+                    <p className="text-[#EF4444] text-xs mt-2">{quoteError}</p>
                   )}
                 </div>
 
@@ -572,13 +581,13 @@ const Swap: React.FC = () => {
               </div>
             </div>
 
-            {}
+            {/* Swap Button */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
               <button
                 onClick={swapTokens}
                 disabled={isLoading}
                 aria-label="Swap tokens"
-                className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white p-3 rounded-full shadow-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white p-3.5 rounded-xl shadow-xl shadow-[#229EDF]/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
               >
                 <ArrowLeftRight className="h-5 w-5" />
               </button>

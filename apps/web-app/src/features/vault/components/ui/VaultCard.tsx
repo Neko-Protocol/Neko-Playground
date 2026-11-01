@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { ShieldCheck, TrendingUp, Droplets, ArrowRight } from "lucide-react";
 import type { VaultView, VaultCategory } from "../../types/vault";
 import { VaultAssetIllustrations } from "./VaultAssetIllustrations";
 
@@ -12,11 +13,14 @@ interface VaultCardProps {
   onDepositClick?: () => void;
 }
 
-const CATEGORY_LABEL: Record<VaultCategory, string> = {
-  lending: "Lending",
-  rwa: "RWA",
-  amm: "AMM",
-  staking: "Staking",
+const CATEGORY_CONFIG: Record<
+  VaultCategory,
+  { label: string; color: string; bg: string }
+> = {
+  lending: { label: "Lending", color: "#229EDF", bg: "rgba(34,158,223,0.1)" },
+  rwa: { label: "RWA", color: "#4ADE80", bg: "rgba(74,222,128,0.1)" },
+  amm: { label: "AMM", color: "#A78BFA", bg: "rgba(167,139,250,0.1)" },
+  staking: { label: "Staking", color: "#FBBF24", bg: "rgba(251,191,36,0.1)" },
 };
 
 export const VaultCard: React.FC<VaultCardProps> = ({
@@ -25,188 +29,143 @@ export const VaultCard: React.FC<VaultCardProps> = ({
   onDetailsClick,
   onDepositClick,
 }) => {
-  const isLight = (vault.variant ?? "light") === "light";
-  const categoryLabel = CATEGORY_LABEL[vault.category];
+  const categoryConfig = CATEGORY_CONFIG[vault.category];
 
   return (
-    <div
-      className="group isolate flex flex-col rounded-2xl overflow-hidden border transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl cursor-pointer"
-      style={{
-        borderColor: "rgba(255,255,255,0.05)",
-        boxShadow: isLight
-          ? "0 2px 16px 0 rgba(0,0,0,0.08)"
-          : "0 2px 16px 0 rgba(0,0,0,0.4)",
-      }}
-    >
-      {/* ── TOP SECTION ─────────────────────────────────── */}
-      <div
-        className="relative overflow-hidden"
-        style={{
-          background: isLight ? "#FFFFFF" : "#242424",
-          minHeight: 124,
-        }}
-      >
-        {!isLight && (
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background:
-                "radial-gradient(ellipse 80% 60% at 85% 50%, rgba(34,158,223,0.08) 0%, transparent 70%)",
-            }}
-          />
-        )}
+    <div className="group relative flex flex-col rounded-2xl bg-[#1A1A1A] border border-white/5 overflow-hidden transition-all duration-300 hover:border-[#229EDF]/30 hover:shadow-xl hover:shadow-[#229EDF]/5">
+      {/* Gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#229EDF]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-        {/* icon + name + badge */}
-        <div className="relative z-10 flex items-center gap-3 px-5 py-4 pr-[46%]">
-          <div className="w-12 h-12 rounded-full bg-[#111] flex items-center justify-center shrink-0 overflow-hidden shadow-md">
-            <Image
-              src={vault.supplyAsset.iconSrc}
-              alt={vault.supplyAsset.symbol}
-              width={28}
-              height={28}
-              unoptimized
-            />
+      {/* Header */}
+      <div className="relative z-10 p-5 pb-0">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="relative w-12 h-12 rounded-xl bg-[#242424] flex items-center justify-center overflow-hidden border border-white/5">
+              <Image
+                src={vault.supplyAsset.iconSrc}
+                alt={vault.supplyAsset.symbol}
+                width={28}
+                height={28}
+                unoptimized
+              />
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-base leading-tight mb-1">
+                {vault.name}
+              </h3>
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                style={{
+                  color: categoryConfig.color,
+                  backgroundColor: categoryConfig.bg,
+                }}
+              >
+                {categoryConfig.label}
+              </span>
+            </div>
           </div>
 
-          <div className="min-w-0">
-            <h3
-              className="font-bold text-base leading-tight"
-              style={{ color: isLight ? "#111111" : "#FFFFFF" }}
-            >
-              {vault.name}
-            </h3>
-            <span
-              className="inline-block mt-1.5 px-3 py-0.5 rounded-full text-xs font-semibold"
-              style={
-                isLight
-                  ? {
-                      border: "1px solid rgba(0,0,0,0.18)",
-                      color: "#333",
-                      background: "transparent",
-                    }
-                  : {
-                      border: "1px solid rgba(34,158,223,0.45)",
-                      color: "#229EDF",
-                      background: "rgba(34,158,223,0.1)",
-                    }
-              }
-            >
-              {categoryLabel}
+          {vault.featured && (
+            <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-[#4ADE80]/10 text-[#4ADE80]">
+              Featured
             </span>
-          </div>
+          )}
         </div>
 
+        {/* Collateral assets preview */}
         <VaultAssetIllustrations
           collateralAssets={vault.collateralAssets}
-          isLight={isLight}
+          isLight={false}
         />
       </div>
 
-      {/* ── BOTTOM SECTION ──────────────────────────────── */}
-      <div
-        className="flex items-stretch px-5 py-3"
-        style={{ background: isLight ? "#141414" : "#181818" }}
-        onClick={() => onDetailsClick?.(vault)}
-      >
-        {/* Supply + Created by */}
-        <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-white/40 text-xs">Supply</span>
-            <div className="w-4 h-4 rounded-full overflow-hidden shrink-0">
-              <Image
-                src={vault.supplyAsset.logoSrc}
-                alt={vault.supplyAsset.symbol}
-                width={16}
-                height={16}
-                unoptimized
-              />
-            </div>
-            <span className="text-white/80 text-xs font-medium">
-              {vault.supplyAsset.symbol}
-            </span>
-            <span className="text-white/40 text-xs">on</span>
-            <div className="w-4 h-4 rounded-full overflow-hidden shrink-0">
-              <Image
-                src="/assets/xlm-logo.png"
-                alt="Stellar"
-                width={16}
-                height={16}
-                unoptimized
-              />
-            </div>
-            <span className="text-white/80 text-xs font-medium">
-              {vault.supplyAsset.network}
+      {/* Metrics Grid */}
+      <div className="relative z-10 grid grid-cols-3 gap-3 p-5 pt-4">
+        <div className="bg-[#242424] rounded-xl p-3 border border-white/5">
+          <div className="flex items-center gap-1.5 mb-2">
+            <TrendingUp className="h-3 w-3 text-[#4ADE80]" />
+            <span className="text-white/40 text-[10px] font-medium uppercase tracking-wider">
+              APY
             </span>
           </div>
-
-          <div className="flex items-center gap-1.5">
-            <span className="text-white/40 text-xs">Created by</span>
-            {vault.creatorIconSrc && (
-              <div className="w-4 h-4 rounded-full overflow-hidden shrink-0">
-                <Image
-                  src={vault.creatorIconSrc}
-                  alt={vault.createdBy}
-                  width={16}
-                  height={16}
-                  unoptimized
-                />
-              </div>
-            )}
-            <span className="text-white/80 text-xs font-medium">
-              {vault.createdBy}
-            </span>
-          </div>
-        </div>
-
-        <div className="w-px bg-white/8 mx-4 shrink-0" />
-
-        {/* TVL */}
-        <div className="flex flex-col justify-center gap-0.5 shrink-0">
-          <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
-            TVL
-          </span>
           {isLoading ? (
-            <div className="h-5 w-16 rounded bg-white/10 animate-pulse" />
+            <div className="h-5 w-12 rounded bg-white/10 animate-pulse" />
           ) : (
-            <span className="text-white text-base font-bold">{vault.tvl}</span>
+            <p className="text-[#4ADE80] text-lg font-bold">{vault.apy7d}</p>
           )}
         </div>
 
-        <div className="w-px bg-white/8 mx-4 shrink-0" />
-
-        {/* APY */}
-        <div className="flex flex-col justify-center gap-0.5 shrink-0">
-          <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
-            APY (7d)
-          </span>
+        <div className="bg-[#242424] rounded-xl p-3 border border-white/5">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Droplets className="h-3 w-3 text-[#229EDF]" />
+            <span className="text-white/40 text-[10px] font-medium uppercase tracking-wider">
+              TVL
+            </span>
+          </div>
           {isLoading ? (
             <div className="h-5 w-14 rounded bg-white/10 animate-pulse" />
           ) : (
-            <span className="text-[#4ADE80] text-base font-bold">
-              {vault.apy7d}
-            </span>
+            <p className="text-white text-lg font-bold">{vault.tvl}</p>
           )}
+        </div>
+
+        <div className="bg-[#242424] rounded-xl p-3 border border-white/5">
+          <div className="flex items-center gap-1.5 mb-2">
+            <ShieldCheck className="h-3 w-3 text-[#4ADE80]" />
+            <span className="text-white/40 text-[10px] font-medium uppercase tracking-wider">
+              Risk
+            </span>
+          </div>
+          <p className="text-[#4ADE80] text-sm font-bold">Low</p>
         </div>
       </div>
 
-      {/* ── ACTIONS ─────────────────────────────────────── */}
-      <div
-        className="flex gap-2 px-4 py-3"
-        style={{ background: isLight ? "#141414" : "#181818" }}
-      >
+      {/* Supply Info */}
+      <div className="relative z-10 px-5 pb-4">
+        <div className="flex items-center gap-2 text-xs text-white/40">
+          <span>Supply</span>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/5">
+            <Image
+              src={vault.supplyAsset.logoSrc}
+              alt={vault.supplyAsset.symbol}
+              width={14}
+              height={14}
+              className="rounded-full"
+              unoptimized
+            />
+            <span className="text-white/70 font-medium">
+              {vault.supplyAsset.symbol}
+            </span>
+          </div>
+          <span>on</span>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/5">
+            <Image
+              src="/assets/xlm-logo.png"
+              alt="Stellar"
+              width={14}
+              height={14}
+              className="rounded-full"
+              unoptimized
+            />
+            <span className="text-white/70 font-medium">Stellar</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="relative z-10 flex gap-2 p-4 pt-0">
         <button
-          aria-label={`View details for ${vault.name}`}
           onClick={() => onDetailsClick?.(vault)}
-          className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-white/15 hover:border-white/35 text-white/60 hover:text-white bg-transparent"
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/5"
         >
           Details
         </button>
         <button
-          aria-label={`Deposit into ${vault.name}`}
           onClick={onDepositClick}
-          className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-[#229EDF]/50 hover:border-[#229EDF] text-[#229EDF] hover:text-white hover:bg-[#229EDF]/10 bg-transparent"
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 bg-[#229EDF] hover:bg-[#1a8bc7] text-white"
         >
           Deposit
+          <ArrowRight className="h-3 w-3" />
         </button>
       </div>
     </div>
