@@ -33,11 +33,6 @@ export default defineConfig({
   },
   test: {
     setupFiles: ["./vitest.setup.ts"],
-  },
-  oxc: {
-    jsx: { runtime: "automatic" },
-  },
-  test: {
     env: {
       NEXT_PUBLIC_STELLAR_NETWORK: "TESTNET",
       NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE:
@@ -45,5 +40,8 @@ export default defineConfig({
       NEXT_PUBLIC_STELLAR_RPC_URL: "https://soroban-testnet.stellar.org",
       NEXT_PUBLIC_STELLAR_HORIZON_URL: "https://horizon-testnet.stellar.org",
     },
+  },
+  oxc: {
+    jsx: { runtime: "automatic" },
   },
 });
