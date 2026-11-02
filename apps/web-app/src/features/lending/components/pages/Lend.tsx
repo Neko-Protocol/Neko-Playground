@@ -1,19 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { BannerPage } from "@/components/ui/BannerPage";
+import Link from "next/link";
+import { TrendingUp, Vault, ChevronRight } from "lucide-react";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { useLend } from "../../hooks/useLend";
 import { LendTable } from "../ui/LendTable";
 import { LendModal } from "../ui/LendModal";
-import MyLendingPositions from "../ui/MyLendingPositions";
-import { BackstopPanel } from "../ui/BackstopPanel";
 import { GetTestTokensBanner } from "@/features/wallet/components/GetTestTokensBanner";
 
-type PageTab = "pools" | "positions" | "backstop";
-
 const Lend: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<PageTab>("pools");
   const {
     pools,
     isLoadingPools,
@@ -32,80 +27,76 @@ const Lend: React.FC = () => {
   } = useLend();
 
   return (
-    <PageContainer maxWidth="6xl">
-      <BannerPage
-        title="Lend to Pools"
-        subtitle="Supply liquidity to pools and earn interest on your assets"
-        badge="Use your actives"
-        imageSrc="/banners/lend.svg"
-        imageAlt="Lend illustration"
-        className="mb-8"
-      />
-
-      <GetTestTokensBanner className="mb-6" />
-
-      <div className="flex items-center gap-1 rounded-xl bg-[#1C1C1C] p-1 w-fit mb-6">
-        <button
-          onClick={() => setActiveTab("pools")}
-          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === "pools"
-              ? "bg-[#229EDF] text-white"
-              : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          Pools
-        </button>
-        <button
-          onClick={() => setActiveTab("backstop")}
-          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === "backstop"
-              ? "bg-[#229EDF] text-white"
-              : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          Backstop
-        </button>
-        <button
-          onClick={() => setActiveTab("positions")}
-          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === "positions"
-              ? "bg-[#229EDF] text-white"
-              : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          My Positions
-        </button>
+    <PageContainer maxWidth="6xl" className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-white">Earn</h1>
+        <p className="text-white/50 text-sm mt-1">
+          Deposit assets to earn yield from lending and vaults
+        </p>
       </div>
 
-      {activeTab === "pools" && (
-        <>
-          <LendTable
-            pools={pools}
-            isLoading={isLoadingPools}
-            error={poolsError}
-            onDeposit={(pool) => openModal(pool, true)}
-            onWithdraw={(pool) => openModal(pool, false)}
-          />
+      <GetTestTokensBanner />
 
-          {isModalOpen && selectedPool && (
-            <LendModal
-              pool={selectedPool}
-              isDeposit={isDeposit}
-              isLoading={isLoading}
-              bTokenBalance={bTokenBalance}
-              isLoadingBalance={isLoadingBalance}
-              hasWallet={hasWallet}
-              onClose={closeModal}
-              onConfirm={handleConfirm}
-              onRefreshBalance={() => void refreshBalance()}
-            />
-          )}
-        </>
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="flex items-center justify-between p-4 rounded-xl bg-[#1A1A1A] border border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-[#229EDF]/10">
+              <TrendingUp className="h-5 w-5 text-[#229EDF]" />
+            </div>
+            <div>
+              <p className="text-white font-medium">Lending Pools</p>
+              <p className="text-white/40 text-sm">Earn interest on deposits</p>
+            </div>
+          </div>
+          <span className="text-white/30 text-sm">{pools.length} pools</span>
+        </div>
+
+        <Link
+          href="/vaults"
+          className="flex items-center justify-between p-4 rounded-xl bg-[#1A1A1A] border border-white/5 hover:border-white/10 transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-[#4ADE80]/10">
+              <Vault className="h-5 w-5 text-[#4ADE80]" />
+            </div>
+            <div>
+              <p className="text-white font-medium">Vaults</p>
+              <p className="text-white/40 text-sm">
+                Automated yield strategies
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-white/30 group-hover:text-white/50 transition-colors" />
+        </Link>
+      </div>
+
+      {/* Lending Pools Table */}
+      <div>
+        <h2 className="text-lg font-semibold text-white mb-4">Lending Pools</h2>
+        <LendTable
+          pools={pools}
+          isLoading={isLoadingPools}
+          error={poolsError}
+          onDeposit={(pool) => openModal(pool, true)}
+          onWithdraw={(pool) => openModal(pool, false)}
+        />
+      </div>
+
+      {isModalOpen && selectedPool && (
+        <LendModal
+          pool={selectedPool}
+          isDeposit={isDeposit}
+          isLoading={isLoading}
+          bTokenBalance={bTokenBalance}
+          isLoadingBalance={isLoadingBalance}
+          hasWallet={hasWallet}
+          onClose={closeModal}
+          onConfirm={handleConfirm}
+          onRefreshBalance={() => void refreshBalance()}
+        />
       )}
-
-      {activeTab === "positions" && <MyLendingPositions />}
-
-      {activeTab === "backstop" && <BackstopPanel />}
     </PageContainer>
   );
 };

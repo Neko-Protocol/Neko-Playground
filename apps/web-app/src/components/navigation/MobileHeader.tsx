@@ -4,13 +4,12 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { X, Menu, LogOut, ChevronDown, Bell } from "lucide-react";
+import { X, Menu, LogOut, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./sidebarConfig";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { truncateAddress } from "@/lib/utils";
-import { useActivityFeed } from "@/features/activity/hooks/useActivityFeed";
 import { clientEnv } from "@/lib/env.client";
 
 const IS_TESTNET = clientEnv.stellarNetwork === "TESTNET";
@@ -22,7 +21,6 @@ export function MobileHeader() {
   const pathname = usePathname();
   const { isStellarConnected, stellarAddress } = useWalletType();
   const { connect, disconnect } = useStellarWallet();
-  const { unreadCount } = useActivityFeed();
   const menuRef = useRef<HTMLDivElement>(null);
   const walletButtonRef = useRef<HTMLDivElement>(null);
 
@@ -153,18 +151,6 @@ export function MobileHeader() {
           </div>
 
           <div className="min-w-0 justify-end flex items-center gap-1 sm:gap-2">
-            <Link
-              href="/activity"
-              className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white transition-colors hover:bg-white/10 sm:h-12 sm:w-12"
-            >
-              <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
-              {unreadCount > 0 && (
-                <span className="absolute top-2 right-2 flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-blue-500 text-[9px] font-bold text-white border-2 border-[#121212]">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </Link>
-
             <button
               type="button"
               onClick={() => setIsOpen((v) => !v)}
@@ -225,14 +211,7 @@ export function MobileHeader() {
                     active ? "text-white" : "text-white/35"
                   )}
                 />
-                <div className="flex items-center justify-between w-full">
-                  <span>{label}</span>
-                  {label === "Activity" && unreadCount > 0 && (
-                    <span className="flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-blue-500 text-[10px] font-bold text-white">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                </div>
+                <span>{label}</span>
               </Link>
             );
           })}

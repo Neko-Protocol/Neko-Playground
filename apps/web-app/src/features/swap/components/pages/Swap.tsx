@@ -18,7 +18,6 @@ import { getSpendableXlmAmount } from "../../utils/xlmSpendable";
 import { AmountInput } from "@/components/AmountInput";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
-import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import TokenSelectorModal from "../ui/TokenSelectorModal";
 
@@ -454,23 +453,18 @@ const Swap: React.FC = () => {
     parseFloat(amountIn) > parseFloat(spendableBalance);
 
   return (
-    <PageContainer maxWidth="4xl">
-      {}
-      <BannerPage
-        title="Swap Currency"
-        subtitle="Select an option and swap your currencies"
-        badge="Conversion"
-        imageSrc="/banners/swap.svg"
-        imageAlt="Swap illustration"
-        className="mb-6"
-      />
-
-      {}
-      <div className="flex flex-col gap-3 mb-5">
+    <PageContainer maxWidth="4xl" className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Swap</h1>
+          <p className="text-white/50 text-sm mt-1">
+            Exchange tokens at the best available rate
+          </p>
+        </div>
         <OrderTypeTabs orderType={orderType} onOrderTypeChange={setOrderType} />
       </div>
 
-      {}
       {!address && (
         <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-5 text-center text-white/60 text-sm">
           Connect your wallet to start swapping
